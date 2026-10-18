@@ -14,7 +14,35 @@ export function PWARegister() {
   const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null)
 
   useEffect(() => {
-    // Register service worker
+    // === One-time cache + SW cleanup (for users with stale v1 cache from before Velzon update) ===
+    // Bumps the user to v2 SW and clears stale HTML/JS chunks. Runs once per browser.
+    const CLEANUP_KEY = 'sw-cleanup-v2'
+    if (typeof window !== 'undefined' && !localStorage.getItem(CLEANUP_KEY)) {
+      ;(async () => {
+        try {
+          // 1. Unregister all existing SWs
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations()
+            await Promise.all(regs.map((r) => r.unregister()))
+          }
+          // 2. Wipe all caches (v1 static/api/images)
+          if ('caches' in window) {
+            const keys = await caches.keys()
+            await Promise.all(keys.map((k) => caches.delete(k)))
+          }
+          // 3. Flag done — re-register fresh SW below on next render cycle
+          localStorage.setItem(CLEANUP_KEY, '1')
+          // 4. Reload once to get clean state (no SW, no cache)
+          window.location.reload()
+          return // skip the normal SW register below; reload will run this effect again
+        } catch (err) {
+          console.warn('SW cleanup failed:', err)
+        }
+      })()
+      return
+    }
+
+    // Register service worker (fresh — only after cleanup)
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').then((reg) => {
         setSwRegistration(reg)

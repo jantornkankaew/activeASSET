@@ -1,5 +1,5 @@
 // activeASSET Service Worker — PWA + offline cache
-const CACHE_VERSION = 'activeasset-v1'
+const CACHE_VERSION = 'activeasset-v2'  // bumped v1 → v2 to invalidate stale Velzon-update cache
 const STATIC_CACHE = `${CACHE_VERSION}-static`
 const API_CACHE = `${CACHE_VERSION}-api`
 const IMAGE_CACHE = `${CACHE_VERSION}-images`
@@ -31,6 +31,11 @@ self.addEventListener('activate', (event) => {
     )
   )
   self.clients.claim()
+})
+
+// Allow page to trigger SW activation (for the in-app "อัปเดต" button)
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting()
 })
 
 // Fetch — strategy ตามประเภท resource
