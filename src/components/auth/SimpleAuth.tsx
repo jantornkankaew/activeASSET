@@ -20,16 +20,6 @@ interface SimpleAuthContextType {
 const TOKEN_KEY = 'activeasset_token'
 const USER_KEY = 'activeasset_user'
 
-// Read user from localStorage immediately (no loading state)
-function readInitialUser(): SimpleUser | null {
-  if (typeof window === 'undefined') return null
-  try {
-    const savedUser = localStorage.getItem(USER_KEY)
-    if (savedUser) return JSON.parse(savedUser)
-  } catch {}
-  return null
-}
-
 const SimpleAuthContext = createContext<SimpleAuthContextType>({
   user: null,
   loading: false,
@@ -38,9 +28,26 @@ const SimpleAuthContext = createContext<SimpleAuthContextType>({
 })
 
 export function SimpleAuthProvider({ children }: { children: ReactNode }) {
-  // Initialize state from localStorage immediately — no loading flicker
-  const [user, setUser] = useState<SimpleUser | null>(readInitialUser)
-  const [loading] = useState(false)
+  // === Hydration-safe initial state ===
+  // SSR and client first render BOTH see user=null + loading=true (no localStorage access during render).
+  // We read localStorage in useEffect AFTER hydration → triggers re-render with real user.
+  // This eliminates the SSR/CSR hydration mismatch that was breaking the page.
+  const [user, setUser] = useState<SimpleUser | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  // Read saved user from localStorage AFTER hydration (client-only)
+  useEffect(() => {
+    try {
+      const savedUser = localStorage.getItem(USER_KEY)
+      if (savedUser) {
+        setUser(JSON.parse(savedUser))
+      }
+    } catch {
+      // ignore parse errors
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   // Patch global fetch on mount to attach Bearer token
   useEffect(() => {

@@ -738,3 +738,31 @@ Stage Summary:
 - Velzon palette: #405189 indigo, #0ab39c teal, #f7b84b amber, #f06548 rose, #a071f0 purple, #74788d slate
 - ไม่กระทบ data flow / API — แก้เฉพาะ visual layer
 - Dev server ยังรันปกติ HTTP 200, /api/dashboard + /api/analytics ตอบ 401 (ต้อง login) ไม่มี compile error
+
+---
+Task ID: hydration-fix
+Agent: main
+Task: แก้ Hydration mismatch error ที่ทำให้หน้าเว็บพังหลัง Velzon update
+
+Root cause:
+- SimpleAuth.tsx ใช้ `useState(readInitialUser)` ที่อ่าน localStorage ตั้งแต่ render ครั้งแรก
+- SSR: ไม่มี `window` → user=null → แสดง login page (`<div className="min-h-screen flex items-stretch bg-background">`)
+- Client first render: มี `localStorage` → user={...} → แสดง AppShell (`<div className="flex h-screen bg-background overflow-hidden">`)
+- → React hydration mismatch → หน้า crash
+
+Fix:
+1. SimpleAuth.tsx: เปลี่ยน initial state เป็น `user=null, loading=true` (SSR/CSR เหมือนกัน) — ย้ายการอ่าน localStorage ไปอยู่ใน useEffect (หลัง hydration)
+2. AuthGate.tsx: เพิ่ม loading splash state (render เดียวกันทั้ง server/client) ระหว่าง auth bootstrap
+3. ลบ `readInitialUser` function ที่ไม่ใช้แล้วออก
+
+Work Log:
+- แก้ SimpleAuth.tsx: state init เป็น null, อ่าน localStorage ใน useEffect
+- แก้ AuthGate.tsx: แยก loading state ออกจาก login state
+- รัน test-hydration.mjs: login → reload (token in localStorage) → ตรวจ hydration messages
+- ผล: 0 hydration messages, 0 real errors (มี 401 pre-login จาก /api/user-tenants ซึ่งเป็น behavior ปกติ)
+- Screenshot: vz-banner + vz-card render ถูกต้องหลัง reload
+
+Stage Summary:
+- Hydration mismatch error หายไปแล้ว — รันผ่านหลัง reload ด้วย token ใน localStorage
+- มี loading splash สั้น ๆ (~50ms) ระหว่าง auth bootstrap แทนที่จะเห็น login flash
+- SSR/CSR render ตรงกันทั้ง 3 states: loading, unauth, auth
