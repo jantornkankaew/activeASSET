@@ -40,6 +40,7 @@ export async function GET(
               loanLineItem: {
                 include: { asset: { select: { tagId: true, serialNo: true, catalog: { select: { model: true, brand: true } } } } },
               },
+              photos: true,  // รูปถ่ายของเครื่องตอนรับคืน (returnEventItemId link)
             },
           },
         },

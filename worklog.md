@@ -1432,3 +1432,62 @@ Stage Summary:
 - Comment textarea is always visible when item is selected (separate from damage description)
 - Grade mapping is visible via 4 hint pills below the stars
 - Backend (API + DB schema) unchanged — still stores conditionGrade + comment fields
+
+---
+Task ID: return-photo-attach
+Agent: main
+Task: ตอนคืนช่วยแนบรูปถ่ายของแต่ละรายการที่ยืมด้วย ไม่บังคับ
+
+Action:
+1. Schema update:
+   - เพิ่ม `returnEventItemId String?` ใน AssetPhoto model (nullable — null=dispatch photo, non-null=return review photo)
+   - เพิ่ม relation `returnEventItem ReturnEventItem? @relation(...)`
+   - เพิ่ม `photos AssetPhoto[]` ใน ReturnEventItem model (relation back)
+2. prisma db push + generate ✓
+
+3. API POST /api/loans/[docNo]/return:
+   - รับ `photos: [{ path, caption }]` per item
+   - หลังจาก tx.returnEventItem.create → find the just-created item ID
+   - สร้าง tx.assetPhoto.create สำหรับแต่ละ photo ที่ส่งมา (link returnEventItemId + loanLineItemId + takenBy = inspectorName)
+
+4. API GET /api/loans/[docNo]:
+   - เพิ่ม `photos: true` ใน include ของ returnEvents.items (auto-include scalar fields)
+   - response จะมี `item.photos = [{ id, photoPath, caption, ... }]` อัตโนมัติ
+
+5. ReturnLoanSheet UI:
+   - เพิ่ม `photos: Array<{ path, caption }>` ใน ReturnItemForm interface
+   - เพิ่ม `photos: []` ใน initial state
+   - ส่ง `photos: f.photos` ใน submit payload
+   - เพิ่ม `photos?: Array<{ id, photoPath, caption }>` ใน ReturnEvent interface (for past events display)
+   - เพิ่ม imports: Camera, X, Upload, Image as ImageIcon
+   - เพิ่ม Photo upload section ใต้ comment textarea ในแต่ละ item (when selected):
+     * Header: "รูปถ่ายเครื่อง (ไม่บังคับ)" with Camera icon
+     * Photo previews: grid-cols-4 of aspect-square thumbnails (object-cover, hover group)
+       - Remove button overlay (rose-500, opacity-0 → group-hover:opacity-100)
+       - Caption overlay (bottom black/60 text-white truncate)
+     * Upload zone: border-dashed label with Upload icon + text "แนบรูปถ่ายเครื่อง"
+       - File input (hidden) accept image/* multiple
+       - onChange: convert each file to base64 → POST /api/uploads → get path → push to f.photos
+       - Reset input.value เพื่อให้ re-upload ได้
+     * Help text: "รองรับ PNG, JPG, WebP — แนบได้หลายรูป (ไม่บังคับ)"
+   - เพิ่มใน past return events display:
+     * Row 3: photos thumbnail strip (if item.photos exists, h-12 w-12 with hover scale)
+
+6. LoanDetailSheet UI:
+   - เพิ่ม `photos?: Array<{ id, photoPath, caption }>` ใน ReturnEvent interface
+   - เพิ่ม photos thumbnail strip ใน past return events item display (Row 3)
+
+Testing:
+- Deploy สำเร็จ, build ผ่าน
+- รัน test-return-sheet.mjs: PASS, 0 errors
+  - Star icons: 10 (5 sidebar + 5 widget)
+  - Radio buttons: 0 ✓ (replaced with star widget)
+  - Checkboxes: 1 → 4 after expand
+- VLM ยืนยัน: ✓ "แนบรูปถ่ายเครื่อง" upload button visible (dashed border, upload icon, "Attach device photo" label)
+
+Stage Summary:
+- แนบรูปถ่ายได้หลายรูปต่อรายการในตอนรับคืน (ไม่บังคับ)
+- Photos stored in AssetPhoto with returnEventItemId link (distinguish from dispatch photos)
+- Display photos in past return events ทั้งใน ReturnLoanSheet และ LoanDetailSheet (thumbnail strip)
+- ใช้ /api/uploads endpoint ที่มีอยู่แล้ว (รับ base64 → save to /public/uploads/xxx.jpg → return path)
+- Velzon dropzone pattern (dashed border + upload icon + hover effect)

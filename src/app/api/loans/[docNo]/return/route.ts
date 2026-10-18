@@ -63,6 +63,34 @@ export async function POST(
         },
       })
 
+      // === Create AssetPhoto records for return review photos (if any) ===
+      if (Array.isArray(item.photos) && item.photos.length > 0) {
+        // Find the just-created ReturnEventItem ID
+        const createdItem = await tx.returnEventItem.findFirst({
+          where: {
+            returnEventId: returnEvent.id,
+            loanLineItemId: item.loanLineItemId,
+          },
+          orderBy: { id: 'desc' },
+          select: { id: true },
+        })
+        if (createdItem) {
+          for (const photo of item.photos) {
+            if (photo.path) {
+              await tx.assetPhoto.create({
+                data: {
+                  loanLineItemId: item.loanLineItemId,
+                  returnEventItemId: createdItem.id,
+                  photoPath: photo.path,
+                  caption: photo.caption || null,
+                  takenBy: inspectorName.trim(),
+                },
+              })
+            }
+          }
+        }
+      }
+
       await tx.loanLineItem.update({
         where: { id: item.loanLineItemId },
         data: { status: 'Returned', returnedAt: now },

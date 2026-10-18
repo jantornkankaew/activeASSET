@@ -63,6 +63,7 @@ interface ReturnEvent {
     sendToRepair: boolean
     returnToSource: boolean
     accessoriesReturned: string[]
+    photos?: Array<{ id: string; photoPath: string; caption: string | null }>
     loanLineItem: { asset: { tagId: string; serialNo: string; catalog: { model: string; brand: string } } }
   }>
 }
@@ -632,6 +633,21 @@ export function LoanDetailSheet({ open, onOpenChange, docNo, onDispatch, onDeliv
                               {item.comment && (
                                 <div className="mt-1.5 pl-1 text-muted-foreground italic text-[10px] leading-relaxed">
                                   "{item.comment}"
+                                </div>
+                              )}
+                              {/* Row 3: photos (if exists) — Velzon thumbnail strip */}
+                              {item.photos && item.photos.length > 0 && (
+                                <div className="mt-2 flex gap-1 flex-wrap">
+                                  {item.photos.map((photo) => (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      key={photo.id}
+                                      src={photo.photoPath}
+                                      alt={photo.caption || ''}
+                                      title={photo.caption || ''}
+                                      className="h-12 w-12 object-cover rounded border border-border cursor-pointer hover:border-primary hover:scale-105 transition-smooth"
+                                    />
+                                  ))}
                                 </div>
                               )}
                             </div>

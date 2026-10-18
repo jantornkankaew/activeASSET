@@ -307,6 +307,8 @@ model AssetPhoto {
   id            String   @id @default(cuid())
   loanLineItemId String
   loanLineItem  LoanLineItem @relation(fields: [loanLineItemId], references: [id])
+  returnEventItemId String?  // null = รูปตอน dispatch, ไม่ null = รูปตอนรับคืน (link ไปยัง return review)
+  returnEventItem ReturnEventItem? @relation(fields: [returnEventItemId], references: [id])
   photoPath     String   // /uploads/xxx.jpg
   caption       String?  // "หน้าจอ", "ข้างซ้าย", "อุปกรณ์เสริม"
   takenAt       DateTime @default(now())
@@ -342,6 +344,8 @@ model ReturnEventItem {
   sendToRepair      Boolean  @default(false)
   returnToSource    Boolean  @default(true) // คืนไปยัง source ต้นทาง (Demo→Demo, Sales→Sales, Supplier→Supplier)
   nextLocationId    String?
+
+  photos AssetPhoto[]  // รูปถ่ายของเครื่องตอนรับคืน
 }
 
 // === WaitingList (เมื่อขอยืมไม่พอ → เข้าคิว) ===

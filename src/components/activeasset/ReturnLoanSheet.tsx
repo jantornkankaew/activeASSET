@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
@@ -20,7 +19,7 @@ import {
 import {
   ScanLine, CheckCircle2, AlertCircle, ShieldCheck, User, Wrench,
   History, Package, Star, FileText, Building2, Calendar, Truck, Phone,
-  MapPin, ChevronRight,
+  MapPin, ChevronRight, Camera, X, Upload, Image as ImageIcon,
 } from 'lucide-react'
 import {
   getLoanStatusLabel, getPurposeLabel, formatThaiDate, formatThaiDateTime,
@@ -58,6 +57,7 @@ interface ReturnEvent {
     sendToRepair: boolean
     returnToSource: boolean
     accessoriesReturned: string[]
+    photos?: Array<{ id: string; photoPath: string; caption: string | null }>
     loanLineItem: { asset: { tagId: string; serialNo: string; catalog: { model: string; brand: string } } }
   }>
 }
@@ -84,6 +84,7 @@ interface ReturnItemForm {
   isDamaged: boolean
   damageDescription: string
   comment: string  // รีวิว/ความคิดเห็นทั่วไป (นอกเหนือจาก damage description)
+  photos: Array<{ path: string; caption: string }>  // รูปถ่ายของเครื่องตอนรับคืน (ไม่บังคับ)
   sendToRepair: boolean
   returnToSource: boolean
 }
@@ -121,6 +122,7 @@ export function ReturnLoanSheet({ open, onOpenChange, loan, onDone }: ReturnLoan
             isDamaged: false,
             damageDescription: '',
             comment: '',
+            photos: [],
             sendToRepair: false,
             returnToSource: true,
           }
@@ -204,6 +206,7 @@ export function ReturnLoanSheet({ open, onOpenChange, loan, onDone }: ReturnLoan
             isDamaged: f.isDamaged || f.conditionGrade === 'D',
             damageDescription: f.damageDescription,
             comment: f.comment,
+            photos: f.photos,
             sendToRepair: f.sendToRepair || f.conditionGrade === 'D',
             returnToSource: f.returnToSource,
             nextLocationId: null,
@@ -506,6 +509,83 @@ export function ReturnLoanSheet({ open, onOpenChange, loan, onDone }: ReturnLoan
                                 </p>
                               </div>
 
+                              {/* === Photo upload (ไม่บังคับ) — Velzon dropzone pattern === */}
+                              <div>
+                                <div className="text-xs font-medium text-foreground mb-1.5 flex items-center gap-1">
+                                  <Camera className="h-3 w-3" style={{ color: VZ.primary }} />
+                                  รูปถ่ายเครื่อง (ไม่บังคับ)
+                                </div>
+                                {/* Photo previews — Velzon avatar-sm thumbnail pattern */}
+                                {f.photos.length > 0 && (
+                                  <div className="grid grid-cols-4 gap-1.5 mb-2">
+                                    {f.photos.map((photo, idx) => (
+                                      <div key={idx} className="relative aspect-square rounded-md overflow-hidden border border-border group">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={photo.path} alt={photo.caption || `รูปที่ ${idx + 1}`} className="w-full h-full object-cover" />
+                                        {/* Remove button overlay */}
+                                        <button
+                                          type="button"
+                                          onClick={() => updateForm(line.id, {
+                                            photos: f.photos.filter((_, i) => i !== idx),
+                                          })}
+                                          className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-rose-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-smooth"
+                                          title="ลบรูป"
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </button>
+                                        {photo.caption && (
+                                          <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] px-1 py-0.5 truncate">
+                                            {photo.caption}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                {/* Upload zone — Velzon dropzone style */}
+                                <label className="flex items-center justify-center gap-2 p-2.5 border border-dashed border-border rounded-md cursor-pointer hover:border-primary/40 hover:bg-muted/30 transition-smooth">
+                                  <Upload className="h-4 w-4 text-muted-foreground" />
+                                  <span className="text-[11px] text-muted-foreground">
+                                    {f.photos.length > 0 ? 'เพิ่มรูปอื่น' : 'แนบรูปถ่ายเครื่อง'}
+                                  </span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    className="hidden"
+                                    onChange={async (e) => {
+                                      const files = e.target.files
+                                      if (!files || files.length === 0) return
+                                      const newPhotos: Array<{ path: string; caption: string }> = [...f.photos]
+                                      for (const file of Array.from(files)) {
+                                        // แปลงเป็น base64 แล้วส่งไป /api/uploads
+                                        const dataUrl = await new Promise<string>((resolve, reject) => {
+                                          const reader = new FileReader()
+                                          reader.onload = () => resolve(reader.result as string)
+                                          reader.onerror = reject
+                                          reader.readAsDataURL(file)
+                                        })
+                                        const res = await fetch('/api/uploads', {
+                                          method: 'POST',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ data: dataUrl, caption: file.name }),
+                                        })
+                                        if (res.ok) {
+                                          const data = await res.json()
+                                          newPhotos.push({ path: data.path, caption: data.caption || '' })
+                                        }
+                                      }
+                                      updateForm(line.id, { photos: newPhotos })
+                                      // Reset input value so same file can be selected again
+                                      e.target.value = ''
+                                    }}
+                                  />
+                                </label>
+                                <p className="text-[10px] text-muted-foreground mt-1">
+                                  รองรับ PNG, JPG, WebP — แนบได้หลายรูป (ไม่บังคับ)
+                                </p>
+                              </div>
+
                               {/* Source return option */}
                               {line.source !== 'Demo_Stock' && (
                                 <label className="flex items-center gap-1.5 text-xs">
@@ -632,6 +712,21 @@ export function ReturnLoanSheet({ open, onOpenChange, loan, onDone }: ReturnLoan
                                       {item.comment && (
                                         <div className="mt-1.5 pl-1 text-muted-foreground italic text-[10px] leading-relaxed">
                                           "{item.comment}"
+                                        </div>
+                                      )}
+                                      {/* Row 3: photos (if exists) — Velzon thumbnail strip */}
+                                      {item.photos && item.photos.length > 0 && (
+                                        <div className="mt-2 flex gap-1 flex-wrap">
+                                          {item.photos.map((photo) => (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img
+                                              key={photo.id}
+                                              src={photo.photoPath}
+                                              alt={photo.caption || ''}
+                                              title={photo.caption || ''}
+                                              className="h-12 w-12 object-cover rounded border border-border cursor-pointer hover:border-primary hover:scale-105 transition-smooth"
+                                            />
+                                          ))}
                                         </div>
                                       )}
                                     </div>
