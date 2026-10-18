@@ -1564,3 +1564,34 @@ Stage Summary:
 - CRM tables with avatars + status badges (Velzon Deals Status pattern)
 - My Tasks lists with dashed borders (Velzon list-group-flush pattern)
 - Inline stats + chart (Velzon Balance Overview pattern)
+
+---
+Task ID: asset-detail-image-declutter
+Agent: main
+Task: หน้ารายละเอียดทรัพย์สิน รูปรกเกินไป ให้มีแต่รูปหลักที่เหลือทำเป็นรูปเล็กๆ เรียงอยู่ด้านล่างรูปหลัก
+
+Root cause:
+- LEFT image panel มี main image (aspect-square) + 4 thumbnail strip (also aspect-square in grid-cols-4) — thumbnails ใหญ่เท่า main image → ดูรก/redundant
+- มี bg-muted/40 p-3 wrapper รอบ main image → เพิ่มความรก
+- ทุก thumbnail แสดง category icon เดียวกัน (no real product photos) → ดูซ้ำ ๆ
+
+Action:
+1. ลบ bg-muted/40 p-3 wrapper ออกจาก main image → เหลือเพียง aspect-square ตรง ๆ กับ border
+2. เปลี่ยน thumbnail strip จาก `grid grid-cols-4` (aspect-square) → `flex gap-1.5` กับ `h-10 w-10` thumbnails (เล็กลง 60%+)
+3. ลดขนาด category icon ใน thumbnail จาก h-6 → h-5
+4. ลด opacity ของ icon ใน thumbnail จาก muted-foreground/60 → muted-foreground/50 (จางลง)
+5. เพิ่ม flex-wrap ที่ badge row รองรับการ wrap หาก badges เยอะ
+
+Verification:
+- Build + deploy สำเร็จ
+- E2E test PASS: 0 page errors
+- VLM ยืนยัน 4/4:
+  1. ✓ Single main image at top
+  2. ✓ Row of 4 small thumbnails below (smaller than main image)
+  3. ✓ Status/grade badges below thumbnails
+  4. ✓ Layout looks clean and organized, less crowded than before
+
+Stage Summary:
+- LEFT image panel เหลือ main image เดียว (ขนาดเท่าเดิม) + thumbnail เล็กลง (h-10 w-10 แทน aspect-square)
+- ลด visual noise: ไม่มี wrapper รอบ main image, icon ใน thumbnail จางลง
+- โครงสร้าง: main image → small thumbnails row → status/grade badges

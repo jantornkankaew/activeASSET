@@ -552,32 +552,30 @@ function AssetDetailView({
       <div className="vz-card">
         <div className="p-4 lg:p-5">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* LEFT — Product image panel (1/3 on lg) */}
+            {/* LEFT — Product image panel (1/3 on lg) — main image + small thumbnails */}
             <div className="lg:col-span-1">
               <div className="vz-product-image-panel">
-                {/* Main image — bg-light p-2 rounded, simple */}
-                <div className="bg-muted/40 p-3 rounded-md">
-                  <div className="aspect-square flex items-center justify-center bg-card rounded-md border border-border/40">
-                    {CATEGORY_ICONS[asset.category] || <Package className="h-24 w-24 text-muted-foreground/40" />}
-                  </div>
+                {/* Main image — clean, no bg-muted wrapper */}
+                <div className="aspect-square flex items-center justify-center bg-muted/30 rounded-md border border-border/40">
+                  {CATEGORY_ICONS[asset.category] || <Package className="h-24 w-24 text-muted-foreground/40" />}
                 </div>
 
-                {/* Thumbnail nav slider — 4 mini thumbnails */}
-                <div className="grid grid-cols-4 gap-2 mt-2">
+                {/* Small thumbnails row — h-10 w-10 (less prominent than aspect-square) */}
+                <div className="flex items-center gap-1.5 mt-2">
                   {[0, 1, 2, 3].map((i) => (
                     <div
                       key={i}
-                      className={`aspect-square flex items-center justify-center bg-card rounded-md border cursor-pointer transition-smooth ${i === 0 ? 'border-primary' : 'border-border hover:border-primary/50'}`}
+                      className={`h-10 w-10 flex-shrink-0 flex items-center justify-center bg-card rounded border cursor-pointer transition-smooth ${i === 0 ? 'border-primary' : 'border-border hover:border-primary/50'}`}
                     >
-                      <div className="scale-75 text-muted-foreground/60">
-                        {CATEGORY_ICONS[asset.category] || <Package className="h-6 w-6" />}
+                      <div className="scale-75 text-muted-foreground/50">
+                        {CATEGORY_ICONS[asset.category] || <Package className="h-5 w-5" />}
                       </div>
                     </div>
                   ))}
                 </div>
 
                 {/* Status + Grade badge row */}
-                <div className="flex items-center gap-2 mt-3">
+                <div className="flex items-center gap-2 mt-3 flex-wrap">
                   <AssetStatusBadge status={asset.status} />
                   {asset.conditionGrade && <GradeBadge grade={asset.conditionGrade} />}
                   <SourceBadge source={asset.source} />
