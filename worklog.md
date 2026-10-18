@@ -900,3 +900,48 @@ Test:
 Stage Summary:
 - หน้า detail ตรงกับ Velzon product-details จริง ๆ ทุก signature element
 - ไม่มี runtime errors, ผ่าน E2E test และ VLM
+
+---
+Task ID: asset-detail-css-fix
+Agent: main
+Task: แก้ layout พังในหน้า AssetDetailView ที่ user บอกว่า "error"
+
+Root cause (CRITICAL!):
+- pre-compiled /public/tailwind.css (95KB) เป็น snapshot ที่ include เฉพาะ Tailwind classes ที่ original codebase ใช้
+- แต่ AssetDetailView ใหม่ ผมใช้ grid classes ที่ไม่มีใน CSS:
+  - col-span-12, col-span-4, col-span-5, col-span-7, col-span-8 — ไม่มี
+  - lg:col-span-5, lg:col-span-7, xl:col-span-4, xl:col-span-8 — ไม่มี
+  - lg:grid-cols-4, lg:grid-cols-5 — ไม่มี
+  - gap-5 — ไม่มี (มีแค่ gap-0,1,2,3,4,6)
+- ผล: grid items ไม่ span column ที่ต้องการ → layout collapse → text overlap → user เห็น "error"
+
+Available responsive classes (หลัง grep จริง):
+- grid-cols: 1,2,3,4,5,6,7,12 ✓
+- col-span: 1,2,3 ✓ (no 4-12)
+- lg:grid-cols: 2,3,6 ✓ (no 4,5,12)
+- lg:col-span: 1,2 ✓ (no 3-12)
+- md:grid-cols: 2,3,4,5 ✓
+- gap: 0,1,2,3,4,6 ✓ (no 5)
+
+Fix:
+- เปลี่ยน grid grid-cols-12 gap-5 → grid grid-cols-1 lg:grid-cols-3 gap-4 (main image+info split)
+- เปลี่ยน col-span-12 lg:col-span-5 xl:col-span-4 → lg:col-span-1 (image LEFT = 1/3)
+- เปลี่ยน col-span-12 lg:col-span-7 xl:col-span-8 → lg:col-span-2 (info RIGHT = 2/3)
+- เปลี่ยน grid-cols-2 lg:grid-cols-4 → grid-cols-2 md:grid-cols-4 (4 stat boxes)
+- เปลี่ยน grid-cols-1 lg:grid-cols-5 + lg:col-span-2/3 → grid-cols-1 lg:grid-cols-3 + lg:col-span-1/2 (Ratings&Reviews summary split)
+- เปลี่ยน sm:grid-cols-2 → md:grid-cols-2 (Features+Services split)
+- ปรับ vz-dashed-box CSS: เพิ่ม contrast ให้ dashed border เด่นชัดขึ้น (1.5px solid color 0.45 alpha)
+
+Service Worker bump:
+- public/sw.js: activeasset-v2 → activeasset-v3
+- PWARegister.tsx: sw-cleanup-v2 → sw-cleanup-v3 (force one-time cleanup ของ user ที่มี v2 cached)
+- Restart dev server, clear .next cache
+
+Test result:
+- E2E: 0 page errors, 0 real console errors ✓
+- VLM ยืนยัน: dashed borders ชัดเจน ✓, image LEFT + info RIGHT ✓, amber stars ✓, coherent design ✓
+
+Stage Summary:
+- หน้า detail ไม่พังแล้ว
+- ใช้ Tailwind classes ที่มีอยู่จริงใน pre-compiled CSS เท่านั้น
+- Bump SW version เพื่อบังคับให้ browser ล้าง cache และดาวน์โหลด CSS ใหม่

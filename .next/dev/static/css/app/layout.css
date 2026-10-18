@@ -959,13 +959,13 @@ a:hover { opacity: 0.8; }
 /* === Velzon product-details specific utilities === */
 /* Dashed stat box — Velzon signature */
 .vz-dashed-box {
-  border: 1px dashed hsl(var(--border));
-  border-radius: 0.25rem;
-  padding: 0.5rem;
+  border: 1.5px dashed hsl(var(--muted-foreground) / 0.45);
+  border-radius: 0.375rem;
+  padding: 0.625rem;
   background-color: hsl(var(--card));
   transition: border-color 0.2s ease;
 }
-.vz-dashed-box:hover { border-color: hsl(var(--muted-foreground) / 0.4); }
+.vz-dashed-box:hover { border-color: hsl(var(--primary) / 0.7); }
 
 /* Velzon nav-tabs-custom — pill-style active tab with colored bottom border */
 .vz-tabs-custom {

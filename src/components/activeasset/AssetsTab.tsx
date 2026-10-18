@@ -529,9 +529,9 @@ function AssetDetailView({
       {/* ===== Velzon product-details single card ===== */}
       <div className="vz-card">
         <div className="p-4 lg:p-5">
-          <div className="grid grid-cols-12 gap-5">
-            {/* LEFT — Product image panel (col-xl-4 = 33%) */}
-            <div className="col-span-12 lg:col-span-5 xl:col-span-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* LEFT — Product image panel (1/3 on lg) */}
+            <div className="lg:col-span-1">
               <div className="vz-product-image-panel">
                 {/* Main image — bg-light p-2 rounded, simple */}
                 <div className="bg-muted/40 p-3 rounded-md">
@@ -563,8 +563,8 @@ function AssetDetailView({
               </div>
             </div>
 
-            {/* RIGHT — Product info (col-xl-8 = 67%) */}
-            <div className="col-span-12 lg:col-span-7 xl:col-span-8">
+            {/* RIGHT — Product info (2/3 on lg) */}
+            <div className="lg:col-span-2">
               {/* Title block + Edit button */}
               <div className="flex items-start gap-3">
                 <div className="flex-1 min-w-0">
@@ -608,7 +608,7 @@ function AssetDetailView({
               </div>
 
               {/* 4 Stat boxes — Velzon DASHED BORDER signature */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
                 <VelzonDashedStat
                   label="ยืมทั้งหมด"
                   value={stats.totalLoans}
@@ -856,9 +856,9 @@ function AssetDetailView({
 
               {/* Ratings & Reviews tab — adapted to loan history */}
               <TabsContent value="reviews" className="vz-tab-content mt-0">
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-                  {/* LEFT — Summary card (col-lg-4) */}
-                  <div className="lg:col-span-2">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  {/* LEFT — Summary card (1/3 on lg) */}
+                  <div className="lg:col-span-1">
                     <div className="vz-services-box">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-0.5">
@@ -906,8 +906,8 @@ function AssetDetailView({
                     </div>
                   </div>
 
-                  {/* RIGHT — Review list (col-lg-8) */}
-                  <div className="lg:col-span-3">
+                  {/* RIGHT — Review list (2/3 on lg) */}
+                  <div className="lg:col-span-2">
                     {history.length === 0 ? (
                       <div className="text-center py-8">
                         <History className="h-10 w-10 mx-auto mb-2 text-muted-foreground/30" />

@@ -1,5 +1,5 @@
 // activeASSET Service Worker — PWA + offline cache
-const CACHE_VERSION = 'activeasset-v2'  // bumped v1 → v2 to invalidate stale Velzon-update cache
+const CACHE_VERSION = 'activeasset-v3'  // bumped v1 → v2 to invalidate stale Velzon-update cache
 const STATIC_CACHE = `${CACHE_VERSION}-static`
 const API_CACHE = `${CACHE_VERSION}-api`
 const IMAGE_CACHE = `${CACHE_VERSION}-images`

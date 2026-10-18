@@ -16,7 +16,7 @@ export function PWARegister() {
   useEffect(() => {
     // === One-time cache + SW cleanup (for users with stale v1 cache from before Velzon update) ===
     // Bumps the user to v2 SW and clears stale HTML/JS chunks. Runs once per browser.
-    const CLEANUP_KEY = 'sw-cleanup-v2'
+    const CLEANUP_KEY = 'sw-cleanup-v3'
     if (typeof window !== 'undefined' && !localStorage.getItem(CLEANUP_KEY)) {
       ;(async () => {
         try {
