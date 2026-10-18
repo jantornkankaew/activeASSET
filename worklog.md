@@ -945,3 +945,48 @@ Stage Summary:
 - หน้า detail ไม่พังแล้ว
 - ใช้ Tailwind classes ที่มีอยู่จริงใน pre-compiled CSS เท่านั้น
 - Bump SW version เพื่อบังคับให้ browser ล้าง cache และดาวน์โหลด CSS ใหม่
+
+---
+Task ID: register-velzon
+Agent: main
+Task: ปรับหน้าลงทะเบียนทรัพย์สิน (RegisterAssetView) ให้ใช้ Velzon add-product design language
+
+Reference: https://themesbrand.com/velzon/html/master/apps-ecommerce-add-product.html
+
+Velzon add-product structure applied:
+- Page-title-box (h4 "ลงทะเบียนทรัพย์สินใหม่" + breadcrumb ขวา)
+- 2-column layout: LEFT 2/3 (main form) + RIGHT 1/3 (sidebar) ใช้ lg:grid-cols-3 + lg:col-span-2/1
+- LEFT cards:
+  1. Basic Info (Tag ID + S/N + Catalog model) — no header
+  2. Product Image panel — Velzon gallery style: avatar-lg พื้นที่ upload + floating pencil button + dropzone "ลากไฟล์มาวาง"
+  3. General Info card with card-header + vz-tabs-custom (ข้อมูลทั่วไป / วันที่ / Supplier) + vz-tab-content bordered
+- RIGHT sidebar cards (แต่ละใบมี card-header + icon + content):
+  1. สถานะ (source + status + grade badges)
+  2. ตั้งค่าการยืม (max loan + deposit)
+  3. ปฏิทิน (purchase date + warranty expire + supplier loan due)
+  4. หมายเหตุ (textarea)
+- Submit button: text-end + teal/green Velzon "btn-success" style (color #0ab39c)
+- ยกเลิก button: text-only ghost
+
+Work Log:
+- อ่าน Velzon add-product HTML จริง (apps-ecommerce-add-product.html) — เข้าใจ layout 2-col + 4 cards on RIGHT + 3 cards on LEFT
+- เขียนใหม่ทั้ง RegisterAssetView ใน AssetsManagementViews.tsx (~280 บรรทัด)
+- ใช้ classes ที่มีใน pre-compiled CSS เท่านั้น (lg:grid-cols-3 + lg:col-span-1/2 ✓, sm:grid-cols-2 ✓, md:grid-cols-2 ✓)
+- เพิ่ม imports: Textarea, Tabs, Save, Package, Tag, FileText, MapPin, Calendar, Shield, DollarSign, Truck, Layers, Clock, Info, Image as ImageIcon
+- SuppliersView เดิม คงไว้ ไม่แก้
+- สร้าง test script: scripts/test-register.mjs
+- รัน test: login → ทรัพย์สิน → ลงทะเบียนใหม่ → ตรวจ elements
+- ผล: vz-card count=8, vz-tabs-custom-trigger count=3, form controls=11, 0 page errors ✓ PASS
+- VLM ยืนยัน 7/7 Velzon elements ครบ:
+  1. ✓ page-title-box with h4 + breadcrumb
+  2. ✓ 2-column layout LEFT 2/3 + RIGHT 1/3
+  3. ✓ Basic Info card (Tag ID + S/N + Catalog)
+  4. ✓ Product Image panel (avatar-lg + floating pencil + dropzone)
+  5. ✓ 3 tabs (ข้อมูลทั่วไป / วันที่ / Supplier) + bordered content
+  6. ✓ Teal/green Save button right-aligned
+  7. ✓ RIGHT sidebar 4 cards (Status / Loan Settings / Schedule / Notes)
+
+Stage Summary:
+- หน้าลงทะเบียนทรัพย์สินใช้ Velzon add-product design language ครบ
+- ใช้ classes ที่มีใน pre-compiled CSS จริง ไม่มี layout collapse
+- ผ่าน E2E test และ VLM ยืนยัน

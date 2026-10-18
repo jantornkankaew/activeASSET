@@ -1,3 +1,14 @@
 {
+  "/api/user-tenants/route": "app/api/user-tenants/route.js",
+  "/api/dashboard/route": "app/api/dashboard/route.js",
+  "/api/loans/route": "app/api/loans/route.js",
+  "/api/notifications/route": "app/api/notifications/route.js",
+  "/api/notify/route": "app/api/notify/route.js",
+  "/api/activities/route": "app/api/activities/route.js",
+  "/api/catalog/route": "app/api/catalog/route.js",
+  "/api/assets/[tagId]/history/route": "app/api/assets/[tagId]/history/route.js",
+  "/api/suppliers/route": "app/api/suppliers/route.js",
+  "/api/locations/route": "app/api/locations/route.js",
+  "/api/auth/simple-login/route": "app/api/auth/simple-login/route.js",
   "/page": "app/page.js"
 }
