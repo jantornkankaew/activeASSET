@@ -1841,3 +1841,29 @@ Changes:
 VLM ยืนยัน 2/2:
   1. ✓ LEFT filter sidebar with categories list + brands list + search
   2. ✓ RIGHT product card grid with image area + brand name + status bar + availability count
+
+---
+Task ID: calendar-full-width-month
+Agent: main
+Task: หน้าปฏิทิน ต้องทำเป็น month ไม่ใช่แบบนี้
+
+Root cause:
+1. min-h-[100px] (arbitrary value) ไม่มีใน pre-compiled CSS → day cells ไม่มีความสูงขั้นต่ำ → cells แบน + ไม่เป็น grid
+2. Layout 2-col (LEFT sidebar + RIGHT calendar) ทำให้ calendar แคบเกินไป → ไม่เห็นเป็น month view ชัดเจน
+
+Fix:
+1. ลบ 2-col layout (lg:grid-cols-3 + col-span) ออกเป็น full-width
+2. ใช้ `style={{ minHeight: '110px' }}` แทน `min-h-[100px]` (inline style แทน arbitrary value)
+3. ย้าย event categories legend ขึ้นไปเป็น inline bar (เหนือ calendar)
+4. ย้าย upcoming events ลงไปเป็น horizontal strip (ใต้ calendar)
+5. ลบ LEFT sidebar (create button + legend + upcoming list + welcome card) ออก
+6. Day cells ใหญ่ขึ้น: p-2 + text-sm (จาก p-1.5 + text-[12px])
+7. Today circle ใหญ่ขึ้น: h-7 w-7 (จาก h-6 w-6)
+8. Events เพิ่มจาก 3 → 4 per cell
+
+VLM ยืนยัน 5/5:
+  1. ✓ Full-width calendar (spans entire content area)
+  2. ✓ 7-column month grid with weeks
+  3. ✓ Day cells tall enough (~110px)
+  4. ✓ Today's date highlighted with colored circle
+  5. ✓ Loan events as colored cards with border-left inside cells

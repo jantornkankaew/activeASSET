@@ -156,52 +156,142 @@ export function ReturnCalendarTab({ onOpenLoan }: ReturnCalendarTabProps) {
         </div>
       </div>
 
-      {/* ===== Velzon calendar 2-col layout: col-3 sidebar + col-9 main ===== */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* === LEFT sidebar (col-1) === */}
-        <div className="lg:col-span-1 space-y-4">
-          {/* Create New Event button — Velzon pattern */}
-          <div className="vz-card p-4">
-            <button
-              className="w-full px-3 py-2 rounded-md text-sm font-semibold text-white shadow-sm transition-smooth hover:shadow-md"
-              style={{ background: `linear-gradient(135deg, ${VZ.primary}, ${VZ.teal})` }}
-              onClick={() => onOpenLoan(null)}
-            >
-              <Plus className="h-4 w-4 inline mr-1" /> สร้างใบยืมใหม่
-            </button>
+      {/* ===== Inline legend bar + create button ===== */}
+      <div className="vz-card p-3 flex items-center justify-between flex-wrap gap-2">
+        {/* Event categories legend */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {EVENT_CATEGORIES.map((cat, i) => {
+            const Icon = cat.icon
+            return (
+              <div key={i} className="flex items-center gap-1.5 px-2 py-1 rounded text-[10px]" style={{ backgroundColor: cat.bg, color: cat.color }}>
+                <Icon className="h-3 w-3" />
+                <span className="font-medium">{cat.label}</span>
+              </div>
+            )
+          })}
+        </div>
+        <button
+          className="px-3 py-1.5 rounded text-xs font-semibold text-white shadow-sm transition-smooth hover:shadow-md"
+          style={{ background: `linear-gradient(135deg, ${VZ.primary}, ${VZ.teal})` }}
+          onClick={() => onOpenLoan(null)}
+        >
+          <Plus className="h-3.5 w-3.5 inline mr-1" /> สร้างใบยืมใหม่
+        </button>
+      </div>
 
-            {/* External Events — Velzon legend pattern */}
-            <p className="text-[11px] text-muted-foreground mt-3 mb-2">หมวดหมู่การคืน</p>
-            <div className="space-y-1.5">
-              {EVENT_CATEGORIES.map((cat, i) => {
-                const Icon = cat.icon
-                return (
-                  <div
-                    key={i}
-                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs cursor-default"
-                    style={{ backgroundColor: cat.bg, color: cat.color }}
-                  >
-                    <Icon className="h-3 w-3" />
-                    <span className="font-medium">{cat.label}</span>
-                  </div>
-                )
-              })}
+      {/* ===== FULL-WIDTH month calendar ===== */}
+      <div className="vz-card overflow-hidden">
+        {/* Calendar toolbar */}
+        <div className="px-4 py-3 vz-divider flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h5 className="text-lg font-semibold text-foreground mb-0" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
+              {THAI_MONTHS[month]} {year + 543}
+            </h5>
+            <div className="flex items-center gap-2">
+              {overdueCount > 0 && <span className="vz-pill vz-pill-danger">{overdueCount} เกิน</span>}
+              {dueSoonCount > 0 && <span className="vz-pill vz-pill-warning">{dueSoonCount} ใกล้</span>}
+              <span className="vz-pill vz-pill-info">{monthLoans.length} ทั้งหมด</span>
             </div>
           </div>
+          <div className="flex items-center gap-1">
+            <button className="vz-icon-soft h-9 w-9 border border-border rounded hover:bg-muted/30 transition-smooth" onClick={prevMonth} title="เดือนก่อนหน้า">
+              <ChevronLeft className="h-5 w-5 text-muted-foreground" />
+            </button>
+            <button className="px-3 py-1.5 text-xs font-medium border border-border rounded hover:bg-muted/30 transition-smooth" onClick={goToday}>
+              วันนี้
+            </button>
+            <button className="vz-icon-soft h-9 w-9 border border-border rounded hover:bg-muted/30 transition-smooth" onClick={nextMonth} title="เดือนถัดไป">
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </button>
+          </div>
+        </div>
 
-          {/* Upcoming Events — Velzon pattern */}
-          <div>
-            <h5 className="text-sm font-semibold text-foreground mb-0" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
-              การคืนที่กำลังจะมาถึง
-            </h5>
-            <p className="text-[11px] text-muted-foreground mb-2">อย่าพลาดกำหนดคืน</p>
-            <div style={{ maxHeight: '400px', overflowY: 'auto' }} className="space-y-2 pr-1">
-              {upcoming.length === 0 && (
-                <div className="text-center py-4 text-xs text-muted-foreground">
-                  <CheckCircle2 className="h-8 w-8 mx-auto mb-1 text-muted-foreground/30" />
-                  ไม่มีการคืนที่กำลังจะมาถึง
+        {/* Day headers */}
+        <div className="grid grid-cols-7 border-b border-border">
+          {THAI_DAYS_SHORT.map((day, i) => (
+            <div key={i} className={`text-center text-xs font-semibold py-2.5 ${i === 0 || i === 6 ? 'text-rose-500' : 'text-muted-foreground'}`}>
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Day cells — full-width month grid */}
+        <div className="grid grid-cols-7">
+          {cells.map(({ date, isCurrentMonth }, i) => {
+            const dateStr = date.toISOString().split('T')[0]
+            const dayLoans = loansByDate[dateStr] || []
+            const isToday = dateStr === todayStr
+            const isWeekend = date.getDay() === 0 || date.getDay() === 6
+            const rowIdx = Math.floor(i / 7)
+            const colIdx = i % 7
+
+            return (
+              <div
+                key={i}
+                className={`p-2 transition-smooth relative ${
+                  colIdx < 6 ? 'border-r border-border/40' : ''
+                } ${rowIdx < Math.floor(totalCells / 7) - 1 ? 'border-b border-border/40' : ''
+                } ${
+                  !isCurrentMonth ? 'bg-muted/5' : isWeekend ? 'bg-rose-500/[0.02]' : 'bg-card'
+                } ${dayLoans.length > 0 ? 'cursor-pointer hover:bg-muted/20' : ''
+                } ${isToday ? 'bg-primary/5' : ''}`}
+                style={{ minHeight: '110px' }}
+                onClick={() => dayLoans.length > 0 && onOpenLoan(dayLoans[0].docNo)}
+              >
+                {/* Date number */}
+                <div className="flex items-center justify-end mb-1.5">
+                  {isToday ? (
+                    <span className="h-7 w-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
+                      {date.getDate()}
+                    </span>
+                  ) : (
+                    <span className={`text-sm font-medium ${
+                      !isCurrentMonth ? 'text-muted-foreground/30'
+                      : isWeekend ? 'text-rose-500/60'
+                      : 'text-muted-foreground'
+                    }`}>
+                      {date.getDate()}
+                    </span>
+                  )}
                 </div>
-              )}
+                {/* Events */}
+                <div className="space-y-1">
+                  {dayLoans.slice(0, 4).map((l) => {
+                    const catIdx = getLoanCategory(l)
+                    const cat = EVENT_CATEGORIES[catIdx]
+                    return (
+                      <div
+                        key={l.docNo}
+                        className="text-[10px] font-medium px-1.5 py-1 rounded truncate flex items-center gap-1 hover:opacity-80 transition-smooth"
+                        style={{ backgroundColor: cat.bg, color: cat.color, borderLeft: `3px solid ${cat.color}` }}
+                      >
+                        <span className="font-mono">{l.docNo.replace('LOAN-', '')}</span>
+                      </div>
+                    )
+                  })}
+                  {dayLoans.length > 4 && (
+                    <div className="text-[9px] text-muted-foreground px-1.5 font-medium">
+                      +{dayLoans.length - 4} รายการ
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ===== Upcoming returns — horizontal strip below calendar ===== */}
+      {upcoming.length > 0 && (
+        <div className="vz-card">
+          <div className="px-4 py-3 vz-divider flex items-center justify-between">
+            <h5 className="text-sm font-semibold text-foreground mb-0" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
+              การคืนที่กำลังจะมาถึง ({upcoming.length})
+            </h5>
+            <p className="text-[10px] text-muted-foreground">อย่าพลาดกำหนดคืน</p>
+          </div>
+          <div className="p-3 overflow-x-auto">
+            <div className="flex gap-2" style={{ minWidth: 'min-content' }}>
               {upcoming.map((l) => {
                 const catIdx = getLoanCategory(l)
                 const cat = EVENT_CATEGORIES[catIdx]
@@ -209,167 +299,25 @@ export function ReturnCalendarTab({ onOpenLoan }: ReturnCalendarTabProps) {
                 return (
                   <button
                     key={l.docNo}
-                    className="w-full text-left p-2.5 rounded-md border border-border hover:bg-muted/30 transition-smooth"
+                    className="flex-shrink-0 w-48 p-2.5 rounded-md border border-border hover:bg-muted/30 transition-smooth text-left"
                     onClick={() => onOpenLoan(l.docNo)}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 mb-1">
                       <div className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
                       <span className="font-mono text-[11px] font-semibold text-foreground truncate">{l.docNo}</span>
                       <span className="ml-auto text-[10px] font-medium" style={{ color: cat.color }}>
                         {days === 0 ? 'วันนี้' : days > 0 ? `${days}d` : `เกิน ${Math.abs(days)}d`}
                       </span>
                     </div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{l.customerName}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">{l.customerName}</div>
                     <div className="text-[10px] text-muted-foreground">{formatThaiDate(l.expectedReturnDate)}</div>
                   </button>
                 )
               })}
             </div>
           </div>
-
-          {/* Welcome card — Velzon info card pattern */}
-          <div className="vz-card p-4" style={{ backgroundColor: 'rgba(10,179,156,0.06)' }}>
-            <div className="flex items-start gap-2.5">
-              <div className="vz-icon-soft h-8 w-8 flex-shrink-0" style={{ backgroundColor: 'rgba(10,179,156,0.10)' }}>
-                <Info className="h-4 w-4" style={{ color: VZ.teal }} />
-              </div>
-              <div>
-                <h6 className="text-xs font-semibold text-foreground mb-0.5">ยินดีต้อนรับสู่ปฏิทินการคืน</h6>
-                <p className="text-[10px] text-muted-foreground mb-0">คลิกที่ใบยืมในปฏิทินเพื่อดูรายละเอียดและจัดเตรียมการรับคืน</p>
-              </div>
-            </div>
-          </div>
         </div>
-
-        {/* === RIGHT main calendar (col-2) === */}
-        <div className="lg:col-span-2">
-          <div className="vz-card overflow-hidden">
-            {/* Calendar header — month navigation */}
-            <div className="px-4 py-3 vz-divider flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <h5 className="text-base font-semibold text-foreground mb-0" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
-                  {THAI_MONTHS[month]} {year + 543}
-                </h5>
-                {/* Month stats */}
-                <div className="flex items-center gap-2">
-                  {overdueCount > 0 && (
-                    <span className="vz-pill vz-pill-danger">{overdueCount} เกิน</span>
-                  )}
-                  {dueSoonCount > 0 && (
-                    <span className="vz-pill vz-pill-warning">{dueSoonCount} ใกล้</span>
-                  )}
-                  <span className="vz-pill vz-pill-info">{monthLoans.length} ทั้งหมด</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  className="vz-icon-soft h-8 w-8 border border-border rounded hover:bg-muted/30 transition-smooth"
-                  onClick={prevMonth}
-                  title="เดือนก่อนหน้า"
-                >
-                  <ChevronLeft className="h-4 w-4 text-muted-foreground" />
-                </button>
-                <button
-                  className="px-2.5 py-1 text-xs font-medium border border-border rounded hover:bg-muted/30 transition-smooth"
-                  onClick={goToday}
-                >
-                  วันนี้
-                </button>
-                <button
-                  className="vz-icon-soft h-8 w-8 border border-border rounded hover:bg-muted/30 transition-smooth"
-                  onClick={nextMonth}
-                  title="เดือนถัดไป"
-                >
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </button>
-              </div>
-            </div>
-
-            {/* Calendar grid — Velzon fullcalendar-style month view */}
-            <div>
-              {/* Day headers — border-bottom only */}
-              <div className="grid grid-cols-7 border-b border-border">
-                {THAI_DAYS_SHORT.map((day, i) => (
-                  <div
-                    key={i}
-                    className={`text-center text-[11px] font-semibold py-2 ${i === 0 || i === 6 ? 'text-rose-500' : 'text-muted-foreground'}`}
-                  >
-                    {day}
-                  </div>
-                ))}
-              </div>
-              {/* Day cells — no gap, with borders (like Velzon fc-day) */}
-              <div className="grid grid-cols-7">
-                {cells.map(({ date, isCurrentMonth }, i) => {
-                  const dateStr = date.toISOString().split('T')[0]
-                  const dayLoans = loansByDate[dateStr] || []
-                  const isToday = dateStr === todayStr
-                  const isWeekend = date.getDay() === 0 || date.getDay() === 6
-                  const rowIdx = Math.floor(i / 7)
-                  const colIdx = i % 7
-
-                  return (
-                    <div
-                      key={i}
-                      className={`min-h-[100px] p-1.5 transition-smooth relative ${
-                        colIdx < 6 ? 'border-r border-border/40' : ''
-                      } ${rowIdx < Math.floor(totalCells / 7) - 1 ? 'border-b border-border/40' : ''
-                      } ${
-                        !isCurrentMonth ? 'bg-muted/5' : isWeekend ? 'bg-rose-500/[0.02]' : 'bg-card'
-                      } ${dayLoans.length > 0 ? 'cursor-pointer hover:bg-muted/20' : ''} ${
-                        isToday ? 'bg-primary/5' : ''
-                      }`}
-                      onClick={() => dayLoans.length > 0 && onOpenLoan(dayLoans[0].docNo)}
-                    >
-                      {/* Date number — today has primary bg circle */}
-                      <div className="flex items-center justify-end mb-1">
-                        {isToday ? (
-                          <span className="h-6 w-6 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center">
-                            {date.getDate()}
-                          </span>
-                        ) : (
-                          <span className={`text-[12px] font-medium ${
-                            !isCurrentMonth ? 'text-muted-foreground/30'
-                            : isWeekend ? 'text-rose-500/60'
-                            : 'text-muted-foreground'
-                          }`}>
-                            {date.getDate()}
-                          </span>
-                        )}
-                      </div>
-                      {/* Event cards — Velzon fc-event style */}
-                      <div className="space-y-0.5">
-                        {dayLoans.slice(0, 3).map((l) => {
-                          const catIdx = getLoanCategory(l)
-                          const cat = EVENT_CATEGORIES[catIdx]
-                          return (
-                            <div
-                              key={l.docNo}
-                              className="text-[10px] font-medium px-1.5 py-1 rounded truncate flex items-center gap-1 hover:opacity-80 transition-smooth"
-                              style={{
-                                backgroundColor: cat.bg,
-                                color: cat.color,
-                                borderLeft: `3px solid ${cat.color}`,
-                              }}
-                            >
-                              <span className="font-mono">{l.docNo.replace('LOAN-', '')}</span>
-                            </div>
-                          )
-                        })}
-                        {dayLoans.length > 3 && (
-                          <div className="text-[9px] text-muted-foreground px-1.5 font-medium">
-                            +{dayLoans.length - 3} รายการเพิ่มเติม
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
