@@ -338,6 +338,7 @@ model ReturnEventItem {
   accessoriesReturned String?
   isDamaged         Boolean  @default(false)
   damageDescription String?
+  comment           String?  // รีวิว/ความคิดเห็นทั่วไปของเจ้าหน้าที่เกี่ยวกับเครื่องที่รับคืน
   sendToRepair      Boolean  @default(false)
   returnToSource    Boolean  @default(true) // คืนไปยัง source ต้นทาง (Demo→Demo, Sales→Sales, Supplier→Supplier)
   nextLocationId    String?

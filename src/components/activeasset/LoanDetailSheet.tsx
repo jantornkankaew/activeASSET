@@ -59,6 +59,7 @@ interface ReturnEvent {
     conditionGrade: string
     isDamaged: boolean
     damageDescription: string | null
+    comment: string | null
     sendToRepair: boolean
     returnToSource: boolean
     accessoriesReturned: string[]
@@ -616,14 +617,23 @@ export function LoanDetailSheet({ open, onOpenChange, docNo, onDispatch, onDeliv
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           {ev.items.map((item) => (
-                            <div key={item.id} className="flex items-center gap-2 p-2 bg-muted/30 rounded text-xs">
-                              <span className="font-mono text-foreground">{item.loanLineItem.asset.tagId}</span>
-                              <span className="text-muted-foreground truncate flex-1">{item.loanLineItem.asset.catalog.brand} {item.loanLineItem.asset.catalog.model}</span>
-                              <div className="flex items-center gap-1">
-                                {item.conditionGrade && <GradeBadge grade={item.conditionGrade} />}
-                                {item.isDamaged && <span className="vz-pill vz-pill-danger">เสียหาย</span>}
-                                {item.sendToRepair && <span className="vz-pill" style={{ backgroundColor: `${VZ.purple}11`, color: VZ.purple }}>ซ่อม</span>}
+                            <div key={item.id} className="p-2 bg-muted/30 rounded text-xs">
+                              {/* Row 1: tagId + brand + badges */}
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-foreground">{item.loanLineItem.asset.tagId}</span>
+                                <span className="text-muted-foreground truncate flex-1">{item.loanLineItem.asset.catalog.brand} {item.loanLineItem.asset.catalog.model}</span>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  {item.conditionGrade && <GradeBadge grade={item.conditionGrade} />}
+                                  {item.isDamaged && <span className="vz-pill vz-pill-danger">เสียหาย</span>}
+                                  {item.sendToRepair && <span className="vz-pill" style={{ backgroundColor: `${VZ.purple}11`, color: VZ.purple }}>ซ่อม</span>}
+                                </div>
                               </div>
+                              {/* Row 2: comment (if exists) — Velzon review quote pattern */}
+                              {item.comment && (
+                                <div className="mt-1.5 pl-1 text-muted-foreground italic text-[10px] leading-relaxed">
+                                  "{item.comment}"
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>

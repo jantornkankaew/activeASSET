@@ -1277,3 +1277,56 @@ Stage Summary:
 - ประวัติการรับคืนย้อนหลังแสดงเป็น Velzon review quote cards (มี stars + quote notes + items chips)
 - แต่ละเกรด A/B/C/D มี star rating แสดงข้างชื่อเกรดใน radio option
 - ผ่าน E2E test + VLM ยืนยัน
+
+---
+Task ID: return-comment-feature
+Agent: main
+Task: เพิ่ม comment field สำหรับ return review — "รีวิวนอกจากให้คะแนนแล้ว ต้องมี comment ได้ด้วย"
+
+User context: รีวิว = rating (grade A/B/C/D = 5/4/3/2 ★) + comment (ข้อความรีวิวเครื่องเพิ่มเติม)
+
+Action:
+1. Prisma schema: เพิ่ม `comment String?` ใน ReturnEventItem model
+2. prisma db push — apply schema to DB ✓
+3. prisma generate — regenerate client ✓
+4. API route /api/loans/[docNo]/return POST: รับ + บันทึก comment ใน ReturnEventItem ✓
+5. API GET endpoint: auto-include comment ผ่าน prisma include (no changes needed)
+6. ReturnLoanSheet UI:
+   - เพิ่ม `comment: string` ใน ReturnItemForm interface
+   - เพิ่ม `comment: ''` ใน initial state
+   - เพิ่ม `comment: f.comment` ใน submit payload
+   - เพิ่ม `comment: string | null` ใน ReturnEvent interface (for past events)
+   - เพิ่ม Textarea "ความคิดเห็น/รีวิวเครื่อง" (always visible when item selected) — Velzon review text pattern
+     - placeholder: "เช่น สภาพดีเหมือนเดิม, มีรอยถลอกเล็กน้อยที่มุม, แบตเตอรี่เหลือน้อย..."
+     - help text: "บันทึกรีวิวเกี่ยวกับสภาพเครื่อง การใช้งาน หรือข้อสังเกตอื่น ๆ"
+     - แยกจาก damageDescription (ที่แสดงเฉพาะกรณีเสียหาย)
+   - ปรับ past return events display ใน ReturnLoanSheet:
+     - แต่ละ item card เปลี่ยนจาก single row เป็น 2 rows
+     - Row 1: tagId + brand + GradeBadge + ซ่อม pill + เปลี่ยน source pill + เสียหาย pill
+     - Row 2 (if comment): italic quote text — Velzon review quote pattern (text-muted-foreground italic)
+
+7. LoanDetailSheet UI (เพิ่ม comment ใน past return events ที่แสดงตอนเปิด loan detail):
+   - เพิ่ม `comment: string | null` ใน ReturnEvent interface
+   - ปรับ item card ใน "ประวัติรับคืน" section:
+     - Row 1: tagId + brand + GradeBadge + เสียหาย + ซ่อม pills
+     - Row 2 (if comment): italic quote text — Velzon review quote pattern
+
+Testing:
+- รัน deploy.sh (rebuild + restart prod)
+- รัน test-return-sheet.mjs: ผ่าน 0 errors (vz-card=3, stars=5, after expand 4 radios + 5 checkboxes)
+- รัน test-comment-verify.mjs: comment "ทดสอบรีวิว" found in body=true ✓
+- รัน test-comment-dom.mjs: DOM query พบ comment element at y=1140 (ใน Sheet's scroll area):
+  - text: `"ทดสอบรีวิว: เครื่องสภาพดี ใช้งานได้ปกติ มีรอยขีดเล็กน้อยที่มุมขวาบน"`
+  - className: `mt-1.5 pl-1 text-muted-foreground italic text-[10px] leading-relaxed`
+  - parentText: `ACT-037 Zebra DS2208-SR Grade A "ทดสอบรีวิว..."` ✓
+- API verification: GET /api/loans/LOAN-202610-008 คืน comment ใน item ที่บันทึก ✓
+
+Stage Summary:
+- Comment field works end-to-end:
+  - Schema ✓ (Prisma + SQLite)
+  - API POST ✓ (รับ + บันทึก)
+  - API GET ✓ (auto-include)
+  - ReturnLoanSheet ✓ (textarea per item + แสดงใน past events เป็น italic quote)
+  - LoanDetailSheet ✓ (แสดงใน past events เป็น italic quote)
+- แยกจาก damageDescription (ที่ใช้เฉพาะกรณีเสียหาย) — comment ใช้สำหรับรีวิวทั่วไปเสมอ
+- Velzon review quote pattern (italic text-muted) ใช้แสดง comment ใน past events

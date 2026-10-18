@@ -56,6 +56,7 @@ export async function POST(
           accessoriesReturned: JSON.stringify(item.accessoriesReturned || []),
           isDamaged: !!item.isDamaged,
           damageDescription: item.damageDescription?.trim() || null,
+          comment: item.comment?.trim() || null,
           sendToRepair: !!item.sendToRepair,
           returnToSource: item.returnToSource !== false,
           nextLocationId: item.nextLocationId || null,

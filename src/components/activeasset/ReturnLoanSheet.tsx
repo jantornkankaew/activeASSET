@@ -54,6 +54,7 @@ interface ReturnEvent {
     conditionGrade: string
     isDamaged: boolean
     damageDescription: string | null
+    comment: string | null
     sendToRepair: boolean
     returnToSource: boolean
     accessoriesReturned: string[]
@@ -82,6 +83,7 @@ interface ReturnItemForm {
   accessoriesReturned: string[]
   isDamaged: boolean
   damageDescription: string
+  comment: string  // รีวิว/ความคิดเห็นทั่วไป (นอกเหนือจาก damage description)
   sendToRepair: boolean
   returnToSource: boolean
 }
@@ -118,6 +120,7 @@ export function ReturnLoanSheet({ open, onOpenChange, loan, onDone }: ReturnLoan
             accessoriesReturned: [...acc],
             isDamaged: false,
             damageDescription: '',
+            comment: '',
             sendToRepair: false,
             returnToSource: true,
           }
@@ -200,6 +203,7 @@ export function ReturnLoanSheet({ open, onOpenChange, loan, onDone }: ReturnLoan
             accessoriesReturned: f.accessoriesReturned,
             isDamaged: f.isDamaged || f.conditionGrade === 'D',
             damageDescription: f.damageDescription,
+            comment: f.comment,
             sendToRepair: f.sendToRepair || f.conditionGrade === 'D',
             returnToSource: f.returnToSource,
             nextLocationId: null,
@@ -465,6 +469,23 @@ export function ReturnLoanSheet({ open, onOpenChange, loan, onDone }: ReturnLoan
                                 </RadioGroup>
                               </div>
 
+                              {/* Review comment — Velzon review text pattern (always visible when selected) */}
+                              <div>
+                                <div className="text-xs font-medium text-foreground mb-1.5 flex items-center gap-1">
+                                  <Star className="h-3 w-3" style={{ color: VZ.amber }} />
+                                  ความคิดเห็น/รีวิวเครื่อง
+                                </div>
+                                <Textarea
+                                  value={f.comment}
+                                  onChange={(e) => updateForm(line.id, { comment: e.target.value })}
+                                  placeholder="เช่น สภาพดีเหมือนเดิม, มีรอยถลอกเล็กน้อยที่มุม, แบตเตอรี่เหลือน้อย..."
+                                  className="min-h-[60px] text-xs bg-card"
+                                />
+                                <p className="text-[10px] text-muted-foreground mt-1">
+                                  บันทึกรีวิวเกี่ยวกับสภาพเครื่อง การใช้งาน หรือข้อสังเกตอื่น ๆ (นอกเหนือจากความเสียหาย)
+                                </p>
+                              </div>
+
                               {/* Source return option */}
                               {line.source !== 'Demo_Stock' && (
                                 <label className="flex items-center gap-1.5 text-xs">
@@ -565,25 +586,34 @@ export function ReturnLoanSheet({ open, onOpenChange, loan, onDone }: ReturnLoan
                                   <p className="text-[11px] text-muted-foreground italic mt-1.5 mb-2">"{ev.notes}"</p>
                                 )}
                                 {/* Items reviewed */}
-                                <div className="mt-1.5 space-y-0.5">
+                                <div className="mt-1.5 space-y-1">
                                   {ev.items.map((item) => (
-                                    <div key={item.id} className="flex items-center gap-1.5 p-1.5 bg-muted/30 rounded text-[11px]">
-                                      <span className="font-mono text-foreground">{item.loanLineItem.asset.tagId}</span>
-                                      <span className="text-muted-foreground truncate flex-1">{item.loanLineItem.asset.catalog.brand} {item.loanLineItem.asset.catalog.model}</span>
-                                      <div className="flex items-center gap-1">
-                                        <GradeBadge grade={item.conditionGrade} />
-                                        {item.sendToRepair && (
-                                          <span className="vz-pill" style={{ backgroundColor: 'rgba(160,113,240,0.10)', color: VZ.purple }}>
-                                            <Wrench className="h-2.5 w-2.5" /> ซ่อม
-                                          </span>
-                                        )}
-                                        {!item.returnToSource && (
-                                          <span className="vz-pill vz-pill-warning">เปลี่ยน source</span>
-                                        )}
-                                        {item.isDamaged && (
-                                          <span className="vz-pill vz-pill-danger">เสียหาย</span>
-                                        )}
+                                    <div key={item.id} className="p-1.5 bg-muted/30 rounded text-[11px]">
+                                      {/* Row 1: tagId + brand + badges */}
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="font-mono text-foreground">{item.loanLineItem.asset.tagId}</span>
+                                        <span className="text-muted-foreground truncate flex-1">{item.loanLineItem.asset.catalog.brand} {item.loanLineItem.asset.catalog.model}</span>
+                                        <div className="flex items-center gap-1 flex-shrink-0">
+                                          <GradeBadge grade={item.conditionGrade} />
+                                          {item.sendToRepair && (
+                                            <span className="vz-pill" style={{ backgroundColor: 'rgba(160,113,240,0.10)', color: VZ.purple }}>
+                                              <Wrench className="h-2.5 w-2.5" /> ซ่อม
+                                            </span>
+                                          )}
+                                          {!item.returnToSource && (
+                                            <span className="vz-pill vz-pill-warning">เปลี่ยน source</span>
+                                          )}
+                                          {item.isDamaged && (
+                                            <span className="vz-pill vz-pill-danger">เสียหาย</span>
+                                          )}
+                                        </div>
                                       </div>
+                                      {/* Row 2: comment (if exists) — Velzon review quote pattern */}
+                                      {item.comment && (
+                                        <div className="mt-1.5 pl-1 text-muted-foreground italic text-[10px] leading-relaxed">
+                                          "{item.comment}"
+                                        </div>
+                                      )}
                                     </div>
                                   ))}
                                 </div>
