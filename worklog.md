@@ -1071,3 +1071,56 @@ Stage Summary:
 - Deploy สำเร็จแล้ว — production build/start ทั้งคู่ผ่าน
 - มี start-prod.sh script สำหรับรัน production server เป็น daemon
 - ใช้ port 3000 เหมือน dev server (preview URL ใช้ได้เหมือนเดิม)
+
+---
+Task ID: loan-detail-velzon
+Agent: main
+Task: ปรับหน้า detail ของใบยืม (LoanDetailSheet) ให้ใช้ Velzon order-details design language
+
+Reference: https://themesbrand.com/velzon/html/master/apps-ecommerce-order-details.html
+
+Velzon order-details structure applied:
+- Sheet ขยายจาก max-w-xl (576px) → max-w-5xl (1024px) รองรับ 2-col layout
+- Header (Velzon page-title-box): docNo + status badges + PDF ใบยืม/ใบคืน buttons
+- 2-col layout: LEFT col-2 (order table + status timeline) + RIGHT col-1 (sidebar cards)
+- LEFT Card 1 — Order table (vz-table):
+  - columns: รายละเอียดเครื่อง | แหล่ง | จำนวน | สถานะ | วันคืน
+  - Each row: avatar-md with Package icon + flex-grow with tag/sn/brand + source badge + qty + status pill + returned date
+  - Summary row at bottom with dashed border: ขอยืมทั้งหมด / จัดจริง / คืนแล้ว / ค้างคืน
+- LEFT Card 2 — Status timeline (Velzon accordion):
+  - 5 phases with vertical connector line: ขอยืม → จัดของ → ส่งมอบ → รับคืน → ปิดใบยืม
+  - Each phase: avatar icon (bg color = phase color) + h6 label + date + sub-text + body items
+  - Body items: nested with border-l-2 colored left border
+- RIGHT sidebar cards (6 cards):
+  1. Logistics (การส่งมอบ) — Velzon truck icon + deliveredBy + deliveredAt
+  2. Customer Details — avatar + customer name + company + industry + sales rep
+  3. Loan Terms — table format: docNo, purpose, requestedAt, expectedReturnDate (red), closedAt (green)
+  4. Signature (if any) — image of customer signature + signed by + signed at
+  5. Waiting List (if any) — red-tinted box with position/quantity/status
+  6. Notes — termsAndNotes text
+- Return history (full-width below): each event has avatar (1,2,3) + inspector + date + items grid
+- Bottom action bar: LINE share + จัดของ + Auto-dispatch + ส่งมอบ + รับคืน (conditional)
+
+Work Log:
+- อ่าน Velzon order-details HTML จริง (apps-ecommerce-order-details.html)
+- สร้าง phases array สำหรับ timeline (5 phases พร้อม body items)
+- เขียนใหม่ทั้ง LoanDetailSheet.tsx (~570 บรรทัด)
+- ใช้ classes ที่มีใน pre-compiled CSS: grid-cols-1 lg:grid-cols-3 + lg:col-span-1/2, vz-table, vz-card, vz-pill, vz-avatar
+- เพิ่ม imports: ScanLine, CheckCircle2, History, MessageCircle, User, Building2, Calendar, FileText, Package, ShoppingCart, Truck, Zap, MapPin, Phone, CreditCard, Shield, Clock, ChevronDown
+- เพิ่ม SOURCE_LABELS, INDUSTRY_LABELS, PURPOSE_LABELS imports
+- Rebuild production + restart server
+- สร้าง test script scripts/test-loan-detail.mjs
+- รัน test: login → ใบยืม → click LOAN-202610-014 → sheet opens
+- ผล: vz-card count=7, vz-pill count=5, vz-table count=1 with 6 rows, vz-avatar count=7, 0 page errors ✓ PASS
+- VLM ยืนยัน 6/6 Velzon elements:
+  1. ✓ Sheet/drawer from right with header (docNo + badges + PDF)
+  2. ✓ 2-col layout LEFT 2/3 + RIGHT 1/3
+  3. ✓ Order table with 5 columns + dashed-border summary row
+  4. ✓ Status timeline with vertical line + 5 phases (avatar icons)
+  5. ✓ RIGHT sidebar cards (Logistics + Customer + Terms + Signature + Waiting + Notes)
+  6. ✓ Bottom action bar with LINE + จัดของ + Auto-dispatch
+
+Stage Summary:
+- หน้า detail ของใบยืมใช้ Velzon order-details design language ครบ
+- ใช้ classes ที่มีใน pre-compiled CSS จริง ไม่มี layout collapse
+- ผ่าน E2E test และ VLM ยืนยัน
