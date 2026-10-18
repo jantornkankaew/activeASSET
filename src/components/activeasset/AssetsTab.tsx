@@ -35,6 +35,9 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   'Tablet': <Tablet className="h-6 w-6" />,
 }
 
+// Velzon color tokens
+const VZ = { primary: '#405189', teal: '#0ab39c', amber: '#f7b84b', rose: '#f06548', purple: '#a071f0', slate: '#74788d' }
+
 // ===== Types =====
 interface CatalogSummary {
   id: string
@@ -245,111 +248,215 @@ export function AssetsTab({ onBorrow }: AssetsTabProps) {
 
   return (
     <div className="space-y-4 animate-fade-in">
-      {/* Top bar */}
-      <div className="flex items-center justify-between gap-3">
+      {/* ===== Velzon products page-title-box ===== */}
+      <div className="vz-card p-4 flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">ทรัพย์สิน</h2>
+          <h4 className="text-base font-semibold text-foreground mb-0" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
+            ทรัพย์สิน
+          </h4>
           <p className="text-xs text-muted-foreground mt-0.5">เลือกรุ่นเพื่อดูเครื่องจริงและประวัติการยืม</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="rounded-full" onClick={() => setView('suppliers')}>
-            <Building2 className="h-4 w-4 mr-1.5" /> Suppliers
-          </Button>
-          <Button variant="outline" size="sm" className="rounded-full" onClick={() => setView('register')}>
-            <Plus className="h-4 w-4 mr-1.5" /> ลงทะเบียน
-          </Button>
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-muted-foreground">Ecommerce</span>
+          <ChevronRight className="h-3 w-3 text-muted-foreground/60" />
+          <span className="text-primary font-medium">Products</span>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="ค้นหารุ่นหรือยี่ห้อ..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 rounded-xl bg-card/50 border-border/50"
-          />
-        </div>
-        <Select value={brandFilter} onValueChange={setBrandFilter}>
-          <SelectTrigger className="w-full md:w-36 rounded-xl"><SelectValue placeholder="ยี่ห้อ" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">ยี่ห้อทั้งหมด</SelectItem>
-            {brands.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-full md:w-40 rounded-xl"><SelectValue placeholder="หมวด" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">หมวดทั้งหมด</SelectItem>
-            {categories.map((c) => <SelectItem key={c} value={c}>{CATEGORY_LABELS[c] || c}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
+      {/* ===== Velzon products 2-col layout: col-xl-3 filter sidebar + col-xl-9 grid ===== */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* === LEFT — Filter sidebar (Velzon filter card pattern) === */}
+        <div className="lg:col-span-1">
+          <div className="vz-card">
+            {/* Card header — Filters + Clear All */}
+            <div className="px-4 py-3 vz-divider flex items-center justify-between">
+              <h5 className="text-sm font-semibold text-foreground mb-0">ตัวกรอง</h5>
+              <button
+                className="text-[11px] text-primary hover:underline"
+                onClick={() => { setSearch(''); setBrandFilter('all'); setCategoryFilter('all') }}
+              >
+                ล้างทั้งหมด
+              </button>
+            </div>
 
-      {/* Catalog grid — premium cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
-        {loading && <div className="col-span-full"><LoadingState /></div>}
-        {!loading && catalogs.length === 0 && (
-          <div className="col-span-full">
-            <EmptyState icon={<Package className="h-12 w-12" />} message="ไม่พบรุ่นสินค้า" />
+            {/* Search filter */}
+            <div className="px-4 py-3 vz-divider">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  placeholder="ค้นหารุ่นหรือยี่ห้อ..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
+
+            {/* Categories — Velzon filter-list pattern */}
+            <div className="px-4 py-3 vz-divider">
+              <p className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider mb-2">หมวดหมู่</p>
+              <ul className="list-none space-y-0.5">
+                <li>
+                  <button
+                    className={`w-full flex items-center justify-between py-1 text-xs hover:text-primary transition-smooth ${categoryFilter === 'all' ? 'text-primary font-semibold' : 'text-foreground'}`}
+                    onClick={() => setCategoryFilter('all')}
+                  >
+                    <span>ทั้งหมด</span>
+                    <span className="bg-muted text-muted-foreground text-[10px] px-1.5 py-0.5 rounded-full tabular-nums">{catalogs.length}</span>
+                  </button>
+                </li>
+                {categories.map((cat) => {
+                  const count = catalogs.filter(c => c.category === cat).length
+                  return (
+                    <li key={cat}>
+                      <button
+                        className={`w-full flex items-center justify-between py-1 text-xs hover:text-primary transition-smooth ${categoryFilter === cat ? 'text-primary font-semibold' : 'text-foreground'}`}
+                        onClick={() => setCategoryFilter(categoryFilter === cat ? 'all' : cat)}
+                      >
+                        <span>{CATEGORY_LABELS[cat] || cat}</span>
+                        {count > 0 && <span className="bg-muted text-muted-foreground text-[10px] px-1.5 py-0.5 rounded-full tabular-nums">{count}</span>}
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+
+            {/* Brands — Velzon accordion pattern */}
+            <div className="px-4 py-3 vz-divider">
+              <p className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider mb-2">ยี่ห้อ</p>
+              <div className="space-y-1.5">
+                <button
+                  className={`w-full flex items-center gap-2 text-xs py-1 hover:text-primary transition-smooth ${brandFilter === 'all' ? 'text-primary font-semibold' : 'text-foreground'}`}
+                  onClick={() => setBrandFilter('all')}
+                >
+                  <span className="h-2 w-2 rounded-full bg-muted-foreground/30" />
+                  ทั้งหมด
+                </button>
+                {brands.map((b) => (
+                  <button
+                    key={b}
+                    className={`w-full flex items-center gap-2 text-xs py-1 hover:text-primary transition-smooth ${brandFilter === b ? 'text-primary font-semibold' : 'text-foreground'}`}
+                    onClick={() => setBrandFilter(brandFilter === b ? 'all' : b)}
+                  >
+                    <span className={`h-2 w-2 rounded-full ${brandFilter === b ? 'bg-primary' : 'bg-muted-foreground/30'}`} />
+                    {b}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick actions */}
+            <div className="px-4 py-3 space-y-2">
+              <Button
+                size="sm"
+                className="w-full text-xs"
+                style={{ backgroundColor: VZ.teal, color: 'white' }}
+                onClick={() => setView('register')}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" /> ลงทะเบียนใหม่
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-xs"
+                onClick={() => setView('suppliers')}
+              >
+                <Building2 className="h-3.5 w-3.5 mr-1" /> Suppliers
+              </Button>
+            </div>
           </div>
-        )}
-        {catalogs.map((c) => {
-          const availColor = c.availabilityLevel === 'green' ? 'text-emerald-600 dark:text-emerald-400'
-            : c.availabilityLevel === 'yellow' ? 'text-amber-600 dark:text-amber-400'
-            : 'text-rose-600 dark:text-rose-400'
-          const dotColor = c.availabilityLevel === 'green' ? 'bg-emerald-500'
-            : c.availabilityLevel === 'yellow' ? 'bg-amber-500'
-            : 'bg-rose-500'
-          return (
-            <button
-              key={c.id}
-              className="group text-left p-5 rounded-2xl bg-card border border-border/50 shadow-premium hover-lift transition-smooth"
-              onClick={() => loadUnits(c)}
-            >
-              {/* Header — icon + brand */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-muted/50 flex items-center justify-center group-hover:bg-accent/10 transition-smooth">
-                    <span className="text-muted-foreground group-hover:text-accent transition-smooth">
-                      {CATEGORY_ICONS[c.category] || <Package className="h-6 w-6" />}
-                    </span>
-                  </div>
-                  <div>
-                    <div className="font-bold text-base">{c.brand} {c.model}</div>
-                    <div className="text-xs text-muted-foreground">{CATEGORY_LABELS[c.category] || c.category}</div>
-                  </div>
+        </div>
+
+        {/* === RIGHT — Product grid (Velzon col-xl-9 pattern) === */}
+        <div className="lg:col-span-2">
+          <div className="vz-card overflow-hidden">
+            {/* Card header — nav tabs with counts */}
+            <div className="px-4 py-3 vz-divider flex items-center justify-between">
+              <div className="flex items-center gap-1 text-xs">
+                <span className="vz-pill vz-pill-info">
+                  ทั้งหมด {catalogs.length}
+                </span>
+                <span className="vz-pill vz-pill-success">
+                  ว่าง {catalogs.reduce((s, c) => s + c.available, 0)}
+                </span>
+                <span className="vz-pill vz-pill-warning">
+                  ยืม {catalogs.reduce((s, c) => s + c.onLoan, 0)}
+                </span>
+              </div>
+              <span className="text-[10px] text-muted-foreground">
+                {catalogs.length} รายการ
+              </span>
+            </div>
+
+            {/* Product grid — Velzon gridjs-border-none pattern */}
+            <div className="p-4">
+              {loading && <LoadingState />}
+              {!loading && catalogs.length === 0 && (
+                <div className="py-12 text-center">
+                  <Package className="h-12 w-12 mx-auto mb-2 text-muted-foreground/30" />
+                  <h5 className="text-sm font-semibold text-foreground">ไม่พบผลลัพธ์</h5>
+                  <p className="text-xs text-muted-foreground mt-1">ลองเปลี่ยนตัวกรองหรือล้างการค้นหา</p>
                 </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-smooth" />
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 stagger-children">
+                {catalogs.map((c) => {
+                  const availColor = c.availabilityLevel === 'green' ? VZ.teal
+                    : c.availabilityLevel === 'yellow' ? VZ.amber
+                    : VZ.rose
+                  const availSoft = c.availabilityLevel === 'green' ? 'rgba(10,179,156,0.10)'
+                    : c.availabilityLevel === 'yellow' ? 'rgba(247,184,75,0.12)'
+                    : 'rgba(240,101,72,0.10)'
+                  return (
+                    <button
+                      key={c.id}
+                      className="group text-left p-4 rounded-md bg-card border border-border hover:border-primary/30 hover:shadow-sm transition-smooth"
+                      onClick={() => loadUnits(c)}
+                    >
+                      {/* Product image area — Velzon product-img pattern */}
+                      <div className="aspect-[4/3] flex items-center justify-center bg-muted/30 rounded-md mb-3 relative overflow-hidden">
+                        <div className="text-muted-foreground/30 group-hover:text-primary/40 transition-smooth">
+                          {CATEGORY_ICONS[c.category] || <Package className="h-12 w-12" />}
+                        </div>
+                        {/* Availability badge — Velzon badge pattern */}
+                        <div
+                          className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full"
+                          style={{ backgroundColor: availColor }}
+                          title={c.availabilityLevel === 'green' ? 'พร้อมใช้' : c.availabilityLevel === 'yellow' ? 'ใกล้หมด' : 'หมด'}
+                        />
+                      </div>
+                      {/* Product name — Velzon product-name pattern */}
+                      <div className="font-semibold text-sm text-foreground mb-0.5 group-hover:text-primary transition-smooth">
+                        {c.brand} {c.model}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground mb-2">
+                        {CATEGORY_LABELS[c.category] || c.category}
+                      </div>
+                      {/* Status bar — Velzon product rating pattern */}
+                      <div className="flex gap-0.5 h-1.5 rounded-full overflow-hidden bg-muted mb-2">
+                        {c.available > 0 && <div style={{ width: `${(c.available / c.total) * 100}%`, backgroundColor: VZ.teal }} />}
+                        {c.onLoan > 0 && <div style={{ width: `${(c.onLoan / c.total) * 100}%`, backgroundColor: VZ.amber }} />}
+                        {c.inRepair > 0 && <div style={{ width: `${(c.inRepair / c.total) * 100}%`, backgroundColor: VZ.purple }} />}
+                        {c.other > 0 && <div style={{ width: `${(c.other / c.total) * 100}%`, backgroundColor: VZ.slate }} />}
+                      </div>
+                      {/* Stats row — Velzon price + rating pattern */}
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-1">
+                          <span className="font-bold text-lg tabular-nums" style={{ color: availColor }}>{c.available}</span>
+                          <span className="text-muted-foreground text-[10px]">/ {c.total} ว่าง</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                          {c.onLoan > 0 && <span style={{ color: VZ.amber }}>ยืม {c.onLoan}</span>}
+                          {c.inRepair > 0 && <span style={{ color: VZ.purple }}>ซ่อม {c.inRepair}</span>}
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
-
-              {/* Stock summary — visual */}
-              <div className="flex items-center gap-3 mb-3">
-                <div className="flex items-center gap-1.5">
-                  <span className={`h-2.5 w-2.5 rounded-full ${dotColor}`} />
-                  <span className={`text-2xl font-bold tabular-nums ${availColor}`}>{c.available}</span>
-                  <span className="text-xs text-muted-foreground">/ {c.total} ว่าง</span>
-                </div>
-              </div>
-
-              {/* Mini status bars */}
-              <div className="flex gap-1 h-1.5 rounded-full overflow-hidden bg-muted/50">
-                {c.available > 0 && <div className="bg-emerald-500" style={{ width: `${(c.available / c.total) * 100}%` }} />}
-                {c.onLoan > 0 && <div className="bg-amber-500" style={{ width: `${(c.onLoan / c.total) * 100}%` }} />}
-                {c.inRepair > 0 && <div className="bg-purple-500" style={{ width: `${(c.inRepair / c.total) * 100}%` }} />}
-                {c.other > 0 && <div className="bg-slate-400" style={{ width: `${(c.other / c.total) * 100}%` }} />}
-              </div>
-
-              {/* Legend */}
-              <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground">
-                {c.onLoan > 0 && <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-amber-500" />ยืม {c.onLoan}</span>}
-                {c.inRepair > 0 && <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-purple-500" />ซ่อม {c.inRepair}</span>}
-              </div>
-            </button>
-          )
-        })}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

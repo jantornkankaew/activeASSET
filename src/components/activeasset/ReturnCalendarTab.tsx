@@ -285,47 +285,59 @@ export function ReturnCalendarTab({ onOpenLoan }: ReturnCalendarTabProps) {
               </div>
             </div>
 
-            {/* Calendar grid — month view */}
-            <div className="p-2">
-              {/* Day headers */}
-              <div className="grid grid-cols-7 gap-0.5 mb-1">
+            {/* Calendar grid — Velzon fullcalendar-style month view */}
+            <div>
+              {/* Day headers — border-bottom only */}
+              <div className="grid grid-cols-7 border-b border-border">
                 {THAI_DAYS_SHORT.map((day, i) => (
                   <div
                     key={i}
-                    className={`text-center text-[11px] font-semibold py-1.5 ${i === 0 ? 'text-rose-500' : 'text-muted-foreground'}`}
+                    className={`text-center text-[11px] font-semibold py-2 ${i === 0 || i === 6 ? 'text-rose-500' : 'text-muted-foreground'}`}
                   >
                     {day}
                   </div>
                 ))}
               </div>
-              {/* Day cells */}
-              <div className="grid grid-cols-7 gap-0.5">
+              {/* Day cells — no gap, with borders (like Velzon fc-day) */}
+              <div className="grid grid-cols-7">
                 {cells.map(({ date, isCurrentMonth }, i) => {
                   const dateStr = date.toISOString().split('T')[0]
                   const dayLoans = loansByDate[dateStr] || []
                   const isToday = dateStr === todayStr
-                  const isWeekend = date.getDay() === 0
+                  const isWeekend = date.getDay() === 0 || date.getDay() === 6
+                  const rowIdx = Math.floor(i / 7)
+                  const colIdx = i % 7
 
                   return (
                     <div
                       key={i}
-                      className={`min-h-[70px] p-1 rounded-md border transition-smooth ${
-                        isCurrentMonth
-                          ? `border-border/50 ${isWeekend ? 'bg-rose-500/5' : 'bg-card'}`
-                          : 'border-border/20 bg-muted/10 opacity-50'
-                      } ${isToday ? 'ring-2 ring-primary/40' : ''} ${dayLoans.length > 0 ? 'cursor-pointer hover:border-primary/30 hover:bg-muted/20' : ''}`}
+                      className={`min-h-[100px] p-1.5 transition-smooth relative ${
+                        colIdx < 6 ? 'border-r border-border/40' : ''
+                      } ${rowIdx < Math.floor(totalCells / 7) - 1 ? 'border-b border-border/40' : ''
+                      } ${
+                        !isCurrentMonth ? 'bg-muted/5' : isWeekend ? 'bg-rose-500/[0.02]' : 'bg-card'
+                      } ${dayLoans.length > 0 ? 'cursor-pointer hover:bg-muted/20' : ''} ${
+                        isToday ? 'bg-primary/5' : ''
+                      }`}
                       onClick={() => dayLoans.length > 0 && onOpenLoan(dayLoans[0].docNo)}
                     >
-                      {/* Date number */}
-                      <div className={`text-[11px] font-medium mb-0.5 ${
-                        !isCurrentMonth ? 'text-muted-foreground/40'
-                        : isToday ? 'text-primary font-bold'
-                        : isWeekend ? 'text-rose-500/70'
-                        : 'text-foreground'
-                      }`}>
-                        {date.getDate()}
+                      {/* Date number — today has primary bg circle */}
+                      <div className="flex items-center justify-end mb-1">
+                        {isToday ? (
+                          <span className="h-6 w-6 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center">
+                            {date.getDate()}
+                          </span>
+                        ) : (
+                          <span className={`text-[12px] font-medium ${
+                            !isCurrentMonth ? 'text-muted-foreground/30'
+                            : isWeekend ? 'text-rose-500/60'
+                            : 'text-muted-foreground'
+                          }`}>
+                            {date.getDate()}
+                          </span>
+                        )}
                       </div>
-                      {/* Events */}
+                      {/* Event cards — Velzon fc-event style */}
                       <div className="space-y-0.5">
                         {dayLoans.slice(0, 3).map((l) => {
                           const catIdx = getLoanCategory(l)
@@ -333,16 +345,20 @@ export function ReturnCalendarTab({ onOpenLoan }: ReturnCalendarTabProps) {
                           return (
                             <div
                               key={l.docNo}
-                              className="text-[9px] font-medium px-1 py-0.5 rounded truncate"
-                              style={{ backgroundColor: cat.bg, color: cat.color }}
+                              className="text-[10px] font-medium px-1.5 py-1 rounded truncate flex items-center gap-1 hover:opacity-80 transition-smooth"
+                              style={{
+                                backgroundColor: cat.bg,
+                                color: cat.color,
+                                borderLeft: `3px solid ${cat.color}`,
+                              }}
                             >
-                              {l.docNo}
+                              <span className="font-mono">{l.docNo.replace('LOAN-', '')}</span>
                             </div>
                           )
                         })}
                         {dayLoans.length > 3 && (
-                          <div className="text-[9px] text-muted-foreground px-1">
-                            +{dayLoans.length - 3} รายการ
+                          <div className="text-[9px] text-muted-foreground px-1.5 font-medium">
+                            +{dayLoans.length - 3} รายการเพิ่มเติม
                           </div>
                         )}
                       </div>

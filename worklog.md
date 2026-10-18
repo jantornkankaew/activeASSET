@@ -1796,3 +1796,48 @@ Stage Summary:
 - Color-coded by status: red (overdue) / amber (due ≤3d) / blue (active) / purple (standby)
 - LEFT sidebar has upcoming returns list + category legend + create button
 - Click on any day cell or upcoming item → opens loan detail sheet
+
+---
+Task ID: calendar-and-assets-redesign
+Agent: main
+Task: ปฏิทินไม่สวยเลย ทำใหม่ + หน้าทรัพย์สิน ใช้ต้นแบบ Velzon products page
+
+=== 1. Calendar redesign ===
+Changes:
+- ลบ `gap-0.5` ออกจาก grid → ใช้ borders แทน (border-r + border-b ระหว่าง cells) เหมือน Velzon fc-day
+- Day cells ใหญ่ขึ้น: min-h-[100px] (จาก 70px)
+- Event pills เปลี่ยนจาก text-[9px] plain → text-[10px] พร้อมี border-left 3px solid color (Velzon fc-event style)
+- Date number: วันนี้มี h-6 w-6 rounded-full bg-primary (Velzon highlight pattern)
+- Weekend: ทั้ง Saturday และ Sunday (เดิมมีแค่ Sunday)
+- No gap between cells → borders only (Velzon calendar signature)
+- bg-primary/5 for today's cell background
+
+VLM ยืนยัน 3/3:
+  1. ✓ Day cells with borders (horizontal lines between rows)
+  2. ✓ Colored event cards with thick colored left border (pale red/yellow/blue + border-left)
+  3. ✓ Today's date highlighted with solid indigo circular badge
+
+=== 2. Assets catalog redesign (Velzon products page) ===
+Reference: https://themesbrand.com/velzon/html/master/apps-ecommerce-products.html
+
+Changes:
+- ลบ old top bar (h2 + inline filters) ออก
+- เพิ่ม page-title-box (h4 "ทรัพย์สิน" + breadcrumb Ecommerce › Products)
+- 2-col layout: col-1 LEFT filter sidebar + col-2 RIGHT product grid
+- LEFT filter sidebar (Velzon filter card pattern):
+  * Header: "ตัวกรอง" + "ล้างทั้งหมด" link
+  * Search input (Velzon search-box pattern)
+  * Categories list (Velzon filter-list pattern) — clickable items with count badges
+  * Brands list (Velzon accordion pattern) — clickable items with color dots
+  * Quick actions: ลงทะเบียนใหม่ button (teal) + Suppliers button
+- RIGHT product grid (Velzon col-xl-9 pattern):
+  * Card header with status pills: ทั้งหมด + ว่าง + ยืม + count
+  * Grid of product cards (2-col on sm):
+    - aspect-[4/3] image area (Velzon product-img pattern) with category icon + availability dot
+    - Product name (Velzon product-name pattern) + category label
+    - Status bar (4 colors: teal/amber/purple/slate)
+    - Stats row: available count (big colored number) + loan/repair counts
+
+VLM ยืนยัน 2/2:
+  1. ✓ LEFT filter sidebar with categories list + brands list + search
+  2. ✓ RIGHT product card grid with image area + brand name + status bar + availability count
