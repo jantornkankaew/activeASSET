@@ -13,6 +13,7 @@ import { EmptyState, LoadingState } from './shared'
 import {
   Plus, Building2, X, ArrowLeft, Trash2, Save, Package, Tag, FileText,
   MapPin, Calendar, Shield, DollarSign, Truck, Layers, Clock, Info, Image as ImageIcon,
+  Search, Phone, Mail, ChevronRight, ChevronLeft, SlidersHorizontal,
 } from 'lucide-react'
 import {
   CATEGORY_LABELS, SOURCE_LABELS,
@@ -435,12 +436,15 @@ export function RegisterAssetView({ onDone, onBack }: { onDone: () => void; onBa
   )
 }
 
-// ===== Suppliers View (unchanged) =====
+// ===== Suppliers View — Velzon sellers style =====
+const VZ_SUP = { primary: '#405189', teal: '#0ab39c', amber: '#f7b84b', rose: '#f06548', purple: '#a071f0', slate: '#74788d' }
+
 export function SuppliersView({ onBack }: { onBack: () => void }) {
   const { toast } = useToast()
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [search, setSearch] = useState('')
   const [form, setForm] = useState({ name: '', contactName: '', phone: '', email: '', notes: '' })
   const [submitting, setSubmitting] = useState(false)
 
@@ -477,71 +481,243 @@ export function SuppliersView({ onBack }: { onBack: () => void }) {
     else { toast({ title: 'ลบไม่สำเร็จ', description: data.error, variant: 'destructive' }) }
   }
 
+  // Filter suppliers by search term (name OR contactName)
+  const filtered = suppliers.filter((s) => {
+    if (!search) return true
+    const q = search.toLowerCase()
+    return s.name.toLowerCase().includes(q) || (s.contactName || '').toLowerCase().includes(q)
+  })
+
   return (
     <div className="space-y-4 animate-fade-in">
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="h-4 w-4 mr-1" /> กลับ</Button>
-        <h2 className="text-lg font-bold tracking-tight">Suppliers</h2>
+      {/* ===== Velzon page-title-box ===== */}
+      <div className="vz-card p-4 flex items-center justify-between">
+        <div>
+          <h4 className="text-base font-semibold text-foreground mb-0" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
+            Suppliers
+          </h4>
+        </div>
+        <div className="flex items-center gap-2 text-xs">
+          <button onClick={onBack} className="text-muted-foreground hover:text-primary transition-smooth">ทรัพย์สิน</button>
+          <span className="text-muted-foreground/60">›</span>
+          <span className="text-primary font-medium">Suppliers</span>
+        </div>
       </div>
-      <Card className="shadow-premium">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Building2 className="h-4 w-4" /> ทั้งหมด ({suppliers.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {showForm && (
-            <div className="border-2 border-dashed border-accent/30 bg-accent/5 rounded-xl p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium">เพิ่ม Supplier ใหม่</h4>
-                <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}><X className="h-3 w-3" /></Button>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-xs text-muted-foreground">ชื่อ <span className="text-rose-500">*</span></label>
-                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Honeywell Thailand" className="mt-1 h-9 rounded-lg" />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">ผู้ติดต่อ</label>
-                  <Input value={form.contactName} onChange={(e) => setForm({ ...form, contactName: e.target.value })} className="mt-1 h-9 rounded-lg" />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">เบอร์โทร</label>
-                  <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="mt-1 h-9 rounded-lg" />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">อีเมล</label>
-                  <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1 h-9 rounded-lg" />
-                </div>
-              </div>
-              <Button size="sm" onClick={create} disabled={submitting} className="w-full rounded-lg">{submitting ? 'กำลังบันทึก...' : 'เพิ่ม Supplier'}</Button>
+
+      {/* ===== Velzon filters card (card-header border-0) ===== */}
+      <div className="vz-card">
+        <div className="p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Search box — col-xl-3 */}
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="ค้นหา supplier หรือชื่อผู้ติดต่อ..."
+                className="pl-9"
+              />
             </div>
-          )}
-          {!showForm && <Button size="sm" onClick={() => setShowForm(true)} className="w-full rounded-xl"><Plus className="h-4 w-4 mr-1" /> เพิ่ม Supplier</Button>}
-          {loading && <LoadingState />}
-          {!loading && suppliers.length === 0 && <EmptyState icon={<Building2 className="h-12 w-12" />} message="ยังไม่มี Supplier" />}
-          <div className="space-y-2">
-            {suppliers.map((s) => (
-              <div key={s.id} className="border border-border/50 rounded-xl p-3 text-sm hover-lift transition-smooth">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1">
-                    <div className="font-semibold">{s.name}</div>
-                    {s.contactName && <div className="text-xs text-muted-foreground">ผู้ติดต่อ: {s.contactName}</div>}
-                    {s.phone && <div className="text-xs text-muted-foreground">โทร: {s.phone}</div>}
-                    {s.email && <div className="text-xs text-muted-foreground">อีเมล: {s.email}</div>}
-                    <div className="text-xs mt-1.5 flex gap-1.5">
-                      <Badge variant="outline" className="text-xs">ทั้งหมด {s.assetCount}</Badge>
-                      <Badge variant="outline" className="text-xs text-amber-700 bg-amber-50">รอคืน {s.activeLoanCount}</Badge>
-                      <Badge variant="outline" className="text-xs text-emerald-700 bg-emerald-50">คืนแล้ว {s.returnedCount}</Badge>
+            {/* Filters button — btn-danger style */}
+            <Button variant="outline" size="sm" className="text-xs" style={{ backgroundColor: 'rgba(240,101,72,0.10)', color: VZ_SUP.rose, borderColor: 'rgba(240,101,72,0.30)' }}>
+              <SlidersHorizontal className="h-3.5 w-3.5 mr-1" /> ตัวกรอง
+            </Button>
+            {/* Add Supplier button — btn-success */}
+            <Button
+              size="sm"
+              className="text-xs"
+              style={{ backgroundColor: VZ_SUP.teal, color: 'white' }}
+              onClick={() => setShowForm(true)}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" /> เพิ่ม Supplier
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== Inline form (Velzon modal-style) ===== */}
+      {showForm && (
+        <div className="vz-card">
+          <div className="px-4 py-3 vz-divider flex items-center justify-between">
+            <h5 className="text-sm font-semibold text-foreground mb-0" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
+              เพิ่ม Supplier ใหม่
+            </h5>
+            <Button size="sm" variant="ghost" onClick={() => setShowForm(false)} className="h-7 w-7 p-0">
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1.5">ชื่อ <span className="text-rose-500">*</span></label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Honeywell Thailand" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1.5">ผู้ติดต่อ</label>
+              <Input value={form.contactName} onChange={(e) => setForm({ ...form, contactName: e.target.value })} placeholder="คุณสมชาย" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1.5">เบอร์โทร</label>
+              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="02-123-4567" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1.5">อีเมล</label>
+              <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="contact@supplier.com" />
+            </div>
+            <div className="md:col-span-2">
+              <label className="text-xs font-medium text-muted-foreground block mb-1.5">หมายเหตุ</label>
+              <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="บันทึกเพิ่มเติม..." rows={2} />
+            </div>
+          </div>
+          <div className="px-4 pb-4 flex justify-end gap-2">
+            <Button variant="soft" size="sm" className="text-xs" onClick={() => setShowForm(false)}>
+              ยกเลิก
+            </Button>
+            <Button size="sm" className="text-xs" style={{ backgroundColor: VZ_SUP.teal, color: 'white' }} onClick={create} disabled={submitting}>
+              <Save className="h-3.5 w-3.5 mr-1" />
+              {submitting ? 'กำลังบันทึก...' : 'เพิ่ม Supplier'}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* ===== Loading ===== */}
+      {loading && <LoadingState />}
+
+      {/* ===== Empty state — Velzon noresult pattern ===== */}
+      {!loading && filtered.length === 0 && (
+        <div className="vz-card p-8 text-center">
+          <Building2 className="h-12 w-12 mx-auto mb-3 text-muted-foreground/30" />
+          <h5 className="text-sm font-semibold text-foreground mb-1">
+            {search ? 'ไม่พบผลลัพธ์' : 'ยังไม่มี Supplier'}
+          </h5>
+          <p className="text-xs text-muted-foreground mb-0">
+            {search ? `ลองค้นหาด้วยคำอื่น หรือล้างการค้นหา` : `คลิก "เพิ่ม Supplier" เพื่อเพิ่มรายการใหม่`}
+          </p>
+        </div>
+      )}
+
+      {/* ===== Suppliers grid — col-xl-3 col-lg-6 pattern ===== */}
+      {!loading && filtered.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((s) => {
+            // "Trending" ribbon for top suppliers (assetCount > 5)
+            const isTrending = s.assetCount > 5
+            // Mini chart width — show returned ratio
+            const totalActive = s.returnedCount + s.activeLoanCount
+            const returnRate = totalActive > 0 ? (s.returnedCount / totalActive) * 100 : 0
+            return (
+              <div key={s.id} className="vz-card overflow-hidden relative hover-lift transition-smooth">
+                {/* Trending ribbon — top-right corner */}
+                {isTrending && (
+                  <div
+                    className="absolute top-0 right-0 text-[10px] font-semibold text-white px-2 py-1 rounded-bl-md"
+                    style={{ backgroundColor: VZ_SUP.teal }}
+                  >
+                    แอคทีฟ
+                  </div>
+                )}
+
+                <div className="p-4 text-center">
+                  {/* Logo — Velzon avatar-md bg-light rounded p-1 */}
+                  <div className="vz-icon-soft h-12 w-12 mx-auto bg-muted/40 rounded-md">
+                    <Building2 className="h-6 w-6 text-muted-foreground" />
+                  </div>
+
+                  {/* Name — link-primary style */}
+                  <h5 className="text-sm font-semibold mt-3 mb-1" style={{ color: VZ_SUP.primary }}>
+                    {s.name}
+                  </h5>
+
+                  {/* Contact name — text-muted */}
+                  <p className="text-xs text-muted-foreground mb-3">
+                    {s.contactName || 'ไม่ระบุผู้ติดต่อ'}
+                  </p>
+
+                  {/* Mini bar chart — return rate (replaces Velzon sparkline) */}
+                  <div className="mb-3">
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${returnRate}%`,
+                          background: `linear-gradient(90deg, ${VZ_SUP.teal}, ${VZ_SUP.primary})`,
+                        }}
+                      />
+                    </div>
+                    <div className="text-[10px] text-muted-foreground mt-1">
+                      อัตราคืนสำเร็จ <b className="text-foreground tabular-nums">{returnRate.toFixed(0)}%</b>
                     </div>
                   </div>
-                  <Button size="sm" variant="ghost" onClick={() => remove(s.id, s.name)}><Trash2 className="h-3.5 w-3.5 text-rose-500" /></Button>
+
+                  {/* 2 stats with dashed border between (border-end-dashed) */}
+                  <div className="grid grid-cols-2 mt-3">
+                    <div className="border-r border-dashed border-border pr-2">
+                      <h5 className="text-base font-semibold text-foreground tabular-nums mb-0">{s.assetCount}</h5>
+                      <span className="text-[10px] text-muted-foreground">ทรัพย์สิน</span>
+                    </div>
+                    <div className="pl-2">
+                      <h5 className="text-base font-semibold tabular-nums mb-0" style={{ color: s.activeLoanCount > 0 ? VZ_SUP.amber : VZ_SUP.slate }}>
+                        {s.activeLoanCount}
+                      </h5>
+                      <span className="text-[10px] text-muted-foreground">กำลังยืม</span>
+                    </div>
+                  </div>
+
+                  {/* Contact info */}
+                  {(s.phone || s.email) && (
+                    <div className="mt-3 pt-3 border-t border-border text-[10px] text-muted-foreground space-y-1">
+                      {s.phone && (
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <Phone className="h-3 w-3 flex-shrink-0" /> <span className="truncate">{s.phone}</span>
+                        </div>
+                      )}
+                      {s.email && (
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <Mail className="h-3 w-3 flex-shrink-0" /> <span className="truncate">{s.email}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Action button — Velzon btn-light w-100 style */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-3 text-xs bg-muted/30 hover:bg-muted border-border"
+                    onClick={() => remove(s.id, s.name)}
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" /> ลบ Supplier
+                  </Button>
                 </div>
               </div>
-            ))}
+            )
+          })}
+        </div>
+      )}
+
+      {/* ===== Pagination element (Velzon pattern) ===== */}
+      {!loading && filtered.length > 0 && (
+        <div className="vz-card p-3 flex items-center justify-between text-xs">
+          <div className="text-muted-foreground">
+            Showing 1 to <span className="font-medium text-foreground">{filtered.length}</span> of <span className="font-medium text-foreground">{suppliers.length}</span> entries
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center gap-1">
+            <button
+              className="vz-icon-soft h-7 w-7 border border-border rounded text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+              disabled
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+            <span className="vz-pill vz-pill-info">1</span>
+            <button
+              className="vz-icon-soft h-7 w-7 border border-border rounded text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+              disabled
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

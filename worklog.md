@@ -1154,3 +1154,42 @@ Verification:
 Stage Summary:
 - deploy.sh พร้อมใช้ — one-click deploy จาก clean state
 - ใช้ร่วมกับ start-dev.sh (dev mode) และ start-prod.sh (restart prod เดิมโดยไม่ rebuild)
+
+---
+Task ID: suppliers-velzon
+Agent: main
+Task: ปรับหน้า Suppliers ให้ใช้ Velzon sellers design language
+
+Reference: https://themesbrand.com/velzon/html/master/apps-ecommerce-sellers.html
+
+Velzon sellers structure applied:
+- Page-title-box (h4 "Suppliers" + breadcrumb right)
+- Filters card (card-header border-0): search box + ตัวกรอง button (red soft) + เพิ่ม Supplier button (teal)
+- Inline form (Velzon modal-style when เพิ่ม Supplier clicked): name*, contactName, phone, email, notes
+- Suppliers grid (col-xl-3 col-lg-6 → grid-cols-1 sm:grid-cols-2 lg:grid-cols-3):
+  - Trending ribbon (teal badge top-right) สำหรับ supplier ที่ assetCount > 5
+  - Logo avatar (Building2 icon in muted bg)
+  - h5 link-primary name (indigo #405189)
+  - Contact name (muted)
+  - Mini progress bar (return rate %) — replaces Velzon sparkline chart
+  - 2 stats with dashed border between (border-r border-dashed):
+    - ทรัพย์สิน (assetCount)
+    - กำลังยืม (activeLoanCount, amber color)
+  - Contact info (phone + email with icons)
+  - ลบ Supplier button (Velzon btn-light w-100 style)
+- Pagination element at bottom: "Showing X to Y of Z entries" + prev/next buttons
+
+Work Log:
+- ดึง Velzon HTML จริง (apps-ecommerce-sellers.html) + JS template (sellers.init.js)
+- อ่าน seller card template จาก JS: card ribbon-box right overflow-hidden + text-center p-4 + optional ribbon + img + h5 link-primary + p text-muted + sparkline chart + 2 stats with border-end-dashed + View Details btn-light w-100
+- ปรับเป็น activeASSET context: Building2 icon แทนรูป logo, mini progress bar แทน sparkline chart (เพราะเราไม่มี time-series data ต่อ supplier)
+- เขียนใหม่ทั้ง SuppliersView ใน AssetsManagementViews.tsx (~285 บรรทัด)
+- เพิ่ม imports: Search, Phone, Mail, ChevronRight, ChevronLeft, SlidersHorizontal
+- เพิ่ม search state + filtered array (filter by name OR contactName)
+- Deploy + test
+- ผล: vz-card count=6 (page-title + filters + 3 supplier cards + pagination), 3 supplier cards in grid, 0 errors ✓ PASS
+- VLM ยืนยัน: 3 supplier cards in grid ✓, each has logo+name+2 stats+delete button ✓, layout clean and functional ✓
+
+Stage Summary:
+- หน้า Suppliers ใช้ Velzon sellers design language ครบ (page-title-box, filters card, supplier cards grid with trending ribbon + dashed border stats + button, pagination)
+- ผ่าน E2E test + VLM ยืนยัน
