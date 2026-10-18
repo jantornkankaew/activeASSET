@@ -990,3 +990,40 @@ Stage Summary:
 - หน้าลงทะเบียนทรัพย์สินใช้ Velzon add-product design language ครบ
 - ใช้ classes ที่มีใน pre-compiled CSS จริง ไม่มี layout collapse
 - ผ่าน E2E test และ VLM ยืนยัน
+
+---
+Task ID: sw-dev-mode-disable
+Agent: main
+Task: แก้ปัญหา "preview ได้ แต่ update ไม่เคยสำเร็จ" — user บอกว่า update ไม่เคยสำเร็จ
+
+Root cause (CRITICAL!):
+- ตอน dev mode, Next.js HMR สร้าง chunk URLs ใหม่ทุกครั้งที่ code เปลี่ยน (?v=timestamp)
+- แต่ Service Worker ใช้ staleWhileRevalidate strategy สำหรับ static assets
+- ส่ง OLD chunk URLs (จาก HTML cached เก่า) จาก SW cache → browser ดึง chunks เก่าที่ไม่มีในเซิร์ฟเวอร์แล้ว
+- ผล: ไม่ว่าจะกด refresh ยังไง user ก็เห็น OLD broken layout ตลอด
+- v1 → v2 → v3 SW bumps + localStorage cleanup gate ไม่ช่วย เพราะ SW script เองก็ถูก cached
+
+Fix (ที่แก้จริง):
+- ปิด SW registration ใน dev mode โดยสมบูรณ์
+- PWARegister.tsx effect ใหม่:
+  1. ล้าง SW registrations ทั้งหมด (unconditional — ไม่ gate ด้วย localStorage)
+  2. ล้าง caches ทั้งหมด (unconditional)
+  3. ถ้า NODE_ENV=development → หยุด ไม่ register SW ใหม่ (network-first ทุก fetch)
+  4. ถ้า NODE_ENV=production → register SW ใหม่ (PWA/offline features)
+- ลบ orphan code ที่ leftover จากการแก้ก่อนหน้า (reg.addEventListener, .catch ฯลฯ)
+
+Work Log:
+- แก้ PWARegister.tsx:
+  - ลบ localStorage gate sw-cleanup-v3 (ไม่ใช้ one-time cleanup แล้ว)
+  - ใช้ process.env.NODE_ENV === 'development' check
+  - เปลี่ยนเป็น "always unregister + always clear caches"
+  - ใน dev mode: หยุดหลัง cleanup, ไม่ register SW
+  - ใน prod: register SW ใหม่ after cleanup
+- Restart dev server, ล้าง .next cache
+- รัน test-detail-full.mjs: PASS (0 errors)
+- รัน test-register.mjs: PASS (0 errors, 8 vz-cards, 3 tabs, 11 form controls)
+
+Stage Summary:
+- Dev mode ไม่มี SW แล้ว → user จะเห็น code ใหม่ทุกครั้งที่ refresh
+- ไม่ต้อง hard refresh / clear cache / unregister manual อีกต่อไป
+- Production mode ยัง register SW ปกติ (PWA/offline features ยังใช้ได้)

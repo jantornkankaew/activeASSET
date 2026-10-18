@@ -14,50 +14,47 @@ export function PWARegister() {
   const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null)
 
   useEffect(() => {
-    // === One-time cache + SW cleanup (for users with stale v1 cache from before Velzon update) ===
-    // Bumps the user to v2 SW and clears stale HTML/JS chunks. Runs once per browser.
-    const CLEANUP_KEY = 'sw-cleanup-v3'
-    if (typeof window !== 'undefined' && !localStorage.getItem(CLEANUP_KEY)) {
-      ;(async () => {
-        try {
-          // 1. Unregister all existing SWs
-          if ('serviceWorker' in navigator) {
-            const regs = await navigator.serviceWorker.getRegistrations()
+    // === CRITICAL: Always unregister SW + clear caches in dev mode ===
+    // In dev mode, Next.js HMR generates new chunk URLs (?v=timestamp) on every code change.
+    // SW's staleWhileRevalidate serves OLD chunks from cache → new code never reaches browser.
+    // Solution: nuke all SW registrations + caches on every page load in dev.
+    const isDev = process.env.NODE_ENV === 'development'
+
+    ;(async () => {
+      try {
+        // 1. Always unregister ALL existing SWs (both dev and prod for cleanup)
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations()
+          if (regs.length > 0) {
+            console.log(`[PWA] Unregistering ${regs.length} existing SW(s)`)
             await Promise.all(regs.map((r) => r.unregister()))
           }
-          // 2. Wipe all caches (v1 static/api/images)
-          if ('caches' in window) {
-            const keys = await caches.keys()
+        }
+
+        // 2. Always wipe ALL caches (every page load)
+        if ('caches' in window) {
+          const keys = await caches.keys()
+          if (keys.length > 0) {
+            console.log(`[PWA] Clearing ${keys.length} cache(s):`, keys)
             await Promise.all(keys.map((k) => caches.delete(k)))
           }
-          // 3. Flag done — re-register fresh SW below on next render cycle
-          localStorage.setItem(CLEANUP_KEY, '1')
-          // 4. Reload once to get clean state (no SW, no cache)
-          window.location.reload()
-          return // skip the normal SW register below; reload will run this effect again
-        } catch (err) {
-          console.warn('SW cleanup failed:', err)
         }
-      })()
-      return
-    }
 
-    // Register service worker (fresh — only after cleanup)
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').then((reg) => {
-        setSwRegistration(reg)
-        reg.addEventListener('updatefound', () => {
-          const newWorker = reg.installing
-          if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                setUpdateAvailable(true)
-              }
-            })
-          }
-        })
-      }).catch((err) => console.warn('SW registration failed:', err))
-    }
+        // 3. In dev mode: do NOT re-register SW. Just stop here.
+        if (isDev) {
+          console.log('[PWA] Dev mode — SW disabled, caches cleared, fresh fetches every load')
+          return
+        }
+
+        // 4. In production: re-register fresh SW (so offline/PWA still works)
+        if ('serviceWorker' in navigator) {
+          await navigator.serviceWorker.register('/sw.js')
+          console.log('[PWA] Fresh SW registered (production)')
+        }
+      } catch (err) {
+        console.warn('[PWA] Cleanup failed:', err)
+      }
+    })()
 
     // Detect if already installed (PWA mode) — defer to escape effect sync phase
     Promise.resolve().then(() => {
