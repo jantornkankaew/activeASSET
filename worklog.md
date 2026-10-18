@@ -1672,3 +1672,57 @@ Stage Summary:
 - 3 stats with dashed borders (ใบยืม + กิจกรรม + แจ้งเตือน)
 - Role selector live-update via PATCH /api/users/[id]
 - Inline add-member form with bcrypt password hashing
+
+---
+Task ID: user-profile-velzon
+Agent: main
+Task: profile ของพนักงานแต่ละคน ใช้ต้นแบบ Velzon pages-profile.html
+
+Reference structure (Velzon Profile):
+- profile-foreground: full-width gradient cover at top
+- profile-wrapper: avatar-lg overlapping cover + h3 name + designation + location/company + 2 stats (Followers/Following)
+- profile-nav: nav-pills tabs (Overview/Activities/Projects/Documents) + Edit Profile button
+- Tab content: 2-col layout (col-xxl-3 sidebar + col-xxl-9 main)
+  - LEFT: Info table (Full Name/Mobile/E-mail/Location/Joining Date) + Portfolio social icons + Skills badges
+  - RIGHT: profile-timeline + portfolio/projects
+
+Action:
+1. Added selectedUserId state in TeamTab
+2. When clicking "ดูโปรไฟล์" button on a member card → set selectedUserId → render UserProfileView
+3. UserProfileView component (Velzon pages-profile pattern):
+   - profile-foreground: full-width gradient cover (role-colored) with grid pattern overlay
+   - Back button (top-left) + Edit Profile button (top-right, teal)
+   - profile-wrapper: avatar-lg overlapping cover + name (h3) + role + email + join date + 3 stats (ใบยืม/กิจกรรม/แจ้งเตือน)
+   - Edit form (Velzon profile-settings inline): name + role inputs + save/cancel
+   - vz-tabs-custom with 3 tabs:
+     * Overview: LEFT col-1 sidebar (Info table + Role permissions badges) + RIGHT col-2 (Recent activity feed with ScrollArea)
+     * Activities: full list of user's activities (filtered by userId from /api/activities?limit=200)
+     * ใบยืม: CRM table of user's loans (filtered by salesRepName === user.name from /api/loans)
+   - Role permissions matrix (ROLE_PERMISSIONS): different permission badges per role
+     * admin: จัดการ users, จัดการ suppliers, จัดการทรัพย์สิน, สร้าง/แก้ใบยืม, จัดของ/ส่งมอบ/รับคืน, ตรวจนับ, ดู analytics, Export ข้อมูล
+     * sales: สร้างใบยืม, ดูทรัพย์สิน, ดูใบยืมของตัวเอง
+     * store: ลงทะเบียนทรัพย์สิน, จัดของ/ส่งมอบ/รับคืน, จัดการ suppliers, ตรวจนับ
+     * manager: ดูทุกหน้า, Export ข้อมูล, ดู analytics, อนุมัติใบยืม
+
+4. Added "ดูโปรไฟล์" button at bottom of each team member card (Velzon btn-light w-100 pattern)
+
+Testing:
+- Build + deploy สำเร็จ
+- E2E test PASS: 0 page errors
+  - DOM verification: coverGradient=2, avatar=1, tabs=3, infoTable=1, activityFeed=true
+- VLM ยืนยัน 6/6 (from HTML reconstruction of screenshot):
+  1. ✓ Full-width gradient cover (role-colored)
+  2. ✓ Avatar overlapping cover + name + role + email + join date
+  3. ✓ 3 stats (ใบยืม/กิจกรรม/แจ้งเตือน) on right
+  4. ✓ Tabs (Overview/Activities/ใบยืม) with Velzon custom tab style
+  5. ✓ LEFT sidebar: Info table + permissions badges
+  6. ✓ RIGHT: Recent activity feed
+
+Stage Summary:
+- Profile view accessible via "ดูโปรไฟล์" button on team member card
+- Full Velzon pages-profile layout: gradient cover + overlapping avatar + stats + tabbed content
+- 3 tabs: Overview (info+permissions+activity) / Activities (full log) / ใบยืม (CRM table)
+- Edit Profile form (inline) with name + role live update
+- Role permissions matrix as Velzon "Skills" badges
+- Activities filtered by userId (client-side from /api/activities)
+- Loans filtered by salesRepName (client-side from /api/loans)
