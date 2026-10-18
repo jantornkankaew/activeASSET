@@ -1124,3 +1124,33 @@ Stage Summary:
 - หน้า detail ของใบยืมใช้ Velzon order-details design language ครบ
 - ใช้ classes ที่มีใน pre-compiled CSS จริง ไม่มี layout collapse
 - ผ่าน E2E test และ VLM ยืนยัน
+
+---
+Task ID: deploy-script
+Agent: main
+Task: สร้าง one-click deploy script หลังจาก user complain "deploy ไม่ได้สักที"
+
+Root cause analysis:
+- Build error ที่แก้ไปก่อนหน้านี้ (`@import "/tailwind.css"`) ทำให้ build ผ่านแล้ว
+- แต่ user อาจไม่รู้ขั้นตอนการ deploy ที่ครบถ้วน (kill → build → start)
+- ต้องการ one-click script ที่ทำทุกอย่างให้
+
+Action:
+- สร้าง /home/z/my-project/deploy.sh — one-click deploy script
+  - Step 1: pkill process เก่า (next dev, next-server, standalone)
+  - Step 2: rm -rf .next
+  - Step 3: bun run build (exit ถ้า fail พร้อมแสดง log)
+  - Step 4: start production server เป็น daemon (double-fork + setsid + disown)
+  - รอ server พร้อม (poll HTTP 200 สูงสุด 15 วินาที)
+  - แสดงสรุป URL + คำสั่งที่เกี่ยวข้อง
+
+Verification:
+- ./deploy.sh รันสำเร็จ
+- Build ผ่าน (exit code 0, standalone server 3247 bytes)
+- Server start daemon (PID parented to init)
+- HTTP 200 ที่ port 3000 (local) + port 81 (Caddy preview)
+- Login ผ่าน Caddy ได้, /api/dashboard และ /api/analytics ตอบ 200
+
+Stage Summary:
+- deploy.sh พร้อมใช้ — one-click deploy จาก clean state
+- ใช้ร่วมกับ start-dev.sh (dev mode) และ start-prod.sh (restart prod เดิมโดยไม่ rebuild)
