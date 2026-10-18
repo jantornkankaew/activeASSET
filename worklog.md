@@ -1330,3 +1330,61 @@ Stage Summary:
   - LoanDetailSheet ✓ (แสดงใน past events เป็น italic quote)
 - แยกจาก damageDescription (ที่ใช้เฉพาะกรณีเสียหาย) — comment ใช้สำหรับรีวิวทั่วไปเสมอ
 - Velzon review quote pattern (italic text-muted) ใช้แสดง comment ใน past events
+
+---
+Task ID: sn-aggregated-rating
+Agent: main
+Task: ดาวรีวิวต้องลงที่ S/N ด้วย ส่วนดาวรวมของใบยืมเกิดจากการคำนวณของทั้งใบที่รีวิวรายเครื่อง
+
+User clarification:
+- ดาวระดับ S/N (asset unit) = คำนวณจากทุก return event ที่เคยรับคืนเครื่องนี้ (ตัดข้ามหลายใบยืม)
+- ดาวระดับใบยืม = คำนวณจาก item-level reviews ในใบยืมนั้น ✅ (ทำไปแล้วใน ReturnLoanSheet)
+
+Action:
+1. Update /api/assets/[tagId]/history API:
+   - Compute `ratingStats` จาก `loanLines.flatMap(line => line.returnItems)` — รวมทุก ReturnEventItem ของเครื่องนี้
+   - `averageStars`: avg (GRADE_TO_STARS[conditionGrade]) across all return items
+   - `gradeCounts`: { A, B, C, D, E } count
+   - `allReviews`: array ของทุก return review (sorted desc by returnDate) พร้อม loanDocNo + customer + stars + comment + isDamaged + damageDescription + sendToRepair + inspectorName + returnDate
+   - เพิ่ม `comment: lastReturn?.comment || null` ใน history items (per loan)
+
+2. Update AssetDetail interface:
+   - เพิ่ม `ratingStats: { totalReviews, averageStars, gradeCounts, allReviews[] }` field
+
+3. Update AssetDetailView component:
+   - ใช้ `ratingStats.averageStars` สำหรับ stars แสดงในหัวข้อ main (แทนการใช้แค่ current grade)
+   - แสดง "( X.X / 5 · N รีวิว · M ครั้งยืม )" แทน "( M ครั้งยืม )" อย่างเดียว
+   - ใน Ratings & Reviews tab:
+     * LEFT summary box: 5 stars + "{avgStars.toFixed(1)} out of 5" + "รวม N รีวิว · จาก M ครั้งยืม"
+     * LEFT breakdown: 5★/4★/3★/2★/1★ progress bars (เปลี่ยนจาก status breakdown เดิม)
+       - 5★ (A) = teal, 4★ (B) = teal, 3★ (C) = amber, 2★ (D) = rose, 1★ (E) = rose
+       - ใช้ gradeCounts จาก ratingStats (คำนวณจากทุก review ทุกใบยืม)
+     * RIGHT review list: แสดง allReviews (ทุก review ของ S/N นี้ ตัดข้ามใบยืม)
+       - แต่ละ review card: avatar + customer + loanDocNo + isDamaged/ซ่อม pills + star rating (from stars field)
+       - บรรทัด date + inspector + grade
+       - comment (italic quote with amber border-l-2)
+       - damageDescription (separate red box) ถ้ามี
+
+Testing:
+- API verification (ACT-037 ที่มี 1 review A=5★ + comment):
+  totalReviews: 1, averageStars: 5, gradeCounts: {A:1, B:0, C:0, D:0, E:0}, allReviews count: 1
+  comment: 'ทดสอบรีวิว: เครื่องสภาพดี ใช้งานได้ปกติ มีรอยขีดเล็กน้อยที่มุมขวาบน' ✓
+- E2E test (test-asset-detail.mjs): PASS, 0 page errors, 3 tabs, 6 star icons
+- DOM verification (test-sn-rating.mjs):
+  - "5.0 / 5" found in body: true ✓
+  - "1 รีวิว" found in body: true ✓
+  - 3 tabs available ✓
+  - After clicking Ratings & Reviews tab → screenshot shows aggregated rating
+- VLM ยืนยัน 3/3:
+  1. ✓ Rating summary box with 5 amber stars + "5.0 out of 5"
+  2. ✓ 5 progress bars (5★/4★/3★/2★/1★) showing distribution (5★ bar filled, others at 0)
+  3. ✓ Review card with avatar + customer name + star rating + date + italic comment quote
+
+Stage Summary:
+- S/N-level aggregated rating works end-to-end:
+  - Schema (ReturnEventItem.comment ที่เพิ่มจาก task ก่อน) ✓
+  - API compute ratingStats (avg stars + grade distribution + all reviews) ✓
+  - UI AssetDetailView ใช้ ratingStats แสดงดาวรวม + breakdown + review list ✓
+- ดาวระดับ S/N คำนวณจากทุก return review ของเครื่องนั้น (ตัดข้ามหลายใบยืม) — แสดงใน AssetDetailView
+- ดาวระดับใบยืม คำนวณจาก item-level reviews ในใบยืมนั้น (เหมือนเดิม) — แสดงใน ReturnLoanSheet + LoanDetailSheet
+- comment แสดงทั้งใน S/N review list (AssetDetailView Ratings & Reviews tab) และใน loan detail (LoanDetailSheet) และใน return form (ReturnLoanSheet past events)

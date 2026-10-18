@@ -122,6 +122,24 @@ interface AssetDetail {
     damagedCount: number
     repairCount: number
   }
+  ratingStats: {
+    totalReviews: number
+    averageStars: number
+    gradeCounts: Record<string, number>
+    allReviews: Array<{
+      loanDocNo: string
+      customerName: string
+      customerCompany: string | null
+      conditionGrade: string
+      stars: number
+      comment: string | null
+      isDamaged: boolean
+      damageDescription: string | null
+      sendToRepair: boolean
+      inspectorName: string
+      returnDate: string
+    }>
+  }
 }
 
 type View = 'catalog' | 'units' | 'detail' | 'register' | 'suppliers'
@@ -502,11 +520,15 @@ function AssetDetailView({
   if (loading) return <div className="py-8"><LoadingState /></div>
   if (!detail) return <EmptyState message="ไม่พบข้อมูล" />
 
-  const { asset, history, stats } = detail
+  const { asset, history, stats, ratingStats } = detail
 
   // Condition grade → star count (A=5, B=4, C=3, D=2, E=1)
   const gradeToStars: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
-  const stars = asset.conditionGrade ? (gradeToStars[asset.conditionGrade] || 4) : 4
+  // Aggregate stars from ratingStats (computed across ALL return events of this S/N — not just current grade)
+  const avgStars = ratingStats?.averageStars ?? (asset.conditionGrade ? (gradeToStars[asset.conditionGrade] || 4) : 4)
+  const totalReviews = ratingStats?.totalReviews ?? 0
+  const gradeCounts = ratingStats?.gradeCounts ?? {}
+  const allReviews = ratingStats?.allReviews ?? []
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -591,19 +613,19 @@ function AssetDetailView({
                 </div>
               </div>
 
-              {/* Stars + review count */}
+              {/* Stars + review count — aggregated across ALL return events of this S/N */}
               <div className="flex items-center gap-2 mt-3">
                 <div className="flex items-center gap-0.5">
                   {[1, 2, 3, 4, 5].map((i) => (
                     <Star
                       key={i}
-                      className={`h-4 w-4 ${i <= stars ? 'fill-current' : ''}`}
-                      style={{ color: i <= stars ? '#f7b84b' : 'rgba(116,120,141,0.3)' }}
+                      className={`h-4 w-4 ${i <= Math.round(avgStars) ? 'fill-current' : ''}`}
+                      style={{ color: i <= Math.round(avgStars) ? '#f7b84b' : 'rgba(116,120,141,0.3)' }}
                     />
                   ))}
                 </div>
                 <span className="text-xs text-muted-foreground">
-                  ( {stats.totalLoans} ครั้งยืม )
+                  ( {avgStars.toFixed(1)} / 5 · {totalReviews} รีวิว · {stats.totalLoans} ครั้งยืม )
                 </span>
               </div>
 
@@ -854,126 +876,124 @@ function AssetDetailView({
                 </div>
               </TabsContent>
 
-              {/* Ratings & Reviews tab — adapted to loan history */}
+              {/* Ratings & Reviews tab — aggregated S/N rating + all item-level reviews */}
               <TabsContent value="reviews" className="vz-tab-content mt-0">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   {/* LEFT — Summary card (1/3 on lg) */}
                   <div className="lg:col-span-1">
+                    {/* Summary box — Velzon bg-light rounded-2 pattern */}
                     <div className="vz-services-box">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-0.5">
                           {[1, 2, 3, 4, 5].map((i) => (
                             <Star
                               key={i}
-                              className={`h-4 w-4 ${i <= stars ? 'fill-current' : ''}`}
-                              style={{ color: i <= stars ? '#f7b84b' : 'rgba(116,120,141,0.3)' }}
+                              className={`h-4 w-4 ${i <= Math.round(avgStars) ? 'fill-current' : ''}`}
+                              style={{ color: i <= Math.round(avgStars) ? '#f7b84b' : 'rgba(116,120,141,0.3)' }}
                             />
                           ))}
                         </div>
-                        <h6 className="text-xs font-semibold text-foreground mb-0">{stars}.0 out of 5</h6>
+                        <h6 className="text-xs font-semibold text-foreground mb-0">{avgStars.toFixed(1)} out of 5</h6>
                       </div>
                     </div>
                     <div className="text-center mt-2 text-xs text-muted-foreground">
-                      รวม <span className="font-medium text-foreground">{history.length}</span> รายการ
+                      รวม <span className="font-medium text-foreground">{totalReviews}</span> รีวิว · จาก <span className="font-medium text-foreground">{stats.totalLoans}</span> ครั้งยืม
                     </div>
 
-                    {/* Status breakdown — progress bars (Velzon 5★ breakdown style) */}
+                    {/* Grade distribution — Velzon 5★→1★ breakdown pattern (computed from ALL reviews across loans) */}
                     <div className="mt-3 space-y-2">
-                      <VelzonBreakdownRow
-                        label="คืนแล้ว"
-                        count={stats.completedLoans}
-                        total={Math.max(stats.totalLoans, 1)}
-                        color="#0ab39c"
-                      />
-                      <VelzonBreakdownRow
-                        label="กำลังยืม"
-                        count={history.filter((h) => h.lineStatus !== 'Returned').length}
-                        total={Math.max(stats.totalLoans, 1)}
-                        color="#f7b84b"
-                      />
-                      <VelzonBreakdownRow
-                        label="เสียหาย"
-                        count={stats.damagedCount}
-                        total={Math.max(stats.totalLoans, 1)}
-                        color="#f06548"
-                      />
-                      <VelzonBreakdownRow
-                        label="ส่งซ่อม"
-                        count={stats.repairCount}
-                        total={Math.max(stats.totalLoans, 1)}
-                        color="#a071f0"
-                      />
+                      {[
+                        { label: '5 ★', grade: 'A', count: gradeCounts.A || 0, color: '#0ab39c' },
+                        { label: '4 ★', grade: 'B', count: gradeCounts.B || 0, color: '#0ab39c' },
+                        { label: '3 ★', grade: 'C', count: gradeCounts.C || 0, color: '#f7b84b' },
+                        { label: '2 ★', grade: 'D', count: gradeCounts.D || 0, color: '#f06548' },
+                        { label: '1 ★', grade: 'E', count: gradeCounts.E || 0, color: '#f06548' },
+                      ].map((row) => {
+                        const total = totalReviews || 1
+                        const pct = (row.count / total) * 100
+                        return (
+                          <div key={row.grade} className="flex items-center gap-2">
+                            <div className="w-8"><h6 className="text-[10px] font-medium text-foreground mb-0">{row.label}</h6></div>
+                            <div className="flex-1">
+                              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: row.color }} />
+                              </div>
+                            </div>
+                            <div className="w-6 text-right"><h6 className="text-[10px] font-medium text-muted-foreground mb-0 tabular-nums">{row.count}</h6></div>
+                          </div>
+                        )
+                      })}
+                      {totalReviews === 0 && (
+                        <p className="text-[10px] text-muted-foreground text-center italic mt-2">ยังไม่มีรีวิวสำหรับ S/N นี้</p>
+                      )}
                     </div>
                   </div>
 
-                  {/* RIGHT — Review list (2/3 on lg) */}
+                  {/* RIGHT — Review list (2/3 on lg) — all reviews across all loans */}
                   <div className="lg:col-span-2">
-                    {history.length === 0 ? (
+                    {allReviews.length === 0 ? (
                       <div className="text-center py-8">
                         <History className="h-10 w-10 mx-auto mb-2 text-muted-foreground/30" />
-                        <div className="text-sm font-medium text-foreground">ยังไม่มีประวัติการยืม</div>
-                        <div className="text-[11px] text-muted-foreground mt-0.5">เครื่องนี้ยังไม่เคยถูกยืม</div>
+                        <div className="text-sm font-medium text-foreground">ยังไม่มีรีวิวการรับคืน</div>
+                        <div className="text-[11px] text-muted-foreground mt-0.5">เครื่องนี้ยังไม่เคยถูกรับคืนพร้อมีการประเมิน</div>
                       </div>
                     ) : (
                       <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                        {history.map((h, i) => {
-                          const isReturned = h.lineStatus === 'Returned'
-                          const color = isReturned ? '#0ab39c' : '#f7b84b'
+                        {allReviews.map((review, i) => {
+                          // Per-review color based on stars
+                          const color = review.stars >= 4 ? '#0ab39c' : review.stars === 3 ? '#f7b84b' : '#f06548'
                           return (
                             <div key={i} className="border border-border rounded-md p-3">
-                              {/* Top row — avatar + name + status */}
+                              {/* Top row — avatar + customer + loan doc + star rating */}
                               <div className="flex items-center gap-2.5">
                                 <div
                                   className="vz-avatar h-8 w-8 text-xs"
                                   style={{ backgroundColor: `${color}11`, color }}
                                 >
-                                  {h.customerName.charAt(0)}
+                                  {review.customerName.charAt(0)}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="text-xs font-semibold text-foreground truncate">
-                                    {h.customerName} {h.customerCompany ? <span className="text-muted-foreground">— {h.customerCompany}</span> : null}
+                                    {review.customerName} {review.customerCompany ? <span className="text-muted-foreground">— {review.customerCompany}</span> : null}
                                   </div>
-                                  <div className="flex items-center gap-1.5 mt-0.5">
-                                    {isReturned ? (
-                                      <span className="vz-pill vz-pill-success">คืนแล้ว</span>
-                                    ) : (
-                                      <span className="vz-pill vz-pill-warning">กำลังยืม</span>
-                                    )}
-                                    <span className="text-[10px] text-muted-foreground">{h.loanDocNo}</span>
+                                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                    <span className="vz-pill vz-pill-muted">{review.loanDocNo}</span>
+                                    {review.isDamaged && <span className="vz-pill vz-pill-danger">เสียหาย</span>}
+                                    {review.sendToRepair && <span className="vz-pill" style={{ backgroundColor: 'rgba(160,113,240,0.10)', color: '#a071f0' }}>ซ่อม</span>}
                                   </div>
                                 </div>
-                                {/* Star rating for this loan */}
-                                <div className="flex items-center gap-0.5">
-                                  {[1, 2, 3, 4, 5].map((s) => {
-                                    const gradeStars: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
-                                    const loanStars = h.conditionGrade ? (gradeStars[h.conditionGrade] || 4) : 4
-                                    return (
-                                      <Star
-                                        key={s}
-                                        className={`h-3 w-3 ${s <= loanStars ? 'fill-current' : ''}`}
-                                        style={{ color: s <= loanStars ? '#f7b84b' : 'rgba(116,120,141,0.3)' }}
-                                      />
-                                    )
-                                  })}
+                                {/* Star rating for this review (computed from conditionGrade) */}
+                                <div className="flex items-center gap-0.5 flex-shrink-0">
+                                  {[1, 2, 3, 4, 5].map((s) => (
+                                    <Star
+                                      key={s}
+                                      className={`h-3 w-3 ${s <= review.stars ? 'fill-current' : ''}`}
+                                      style={{ color: s <= review.stars ? '#f7b84b' : 'rgba(116,120,141,0.3)' }}
+                                    />
+                                  ))}
                                 </div>
                               </div>
 
-                              {/* Bottom row — date */}
+                              {/* Bottom row — date + inspector */}
                               <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground">
-                                <span>ยืม {h.dispatchedAt ? formatThaiDate(h.dispatchedAt) : '-'}</span>
+                                <span>รับคืน {formatThaiDate(review.returnDate)}</span>
                                 <span aria-hidden>•</span>
-                                <span>กำหนดคืน {formatThaiDate(h.expectedReturnDate)}</span>
-                                {h.returnedAt && (
-                                  <>
-                                    <span aria-hidden>•</span>
-                                    <span style={{ color: '#0ab39c' }}>คืน {formatThaiDate(h.returnedAt)}</span>
-                                  </>
-                                )}
+                                <span>ตรวจโดย {review.inspectorName}</span>
+                                <span aria-hidden>•</span>
+                                <span style={{ color }}>Grade {review.conditionGrade}</span>
                               </div>
 
-                              {h.damageDescription && (
-                                <div className="text-xs mt-2 p-2 rounded" style={{ backgroundColor: 'rgba(240,101,72,0.06)', color: '#f06548' }}>
-                                  ⚠ {h.damageDescription}
+                              {/* Comment — Velzon review quote pattern */}
+                              {review.comment && (
+                                <div className="mt-2 text-[11px] text-muted-foreground italic leading-relaxed pl-1 border-l-2" style={{ borderColor: '#f7b84b' }}>
+                                  "{review.comment}"
+                                </div>
+                              )}
+
+                              {/* Damage description (if exists, separate from comment) */}
+                              {review.damageDescription && (
+                                <div className="text-xs mt-2 p-2 rounded" style={{ backgroundColor: 'rgba(240,101,72,0.06)', color: '#f06548', border: '1px solid rgba(240,101,72,0.15)' }}>
+                                  ⚠ {review.damageDescription}
                                 </div>
                               )}
                             </div>

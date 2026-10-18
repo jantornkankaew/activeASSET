@@ -72,11 +72,65 @@ export async function GET(
       conditionGrade: lastReturn?.conditionGrade || null,
       isDamaged: lastReturn?.isDamaged || false,
       damageDescription: lastReturn?.damageDescription || null,
+      comment: lastReturn?.comment || null,
       sendToRepair: lastReturn?.sendToRepair || false,
       inspectorName: lastReturn?.returnEvent.inspectorName || null,
       returnNotes: lastReturn?.returnEvent.notes || null,
     }
   })
+
+  // === Compute aggregated S/N-level rating stats across ALL return events ===
+  // (ตัดข้ามหลายใบยืม — คำนวณจากทุก ReturnEventItem ของเครื่องนี้)
+  const allReturnItems = loanLines.flatMap((line) => line.returnItems)
+  const GRADE_TO_STARS: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
+  const gradeCounts: Record<string, number> = { A: 0, B: 0, C: 0, D: 0, E: 0 }
+  let totalStars = 0
+  let totalReviewCount = 0
+  const allReviews: Array<{
+    loanDocNo: string
+    customerName: string
+    customerCompany: string | null
+    conditionGrade: string
+    stars: number
+    comment: string | null
+    isDamaged: boolean
+    damageDescription: string | null
+    sendToRepair: boolean
+    inspectorName: string
+    returnDate: string
+  }> = []
+
+  for (const item of allReturnItems) {
+    const grade = item.conditionGrade
+    if (grade && GRADE_TO_STARS[grade] !== undefined) {
+      gradeCounts[grade] = (gradeCounts[grade] || 0) + 1
+      totalStars += GRADE_TO_STARS[grade]
+      totalReviewCount++
+
+      // Find the loan for this item
+      const line = loanLines.find((l) => l.returnItems.some((ri) => ri.id === item.id))
+      if (line) {
+        allReviews.push({
+          loanDocNo: line.loan.docNo,
+          customerName: line.loan.customerName,
+          customerCompany: line.loan.customerCompany,
+          conditionGrade: grade,
+          stars: GRADE_TO_STARS[grade],
+          comment: item.comment || null,
+          isDamaged: item.isDamaged,
+          damageDescription: item.damageDescription || null,
+          sendToRepair: item.sendToRepair,
+          inspectorName: item.returnEvent.inspectorName,
+          returnDate: item.returnEvent.returnDate,
+        })
+      }
+    }
+  }
+
+  // Sort reviews by date desc (most recent first)
+  allReviews.sort((a, b) => new Date(b.returnDate).getTime() - new Date(a.returnDate).getTime())
+
+  const averageStars = totalReviewCount > 0 ? totalStars / totalReviewCount : 0
 
   return NextResponse.json({
     asset: {
@@ -109,6 +163,12 @@ export async function GET(
       activeLoan: history.find((h) => h.lineStatus === 'Out') || null,
       damagedCount: history.filter((h) => h.isDamaged).length,
       repairCount: history.filter((h) => h.sendToRepair).length,
+    },
+    ratingStats: {
+      totalReviews: totalReviewCount,
+      averageStars: Number(averageStars.toFixed(2)),
+      gradeCounts,
+      allReviews,
     },
   })
 }
