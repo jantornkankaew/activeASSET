@@ -132,6 +132,14 @@
         "nxtPid": "nxtPid"
       },
       "namedRegex": "^/api/suppliers/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/users/[id]",
+      "regex": "^/api/users/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/users/(?<nxtPid>[^/]+?)(?:/)?$"
     }
   ],
   "staticRoutes": [
@@ -332,6 +340,12 @@
       "regex": "^/api/user\\-tenants/switch(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/user\\-tenants/switch(?:/)?$"
+    },
+    {
+      "page": "/api/users",
+      "regex": "^/api/users(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/users(?:/)?$"
     },
     {
       "page": "/api/waiting-list",

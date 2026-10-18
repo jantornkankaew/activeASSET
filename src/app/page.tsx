@@ -8,6 +8,7 @@ import { AssetsTab } from '@/components/activeasset/AssetsTab'
 import { LoansTab } from '@/components/activeasset/LoansTab'
 import { AuditTab } from '@/components/activeasset/AuditTab'
 import { AnalyticsTab } from '@/components/activeasset/AnalyticsTab'
+import { TeamTab } from '@/components/activeasset/TeamTab'
 import { ReservationTab } from '@/components/activeasset/ReservationTab'
 import { RegisterAssetView, SuppliersView } from '@/components/activeasset/AssetsManagementViews'
 import { RequestLoanSheet } from '@/components/activeasset/RequestLoanSheet'
@@ -187,6 +188,7 @@ function AppShell() {
           {page === 'reservations' && <ReservationTab />}
           {page === 'audit' && <AuditTab startNewTrigger={auditStartTrigger} />}
           {page === 'analytics' && <AnalyticsTab />}
+          {page === 'team' && <TeamTab />}
         </main>
 
         {/* Footer */}

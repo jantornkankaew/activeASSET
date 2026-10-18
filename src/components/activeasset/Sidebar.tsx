@@ -9,7 +9,7 @@ import { TenantSwitcher } from '@/components/auth/TenantSwitcher'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
 import {
   Boxes, FileText, Calendar, ClipboardCheck, TrendingUp,
-  Package, Plus, Building2, Download,
+  Package, Plus, Building2, Download, Users,
   Home, Wrench,
   Menu, X, Clock, AlertTriangle,
 } from 'lucide-react'
@@ -17,7 +17,8 @@ import {
 export type SidebarPage =
   | 'overview' | 'loans' | 'reservations'
   | 'assets' | 'assets-register' | 'assets-suppliers'
-  | 'audit' | 'analytics' | 'export-loans' | 'export-assets' | 'export-analytics'
+  | 'audit' | 'analytics' | 'team'
+  | 'export-loans' | 'export-assets' | 'export-analytics'
 
 interface SidebarGroup {
   label: string
@@ -100,6 +101,15 @@ export function Sidebar({
         {
           id: 'export-analytics', label: 'Export Analytics', icon: <Download className="h-4 w-4" />,
           roles: ['admin', 'manager'],
+        },
+      ],
+    },
+    {
+      label: 'ระบบ',
+      items: [
+        {
+          id: 'team', label: 'ทีมงาน', icon: <Users className="h-4 w-4" />,
+          roles: ['admin'],
         },
       ],
     },

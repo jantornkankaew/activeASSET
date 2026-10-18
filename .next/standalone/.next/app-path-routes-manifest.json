@@ -45,6 +45,8 @@
   "/api/uploads/route": "/api/uploads",
   "/api/user-tenants/route": "/api/user-tenants",
   "/api/user-tenants/switch/route": "/api/user-tenants/switch",
+  "/api/users/[id]/route": "/api/users/[id]",
+  "/api/users/route": "/api/users",
   "/api/waiting-list/route": "/api/waiting-list",
   "/page": "/"
 }

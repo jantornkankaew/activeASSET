@@ -1595,3 +1595,80 @@ Stage Summary:
 - LEFT image panel เหลือ main image เดียว (ขนาดเท่าเดิม) + thumbnail เล็กลง (h-10 w-10 แทน aspect-square)
 - ลด visual noise: ไม่มี wrapper รอบ main image, icon ใน thumbnail จางลง
 - โครงสร้าง: main image → small thumbnails row → status/grade badges
+
+---
+Task ID: team-page-velzon
+Agent: main
+Task: หน้าสมาชิก ทีมงาน พนักงาน ใช้ต้นแบบ Velzon team page (https://themesbrand.com/velzon/html/master/pages-team.html)
+
+Reference structure (Velzon Team):
+- page-title-box (h4 "Team" + breadcrumb right)
+- Filter card: search box + view toggle (grid/list) + Add Members button (btn-success)
+- Team member cards (grid-view-filter) — each card has:
+  - team-cover image at top (gradient image)
+  - card-body p-4 with:
+    - team-settings (favorite star + dropdown Edit/Remove) on right top
+    - col-lg-4: team-profile-img (avatar-lg img-thumbnail rounded-circle) + member-name (h5 link) + designation (text-muted p)
+    - col-lg-4: 2 stats with border-end-dashed (Projects + Tasks)
+    - col-lg-2: View Profile button (btn-light)
+- list-view-filter: alternative layout (table-like)
+
+Action:
+1. Created /api/users endpoint:
+   - GET /api/users — list all users with stats (loans/activities/notifications)
+   - POST /api/users — create new user (name, email, password, role) — bcrypt hash password
+   - Both require admin role (requireRole('admin'))
+
+2. Created /api/users/[id] endpoint:
+   - PATCH — update role or name
+   - DELETE — remove user (don't allow last user delete)
+
+3. Updated Sidebar:
+   - Added 'team' to SidebarPage type
+   - Added "ระบบ" group with "ทีมงาน" item (Users icon, admin-only role)
+   - Added Users import from lucide-react
+
+4. Updated page.tsx:
+   - Added import { TeamTab }
+   - Added routing: {page === 'team' && <TeamTab />}
+
+5. Created TeamTab.tsx with Velzon team design:
+   - page-title-box (h4 "ทีมงาน" + breadcrumb)
+   - Filter card: search box + grid/list view toggle buttons (Velzon list-grid-nav) + เพิ่มสมาชิก button (teal)
+   - Inline add-member form (Velzon modal-style) with name/email/password/role fields
+   - Grid view (grid-view-filter pattern):
+     * Each card has Velzon team-cover gradient at top (different color per role: admin=red→indigo, sales=amber→teal, store=teal→indigo, manager=purple→indigo)
+     * Avatar-lg overlapping cover (Velzon team-profile-img pattern) with role-colored bg + initials
+     * Member name (h5 link) + designation (text-muted p) = role label
+     * Email with Mail icon
+     * 3 stats with border-end-dashed: ใบยืม (loans) + กิจกรรม (activities) + แจ้งเตือน (notifications)
+     * Role selector Select dropdown at bottom (replaces View Profile button — change role live)
+     * Delete button in cover dropdown (replaces Edit/Remove dropdown)
+     * Favorite star (Shield icon — bookmark pattern)
+   - List view (list-view-filter pattern):
+     * CRM table with avatar-sm + name + email + role pill + 3 stat columns + delete button
+   - Summary footer: "Showing X to Y of Z สมาชิก" + role distribution pills
+
+Testing:
+- API verification: GET /api/users returns 4 users (admin + sales + store + manager) with stats ✓
+- E2E test: PASS, 0 page errors
+  - vz-card count: 7 (page-title + filter + 4 member cards + summary)
+  - vz-avatar count: 4 (one per member card)
+  - vz-pill count: 4 (role distribution pills in footer)
+  - coverGradients: 8 (4 cards × 2 gradients each — primary + grid pattern overlay)
+  - Switch to list view: vz-crm-table count: 1 ✓
+- VLM ยืนยัน 5/5 Velzon elements:
+  1. ✓ page-title-box (h4 + breadcrumb)
+  2. ✓ Filter card with search + view toggle + เพิ่มสมาชิก button (teal)
+  3. ✓ Team member cards with gradient cover (different colors per role)
+  4. ✓ Avatar overlapping cover + name + role + email + 3 stats with dashed borders
+  5. ✓ Role selector dropdown at bottom of each card
+
+Stage Summary:
+- หน้าทีมงานพร้อมใช้งานใน sidebar (admin only)
+- API /api/users สำหรับ CRUD users (admin only)
+- Grid + List view toggle (Velzon list-grid-nav pattern)
+- Cover gradient different colors per role (admin red→indigo, sales amber→teal, store teal→indigo, manager purple→indigo)
+- 3 stats with dashed borders (ใบยืม + กิจกรรม + แจ้งเตือน)
+- Role selector live-update via PATCH /api/users/[id]
+- Inline add-member form with bcrypt password hashing
