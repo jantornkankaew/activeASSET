@@ -19,12 +19,16 @@ import {
 } from './shared'
 import {
   ScanLine, CheckCircle2, AlertCircle, ShieldCheck, User, Wrench,
-  History, Package,
+  History, Package, Star, FileText, Building2, Calendar, Truck, Phone,
+  MapPin, ChevronRight,
 } from 'lucide-react'
 import {
   getLoanStatusLabel, getPurposeLabel, formatThaiDate, formatThaiDateTime,
-  GRADE_LABELS, SOURCE_LABELS,
+  GRADE_LABELS, SOURCE_LABELS, INDUSTRY_LABELS, PURPOSE_LABELS,
 } from '@/lib/activeasset-constants'
+
+// Velzon color tokens
+const VZ = { primary: '#405189', teal: '#0ab39c', amber: '#f7b84b', rose: '#f06548', purple: '#a071f0', slate: '#74788d' }
 
 interface LoanLineItem {
   id: string
@@ -61,8 +65,10 @@ interface LoanDetail {
   docNo: string
   customerName: string
   customerCompany: string | null
+  customerIndustry: string | null
   salesRepName: string
   purpose: string
+  industry: string | null
   expectedReturnDate: string
   status: string
   lines: LoanLineItem[]
@@ -77,7 +83,7 @@ interface ReturnItemForm {
   isDamaged: boolean
   damageDescription: string
   sendToRepair: boolean
-  returnToSource: boolean // default true — คืนตาม source ต้นทาง
+  returnToSource: boolean
 }
 
 interface ReturnLoanSheetProps {
@@ -87,7 +93,9 @@ interface ReturnLoanSheetProps {
   onDone: () => void
 }
 
-// ReturnLoanSheet (Phase 4) — รับคืน + ตรวจสภาพ + Grade + รองรับ source-based return
+// Grade → star count mapping (for the "review" star rating display)
+const GRADE_TO_STARS: Record<string, number> = { A: 5, B: 4, C: 3, D: 2 }
+
 export function ReturnLoanSheet({ open, onOpenChange, loan, onDone }: ReturnLoanSheetProps) {
   const { toast } = useToast()
   const [forms, setForms] = useState<Record<string, ReturnItemForm>>({})
@@ -111,7 +119,7 @@ export function ReturnLoanSheet({ open, onOpenChange, loan, onDone }: ReturnLoan
             isDamaged: false,
             damageDescription: '',
             sendToRepair: false,
-            returnToSource: true, // default คืนตาม source ต้นทาง
+            returnToSource: true,
           }
         }
       }
@@ -139,6 +147,20 @@ export function ReturnLoanSheet({ open, onOpenChange, loan, onDone }: ReturnLoan
   const pendingLines = loan.lines.filter((l) => l.status === 'Out')
   const returnedLines = loan.lines.filter((l) => l.status === 'Returned')
   const selectedCount = Object.values(forms).filter((f) => f.selected).length
+
+  // === "Review" summary — grade distribution of all returned items across all return events ===
+  const allReturnedItems = (loan.returnEvents || []).flatMap(ev => ev.items)
+  const gradeCounts: Record<string, number> = { A: 0, B: 0, C: 0, D: 0 }
+  for (const item of allReturnedItems) {
+    if (item.conditionGrade && gradeCounts[item.conditionGrade] !== undefined) {
+      gradeCounts[item.conditionGrade]++
+    }
+  }
+  // Also count already-returned lines from current loan (returnedAt set)
+  const totalReturnedCount = allReturnedItems.length
+  const avgStars = totalReturnedCount > 0
+    ? allReturnedItems.reduce((s, it) => s + (GRADE_TO_STARS[it.conditionGrade] || 4), 0) / totalReturnedCount
+    : 0
 
   const submit = async () => {
     if (!loan) return
@@ -201,209 +223,414 @@ export function ReturnLoanSheet({ open, onOpenChange, loan, onDone }: ReturnLoan
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-2xl p-0 flex flex-col">
-        <SheetHeader className="px-4 py-3 border-b">
-          <SheetTitle className="flex items-center gap-2">
-            <ScanLine className="h-4 w-4" /> รับคืน — {loan.docNo}
-          </SheetTitle>
-          <SheetDescription className="flex items-center gap-2 flex-wrap">
-            <LoanStatusBadge status={loan.status} />
-            <span>{loan.customerName}{loan.customerCompany ? ` • ${loan.customerCompany}` : ''}</span>
-          </SheetDescription>
+      <SheetContent side="right" className="w-full sm:max-w-5xl p-0 flex flex-col">
+        {/* ===== Velzon page-title-box style header ===== */}
+        <SheetHeader className="px-4 py-3 border-b flex flex-row items-center justify-between gap-3 space-y-0">
+          <div className="flex items-center gap-3">
+            <SheetTitle className="flex items-center gap-2 text-base">
+              <ScanLine className="h-4 w-4" /> รับคืน — {loan.docNo}
+            </SheetTitle>
+            <span className="text-muted-foreground/40">|</span>
+            <SheetDescription className="flex items-center gap-1.5 flex-wrap">
+              <LoanStatusBadge status={loan.status} />
+              <span className="text-xs">{loan.customerName}{loan.customerCompany ? ` • ${loan.customerCompany}` : ''}</span>
+            </SheetDescription>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            กำหนดคืน: <span className="font-medium text-foreground">{formatThaiDate(loan.expectedReturnDate)}</span>
+          </div>
         </SheetHeader>
 
         <ScrollArea className="flex-1">
-          <div className="p-3 space-y-3">
-            <div>
-              <h3 className="text-sm font-medium mb-2 flex items-center gap-1.5">
-                <Package className="h-4 w-4" /> รอรับคืน ({pendingLines.length})
-              </h3>
-              <div className="space-y-2">
-                {pendingLines.map((line) => {
-                  const f = forms[line.id]
-                  if (!f) return null
-                  return (
-                    <div key={line.id} className="border rounded-md p-2.5">
-                      <div className="flex items-start gap-2">
-                        <Checkbox checked={f.selected} onCheckedChange={(v) => updateForm(line.id, { selected: !!v })} className="mt-1" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-mono text-sm font-medium">{line.assetTagId}</span>
-                            <Badge variant="outline" className="text-xs">{line.brand} {line.model}</Badge>
-                            <SourceBadge source={line.source} />
-                          </div>
-                          <div className="text-xs text-slate-500 mt-0.5">S/N: <span className="font-mono">{line.serialNo}</span></div>
-                          {/* Source return hint */}
-                          {line.source === 'Supplier' && (
-                            <div className="text-xs text-purple-700 bg-purple-50 border border-purple-200 rounded p-1 mt-1">
-                              ⚠ เครื่องนี้ยืมจาก Supplier — คืนตาม source = ส่งคืน Supplier
-                            </div>
-                          )}
-                          {line.source === 'Sales_Stock' && (
-                            <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded p-1 mt-1">
-                              เครื่องนี้จากคลังขาย — คืนตาม source = กลับคลังขาย
-                            </div>
-                          )}
-                        </div>
+          <div className="p-4">
+            {/* ===== Velzon seller-details 2-column layout ===== */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* === LEFT col-1 — Sidebar === */}
+              <div className="lg:col-span-1 space-y-4">
+                {/* Loan summary card (Velzon company profile card) */}
+                <div className="vz-card">
+                  <div className="p-4">
+                    {/* Avatar */}
+                    <div className="vz-icon-soft h-14 w-14 mx-auto mb-3 bg-muted/40 rounded-md">
+                      <FileText className="h-7 w-7 text-muted-foreground" />
+                    </div>
+                    <div className="text-center">
+                      <h5 className="text-sm font-semibold text-foreground mb-0">{loan.docNo}</h5>
+                      <p className="text-[11px] text-muted-foreground">{getLoanStatusLabel(loan.status).label}</p>
+                    </div>
+                    {/* Info table — Velzon table-borderless */}
+                    <div className="mt-4 space-y-1.5 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">ลูกค้า:</span>
+                        <span className="font-medium text-foreground text-right">{loan.customerName}</span>
                       </div>
-
-                      {f.selected && (
-                        <div className="mt-2 ml-6 space-y-2 border-l-2 border-slate-200 pl-3">
-                          {/* Accessories */}
-                          <div>
-                            <div className="text-xs font-medium text-slate-700 mb-1">อุปกรณ์เสริมที่คืน</div>
-                            <div className="space-y-1">
-                              {line.accessoriesHandedOver.map((acc) => {
-                                const checked = f.accessoriesReturned.includes(acc)
-                                return (
-                                  <div key={acc} className={`flex items-center gap-1.5 p-1.5 rounded border text-xs ${checked ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
-                                    <Checkbox checked={checked} onCheckedChange={() => toggleAccessory(line.id, acc)} className="h-3 w-3" />
-                                    <span className={checked ? 'text-emerald-700' : 'text-rose-700 line-through'}>{acc}</span>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          </div>
-
-                          {/* Grade */}
-                          <div>
-                            <div className="text-xs font-medium text-slate-700 mb-1">เกรดสภาพ</div>
-                            <RadioGroup value={f.conditionGrade} onValueChange={(g) => updateForm(line.id, {
-                              conditionGrade: g as 'A' | 'B' | 'C' | 'D',
-                              sendToRepair: g === 'D' ? true : f.sendToRepair,
-                              isDamaged: g === 'D' ? true : f.isDamaged,
-                            })} className="grid grid-cols-2 gap-1">
-                              {(['A', 'B', 'C', 'D'] as const).map((g) => {
-                                const info = GRADE_LABELS[g]
-                                return (
-                                  <label key={g} className={`flex items-start gap-1.5 p-1.5 border rounded cursor-pointer text-xs ${f.conditionGrade === g ? `${info.bg} border-current` : 'bg-white border-slate-200'}`}>
-                                    <RadioGroupItem value={g} className="mt-0.5 h-3 w-3" />
-                                    <div>
-                                      <div className={`font-bold ${info.color}`}>Grade {info.label}</div>
-                                      <div className="text-slate-600">{info.description}</div>
-                                    </div>
-                                  </label>
-                                )
-                              })}
-                            </RadioGroup>
-                          </div>
-
-                          {/* Source return option */}
-                          {line.source !== 'Demo_Stock' && (
-                            <label className="flex items-center gap-1.5 text-xs">
-                              <Checkbox
-                                checked={f.returnToSource}
-                                onCheckedChange={(v) => updateForm(line.id, { returnToSource: !!v })}
-                                className="h-3 w-3"
-                              />
-                              <span>คืนไปยัง source ต้นทาง ({SOURCE_LABELS[line.source]?.label})</span>
-                            </label>
-                          )}
-
-                          {/* Damage */}
-                          {(f.isDamaged || f.conditionGrade === 'D') && (
-                            <div className="space-y-1.5">
-                              <Textarea
-                                value={f.damageDescription}
-                                onChange={(e) => updateForm(line.id, { damageDescription: e.target.value })}
-                                placeholder="รายละเอียดความเสียหาย..."
-                                className="min-h-[50px] text-xs"
-                              />
-                              <label className="flex items-center gap-1.5 text-xs">
-                                <Checkbox checked={f.sendToRepair} onCheckedChange={(v) => updateForm(line.id, { sendToRepair: !!v })} className="h-3 w-3" />
-                                <span className="text-purple-700">ส่งเข้าคิวซ่อม (สร้าง RMA อัตโนมัติ)</span>
-                              </label>
-                            </div>
-                          )}
+                      {loan.customerCompany && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">บริษัท:</span>
+                          <span className="font-medium text-foreground text-right">{loan.customerCompany}</span>
                         </div>
                       )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {returnedLines.length > 0 && (
-              <>
-                <Separator />
-                <div>
-                  <h3 className="text-sm font-medium mb-2 flex items-center gap-1.5 text-emerald-700">
-                    <CheckCircle2 className="h-4 w-4" /> รับคืนแล้ว ({returnedLines.length})
-                  </h3>
-                  <div className="space-y-1">
-                    {returnedLines.map((line) => (
-                      <div key={line.id} className="flex items-center gap-2 p-1.5 text-xs bg-slate-50 rounded">
-                        <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                        <span className="font-mono">{line.assetTagId}</span>
-                        <span className="text-slate-500">{line.brand} {line.model}</span>
-                        <SourceBadge source={line.source} className="ml-auto" />
-                        <span className="text-slate-400">{line.returnedAt ? formatThaiDate(line.returnedAt) : ''}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {loan.returnEvents && loan.returnEvents.length > 0 && (
-              <>
-                <Separator />
-                <div>
-                  <h3 className="text-sm font-medium mb-2 flex items-center gap-1.5">
-                    <History className="h-4 w-4" /> ประวัติรับคืน ({loan.returnEvents.length})
-                  </h3>
-                  <div className="space-y-1.5">
-                    {loan.returnEvents.map((ev, i) => (
-                      <div key={ev.id} className="border rounded p-2 bg-slate-50 text-xs">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">ครั้งที่ {i + 1} — {ev.inspectorName}</span>
-                          <span className="text-slate-500">{formatThaiDateTime(ev.returnDate)}</span>
+                      {loan.customerIndustry && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">อุตสาหกรรม:</span>
+                          <span className="font-medium text-foreground text-right">{INDUSTRY_LABELS[loan.customerIndustry] || loan.customerIndustry}</span>
                         </div>
-                        {ev.notes && <div className="text-slate-500 mt-0.5">หมายเหตุ: {ev.notes}</div>}
-                        <div className="mt-1 space-y-0.5">
-                          {ev.items.map((item) => (
-                            <div key={item.id} className="flex items-center gap-1.5 bg-white p-1 rounded border">
-                              <span className="font-mono">{item.loanLineItem.asset.tagId}</span>
-                              <span className="text-slate-600">{item.loanLineItem.asset.catalog.brand} {item.loanLineItem.asset.catalog.model}</span>
-                              <span className="ml-auto flex items-center gap-1">
-                                <GradeBadge grade={item.conditionGrade} />
-                                {item.sendToRepair && <Badge variant="outline" className="text-xs text-purple-700">ซ่อม</Badge>}
-                                {!item.returnToSource && <Badge variant="outline" className="text-xs text-amber-700">เปลี่ยน source</Badge>}
-                              </span>
-                            </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">พนักงาน:</span>
+                        <span className="font-medium text-foreground text-right">{loan.salesRepName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">วัตถุประสงค์:</span>
+                        <span className="font-medium text-foreground text-right">{PURPOSE_LABELS[loan.purpose] || loan.purpose}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* === Customer Reviews section (border-top-dashed) === */}
+                  <div className="border-t border-dashed border-border p-4">
+                    <h6 className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">รีวิวการรับคืน</h6>
+                    {/* Summary box — bg-light px-3 py-2 rounded-2 */}
+                    <div className="bg-muted/40 px-3 py-2 rounded-md mb-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-0.5">
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <Star
+                              key={i}
+                              className={`h-4 w-4 ${i <= Math.round(avgStars) ? 'fill-current' : ''}`}
+                              style={{ color: i <= Math.round(avgStars) ? VZ.amber : 'rgba(116,120,141,0.3)' }}
+                            />
                           ))}
                         </div>
+                        <h6 className="text-xs font-semibold text-foreground mb-0">{avgStars.toFixed(1)} out of 5</h6>
                       </div>
-                    ))}
+                    </div>
+                    <div className="text-center text-[10px] text-muted-foreground mb-3">
+                      รวม <span className="font-medium text-foreground">{totalReturnedCount}</span> รีวิว
+                    </div>
+
+                    {/* Grade breakdown — Velzon 5-row rating distribution */}
+                    <div className="space-y-1.5">
+                      {[
+                        { label: '5 ★', grade: 'A', count: gradeCounts.A, color: VZ.teal },
+                        { label: '4 ★', grade: 'B', count: gradeCounts.B, color: VZ.teal },
+                        { label: '3 ★', grade: 'C', count: gradeCounts.C, color: VZ.amber },
+                        { label: '2 ★', grade: 'D', count: gradeCounts.D, color: VZ.rose },
+                      ].map((row) => {
+                        const total = totalReturnedCount || 1
+                        const pct = (row.count / total) * 100
+                        return (
+                          <div key={row.grade} className="flex items-center gap-2">
+                            <div className="w-8"><h6 className="text-[10px] font-medium text-foreground mb-0">{row.label}</h6></div>
+                            <div className="flex-1">
+                              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all duration-500"
+                                  style={{ width: `${pct}%`, backgroundColor: row.color }}
+                                />
+                              </div>
+                            </div>
+                            <div className="w-6 text-right"><h6 className="text-[10px] font-medium text-muted-foreground mb-0 tabular-nums">{row.count}</h6></div>
+                          </div>
+                        )
+                      })}
+                      {totalReturnedCount === 0 && (
+                        <p className="text-[10px] text-muted-foreground text-center italic mt-2">ยังไม่มีรีวิวการรับคืน</p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </>
-            )}
+              </div>
 
-            <Separator />
+              {/* === RIGHT col-2 — Main === */}
+              <div className="lg:col-span-2 space-y-4">
+                {/* === Items to return — Velzon review card pattern === */}
+                <div className="vz-card">
+                  <div className="px-4 py-3 vz-divider flex items-center justify-between">
+                    <h5 className="text-sm font-semibold text-foreground mb-0" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
+                      รอรับคืน ({pendingLines.length})
+                    </h5>
+                    <div className="flex items-center gap-1.5">
+                      {selectedCount > 0 && (
+                        <span className="vz-pill vz-pill-info">เลือก {selectedCount}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="p-3 space-y-3">
+                    {pendingLines.length === 0 && (
+                      <div className="py-6 text-center">
+                        <CheckCircle2 className="h-10 w-10 mx-auto mb-2" style={{ color: VZ.teal }} />
+                        <div className="text-sm font-medium text-foreground">ไม่มีเครื่องรอรับคืน</div>
+                      </div>
+                    )}
+                    {pendingLines.map((line) => {
+                      const f = forms[line.id]
+                      if (!f) return null
+                      return (
+                        <div
+                          key={line.id}
+                          className={`border rounded-md transition-smooth ${f.selected ? 'border-primary bg-primary/5' : 'border-border bg-card'}`}
+                        >
+                          {/* Top row — Velzon review card pattern */}
+                          <div className="p-3 flex items-start gap-2.5">
+                            <Checkbox checked={f.selected} onCheckedChange={(v) => updateForm(line.id, { selected: !!v })} className="mt-1" />
+                            {/* avatar-sm bg-light rounded */}
+                            <div className="vz-icon-soft h-9 w-9 bg-muted/40 rounded-md flex-shrink-0">
+                              <Package className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-mono text-sm font-semibold text-foreground">{line.assetTagId}</span>
+                                <span className="text-muted-foreground/40">·</span>
+                                <span className="text-xs text-foreground">{line.brand} {line.model}</span>
+                                <SourceBadge source={line.source} />
+                              </div>
+                              <div className="text-[11px] text-muted-foreground mt-0.5">
+                                S/N: <span className="font-mono">{line.serialNo}</span>
+                              </div>
+                              {/* Source hint */}
+                              {line.source === 'Supplier' && (
+                                <div className="text-[10px] mt-1 p-1.5 rounded" style={{ backgroundColor: 'rgba(160,113,240,0.06)', color: VZ.purple, border: '1px solid rgba(160,113,240,0.15)' }}>
+                                  ⚠ ยืมจาก Supplier — คืนตาม source = ส่งคืน Supplier
+                                </div>
+                              )}
+                              {line.source === 'Sales_Stock' && (
+                                <div className="text-[10px] mt-1 p-1.5 rounded" style={{ backgroundColor: 'rgba(64,81,137,0.06)', color: VZ.primary, border: '1px solid rgba(64,81,137,0.15)' }}>
+                                  จากคลังขาย — คืนตาม source = กลับคลังขาย
+                                </div>
+                              )}
+                            </div>
+                          </div>
 
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium">ข้อมูลเจ้าหน้าที่</h3>
-              <div>
-                <label className="text-xs text-slate-600">ชื่อเจ้าหน้าที่ <span className="text-rose-500">*</span></label>
-                <div className="relative mt-1">
-                  <User className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-                  <Input value={inspectorName} onChange={(e) => setInspectorName(e.target.value)} className="pl-7 h-9 text-sm" />
+                          {/* Expandable form when selected */}
+                          {f.selected && (
+                            <div className="px-3 pb-3 ml-6 space-y-2.5 border-l-2 border-primary/30 ml-9 pl-3">
+                              {/* Accessories */}
+                              <div>
+                                <div className="text-xs font-medium text-foreground mb-1.5">อุปกรณ์เสริมที่คืน</div>
+                                <div className="space-y-1">
+                                  {line.accessoriesHandedOver.map((acc) => {
+                                    const checked = f.accessoriesReturned.includes(acc)
+                                    return (
+                                      <div
+                                        key={acc}
+                                        className={`flex items-center gap-1.5 p-1.5 rounded border text-xs transition-smooth ${checked ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}
+                                      >
+                                        <Checkbox checked={checked} onCheckedChange={() => toggleAccessory(line.id, acc)} className="h-3 w-3" />
+                                        <span className={checked ? 'text-emerald-700' : 'text-rose-700 line-through'}>{acc}</span>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+
+                              {/* Grade — Velzon radio with descriptions */}
+                              <div>
+                                <div className="text-xs font-medium text-foreground mb-1.5">เกรดสภาพ (รีวิวสภาพเครื่อง)</div>
+                                <RadioGroup
+                                  value={f.conditionGrade}
+                                  onValueChange={(g) => updateForm(line.id, {
+                                    conditionGrade: g as 'A' | 'B' | 'C' | 'D',
+                                    sendToRepair: g === 'D' ? true : f.sendToRepair,
+                                    isDamaged: g === 'D' ? true : f.isDamaged,
+                                  })}
+                                  className="grid grid-cols-2 gap-1.5"
+                                >
+                                  {(['A', 'B', 'C', 'D'] as const).map((g) => {
+                                    const info = GRADE_LABELS[g]
+                                    return (
+                                      <label
+                                        key={g}
+                                        className={`flex items-start gap-1.5 p-1.5 border rounded cursor-pointer text-xs transition-smooth ${f.conditionGrade === g ? `${info.bg} border-current` : 'bg-card border-border hover:bg-muted/30'}`}
+                                      >
+                                        <RadioGroupItem value={g} className="mt-0.5 h-3 w-3" />
+                                        <div>
+                                          <div className={`font-bold ${info.color} flex items-center gap-1`}>
+                                            Grade {info.label}
+                                            <span className="flex gap-0">
+                                              {[1, 2, 3, 4, 5].map((s) => (
+                                                <Star
+                                                  key={s}
+                                                  className={`h-2.5 w-2.5 ${s <= GRADE_TO_STARS[g] ? 'fill-current' : ''}`}
+                                                  style={{ color: s <= GRADE_TO_STARS[g] ? VZ.amber : 'rgba(116,120,141,0.3)' }}
+                                                />
+                                              ))}
+                                            </span>
+                                          </div>
+                                          <div className="text-muted-foreground text-[10px] mt-0.5">{info.description}</div>
+                                        </div>
+                                      </label>
+                                    )
+                                  })}
+                                </RadioGroup>
+                              </div>
+
+                              {/* Source return option */}
+                              {line.source !== 'Demo_Stock' && (
+                                <label className="flex items-center gap-1.5 text-xs">
+                                  <Checkbox
+                                    checked={f.returnToSource}
+                                    onCheckedChange={(v) => updateForm(line.id, { returnToSource: !!v })}
+                                    className="h-3 w-3"
+                                  />
+                                  <span>คืนไปยัง source ต้นทาง ({SOURCE_LABELS[line.source]?.label})</span>
+                                </label>
+                              )}
+
+                              {/* Damage description + repair flag */}
+                              {(f.isDamaged || f.conditionGrade === 'D') && (
+                                <div className="space-y-1.5 p-2 rounded" style={{ backgroundColor: 'rgba(240,101,72,0.06)', border: '1px solid rgba(240,101,72,0.15)' }}>
+                                  <Textarea
+                                    value={f.damageDescription}
+                                    onChange={(e) => updateForm(line.id, { damageDescription: e.target.value })}
+                                    placeholder="รายละเอียดความเสียหาย..."
+                                    className="min-h-[50px] text-xs bg-card"
+                                  />
+                                  <label className="flex items-center gap-1.5 text-xs">
+                                    <Checkbox checked={f.sendToRepair} onCheckedChange={(v) => updateForm(line.id, { sendToRepair: !!v })} className="h-3 w-3" />
+                                    <span style={{ color: VZ.purple }}>ส่งเข้าคิวซ่อม (สร้าง RMA อัตโนมัติ)</span>
+                                  </label>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* === Already returned === */}
+                {returnedLines.length > 0 && (
+                  <div className="vz-card">
+                    <div className="px-4 py-3 vz-divider flex items-center gap-2.5">
+                      <CheckCircle2 className="h-4 w-4" style={{ color: VZ.teal }} />
+                      <h5 className="text-sm font-semibold text-foreground mb-0">รับคืนแล้ว ({returnedLines.length})</h5>
+                    </div>
+                    <div className="p-3 space-y-1">
+                      {returnedLines.map((line) => (
+                        <div key={line.id} className="flex items-center gap-2 p-1.5 text-xs bg-muted/30 rounded">
+                          <CheckCircle2 className="h-3 w-3" style={{ color: VZ.teal }} />
+                          <span className="font-mono text-foreground">{line.assetTagId}</span>
+                          <span className="text-muted-foreground">{line.brand} {line.model}</span>
+                          <SourceBadge source={line.source} className="ml-auto" />
+                          <span className="text-muted-foreground text-[10px]">{line.returnedAt ? formatThaiDate(line.returnedAt) : ''}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* === Past return events — Velzon "Products Reviews" pattern (quote cards) === */}
+                {loan.returnEvents && loan.returnEvents.length > 0 && (
+                  <div className="vz-card">
+                    <div className="px-4 py-3 vz-divider">
+                      <h5 className="text-sm font-semibold text-foreground mb-0 flex items-center gap-1.5" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
+                        <History className="h-4 w-4" style={{ color: VZ.purple }} /> รีวิวการรับคืนย้อนหลัง ({loan.returnEvents.length})
+                      </h5>
+                    </div>
+                    <div className="p-3 space-y-2">
+                      {loan.returnEvents.map((ev, i) => {
+                        // Compute average stars for this return event
+                        const avgEventStars = ev.items.length > 0
+                          ? ev.items.reduce((s, it) => s + (GRADE_TO_STARS[it.conditionGrade] || 4), 0) / ev.items.length
+                          : 0
+                        return (
+                          <div key={ev.id} className="border border-dashed border-border rounded-md p-3">
+                            {/* Header row — avatar + name + stars + date */}
+                            <div className="flex items-start gap-2.5">
+                              {/* avatar-sm */}
+                              <div className="vz-avatar h-8 w-8 text-[10px]" style={{ backgroundColor: 'rgba(160,113,240,0.10)', color: VZ.purple }}>
+                                {i + 1}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <div>
+                                    <h6 className="text-xs font-semibold text-foreground mb-0">ครั้งที่ {i + 1} — {ev.inspectorName}</h6>
+                                    <p className="text-[10px] text-muted-foreground">{formatThaiDateTime(ev.returnDate)}</p>
+                                  </div>
+                                  {/* Star rating — Velzon rating pattern */}
+                                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                                    {[1, 2, 3, 4, 5].map((s) => (
+                                      <Star
+                                        key={s}
+                                        className={`h-3 w-3 ${s <= Math.round(avgEventStars) ? 'fill-current' : ''}`}
+                                        style={{ color: s <= Math.round(avgEventStars) ? VZ.amber : 'rgba(116,120,141,0.3)' }}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                                {/* Quote — Velzon review text */}
+                                {ev.notes && (
+                                  <p className="text-[11px] text-muted-foreground italic mt-1.5 mb-2">"{ev.notes}"</p>
+                                )}
+                                {/* Items reviewed */}
+                                <div className="mt-1.5 space-y-0.5">
+                                  {ev.items.map((item) => (
+                                    <div key={item.id} className="flex items-center gap-1.5 p-1.5 bg-muted/30 rounded text-[11px]">
+                                      <span className="font-mono text-foreground">{item.loanLineItem.asset.tagId}</span>
+                                      <span className="text-muted-foreground truncate flex-1">{item.loanLineItem.asset.catalog.brand} {item.loanLineItem.asset.catalog.model}</span>
+                                      <div className="flex items-center gap-1">
+                                        <GradeBadge grade={item.conditionGrade} />
+                                        {item.sendToRepair && (
+                                          <span className="vz-pill" style={{ backgroundColor: 'rgba(160,113,240,0.10)', color: VZ.purple }}>
+                                            <Wrench className="h-2.5 w-2.5" /> ซ่อม
+                                          </span>
+                                        )}
+                                        {!item.returnToSource && (
+                                          <span className="vz-pill vz-pill-warning">เปลี่ยน source</span>
+                                        )}
+                                        {item.isDamaged && (
+                                          <span className="vz-pill vz-pill-danger">เสียหาย</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* === Inspector info + signature === */}
+                <div className="vz-card">
+                  <div className="px-4 py-3 vz-divider">
+                    <h5 className="text-sm font-semibold text-foreground mb-0 flex items-center gap-1.5" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
+                      <User className="h-4 w-4" style={{ color: VZ.primary }} /> ข้อมูลเจ้าหน้าที่รับคืน
+                    </h5>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground block mb-1.5">ชื่อเจ้าหน้าที่ <span className="text-rose-500">*</span></label>
+                      <div className="relative">
+                        <User className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                        <Input value={inspectorName} onChange={(e) => setInspectorName(e.target.value)} className="pl-7 h-9 text-sm" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground block mb-1.5">หมายเหตุการรับคืน</label>
+                      <Textarea value={returnNotes} onChange={(e) => setReturnNotes(e.target.value)} placeholder="บันทึกเพิ่มเติม..." className="min-h-[50px] text-sm" />
+                    </div>
+                    <SignaturePad ref={sigRef} label="ลายมือชื่อเจ้าหน้าที่รับคืน" required height={120} onChange={setSigHasContent} />
+                  </div>
                 </div>
               </div>
-              <Textarea value={returnNotes} onChange={(e) => setReturnNotes(e.target.value)} placeholder="หมายเหตุ..." className="min-h-[50px] text-sm" />
             </div>
-
-            <SignaturePad ref={sigRef} label="ลายมือชื่อเจ้าหน้าที่รับคืน" required height={120} onChange={setSigHasContent} />
           </div>
         </ScrollArea>
 
-        <div className="border-t p-3">
+        {/* Action bar */}
+        <div className="border-t p-3 bg-card">
           <Button
             className="w-full"
             size="lg"
             onClick={submit}
             disabled={submitting || selectedCount === 0 || !sigHasContent || !inspectorName}
+            style={{ backgroundColor: VZ.teal, color: 'white' }}
           >
             {submitting ? 'กำลังบันทึก...' : <><ShieldCheck className="h-4 w-4 mr-2" /> ยืนยันรับคืน ({selectedCount})</>}
           </Button>

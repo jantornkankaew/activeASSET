@@ -1193,3 +1193,87 @@ Work Log:
 Stage Summary:
 - หน้า Suppliers ใช้ Velzon sellers design language ครบ (page-title-box, filters card, supplier cards grid with trending ribbon + dashed border stats + button, pagination)
 - ผ่าน E2E test + VLM ยืนยัน
+
+---
+Task ID: return-sheet-velzon
+Agent: main
+Task: ปรับหน้า ReturnLoanSheet (รับคืน) ให้ใช้ Velzon seller-details design + เพิ่มส่วนรีวิว (Customer Reviews pattern)
+
+Reference: https://themesbrand.com/velzon/html/master/apps-ecommerce-seller-details.html
+
+Velzon seller-details structure applied:
+- Sheet ขยายจาก max-w-2xl (640px) → max-w-5xl (1024px)
+- Header (Velzon page-title-box): doc# + status + expected return date
+- 2-column layout: LEFT col-1 (sidebar) + RIGHT col-2 (main)
+
+LEFT sidebar cards (Velzon company profile + customer reviews pattern):
+1. Loan summary card:
+   - avatar-md (FileText icon in bg-light rounded)
+   - h5 docNo + p status (label from getLoanStatusLabel().label)
+   - Info table (Velzon table-borderless pattern): ลูกค้า/บริษัท/อุตสาหกรรม/พนักงาน/วัตถุประสงค์
+   - border-top-dashed divider
+
+2. รีวิวการรับคืน (Customer Reviews) section:
+   - h6 "รีวิวการรับคืน" (uppercase, fw-semibold, text-muted)
+   - Summary box (bg-light px-3 py-2 rounded-2): 5 stars + "X.X out of 5" + total reviews count
+   - Grade breakdown (4 rows like Velzon 5★→1★ breakdown):
+     - 5★ (Grade A) — progress bar teal
+     - 4★ (Grade B) — progress bar teal
+     - 3★ (Grade C) — progress bar amber
+     - 2★ (Grade D) — progress bar rose
+   - Empty state "ยังไม่มีรีวิวการรับคืน" if no past returns
+
+RIGHT main cards (Velzon products reviews pattern):
+3. รอรับคืน card (Items to return):
+   - Each item is a Velzon review card with: checkbox + avatar-sm (Package icon) + tagId + brand/model + source badge
+   - Source hint (Supplier/Sales_Stock warning)
+   - Expanded form (when selected): accessories checkboxes + grade radios (A/B/C/D with star icons next to each) + returnToSource option + damage textarea + repair flag
+
+4. รับคืนแล้ว card (Already returned): list with check icons
+
+5. รีวิวการรับคืนย้อนหลัง (Past return events) — Velzon Products Reviews pattern:
+   - Each event is a Velzon review quote card:
+     - avatar-sm with event number
+     - h6 "ครั้งที่ N — inspector name" + date
+     - Star rating (computed from average grade of items in this event)
+     - Quote: notes (italic text-muted)
+     - Item chips (Velzon mini-card pattern): tagId + brand/model + GradeBadge + ซ่อม pill + เปลี่ยน source pill + เสียหาย pill
+
+6. ข้อมูลเจ้าหน้าที่รับคืน (Inspector info) card:
+   - Name input with User icon
+   - Notes textarea
+   - SignaturePad
+
+Bug found + fixed during testing:
+- `getLoanStatusLabel(loan.status)` returns an object {label, color, bg, phase}, NOT a string
+- Initial code passed the whole object as JSX child → React crash "Objects are not valid as a React child"
+- Fix: use `.label` to extract the string
+- Also fixed `PURPOSE_LABELS[loan.purpose]?.label` → `PURPOSE_LABELS[loan.purpose]` (since PURPOSE_LABELS is Record<string, string>, not object)
+
+Work Log:
+- อ่าน Velzon seller-details HTML จริง (apps-ecommerce-seller-details.html)
+- ดู customer reviews section structure: h6 + summary box (bg-light) + 5-row progress bars
+- ดู products reviews pattern: avatar + quote (italic) + stars + author
+- เขียนใหม่ทั้ง ReturnLoanSheet.tsx (~570 บรรทัด) แทนของเดิม 414 บรรทัด
+- ใช้ classes ที่มีใน pre-compiled CSS: lg:grid-cols-3 + lg:col-span-1/2, vz-card, vz-pill, vz-avatar, vz-icon-soft, border-t border-dashed
+- เพิ่ม imports: Star, FileText, Building2, Calendar, Truck, Phone, MapPin, ChevronRight
+- สร้าง GRADE_TO_STARS map (A=5, B=4, C=3, D=2)
+- คำนวณ gradeCounts + avgStars จาก loan.returnEvents items ทั้งหมด
+- Deploy + รัน test: login → ใบยืม → LOAN-202610-008 (Delivered) → รับคืน button
+- ผลก่อน fix bug: page error #31 "Objects are not valid as a React child"
+- หลัง fix: vz-card count=3, Star icons=5, after expand form: 4 radio buttons + 5 checkboxes, 0 page errors ✓ PASS
+- VLM ยืนยัน 6/6 Velzon elements ครบ:
+  1. ✓ Page header (doc# + status + date)
+  2. ✓ 2-column layout LEFT 1/3 + RIGHT 2/3
+  3. ✓ LEFT loan summary card (avatar + info table)
+  4. ✓ LEFT รีวิวการรับคืน (summary box + grade breakdown)
+  5. ✓ RIGHT รอรับคืน card with item form
+  6. ✓ RIGHT inspector info card (name + notes + signature)
+- VLM ยืนยัน expanded form: ✓ Grade radios A/B/C/D with stars ✓ Accessory checkboxes ✓ Layout intact
+
+Stage Summary:
+- ReturnLoanSheet ใช้ Velzon seller-details design language ครบ
+- เพิ่มส่วน "รีวิวการรับคืน" (Customer Reviews pattern) ที่ user ขอ — แสดง grade distribution ของการรับคืนย้อนหลังทั้งหมดแบบ star rating
+- ประวัติการรับคืนย้อนหลังแสดงเป็น Velzon review quote cards (มี stars + quote notes + items chips)
+- แต่ละเกรด A/B/C/D มี star rating แสดงข้างชื่อเกรดใน radio option
+- ผ่าน E2E test + VLM ยืนยัน
