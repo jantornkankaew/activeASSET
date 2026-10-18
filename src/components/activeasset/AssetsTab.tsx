@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useToast } from '@/hooks/use-toast'
 import {
   AssetStatusBadge, SourceBadge, GradeBadge, EmptyState, LoadingState,
@@ -16,6 +17,8 @@ import {
   Search, Package, ArrowLeft, Plus, Building2, Settings2, ChevronRight,
   Smartphone, Printer, ScanLine, Tablet, Boxes, History, Wrench,
   CheckCircle2, AlertTriangle, Clock, TrendingUp, FileText, Camera,
+  Star, Shield, MapPin, Calendar, Phone, User, DollarSign, CreditCard,
+  Truck, Package2, Cpu, HardDrive,
 } from 'lucide-react'
 import {
   ASSET_STATUS_LABELS, CATEGORY_LABELS, SOURCE_LABELS,
@@ -487,7 +490,7 @@ function UnitsView({
   )
 }
 
-// ===== Level 3: Asset Detail + History =====
+// ===== Level 3: Asset Detail + History (Velzon product-details style) =====
 function AssetDetailView({
   detail, loading, onBack,
 }: {
@@ -500,153 +503,501 @@ function AssetDetailView({
 
   const { asset, history, stats } = detail
 
+  // Condition grade → star count (A=5, B=4, C=3, D=2, E=1)
+  const gradeToStars: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
+  const stars = asset.conditionGrade ? (gradeToStars[asset.conditionGrade] || 4) : 4
+
+  // Status color tokens
+  const statusColor: Record<string, { fg: string; soft: string; label: string }> = {
+    Available:             { fg: '#0ab39c', soft: 'rgba(10,179,156,0.10)', label: 'พร้อมใช้' },
+    On_Loan:               { fg: '#f7b84b', soft: 'rgba(247,184,75,0.12)', label: 'กำลังยืม' },
+    In_Repair:             { fg: '#a071f0', soft: 'rgba(160,113,240,0.10)', label: 'ส่งซ่อม' },
+    In_Inspection:         { fg: '#405189', soft: 'rgba(64,81,137,0.10)', label: 'ตรวจสภาพ' },
+    Lost:                  { fg: '#f06548', soft: 'rgba(240,101,72,0.10)', label: 'สูญหาย' },
+    Disposed:              { fg: '#74788d', soft: 'rgba(116,120,141,0.12)', label: 'ตัดจำหน่าย' },
+    Returned_To_Supplier:  { fg: '#74788d', soft: 'rgba(116,120,141,0.12)', label: 'คืน Supplier' },
+  }
+  const sc = statusColor[asset.status] || statusColor.Available
+
   return (
     <div className="space-y-4 animate-fade-in">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm">
-        <button onClick={onBack} className="text-muted-foreground hover:text-foreground transition-smooth flex items-center gap-1">
-          <ArrowLeft className="h-4 w-4" /> กลับ
-        </button>
+      {/* ===== Velzon breadcrumb ===== */}
+      <div className="flex items-center gap-1.5 text-xs">
+        <button onClick={onBack} className="text-muted-foreground hover:text-foreground transition-smooth">ทรัพย์สิน</button>
+        <ChevronRight className="h-3 w-3 text-muted-foreground/60" />
+        <span className="text-muted-foreground">{asset.brand} {asset.model}</span>
+        <ChevronRight className="h-3 w-3 text-muted-foreground/60" />
+        <span className="font-mono font-semibold text-foreground">{asset.tagId}</span>
       </div>
 
-      {/* Asset header card */}
-      <div className="p-5 rounded-2xl gradient-hero border border-border/50 shadow-premium">
-        <div className="flex items-start gap-4">
-          <div className="h-16 w-16 rounded-2xl bg-card/80 flex items-center justify-center shadow-lift flex-shrink-0">
-            {CATEGORY_ICONS[asset.category] || <Package className="h-8 w-8" />}
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-xl font-bold tracking-tight">{asset.brand} {asset.model}</h2>
-              <AssetStatusBadge status={asset.status} />
-              {asset.conditionGrade && <GradeBadge grade={asset.conditionGrade} />}
-              <SourceBadge source={asset.source} />
-            </div>
-            <div className="text-sm font-mono text-muted-foreground mt-1">
-              {asset.tagId} · S/N: {asset.serialNo}
-            </div>
-          </div>
-        </div>
+      {/* ===== Top section — Velzon product-details layout ===== */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        {/* LEFT — Asset "image" card (Velzon product image panel) */}
+        <div className="lg:col-span-2">
+          <div className="vz-card overflow-hidden">
+            {/* Hero "image" panel — Velzon-style with gradient + brand watermark */}
+            <div
+              className="relative aspect-[4/3] flex items-center justify-center"
+              style={{ background: `linear-gradient(135deg, ${sc.soft}, rgba(255,255,255,0.5))` }}
+            >
+              {/* Subtle pattern overlay */}
+              <div className="absolute inset-0 opacity-30" style={{
+                backgroundImage: 'linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px)',
+                backgroundSize: '24px 24px',
+              }} />
 
-        {/* Quick stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4">
-          <div className="p-2.5 rounded-xl bg-card/60">
-            <div className="text-[10px] text-muted-foreground">ยืมทั้งหมด</div>
-            <div className="text-lg font-bold tabular-nums">{stats.totalLoans}</div>
-          </div>
-          <div className="p-2.5 rounded-xl bg-card/60">
-            <div className="text-[10px] text-muted-foreground">คืนแล้ว</div>
-            <div className="text-lg font-bold tabular-nums text-emerald-600">{stats.completedLoans}</div>
-          </div>
-          <div className="p-2.5 rounded-xl bg-card/60">
-            <div className="text-[10px] text-muted-foreground">เสียหาย</div>
-            <div className={`text-lg font-bold tabular-nums ${stats.damagedCount > 0 ? 'text-rose-600' : ''}`}>{stats.damagedCount}</div>
-          </div>
-          <div className="p-2.5 rounded-xl bg-card/60">
-            <div className="text-[10px] text-muted-foreground">ส่งซ่อม</div>
-            <div className={`text-lg font-bold tabular-nums ${stats.repairCount > 0 ? 'text-purple-600' : ''}`}>{stats.repairCount}</div>
-          </div>
-          {asset.maxLoanCount && (
-            <div className="p-2.5 rounded-xl bg-card/60">
-              <div className="text-[10px] text-muted-foreground">ยืมครั้งที่</div>
-              <div className={`text-lg font-bold tabular-nums ${asset.loanCount >= asset.maxLoanCount ? 'text-rose-600' : 'text-amber-600'}`}>
-                {asset.loanCount}/{asset.maxLoanCount}
+              {/* Brand watermark (top-right, large) */}
+              <div className="absolute top-4 right-4 text-3xl font-bold text-foreground/5 leading-none tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
+                {asset.brand}
+              </div>
+
+              {/* Center — category icon */}
+              <div
+                className="vz-icon-soft h-24 w-24 relative z-10"
+                style={{ backgroundColor: 'rgba(255,255,255,0.6)', boxShadow: `inset 0 0 0 1px ${sc.fg}22` }}
+              >
+                <span style={{ color: sc.fg }} className="scale-150">
+                  {CATEGORY_ICONS[asset.category] || <Package className="h-12 w-12" />}
+                </span>
+              </div>
+
+              {/* Status ribbon (top-left) */}
+              <div
+                className="absolute top-3 left-3 vz-pill text-[10px] font-semibold"
+                style={{ backgroundColor: sc.soft, color: sc.fg }}
+              >
+                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: sc.fg }} />
+                {sc.label}
+              </div>
+
+              {/* Tag ID badge (bottom-left) */}
+              <div className="absolute bottom-3 left-3 bg-card/90 backdrop-blur-sm rounded px-2 py-1 border border-border/50 shadow-sm">
+                <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Tag ID</div>
+                <div className="font-mono text-xs font-bold text-foreground">{asset.tagId}</div>
+              </div>
+
+              {/* Grade badge (bottom-right) */}
+              {asset.conditionGrade && (
+                <div className="absolute bottom-3 right-3 bg-card/90 backdrop-blur-sm rounded px-2 py-1 border border-border/50 shadow-sm">
+                  <div className="text-[9px] text-muted-foreground uppercase tracking-wider">เกรด</div>
+                  <div className="text-sm font-bold" style={{ color: sc.fg }}>{asset.conditionGrade}</div>
+                </div>
+              )}
+            </div>
+
+            {/* Mini meta strip below image */}
+            <div className="px-4 py-3 vz-divider">
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <div className="vz-eyebrow">Serial No</div>
+                  <div className="font-mono font-semibold text-foreground truncate">{asset.serialNo}</div>
+                </div>
+                <div>
+                  <div className="vz-eyebrow">หมวดหมู่</div>
+                  <div className="font-medium text-foreground truncate">{CATEGORY_LABELS[asset.category] || asset.category}</div>
+                </div>
               </div>
             </div>
-          )}
+          </div>
+        </div>
+
+        {/* RIGHT — Product info (Velzon product info panel) */}
+        <div className="lg:col-span-3 space-y-4">
+          {/* Title + brand + rating */}
+          <div className="vz-card p-5">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="vz-eyebrow" style={{ color: '#405189' }}>{asset.brand}</span>
+              <span className="text-muted-foreground/50">•</span>
+              <span className="vz-eyebrow">{SOURCE_LABELS[asset.source]?.label || asset.source}</span>
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground mb-2" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
+              {asset.model}
+            </h1>
+
+            {/* Star rating + review count */}
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Star
+                    key={i}
+                    className={`h-4 w-4 ${i <= stars ? 'fill-current text-amber-400' : 'text-muted-foreground/40'}`}
+                    style={{ color: i <= stars ? '#f7b84b' : undefined }}
+                  />
+                ))}
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {asset.conditionGrade ? `เกรด ${asset.conditionGrade}` : 'ยังไม่ประเมิน'} · {stats.totalLoans} ครั้งยืม
+              </span>
+            </div>
+
+            {/* Quick stats — Velzon 4-stat row */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <VelzonMiniStat
+                label="ยืมทั้งหมด"
+                value={stats.totalLoans}
+                icon={<History className="h-4 w-4" />}
+                color="#405189"
+              />
+              <VelzonMiniStat
+                label="คืนแล้ว"
+                value={stats.completedLoans}
+                icon={<CheckCircle2 className="h-4 w-4" />}
+                color="#0ab39c"
+              />
+              <VelzonMiniStat
+                label="เสียหาย"
+                value={stats.damagedCount}
+                icon={<AlertTriangle className="h-4 w-4" />}
+                color="#f06548"
+                highlight={stats.damagedCount > 0}
+              />
+              <VelzonMiniStat
+                label="ส่งซ่อม"
+                value={stats.repairCount}
+                icon={<Wrench className="h-4 w-4" />}
+                color="#a071f0"
+                highlight={stats.repairCount > 0}
+              />
+            </div>
+
+            {/* Loan count limit indicator */}
+            {asset.maxLoanCount && (
+              <div className="mt-4 pt-3 vz-divider">
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <span className="text-muted-foreground">สถานะการยืม</span>
+                  <span className="font-semibold tabular-nums text-foreground">{asset.loanCount} / {asset.maxLoanCount} ครั้ง</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.min(100, (asset.loanCount / asset.maxLoanCount) * 100)}%`,
+                      background: asset.loanCount >= asset.maxLoanCount ? '#f06548' : asset.loanCount >= asset.maxLoanCount * 0.8 ? '#f7b84b' : '#0ab39c',
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Features + Services (Velzon-style) */}
+          <div className="vz-card p-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Features — accessories */}
+              <div>
+                <div className="vz-eyebrow mb-2">อุปกรณ์เสริม ({asset.defaultAccessories.length})</div>
+                {asset.defaultAccessories.length === 0 ? (
+                  <div className="text-xs text-muted-foreground">ไม่มีอุปกรณ์เสริม</div>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {asset.defaultAccessories.slice(0, 6).map((a, i) => (
+                      <li key={i} className="flex items-center gap-2 text-xs">
+                        <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#0ab39c' }} />
+                        <span className="text-foreground">{a}</span>
+                      </li>
+                    ))}
+                    {asset.defaultAccessories.length > 6 && (
+                      <li className="text-[10px] text-muted-foreground pl-5">+{asset.defaultAccessories.length - 6} รายการ</li>
+                    )}
+                  </ul>
+                )}
+              </div>
+
+              {/* Services */}
+              <div>
+                <div className="vz-eyebrow mb-2">บริการ</div>
+                <ul className="space-y-1.5">
+                  <li className="flex items-center gap-2 text-xs">
+                    <Shield className="h-3.5 w-3.5 flex-shrink-0" style={{ color: asset.warrantyExpireDate ? '#0ab39c' : '#74788d' }} />
+                    <span className="text-foreground">
+                      {asset.warrantyExpireDate ? `รับประกันถึง ${formatThaiDate(asset.warrantyExpireDate)}` : 'ไม่มีรับประกัน'}
+                    </span>
+                  </li>
+                  {asset.location && (
+                    <li className="flex items-center gap-2 text-xs">
+                      <MapPin className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#405189' }} />
+                      <span className="text-foreground">{asset.location.name} <span className="text-muted-foreground">({asset.location.zone})</span></span>
+                    </li>
+                  )}
+                  {asset.purchaseDate && (
+                    <li className="flex items-center gap-2 text-xs">
+                      <Calendar className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#405189' }} />
+                      <span className="text-foreground">ซื้อ {formatThaiDate(asset.purchaseDate)}</span>
+                    </li>
+                  )}
+                  {asset.depositPrice && (
+                    <li className="flex items-center gap-2 text-xs">
+                      <DollarSign className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#f7b84b' }} />
+                      <span className="text-foreground">มัดจำ ฿{asset.depositPrice.toLocaleString()}</span>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex flex-wrap gap-2">
+            <Button variant="soft" size="sm" onClick={onBack} className="text-xs">
+              <ArrowLeft className="h-3.5 w-3.5 mr-1" /> กลับ
+            </Button>
+            {asset.source === 'Supplier' && asset.supplierName && (
+              <span className="vz-pill vz-pill-info inline-flex items-center gap-1">
+                <Truck className="h-3 w-3" /> Supplier: {asset.supplierName}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Asset details grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Info */}
-        <Card className="shadow-premium">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">ข้อมูลทรัพย์สิน</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1.5 text-sm">
-            <DetailRow label="ที่ตั้ง" value={asset.location ? `${asset.location.name} (${asset.location.zone})` : 'ไม่ระบุ'} />
-            <DetailRow label="วันที่ซื้อ" value={asset.purchaseDate ? formatThaiDate(asset.purchaseDate) : '-'} />
-            <DetailRow label="รับประกันถึง" value={asset.warrantyExpireDate ? formatThaiDate(asset.warrantyExpireDate) : '-'} />
-            {asset.source === 'Supplier' && (
-              <>
-                <DetailRow label="Supplier" value={asset.supplierName || '-'} />
-                {asset.supplierContact && <DetailRow label="ผู้ติดต่อ" value={asset.supplierContact} />}
-                {asset.supplierPhone && <DetailRow label="โทร" value={asset.supplierPhone} />}
-                <DetailRow label="กำหนดคืน Supplier" value={asset.supplierLoanDue ? formatThaiDate(asset.supplierLoanDue) : '-'} />
-                {asset.depositPrice && <DetailRow label="มัดจำ" value={`฿${asset.depositPrice.toLocaleString()}`} />}
-              </>
-            )}
-          </CardContent>
-        </Card>
+      {/* ===== Tabbed section — Velzon-style tabs ===== */}
+      <Tabs defaultValue="info" className="w-full">
+        <div className="vz-card px-2 pt-2">
+          <TabsList className="bg-transparent p-0 h-auto gap-1">
+            <TabsTrigger
+              value="info"
+              className="text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md px-3 py-1.5 data-[state=active]:shadow-sm"
+            >
+              <FileText className="h-3.5 w-3.5 mr-1.5" /> ข้อมูลทรัพย์สิน
+            </TabsTrigger>
+            <TabsTrigger
+              value="accessories"
+              className="text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md px-3 py-1.5 data-[state=active]:shadow-sm"
+            >
+              <Package2 className="h-3.5 w-3.5 mr-1.5" /> อุปกรณ์เสริม ({asset.defaultAccessories.length})
+            </TabsTrigger>
+            <TabsTrigger
+              value="history"
+              className="text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md px-3 py-1.5 data-[state=active]:shadow-sm"
+            >
+              <History className="h-3.5 w-3.5 mr-1.5" /> ประวัติยืม-คืน ({history.length})
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        {/* Accessories */}
-        <Card className="shadow-premium">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">อุปกรณ์เสริม ({asset.defaultAccessories.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-1.5">
-              {asset.defaultAccessories.map((a) => (
-                <Badge key={a} variant="secondary" className="text-xs">{a}</Badge>
-              ))}
+        {/* Tab 1 — Spec table */}
+        <TabsContent value="info" className="mt-3">
+          <div className="vz-card overflow-hidden">
+            {/* Header */}
+            <div className="px-4 py-3 vz-divider flex items-center gap-2.5">
+              <span className="vz-icon-soft h-8 w-8" style={{ backgroundColor: 'rgba(64,81,137,0.10)' }}>
+                <FileText className="h-4 w-4" style={{ color: '#405189' }} />
+              </span>
+              <div className="leading-tight">
+                <div className="text-sm font-semibold text-foreground">ข้อมูลทรัพย์สิน</div>
+                <div className="text-[10px] text-muted-foreground">รายละเอียดและสเปค</div>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* Loan history timeline */}
-      <Card className="shadow-premium">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <History className="h-4 w-4" /> ประวัติการยืม-คืน ({history.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <ScrollArea className="h-[400px]">
-            <div className="divide-y">
-              {history.length === 0 && <EmptyState message="ยังไม่มีประวัติการยืม" />}
-              {history.map((h, i) => (
-                <div key={i} className="p-3 flex items-start gap-3">
-                  {/* Timeline dot */}
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    h.lineStatus === 'Returned' ? 'bg-emerald-500/10' :
-                    h.lineStatus === 'Out' ? 'bg-amber-500/10' : 'bg-muted/50'
-                  }`}>
-                    {h.lineStatus === 'Returned' ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> :
-                     h.lineStatus === 'Out' ? <Clock className="h-4 w-4 text-amber-500" /> :
-                     <Package className="h-4 w-4 text-muted-foreground" />}
-                  </div>
+            {/* Spec table — Velzon 2-column table style */}
+            <div className="px-4 py-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0">
+                <VelzonSpecRow icon={<MapPin className="h-3.5 w-3.5" />} label="ที่ตั้ง" value={asset.location ? `${asset.location.name} (${asset.location.zone})` : 'ไม่ระบุ'} />
+                <VelzonSpecRow icon={<Calendar className="h-3.5 w-3.5" />} label="วันที่ซื้อ" value={asset.purchaseDate ? formatThaiDate(asset.purchaseDate) : '-'} />
+                <VelzonSpecRow icon={<Shield className="h-3.5 w-3.5" />} label="รับประกันถึง" value={asset.warrantyExpireDate ? formatThaiDate(asset.warrantyExpireDate) : '-'} />
+                <VelzonSpecRow icon={<Package className="h-3.5 w-3.5" />} label="แหล่ง" value={SOURCE_LABELS[asset.source]?.label || asset.source} />
+                <VelzonSpecRow icon={<Cpu className="h-3.5 w-3.5" />} label="รหัส Tag" value={asset.tagId} mono />
+                <VelzonSpecRow icon={<HardDrive className="h-3.5 w-3.5" />} label="Serial No" value={asset.serialNo} mono />
+                {asset.source === 'Supplier' && (
+                  <>
+                    <VelzonSpecRow icon={<Building2 className="h-3.5 w-3.5" />} label="Supplier" value={asset.supplierName || '-'} />
+                    {asset.supplierContact && <VelzonSpecRow icon={<User className="h-3.5 w-3.5" />} label="ผู้ติดต่อ" value={asset.supplierContact} />}
+                    {asset.supplierPhone && <VelzonSpecRow icon={<Phone className="h-3.5 w-3.5" />} label="โทร" value={asset.supplierPhone} />}
+                    <VelzonSpecRow icon={<Calendar className="h-3.5 w-3.5" />} label="กำหนดคืน Supplier" value={asset.supplierLoanDue ? formatThaiDate(asset.supplierLoanDue) : '-'} />
+                    {asset.depositPrice && <VelzonSpecRow icon={<DollarSign className="h-3.5 w-3.5" />} label="มัดจำ" value={`฿${asset.depositPrice.toLocaleString()}`} />}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </TabsContent>
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono font-semibold text-sm">{h.loanDocNo}</span>
-                      <Badge variant="outline" className={`text-xs ${
-                        h.lineStatus === 'Returned' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
-                      }`}>
-                        {h.lineStatus === 'Returned' ? 'คืนแล้ว' : 'กำลังยืม'}
-                      </Badge>
-                      {h.conditionGrade && <GradeBadge grade={h.conditionGrade} />}
-                      {h.isDamaged && <Badge variant="outline" className="text-xs text-rose-700 bg-rose-50">เสียหาย</Badge>}
-                      {h.sendToRepair && <Badge variant="outline" className="text-xs text-purple-700 bg-purple-50">ส่งซ่อม</Badge>}
-                    </div>
-                    <div className="text-sm mt-0.5">{h.customerName} {h.customerCompany ? `— ${h.customerCompany}` : ''}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      ยืม {h.dispatchedAt ? formatThaiDate(h.dispatchedAt) : '-'} · กำหนดคืน {formatThaiDate(h.expectedReturnDate)}
-                      {h.returnedAt && ` · คืน ${formatThaiDate(h.returnedAt)}`}
-                    </div>
-                    {h.damageDescription && (
-                      <div className="text-xs text-rose-600 mt-1 bg-rose-50 rounded p-1.5">
-                        ⚠ {h.damageDescription}
-                      </div>
-                    )}
-                  </div>
+        {/* Tab 2 — Accessories grid */}
+        <TabsContent value="accessories" className="mt-3">
+          <div className="vz-card overflow-hidden">
+            <div className="px-4 py-3 vz-divider flex items-center gap-2.5">
+              <span className="vz-icon-soft h-8 w-8" style={{ backgroundColor: 'rgba(10,179,156,0.10)' }}>
+                <Package2 className="h-4 w-4" style={{ color: '#0ab39c' }} />
+              </span>
+              <div className="leading-tight">
+                <div className="text-sm font-semibold text-foreground">อุปกรณ์เสริมในชุด</div>
+                <div className="text-[10px] text-muted-foreground">{asset.defaultAccessories.length} รายการ</div>
+              </div>
+            </div>
+            <div className="p-4">
+              {asset.defaultAccessories.length === 0 ? (
+                <div className="py-8 text-center text-xs text-muted-foreground">
+                  <Package2 className="h-10 w-10 mx-auto mb-2 text-muted-foreground/30" />
+                  <div className="font-medium">ไม่มีอุปกรณ์เสริม</div>
                 </div>
-              ))}
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {asset.defaultAccessories.map((a, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-2.5 p-2.5 rounded-md border border-border/50 bg-card hover:bg-muted/30 transition-smooth"
+                    >
+                      <span className="vz-icon-soft h-7 w-7 flex-shrink-0" style={{ backgroundColor: 'rgba(10,179,156,0.10)' }}>
+                        <CheckCircle2 className="h-3.5 w-3.5" style={{ color: '#0ab39c' }} />
+                      </span>
+                      <span className="text-xs font-medium text-foreground truncate">{a}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
+          </div>
+        </TabsContent>
+
+        {/* Tab 3 — Loan history timeline */}
+        <TabsContent value="history" className="mt-3">
+          <div className="vz-card overflow-hidden">
+            <div className="px-4 py-3 vz-divider flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="vz-icon-soft h-8 w-8" style={{ backgroundColor: 'rgba(247,184,75,0.12)' }}>
+                  <History className="h-4 w-4" style={{ color: '#f7b84b' }} />
+                </span>
+                <div className="leading-tight">
+                  <div className="text-sm font-semibold text-foreground">ประวัติการยืม-คืน</div>
+                  <div className="text-[10px] text-muted-foreground">{history.length} รายการ</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="vz-pill vz-pill-success">
+                  {stats.completedLoans} คืนแล้ว
+                </span>
+                <span className="vz-pill vz-pill-warning">
+                  {history.filter((h) => h.lineStatus !== 'Returned').length} กำลังยืม
+                </span>
+              </div>
+            </div>
+
+            <ScrollArea className="h-[400px]">
+              <div>
+                {history.length === 0 && (
+                  <div className="p-8 text-center">
+                    <History className="h-10 w-10 mx-auto mb-2 text-muted-foreground/30" />
+                    <div className="text-sm font-medium text-foreground">ยังไม่มีประวัติการยืม</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">เครื่องนี้ยังไม่เคยถูกยืม</div>
+                  </div>
+                )}
+                {history.map((h, i) => {
+                  const isReturned = h.lineStatus === 'Returned'
+                  const dotColor = isReturned ? '#0ab39c' : '#f7b84b'
+                  const dotSoft = isReturned ? 'rgba(10,179,156,0.10)' : 'rgba(247,184,75,0.12)'
+                  return (
+                    <div
+                      key={i}
+                      className={`px-4 py-3 flex items-start gap-3 hover:bg-muted/30 transition-smooth ${i < history.length - 1 ? 'vz-divider' : ''}`}
+                    >
+                      {/* Timeline dot avatar */}
+                      <div
+                        className="vz-avatar h-9 w-9 flex-shrink-0"
+                        style={{ backgroundColor: dotSoft, color: dotColor, boxShadow: `inset 0 0 0 1px ${dotColor}33` }}
+                      >
+                        {isReturned ? <CheckCircle2 className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono font-semibold text-sm text-foreground">{h.loanDocNo}</span>
+                          <span
+                            className="vz-pill"
+                            style={{ backgroundColor: dotSoft, color: dotColor }}
+                          >
+                            {isReturned ? 'คืนแล้ว' : 'กำลังยืม'}
+                          </span>
+                          {h.conditionGrade && <GradeBadge grade={h.conditionGrade} />}
+                          {h.isDamaged && (
+                            <span className="vz-pill vz-pill-danger">
+                              <AlertTriangle className="h-2.5 w-2.5" /> เสียหาย
+                            </span>
+                          )}
+                          {h.sendToRepair && (
+                            <span className="vz-pill" style={{ backgroundColor: 'rgba(160,113,240,0.10)', color: '#a071f0' }}>
+                              <Wrench className="h-2.5 w-2.5" /> ส่งซ่อม
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm mt-1 font-medium text-foreground">
+                          {h.customerName} {h.customerCompany ? <span className="text-muted-foreground">— {h.customerCompany}</span> : null}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2 flex-wrap">
+                          <span>ยืม {h.dispatchedAt ? formatThaiDate(h.dispatchedAt) : '-'}</span>
+                          <span className="text-muted-foreground/40">·</span>
+                          <span>กำหนดคืน {formatThaiDate(h.expectedReturnDate)}</span>
+                          {h.returnedAt && (
+                            <>
+                              <span className="text-muted-foreground/40">·</span>
+                              <span style={{ color: '#0ab39c' }}>คืน {formatThaiDate(h.returnedAt)}</span>
+                            </>
+                          )}
+                        </div>
+                        {h.damageDescription && (
+                          <div className="text-xs mt-1.5 p-2 rounded" style={{ backgroundColor: 'rgba(240,101,72,0.06)', color: '#f06548', border: '1px solid rgba(240,101,72,0.15)' }}>
+                            ⚠ {h.damageDescription}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </ScrollArea>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}
+
+// ===== Velzon mini stat card (for the 4-stat row) =====
+function VelzonMiniStat({
+  label, value, icon, color, highlight,
+}: {
+  label: string
+  value: number
+  icon: React.ReactNode
+  color: string
+  highlight?: boolean
+}) {
+  return (
+    <div
+      className={`p-2.5 rounded-md border transition-smooth ${highlight ? 'animate-pulse' : ''}`}
+      style={{
+        backgroundColor: `${color}11`,
+        borderColor: `${color}33`,
+      }}
+    >
+      <div className="flex items-center gap-1.5 mb-1">
+        <span className="vz-icon-soft h-5 w-5" style={{ backgroundColor: `${color}22` }}>
+          <span style={{ color }}>{icon}</span>
+        </span>
+        <span className="vz-eyebrow truncate">{label}</span>
+      </div>
+      <div className="text-lg font-bold tabular-nums tracking-tight" style={{ color }}>
+        {value}
+      </div>
+    </div>
+  )
+}
+
+// ===== Velzon spec row — Velzon 2-column spec table style =====
+function VelzonSpecRow({
+  icon, label, value, mono,
+}: {
+  icon: React.ReactNode
+  label: string
+  value: React.ReactNode
+  mono?: boolean
+}) {
+  return (
+    <div className="flex items-center gap-2 py-2 border-b border-border/40 last:border-b-0">
+      <span className="text-muted-foreground flex-shrink-0">{icon}</span>
+      <span className="text-xs text-muted-foreground flex-shrink-0 w-28">{label}</span>
+      <span className={`text-xs font-medium text-foreground flex-1 truncate ${mono ? 'font-mono' : ''}`}>
+        {value}
+      </span>
     </div>
   )
 }

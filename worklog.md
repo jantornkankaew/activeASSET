@@ -805,3 +805,41 @@ Stage Summary:
 - รองรับ Thai + Latin ทั้ง body และ headings
 - ตัวเลข stat card ใช้ tabular-nums (ตัวเลขตรงแนว, สวยแบบ Velzon)
 - ผ่านการตรวจสอบจาก VLM ว่าเหมาะกับ enterprise dashboard
+
+---
+Task ID: asset-detail-velzon
+Agent: main
+Task: ปรับหน้า detail ของตัวสินค้า (หน้าระดับ 3 ในแทปทรัพย์สิน) ให้ใช้ Velzon product-details design language
+
+Reference: https://themesbrand.com/velzon/html/master/apps-ecommerce-product-details.html
+
+Velzon product-details elements applied:
+- Breadcrumb at top (ทรัพย์สิน / brand+model / tagId)
+- 2-column layout: LEFT = product image panel (gradient + category icon + brand watermark + status ribbon + Tag ID + Grade badges); RIGHT = product info (brand eyebrow + h1 model name + 5-star rating + 4-stat row + features list + services list + action buttons)
+- 4 mini stat cards (ยืมทั้งหมด / คืนแล้ว / เสียหาย / ส่งซ่อม) with colored soft bg
+- Loan count progress bar (loan_count / max_loan_count)
+- Features list (accessories with check icons) + Services list (warranty + location + purchase date + deposit price)
+- 3 Velzon-style tabs: ข้อมูลทรัพย์สิน / อุปกรณ์เสริม / ประวัติยืม-คืน
+- Tab 1: Spec table (VelzonSpecRow — icon + label + value, 2-column grid)
+- Tab 2: Accessories grid (chip cards with check icon)
+- Tab 3: Timeline list with timeline dot avatars + status pills
+
+Bug found + fixed during testing:
+- SOURCE_LABELS[source] returns an object {label, color, bg}, NOT a string
+- Original code passed the whole object as JSX child → React crash "Objects are not valid as a React child"
+- Fix: SOURCE_LABELS[asset.source]?.label || asset.source
+
+Work Log:
+- เพิ่ม imports: Tabs/Star/Shield/MapPin/Calendar/Phone/User/DollarSign/CreditCard/Truck/Package2/Cpu/HardDrive
+- แทนที่ AssetDetailView function ทั้งจก → Velzon product-details layout
+- เพิ่ม VelzonMiniStat helper (4 stat cards)
+- เพิ่ม VelzonSpecRow helper (2-column spec table)
+- รัน test-asset-detail.mjs (Playwright): login → click ทรัพย์สิน → click catalog → click unit
+- ตรวจพบ React crash จาก SOURCE_LABELS → แก้โดยใช้ .label
+- รันใหม่: ผ่านครบ — 5 vz-card, 10 vz-eyebrow, 3 tab triggers, 5 star icons, 0 page errors
+- VLM ยืนยัน: breadcrumb ✓, LEFT image panel ✓, RIGHT product info ✓, star ratings ✓, 4 stat cards ✓, 3 tabs ✓
+
+Stage Summary:
+- หน้า detail ของตัวสินค้าใช้ Velzon product-details design ครบ
+- ผ่านการทดสอบ E2E และ VLM
+- ไม่มี runtime errors
