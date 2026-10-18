@@ -8,14 +8,14 @@ import { ThemeToggle } from '@/components/theme/ThemeToggle'
 import { TenantSwitcher } from '@/components/auth/TenantSwitcher'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
 import {
-  Boxes, FileText, Calendar, ClipboardCheck, TrendingUp,
+  Boxes, FileText, Calendar, CalendarDays, ClipboardCheck, TrendingUp,
   Package, Plus, Building2, Download, Users,
   Home, Wrench,
   Menu, X, Clock, AlertTriangle,
 } from 'lucide-react'
 
 export type SidebarPage =
-  | 'overview' | 'loans' | 'reservations'
+  | 'overview' | 'loans' | 'reservations' | 'return-calendar'
   | 'assets' | 'assets-register' | 'assets-suppliers'
   | 'audit' | 'analytics' | 'team'
   | 'export-loans' | 'export-assets' | 'export-analytics'
@@ -68,6 +68,9 @@ export function Sidebar({
         {
           id: 'reservations', label: 'จอง & คิวยืม', icon: <Calendar className="h-4 w-4" />,
           badge: stats?.queuedLoans || 0, badgeColor: 'amber',
+        },
+        {
+          id: 'return-calendar', label: 'ปฏิทินคืน', icon: <CalendarDays className="h-4 w-4" />,
         },
       ],
     },

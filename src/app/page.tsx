@@ -9,6 +9,7 @@ import { LoansTab } from '@/components/activeasset/LoansTab'
 import { AuditTab } from '@/components/activeasset/AuditTab'
 import { AnalyticsTab } from '@/components/activeasset/AnalyticsTab'
 import { TeamTab } from '@/components/activeasset/TeamTab'
+import { ReturnCalendarTab } from '@/components/activeasset/ReturnCalendarTab'
 import { ReservationTab } from '@/components/activeasset/ReservationTab'
 import { RegisterAssetView, SuppliersView } from '@/components/activeasset/AssetsManagementViews'
 import { RequestLoanSheet } from '@/components/activeasset/RequestLoanSheet'
@@ -186,6 +187,7 @@ function AppShell() {
             />
           )}
           {page === 'reservations' && <ReservationTab />}
+          {page === 'return-calendar' && <ReturnCalendarTab onOpenLoan={setOpenLoanDocNo} />}
           {page === 'audit' && <AuditTab startNewTrigger={auditStartTrigger} />}
           {page === 'analytics' && <AnalyticsTab />}
           {page === 'team' && <TeamTab />}

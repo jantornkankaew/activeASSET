@@ -1726,3 +1726,73 @@ Stage Summary:
 - Role permissions matrix as Velzon "Skills" badges
 - Activities filtered by userId (client-side from /api/activities)
 - Loans filtered by salesRepName (client-side from /api/loans)
+
+---
+Task ID: return-calendar-velzon
+Agent: main
+Task: การคืน เพื่อเตรียมตัว ต้นแบบ Velzon calendar (https://themesbrand.com/velzon/html/master/apps-calendar.html)
+
+Reference structure (Velzon Calendar):
+- page-title-box (h4 "Calendar" + breadcrumb)
+- 2-col layout: col-xl-3 (LEFT sidebar) + col-xl-9 (RIGHT main calendar)
+- LEFT sidebar:
+  - Create New Event button (btn-primary w-100)
+  - External Events legend (bg-success/info/warning/danger-subtle categories)
+  - Upcoming Events scrollable list (data-simplebar height:400px)
+  - Welcome info card (bg-info-subtle)
+- RIGHT main: FullCalendar month view grid with event pills on dates
+
+Action:
+1. Added 'return-calendar' to SidebarPage type
+2. Added "ปฏิทินคืน" sidebar item (CalendarDays icon) under "เมนูหลัก"
+3. Added routing in page.tsx: {page === 'return-calendar' && <ReturnCalendarTab onOpenLoan={...} />}
+4. Created ReturnCalendarTab.tsx with Velzon calendar design:
+   - page-title-box (h4 "ปฏิทินการคืน" + breadcrumb Apps › Calendar)
+   - 2-col layout: LEFT col-1 sidebar + RIGHT col-2 main calendar
+   - LEFT sidebar:
+     * Create New Event button (gradient primary→teal) — opens loan creation
+     * Event category legend (4 categories with colors + icons):
+       - เกินกำหนด (red)
+       - ใกล้ครบกำหนด (amber)
+       - กำลังยืม (primary blue)
+       - เครื่องสำรอง (purple)
+     * Upcoming returns scrollable list (15 items, sorted by date):
+       - Each: dot color + docNo + days remaining/days overdue + customer name + date
+       - Click → opens loan detail
+     * Welcome info card (teal bg) with calendar usage instructions
+   - RIGHT main:
+     * Month header with Thai month name + Buddhist year (e.g. "ตุลาคม 2569")
+     * Stats pills: X เกิน + Y ใกล้ + Z ทั้นหมด
+     * Navigation: prev / วันนี้ (today) / next buttons
+     * 7-col calendar grid with Thai day headers (อา จ อ พ พฤ ศ ส)
+     * Each day cell:
+       - min-h-70px with border + bg
+       - Current month: normal bg, weekend: rose-500/5
+       - Other month: opacity-50
+       - Today: ring-2 ring-primary/40
+       - Loans shown as colored pills (docNo) — max 3 per cell + "+N more"
+       - Click on cell → opens first loan
+     - Loans data fetched from /api/loans, grouped by expectedReturnDate
+
+Testing:
+- Build + deploy สำเร็จ
+- E2E test PASS: 0 page errors
+  - vz-card count: 4 (page-title + create button + upcoming list + welcome card)
+  - Calendar grid: 2 (day headers + day cells, both grid-cols-7)
+  - h5 headers: 2 (month title + upcoming title)
+  - buttons: 31 (nav + upcoming items + cells)
+  - vz-pill: 3 (month stats: overdue + due soon + total)
+- VLM ยืนยัน 6/6:
+  1. ✓ page-title-box (h4 + breadcrumb)
+  2. ✓ LEFT sidebar: Create button + category legend + upcoming list
+  3. ✓ RIGHT main: Month calendar grid (7-col with Thai day headers)
+  4. ✓ Month navigation (prev/today/next) + stats pills
+  5. ✓ Day cells show loan events as colored pills
+  6. ✓ Today's date highlighted
+
+Stage Summary:
+- หน้าปฏิทินการคืน (Velzon calendar pattern) พร้อมใช้งานใน sidebar (เมนูหลัก)
+- Monthly calendar grid shows loans by expectedReturnDate
+- Color-coded by status: red (overdue) / amber (due ≤3d) / blue (active) / purple (standby)
+- LEFT sidebar has upcoming returns list + category legend + create button
+- Click on any day cell or upcoming item → opens loan detail sheet
