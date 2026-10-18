@@ -336,5 +336,163 @@ a:hover { opacity: 0.8; }
   border-radius: 0.5rem;
 }
 
+/* === Velzon CRM dashboard utilities === */
+/* crm-widget card — single card containing multiple horizontal stats */
+.vz-crm-widget {
+  border-radius: 0.375rem;
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 0.125rem 0.25rem rgb(33 37 41 / 0.04);
+  overflow: hidden;
+}
+.dark .vz-crm-widget { box-shadow: 0 0.125rem 0.25rem rgb(0 0 0 / 0.2); }
+
+/* crm mini stat — single stat item */
+.vz-crm-stat {
+  padding: 1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.vz-crm-stat + .vz-crm-stat {
+  border-left: 1px solid hsl(var(--border));
+}
+@media (max-width: 767px) {
+  .vz-crm-stat + .vz-crm-stat {
+    border-left: 0;
+    border-top: 1px solid hsl(var(--border));
+  }
+}
+
+/* CRM label — uppercase text-muted with arrow icon on right */
+.vz-crm-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+  line-height: 1.3;
+}
+
+/* CRM value — flex with icon left + big number right */
+.vz-crm-value-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+/* CRM big number — cfs-22 */
+.vz-crm-num {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--foreground));
+}
+
+/* CRM card-header dropdown button — "Sort by: <value> ▾" */
+.vz-crm-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  user-select: none;
+  color: hsl(var(--muted-foreground));
+  background: transparent;
+  border: 0;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+.vz-crm-sort-btn:hover { color: hsl(var(--primary)); }
+.vz-crm-sort-btn b { font-weight: 600; color: hsl(var(--foreground)); }
+
+/* CRM inline stats — Balance Overview 3 inline stats */
+.vz-crm-inline-stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+.vz-crm-inline-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+.vz-crm-inline-stat + .vz-crm-inline-stat {
+  border-left: 1px solid hsl(var(--border));
+  padding-left: 1.5rem;
+}
+.vz-crm-inline-num {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.vz-crm-inline-label {
+  font-size: 11px;
+  color: hsl(var(--muted-foreground));
+}
+
+/* CRM table — avatar-xs in cell + status badge */
+.vz-crm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.vz-crm-table thead th {
+  background: hsl(var(--muted) / 0.4);
+  color: hsl(var(--muted-foreground));
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid hsl(var(--border));
+}
+.vz-crm-table tbody td {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  vertical-align: middle;
+}
+.vz-crm-table tbody tr:hover td { background: hsl(var(--muted) / 0.2); }
+.vz-crm-table tbody tr:last-child td { border-bottom: 0; }
+
+/* CRM tasks list — list-group-flush border-dashed pattern */
+.vz-crm-tasks {
+  border-top: 1px dashed hsl(var(--border));
+}
+.vz-crm-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px dashed hsl(var(--border));
+}
+.vz-crm-task:last-child { border-bottom: 0; }
+
+/* counter animation */
+@keyframes vz-counter-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.vz-crm-counter {
+  display: inline-block;
+  animation: vz-counter-up 0.6s ease-out;
+}
+
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

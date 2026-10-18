@@ -1491,3 +1491,76 @@ Stage Summary:
 - Display photos in past return events ทั้งใน ReturnLoanSheet และ LoanDetailSheet (thumbnail strip)
 - ใช้ /api/uploads endpoint ที่มีอยู่แล้ว (รับ base64 → save to /public/uploads/xxx.jpg → return path)
 - Velzon dropzone pattern (dashed border + upload icon + hover effect)
+
+---
+Task ID: crm-dashboard-redesign
+Agent: main
+Task: หน้าภาพรวมและ analytics ใช้ต้นแบบ Velzon CRM dashboard (https://themesbrand.com/velzon/html/master/dashboard-crm.html)
+
+Reference structure (Velzon CRM):
+- page-title-box (h4 + breadcrumb right)
+- crm-widget card (single card containing 5 mini stats horizontally — each: h5 uppercase label + arrow icon + display-6 large icon + h2 counter)
+- 3-col chart cards with "Sort by: ▾" dropdowns in card headers (Sales Forecast / Deal Type / Balance Overview with 3 inline stats + chart)
+- 2-col layout: Deals Status (table with avatar-xs + status badge + deal value) + My Tasks (list-group-flush border-dashed with checkbox + label + date)
+- Bottom row: Upcoming Activities + Closing Deals
+
+Action:
+1. Added Velzon CRM CSS utilities in globals.css:
+   - .vz-crm-widget (single card containing row of stats)
+   - .vz-crm-stat (single stat item with label + icon + number)
+   - .vz-crm-label (uppercase text-muted with arrow icon)
+   - .vz-crm-value-row (flex: icon left + number right)
+   - .vz-crm-num (big number 22px)
+   - .vz-crm-sort-btn ("Sort by: <value> ▾" pattern)
+   - .vz-crm-inline-stats (3 inline stats before chart, Balance Overview pattern)
+   - .vz-crm-table (table with avatar-xs in cell + status badge)
+   - .vz-crm-tasks + .vz-crm-task (list-group-flush border-dashed pattern)
+   - .vz-crm-counter animation (vz-counter-up keyframe)
+   - Responsive: on mobile, vertical borders switch to top borders
+
+2. Rewrote OverviewTab.tsx in CRM style:
+   - Removed gradient hero banner (Velzon analytics style)
+   - Removed Quick Actions row
+   - Removed 6 KPI stat cards (Velzon analytics style)
+   - Added page-title-box (h4 + breadcrumb)
+   - Added crm-widget with 5 mini stats: ทรัพย์สินทั้งหมด / พร้อมใช้ / กำลังยืม / ใบยืมเปิดอยู่ / เกินกำหนด
+   - Each stat: label + arrow (up green / down red) + large icon + big number + trend text + pulse for urgent
+   - 3-col charts: Brand distribution (with Sort by dropdown) + Status donut (with Sort by) + Balance Overview (3 inline stats + mini stacked bar)
+   - 2-col: Overdue loans (CRM Deals Status table pattern with avatars + customer + status pills) + Standby loans (My Tasks pattern with avatars + dashed borders)
+   - Bottom row: Dead stock (CRM table) + Recent activity feed
+
+3. Rewrote AnalyticsTab.tsx in CRM style:
+   - Removed gradient hero banner
+   - Removed 4 KPI stat cards
+   - Added page-title-box
+   - Added crm-widget with 5 mini stats: ยืมทั้งหมด / กำลังยืม / คืนครบ / ติดคิว / อัตราสำเร็จ
+   - 2-col charts: Trend chart (Balance Overview pattern with 3 inline stats + smooth area chart) + Source donut (Deal Type pattern with Sort by)
+   - 2-col: Top Customers (CRM table with avatar + company + industry + count + "โอกาสขาย" badge) + Top Models (My Tasks pattern with rank badge + brand/model + progress bar + count)
+   - Bottom row: Demand vs Supply (CRM table with status pills + Sort by dropdown showing ขาด/ใกล้ counts) + Purpose + Industry (My Tasks pattern with bars + industries chips)
+
+Testing:
+- Build + deploy สำเร็จ
+- รัน test-velzon-render.mjs: PASS (0 page errors)
+- DOM verification (test-crm-dom.mjs):
+  Overview tab:
+    - crm-widget: 1 ✓
+    - crm-stat: 5 ✓ (5 mini stats horizontal in single card)
+    - sort buttons: 5 ✓
+    - CRM tables: 2 ✓ (overdue + dead stock)
+    - tasks lists: 1 ✓ (standby)
+  Analytics tab:
+    - crm-widget: 1 ✓
+    - crm-stat: 5 ✓
+    - sort buttons: 4 ✓
+    - CRM tables: 2 ✓ (top customers + demand vs supply)
+    - tasks lists: 2 ✓ (top models + purpose)
+- VLM ยืนยัน 4/5 (page-title ✓, 3-col chart cards with Sort by ✓, Deals Status table ✓, My Tasks list ✓)
+  Note: VLM confused about (2) saying "5 separate individual cards" but DOM confirms it IS 1 single crm-widget card with 5 stats inside
+
+Stage Summary:
+- Overview + Analytics tabs both use Velzon CRM dashboard design language ครบ
+- crm-widget with 5 horizontal mini stats (Velzon CRM signature)
+- Sort by dropdowns in card headers (Velzon CRM signature)
+- CRM tables with avatars + status badges (Velzon Deals Status pattern)
+- My Tasks lists with dashed borders (Velzon list-group-flush pattern)
+- Inline stats + chart (Velzon Balance Overview pattern)

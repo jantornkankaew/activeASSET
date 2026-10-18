@@ -12,6 +12,7 @@ import {
   Package, CheckCircle2, Boxes, Wrench, Clock, AlertTriangle,
   ClipboardCheck, TrendingUp, ShoppingCart, ScanLine, Truck, Settings2,
   ChevronRight, ArrowUpRight, ArrowDownRight, Activity, Sparkles,
+  ChevronDown, FileText, History,
 } from 'lucide-react'
 import {
   formatThaiDate, daysUntil,
@@ -68,24 +69,12 @@ interface OverviewTabProps {
   onOpenLoan: (docNo: string) => void
 }
 
-// === Velzon color tokens (matched to brand palette) ===
-const VZ = {
-  primary: '#405189',   // Velzon indigo
-  teal:    '#0ab39c',  // Velzon growth teal
-  amber:   '#f7b84b',  // Velzon warning amber
-  rose:    '#f06548',  // Velzon danger coral
-  purple:  '#a071f0',  // Velzon accent purple
-  slate:   '#74788d',  // Velzon muted slate
-}
-
-// Velzon soft bg map (rgba of the brand color)
+// Velzon color tokens (CRM palette)
+const VZ = { primary: '#405189', teal: '#0ab39c', amber: '#f7b84b', rose: '#f06548', purple: '#a071f0', slate: '#74788d' }
 const VZ_SOFT: Record<string, string> = {
-  primary: 'rgba(64, 81, 137, 0.10)',
-  teal:    'rgba(10, 179, 156, 0.10)',
-  amber:   'rgba(247, 184, 75, 0.12)',
-  rose:    'rgba(240, 101, 72, 0.10)',
-  purple:  'rgba(160, 113, 240, 0.10)',
-  slate:   'rgba(116, 120, 141, 0.12)',
+  primary: 'rgba(64,81,137,0.10)', teal: 'rgba(10,179,156,0.10)',
+  amber: 'rgba(247,184,75,0.12)', rose: 'rgba(240,101,72,0.10)',
+  purple: 'rgba(160,113,240,0.10)', slate: 'rgba(116,120,141,0.12)',
 }
 
 export function OverviewTab({ onNavigate, onCreateLoan, onStartAudit, onOpenLoan }: OverviewTabProps) {
@@ -93,6 +82,11 @@ export function OverviewTab({ onNavigate, onCreateLoan, onStartAudit, onOpenLoan
   const [loading, setLoading] = useState(true)
   const [widgetEditorOpen, setWidgetEditorOpen] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
+  // Sort dropdowns for each card (Velzon CRM signature)
+  const [sortByTrend, setSortByTrend] = useState('6 เดือนล่าสุด')
+  const [sortByBrand, setSortByBrand] = useState('ทั้งหมด')
+  const [sortByOverdue, setSortByOverdue] = useState('ด่วนที่สุดก่อน')
+  const [sortByStandby, setSortByStandby] = useState('ทั้งหมด')
 
   useEffect(() => {
     fetch('/api/dashboard')
@@ -111,269 +105,92 @@ export function OverviewTab({ onNavigate, onCreateLoan, onStartAudit, onOpenLoan
     : 0
   const availablePct = s.totalAssets > 0 ? Math.round((s.available / s.totalAssets) * 100) : 0
 
-  // Greeting based on time
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'สวัสดีตอนเช้า' : hour < 17 ? 'สวัสดีตอนบ่าย' : 'สวัสดีตอนเย็น'
-
   return (
-    <div className="space-y-5 animate-fade-in">
-      {/* ===== Velzon gradient hero banner ===== */}
-      <div className="vz-banner p-5 lg:p-6">
-        <div className="vz-banner-pattern" />
-        <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div className="space-y-2 text-white">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-white/80" />
-              <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/85">{greeting}</span>
-            </div>
-            <h2 className="text-2xl font-bold tracking-tight">ภาพรวมระบบบริหารทรัพย์สิน</h2>
-            <p className="text-xs text-white/75 max-w-lg leading-relaxed">
-              ติดตามสถานะทรัพย์สิน ใบยืม และคิวการยืมแบบเรียลไทม์ — ข้อมูลอัปเดตล่าสุดทุกการรีเฟรช
-            </p>
-          </div>
-
-          {/* Right — Velzon-style stat summary on banner */}
-          <div className="flex items-center gap-5">
-            <VelzonRingMini label="สุขภาพคลัง" value={healthScore} color={VZ.teal} />
-            <div className="h-12 w-px bg-white/15" />
-            <VelzonRingMini label="อัตราใช้งาน" value={utilization} color="#fff" />
-            <div className="h-12 w-px bg-white/15 hidden lg:block" />
-            <Button
-              size="sm"
-              variant="secondary"
-              className="bg-white/15 hover:bg-white/25 text-white border-0 shadow-none text-xs"
-              onClick={() => setWidgetEditorOpen(true)}
-            >
-              <Settings2 className="h-3.5 w-3.5 mr-1" /> จัดวิดเจ็ต
-            </Button>
-          </div>
+    <div className="space-y-4 animate-fade-in">
+      {/* ===== Velzon CRM page-title-box ===== */}
+      <div className="vz-card p-4 flex items-center justify-between">
+        <div>
+          <h4 className="text-base font-semibold text-foreground mb-0" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
+            ภาพรวมระบบบริหารทรัพย์สิน
+          </h4>
+          <p className="text-xs text-muted-foreground mt-0.5">ติดตามสถานะทรัพย์สิน ใบยืม และคิวการยืมแบบเรียลไทม์</p>
+        </div>
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-muted-foreground">Dashboards</span>
+          <ChevronRight className="h-3 w-3 text-muted-foreground/60" />
+          <span className="text-primary font-medium">Overview</span>
         </div>
       </div>
 
-      {/* ===== Quick Actions — Velzon button bar ===== */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          className="group relative overflow-hidden inline-flex items-center gap-2 px-4 py-2 rounded text-white text-sm font-semibold shadow-sm transition-smooth hover:shadow-md hover:-translate-y-0.5"
-          style={{ background: `linear-gradient(135deg, ${VZ.primary} 0%, ${VZ.purple} 100%)` }}
-          onClick={onCreateLoan}
-        >
-          <ShoppingCart className="h-4 w-4" />
-          ขอยืมใหม่
-        </button>
-        {[
-          { icon: Truck, label: 'จัดของ', color: VZ.amber, action: () => onNavigate('loans') },
-          { icon: ScanLine, label: 'รับคืน', color: VZ.teal, action: () => onNavigate('loans') },
-          { icon: ClipboardCheck, label: 'ตรวจนับ', color: VZ.primary, action: onStartAudit },
-          { icon: TrendingUp, label: 'Analytics', color: VZ.purple, action: () => onNavigate('analytics') },
-        ].map((a, i) => (
-          <button
-            key={i}
-            className="group vz-card inline-flex items-center gap-2 px-3.5 py-2 transition-smooth hover:-translate-y-0.5"
-            onClick={a.action}
-          >
-            <span
-              className="vz-icon-soft h-7 w-7"
-              style={{ backgroundColor: VZ_SOFT[i % 6 === 0 ? 'amber' : i === 1 ? 'teal' : i === 2 ? 'primary' : 'purple'] }}
-            >
-              <a.icon className="h-4 w-4" style={{ color: a.color }} />
-            </span>
-            <span className="text-sm font-medium text-foreground">{a.label}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* ===== KPI stat cards — Velzon signature pattern ===== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-        <VelzonStatCard
-          label="ทรัพย์สินทั้งหมด"
-          value={s.totalAssets}
-          icon={<Package className="h-5 w-5" />}
-          color="primary"
-          trend={{ delta: '+3', label: 'เพิ่มเดือนนี้', up: true }}
-          onClick={() => onNavigate('assets')}
-        />
-        <VelzonStatCard
-          label="พร้อมใช้"
-          value={s.available}
-          icon={<CheckCircle2 className="h-5 w-5" />}
-          color="teal"
-          trend={{ delta: `${availablePct}%`, label: 'ของทั้งหมด', up: availablePct >= 50 }}
-          onClick={() => onNavigate('assets')}
-        />
-        <VelzonStatCard
-          label="กำลังยืม"
-          value={s.onLoan}
-          icon={<Boxes className="h-5 w-5" />}
-          color="amber"
-          trend={{ delta: `${s.activeLoans}`, label: 'ใบยืม', up: true }}
-          onClick={() => onNavigate('loans')}
-        />
-        <VelzonStatCard
-          label="ส่งซ่อม"
-          value={s.inRepair}
-          icon={<Wrench className="h-5 w-5" />}
-          color="purple"
-          trend={{ delta: s.openTickets > 0 ? `${s.openTickets}` : '0', label: s.openTickets > 0 ? 'tickets' : 'ไม่มี', up: s.openTickets === 0 }}
-          onClick={() => onNavigate('assets')}
-        />
-        <VelzonStatCard
-          label="เกินกำหนด"
-          value={s.overdueLoans}
-          icon={<AlertTriangle className="h-5 w-5" />}
-          color="rose"
-          pulse={s.overdueLoans > 0}
-          trend={{ delta: s.overdueLoans > 0 ? 'ด่วน' : 'ปกติ', label: '', up: s.overdueLoans === 0 }}
-          onClick={() => onNavigate('loans')}
-        />
-        <VelzonStatCard
-          label="Dead Stock"
-          value={s.deadStockCount}
-          icon={<Clock className="h-5 w-5" />}
-          color="slate"
-          trend={{ delta: s.deadStockCount > 0 ? 'พิจารณา' : '—', label: '', up: s.deadStockCount === 0 }}
-          onClick={() => onNavigate('assets')}
-        />
-      </div>
-
-      {/* ===== Overdue + Standby — Velzon card pattern ===== */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Overdue */}
-        <div className="vz-card overflow-hidden" style={{ borderColor: 'rgba(240, 101, 72, 0.20)' }}>
-          <div className="px-4 py-3 vz-divider" style={{ background: 'linear-gradient(90deg, rgba(240, 101, 72, 0.06), transparent)' }}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="vz-icon-soft h-9 w-9" style={{ backgroundColor: VZ_SOFT.rose, boxShadow: 'inset 0 0 0 1px rgba(240, 101, 72, 0.18)' }}>
-                  <AlertTriangle className="h-4 w-4" style={{ color: VZ.rose }} />
-                </span>
-                <div className="leading-tight">
-                  <div className="text-sm font-semibold text-foreground">เกินกำหนดคืน</div>
-                  <div className="text-[10px] text-muted-foreground">ต้องติดตามด่วน</div>
-                </div>
-              </div>
-              <span className="vz-pill vz-pill-danger">
-                {data.overdueLoans.length} ใบ
-              </span>
-            </div>
-          </div>
-          <div>
-            {data.overdueLoans.length === 0 && (
-              <div className="p-8 text-center">
-                <CheckCircle2 className="h-10 w-10 mx-auto mb-2" style={{ color: VZ.teal }} />
-                <div className="text-sm font-medium text-foreground">ไม่มีใบยืมเกินกำหนด</div>
-                <div className="text-[11px] text-muted-foreground mt-0.5">ระบบปกติดี</div>
-              </div>
-            )}
-            {data.overdueLoans.map((l, i) => {
-              const days = daysUntil(l.expectedReturnDate)
-              return (
-                <button
-                  key={l.docNo}
-                  onClick={() => onOpenLoan(l.docNo)}
-                  className={`w-full text-left px-4 py-2.5 hover:bg-rose-500/4 transition-smooth flex items-center gap-3 group ${i < data.overdueLoans.length - 1 ? 'vz-divider' : ''}`}
-                >
-                  <div
-                    className="vz-avatar h-9 w-9 text-xs"
-                    style={{ backgroundColor: VZ_SOFT.rose, color: VZ.rose, boxShadow: 'inset 0 0 0 1px rgba(240, 101, 72, 0.18)' }}
-                  >
-                    {l.customerName.charAt(0)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-semibold text-foreground">{l.docNo}</span>
-                      <span className="vz-pill vz-pill-danger">เกิน {Math.abs(days)}d</span>
-                    </div>
-                    <div className="text-xs truncate mt-0.5 font-medium text-foreground">{l.customerName} {l.customerCompany ? `· ${l.customerCompany}` : ''}</div>
-                    <div className="text-[10px] text-muted-foreground">โดย {l.salesRepName} • {l.items.length} ชิ้น</div>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 group-hover:text-rose-500 group-hover:translate-x-0.5 transition-smooth" />
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Standby */}
-        <div className="vz-card overflow-hidden" style={{ borderColor: 'rgba(247, 184, 75, 0.20)' }}>
-          <div className="px-4 py-3 vz-divider" style={{ background: 'linear-gradient(90deg, rgba(247, 184, 75, 0.06), transparent)' }}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="vz-icon-soft h-9 w-9" style={{ backgroundColor: VZ_SOFT.amber, boxShadow: 'inset 0 0 0 1px rgba(247, 184, 75, 0.20)' }}>
-                  <Wrench className="h-4 w-4" style={{ color: VZ.amber }} />
-                </span>
-                <div className="leading-tight">
-                  <div className="text-sm font-semibold text-foreground">เครื่องสำรองซ่อม</div>
-                  <div className="text-[10px] text-muted-foreground">ที่ยังไม่คืนของจริง</div>
-                </div>
-              </div>
-              <span className="vz-pill vz-pill-warning">
-                {data.standbyLoans.length} ใบ
-              </span>
-            </div>
-          </div>
-          <div>
-            {data.standbyLoans.length === 0 && (
-              <div className="p-8 text-center">
-                <CheckCircle2 className="h-10 w-10 mx-auto mb-2" style={{ color: VZ.teal }} />
-                <div className="text-sm font-medium text-foreground">ไม่มีเครื่องสำรองค้าง</div>
-                <div className="text-[11px] text-muted-foreground mt-0.5">ทุกใบคืนครบแล้ว</div>
-              </div>
-            )}
-            {data.standbyLoans.map((l, i) => {
-              const days = daysUntil(l.expectedReturnDate)
-              return (
-                <button
-                  key={l.docNo}
-                  onClick={() => onOpenLoan(l.docNo)}
-                  className={`w-full text-left px-4 py-2.5 hover:bg-amber-500/4 transition-smooth flex items-center gap-3 group ${i < data.standbyLoans.length - 1 ? 'vz-divider' : ''}`}
-                >
-                  <div
-                    className="vz-avatar h-9 w-9 text-xs"
-                    style={{ backgroundColor: VZ_SOFT.amber, color: VZ.amber, boxShadow: 'inset 0 0 0 1px rgba(247, 184, 75, 0.20)' }}
-                  >
-                    {l.customerName.charAt(0)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-semibold text-foreground">{l.docNo}</span>
-                      {days < 0 && <span className="vz-pill vz-pill-danger">เกิน {Math.abs(days)}d</span>}
-                      {days >= 0 && <span className="vz-pill vz-pill-warning">{days}d left</span>}
-                    </div>
-                    <div className="text-xs truncate mt-0.5 font-medium text-foreground">{l.customerName} {l.customerCompany ? `· ${l.customerCompany}` : ''}</div>
-                    <div className="text-[10px] text-muted-foreground">คืน {formatThaiDate(l.expectedReturnDate)}</div>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-smooth" />
-                </button>
-              )
-            })}
-          </div>
+      {/* ===== Velzon CRM crm-widget (5 mini stats horizontal in 1 card) ===== */}
+      <div className="vz-crm-widget">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 g-0">
+          {/* Stat 1 — Total Assets */}
+          <CrmStat
+            label="ทรัพย์สินทั้งหมด"
+            value={s.totalAssets}
+            icon={<Package className="h-6 w-6" />}
+            trend="up"
+            trendText="+3"
+          />
+          {/* Stat 2 — Available */}
+          <CrmStat
+            label="พร้อมใช้"
+            value={s.available}
+            valueSuffix={` (${availablePct}%)`}
+            icon={<CheckCircle2 className="h-6 w-6" />}
+            trend="up"
+            trendText={`${availablePct}%`}
+          />
+          {/* Stat 3 — On Loan */}
+          <CrmStat
+            label="กำลังยืม"
+            value={s.onLoan}
+            icon={<Boxes className="h-6 w-6" />}
+            trend="up"
+            trendText={`${s.activeLoans} ใบ`}
+          />
+          {/* Stat 4 — Active Loans */}
+          <CrmStat
+            label="ใบยืมเปิดอยู่"
+            value={s.activeLoans}
+            icon={<FileText className="h-6 w-6" />}
+            trend={s.overdueLoans > 0 ? 'down' : 'up'}
+            trendText={s.overdueLoans > 0 ? `${s.overdueLoans} เกิน` : 'ปกติ'}
+          />
+          {/* Stat 5 — Overdue */}
+          <CrmStat
+            label="เกินกำหนด"
+            value={s.overdueLoans}
+            icon={<AlertTriangle className="h-6 w-6" />}
+            trend={s.overdueLoans > 0 ? 'down' : 'up'}
+            trendText={s.overdueLoans > 0 ? 'ด่วน' : 'ปกติ'}
+            pulse={s.overdueLoans > 0}
+          />
         </div>
       </div>
 
-      {/* ===== Brand + Dead Stock — Velzon pattern ===== */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Brand distribution */}
+      {/* ===== Velzon CRM — 3-col charts (Sales Forecast / Deal Type / Balance Overview) ===== */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Card 1 — Brand Distribution (Sales Forecast pattern) */}
         <div className="vz-card">
           <div className="px-4 py-3 vz-divider flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <span className="vz-icon-soft h-8 w-8" style={{ backgroundColor: VZ_SOFT.primary }}>
-                <TrendingUp className="h-4 w-4" style={{ color: VZ.primary }} />
-              </span>
-              <div className="leading-tight">
-                <div className="text-sm font-semibold text-foreground">สัดส่วนแบรนด์</div>
-                <div className="text-[10px] text-muted-foreground">การกระจายตามยี่ห้อ</div>
-              </div>
+            <h5 className="text-sm font-semibold text-foreground mb-0 flex-grow-1" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
+              สัดส่วนแบรนด์
+            </h5>
+            <div className="flex-shrink-0">
+              <SortDropdown value={sortByBrand} onChange={setSortByBrand} options={['ทั้งหมด', 'Top 5', 'Top 10']} />
             </div>
-            <span className="vz-pill vz-pill-muted">{data.brandDistribution.length} แบรนด์</span>
           </div>
-          <div className="px-4 py-3">
-            <div className="space-y-3">
-              {data.brandDistribution.map((b, i) => {
+          <div className="p-4">
+            <div className="space-y-2.5">
+              {data.brandDistribution.slice(0, 6).map((b, i) => {
                 const pct = s.totalAssets > 0 ? (b.count / s.totalAssets) * 100 : 0
                 const colorHex = [VZ.primary, VZ.teal, VZ.amber, VZ.purple, VZ.rose, VZ.slate][i % 6]
                 return (
                   <div key={b.brand}>
-                    <div className="flex items-center justify-between text-xs mb-1.5">
-                      <span className="font-semibold text-foreground flex items-center gap-2">
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="font-medium text-foreground flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full" style={{ backgroundColor: colorHex }} />
                         {b.brand}
                       </span>
@@ -382,13 +199,7 @@ export function OverviewTab({ onNavigate, onCreateLoan, onStartAudit, onOpenLoan
                       </span>
                     </div>
                     <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${pct}%`,
-                          background: `linear-gradient(90deg, ${colorHex}, ${colorHex}aa)`,
-                        }}
-                      />
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${colorHex}, ${colorHex}aa)` }} />
                     </div>
                   </div>
                 )
@@ -397,42 +208,170 @@ export function OverviewTab({ onNavigate, onCreateLoan, onStartAudit, onOpenLoan
           </div>
         </div>
 
-        {/* Dead stock */}
-        <div className="vz-card overflow-hidden">
+        {/* Card 2 — Donut Status (Deal Type pattern) */}
+        <div className="vz-card">
           <div className="px-4 py-3 vz-divider flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <span className="vz-icon-soft h-8 w-8" style={{ backgroundColor: VZ_SOFT.slate }}>
-                <Clock className="h-4 w-4" style={{ color: VZ.slate }} />
-              </span>
-              <div className="leading-tight">
-                <div className="text-sm font-semibold text-foreground">ของดอง — ไม่เคยถูกยืม</div>
-                <div className="text-[10px] text-muted-foreground">รอการพิจารณาตัดออก</div>
+            <h5 className="text-sm font-semibold text-foreground mb-0 flex-grow-1" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
+              สถานะทรัพย์สิน
+            </h5>
+            <div className="flex-shrink-0">
+              <SortDropdown value={sortByTrend} onChange={setSortByTrend} options={['6 เดือนล่าสุด', '3 เดือนล่าสุด', 'เดือนนี้']} />
+            </div>
+          </div>
+          <div className="p-4 flex items-center justify-center">
+            <StatusDonut available={s.available} onLoan={s.onLoan} inRepair={s.inRepair} other={s.lost + s.disposed + s.inInspection} total={s.totalAssets} />
+          </div>
+        </div>
+
+        {/* Card 3 — Balance Overview pattern (3 inline stats + bar) */}
+        <div className="vz-card">
+          <div className="px-4 py-3 vz-divider flex items-center justify-between">
+            <h5 className="text-sm font-semibold text-foreground mb-0 flex-grow-1" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
+              ภาพรวมการยืม
+            </h5>
+            <div className="flex-shrink-0">
+              <SortDropdown value={sortByTrend} onChange={setSortByTrend} options={['ปีนี้', 'ไตรมาสนี้', 'เดือนนี้']} />
+            </div>
+          </div>
+          <div className="px-4 py-3">
+            {/* 3 inline stats — Velzon Balance Overview pattern */}
+            <div className="vz-crm-inline-stats">
+              <div className="vz-crm-inline-stat">
+                <div className="vz-crm-inline-num" style={{ color: VZ.primary }}>{s.activeLoans}</div>
+                <div className="vz-crm-inline-label">ใบยืมเปิดอยู่</div>
+              </div>
+              <div className="vz-crm-inline-stat">
+                <div className="vz-crm-inline-num" style={{ color: VZ.teal }}>{healthScore}%</div>
+                <div className="vz-crm-inline-label">สุขภาพคลัง</div>
+              </div>
+              <div className="vz-crm-inline-stat">
+                <div className="vz-crm-inline-num" style={{ color: VZ.amber }}>{utilization}%</div>
+                <div className="vz-crm-inline-label">อัตราใช้งาน</div>
               </div>
             </div>
-            <span className="vz-pill vz-pill-muted">{data.deadStockAssets.length}</span>
+            {/* Mini stacked bar */}
+            <div className="flex h-2 rounded-full overflow-hidden bg-muted mt-2">
+              <div style={{ width: `${availablePct}%`, backgroundColor: VZ.teal }} title={`ว่าง ${s.available}`} />
+              <div style={{ width: `${s.totalAssets > 0 ? (s.onLoan / s.totalAssets) * 100 : 0}%`, backgroundColor: VZ.amber }} title={`ยืม ${s.onLoan}`} />
+              <div style={{ width: `${s.totalAssets > 0 ? (s.inRepair / s.totalAssets) * 100 : 0}%`, backgroundColor: VZ.purple }} title={`ซ่อม ${s.inRepair}`} />
+            </div>
+            <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: VZ.teal }} /> ว่าง {s.available}</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: VZ.amber }} /> ยืม {s.onLoan}</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: VZ.purple }} /> ซ่อม {s.inRepair}</span>
+            </div>
           </div>
-          <div className="max-h-[220px] overflow-y-auto">
-            {data.deadStockAssets.length === 0 && (
-              <div className="p-8 text-center">
-                <CheckCircle2 className="h-10 w-10 mx-auto mb-2" style={{ color: VZ.teal }} />
-                <div className="text-sm font-medium text-foreground">ไม่มีของดอง</div>
+        </div>
+      </div>
+
+      {/* ===== Velzon CRM — 2-col (Deals Status table + My Tasks list) ===== */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* LEFT — Overdue loans (Deals Status pattern) */}
+        <div className="lg:col-span-2 vz-card overflow-hidden">
+          <div className="px-4 py-3 vz-divider flex items-center justify-between">
+            <h5 className="text-sm font-semibold text-foreground mb-0 flex-grow-1 flex items-center gap-1.5" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
+              <AlertTriangle className="h-4 w-4" style={{ color: VZ.rose }} />
+              เกินกำหนดคืน
+            </h5>
+            <div className="flex-shrink-0 flex items-center gap-2">
+              <SortDropdown value={sortByOverdue} onChange={setSortByOverdue} options={['ด่วนที่สุดก่อน', 'ล่าสุด', 'ลูกค้า']} />
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="vz-crm-table">
+              <thead>
+                <tr>
+                  <th>เลขที่</th>
+                  <th>ลูกค้า</th>
+                  <th>พนักงาน</th>
+                  <th>เกิน</th>
+                  <th className="text-right">ชิ้น</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.overdueLoans.length === 0 && (
+                  <tr><td colSpan={5} className="text-center py-6 text-muted-foreground">
+                    <CheckCircle2 className="h-8 w-8 mx-auto mb-1" style={{ color: VZ.teal }} />
+                    ไม่มีใบยืมเกินกำหนด
+                  </td></tr>
+                )}
+                {data.overdueLoans.slice(0, 5).map((l) => {
+                  const days = daysUntil(l.expectedReturnDate)
+                  const overdueDays = Math.abs(days)
+                  return (
+                    <tr key={l.docNo} className="cursor-pointer" onClick={() => onOpenLoan(l.docNo)}>
+                      <td>
+                        <span className="font-mono font-semibold text-foreground">{l.docNo}</span>
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-1.5">
+                          <div className="vz-avatar h-7 w-7 text-[10px]" style={{ backgroundColor: VZ_SOFT.rose, color: VZ.rose }}>
+                            {l.customerName.charAt(0)}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-foreground font-medium truncate">{l.customerName}</div>
+                            {l.customerCompany && <div className="text-[10px] text-muted-foreground truncate">{l.customerCompany}</div>}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="text-muted-foreground">{l.salesRepName}</td>
+                      <td>
+                        <span className="vz-pill vz-pill-danger">{overdueDays}d</span>
+                      </td>
+                      <td className="text-right tabular-nums font-medium">{l.items.length}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* RIGHT — Standby loans (My Tasks pattern) */}
+        <div className="vz-card">
+          <div className="px-4 py-3 vz-divider flex items-center justify-between">
+            <h5 className="text-sm font-semibold text-foreground mb-0 flex-grow-1 flex items-center gap-1.5" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
+              <Wrench className="h-4 w-4" style={{ color: VZ.amber }} />
+              เครื่องสำรองซ่อม
+            </h5>
+            <div className="flex-shrink-0">
+              <SortDropdown value={sortByStandby} onChange={setSortByStandby} options={['ทั้งหมด', 'เหลือ 7 วัน', 'เหลือ 3 วัน']} />
+            </div>
+          </div>
+          <div className="px-3 pb-3 pt-2 flex items-center justify-between">
+            <div className="text-[11px] text-muted-foreground">
+              <b className="text-foreground">{data.standbyLoans.length}</b> ใบค้างส่งคืนของจริง
+            </div>
+            <button onClick={() => onNavigate('loans')} className="vz-pill vz-pill-info cursor-pointer">
+              ดูทั้งหมด <ChevronRight className="h-2.5 w-2.5" />
+            </button>
+          </div>
+          <div className="vz-crm-tasks" style={{ maxHeight: '280px', overflowY: 'auto' }}>
+            {data.standbyLoans.length === 0 && (
+              <div className="py-6 text-center text-xs text-muted-foreground">
+                <CheckCircle2 className="h-8 w-8 mx-auto mb-1" style={{ color: VZ.teal }} />
+                ไม่มีเครื่องสำรองค้าง
               </div>
             )}
-            {data.deadStockAssets.slice(0, 10).map((a, i) => {
-              const age = a.purchaseDate ? daysUntil(a.purchaseDate) : null
+            {data.standbyLoans.map((l) => {
+              const days = daysUntil(l.expectedReturnDate)
               return (
-                <div
-                  key={a.tagId}
-                  className={`px-4 py-2 flex items-center gap-2.5 text-xs hover:bg-muted/30 transition-smooth ${i < Math.min(data.deadStockAssets.length, 10) - 1 ? 'vz-divider' : ''}`}
-                >
-                  <span className="vz-icon-soft h-7 w-7 flex-shrink-0" style={{ backgroundColor: VZ_SOFT.slate }}>
-                    <Package className="h-3.5 w-3.5" style={{ color: VZ.slate }} />
-                  </span>
-                  <span className="font-mono font-semibold text-foreground">{a.tagId}</span>
-                  <span className="text-muted-foreground truncate flex-1">{a.brand} {a.model}</span>
-                  {age !== null && (
-                    <span className="vz-pill vz-pill-muted">{Math.abs(age)}d</span>
-                  )}
+                <div key={l.docNo} className="vz-crm-task cursor-pointer hover:bg-muted/20" onClick={() => onOpenLoan(l.docNo)}>
+                  <div className="vz-avatar h-7 w-7 text-[10px] flex-shrink-0" style={{ backgroundColor: VZ_SOFT.amber, color: VZ.amber }}>
+                    {l.customerName.charAt(0)}
+                  </div>
+                  <div className="flex-grow-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-[11px] font-semibold text-foreground">{l.docNo}</span>
+                      {days < 0 ? (
+                        <span className="vz-pill vz-pill-danger">เกิน {Math.abs(days)}d</span>
+                      ) : (
+                        <span className="vz-pill vz-pill-warning">{days}d</span>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-foreground truncate mt-0.5">{l.customerName}</div>
+                    <div className="text-[10px] text-muted-foreground">คืน {formatThaiDate(l.expectedReturnDate)}</div>
+                  </div>
                 </div>
               )
             })}
@@ -440,20 +379,69 @@ export function OverviewTab({ onNavigate, onCreateLoan, onStartAudit, onOpenLoan
         </div>
       </div>
 
-      {/* ===== Activity Feed — Velzon card ===== */}
-      <div className="vz-card">
-        <div className="px-4 py-3 vz-divider flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="vz-icon-soft h-8 w-8" style={{ backgroundColor: VZ_SOFT.primary }}>
+      {/* ===== Velzon CRM — Bottom row (Dead stock + Recent activity) ===== */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* LEFT — Dead stock (Upcoming Activities pattern) */}
+        <div className="lg:col-span-2 vz-card">
+          <div className="px-4 py-3 vz-divider flex items-center justify-between">
+            <h5 className="text-sm font-semibold text-foreground mb-0 flex-grow-1 flex items-center gap-1.5" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
+              <Clock className="h-4 w-4" style={{ color: VZ.slate }} />
+              ของดอง — ไม่เคยถูกยืม
+            </h5>
+            <div className="flex-shrink-0">
+              <span className="vz-pill vz-pill-muted">{data.deadStockAssets.length} เครื่อง</span>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="vz-crm-table">
+              <thead>
+                <tr>
+                  <th>Tag ID</th>
+                  <th>รุ่น</th>
+                  <th>ยี่ห้อ</th>
+                  <th className="text-right">อายุ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.deadStockAssets.length === 0 && (
+                  <tr><td colSpan={4} className="text-center py-4 text-muted-foreground">
+                    <CheckCircle2 className="h-8 w-8 mx-auto mb-1" style={{ color: VZ.teal }} />
+                    ไม่มีของดอง
+                  </td></tr>
+                )}
+                {data.deadStockAssets.slice(0, 6).map((a) => {
+                  const age = a.purchaseDate ? daysUntil(a.purchaseDate) : null
+                  return (
+                    <tr key={a.tagId} className="cursor-pointer" onClick={() => onNavigate('assets')}>
+                      <td><span className="font-mono font-semibold text-foreground">{a.tagId}</span></td>
+                      <td className="text-muted-foreground">{a.model}</td>
+                      <td className="text-muted-foreground">{a.brand}</td>
+                      <td className="text-right">
+                        {age !== null && (
+                          <span className="vz-pill vz-pill-muted">{Math.abs(age)}d</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* RIGHT — Recent activity (Closing Deals pattern) */}
+        <div className="vz-card overflow-hidden">
+          <div className="px-4 py-3 vz-divider flex items-center gap-2.5">
+            <span className="vz-icon-soft h-7 w-7" style={{ backgroundColor: VZ_SOFT.primary }}>
               <Activity className="h-4 w-4" style={{ color: VZ.primary }} />
             </span>
-            <div className="leading-tight">
-              <div className="text-sm font-semibold text-foreground">กิจกรรมล่าสุด</div>
+            <div className="leading-tight flex-grow-1">
+              <div className="text-sm font-semibold text-foreground" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>กิจกรรมล่าสุด</div>
               <div className="text-[10px] text-muted-foreground">จากทุกโมดูลในระบบ</div>
             </div>
           </div>
+          <ActivityFeed embedded />
         </div>
-        <ActivityFeed embedded />
       </div>
 
       <WidgetEditor
@@ -465,88 +453,143 @@ export function OverviewTab({ onNavigate, onCreateLoan, onStartAudit, onOpenLoan
   )
 }
 
-// ===== Velzon ring gauge (mini, for banner) =====
-function VelzonRingMini({ label, value, color }: { label: string; value: number; color: string }) {
-  const r = 16
-  const circ = 2 * Math.PI * r
-  const offset = circ - (value / 100) * circ
+// ===== CRM Mini Stat component (5 in crm-widget) =====
+function CrmStat({
+  label, value, valueSuffix, icon, trend, trendText, pulse,
+}: {
+  label: string
+  value: number | string
+  valueSuffix?: string
+  icon: React.ReactNode
+  trend: 'up' | 'down'
+  trendText: string
+  pulse?: boolean
+}) {
+  const trendColor = trend === 'up' ? VZ.teal : VZ.rose
   return (
-    <div className="flex items-center gap-2.5">
-      <div className="relative h-10 w-10">
-        <svg className="h-10 w-10 -rotate-90" viewBox="0 0 40 40">
-          <circle cx="20" cy="20" r={r} className="fill-none" strokeWidth="3" stroke="rgba(255,255,255,0.20)" />
-          <circle
-            cx="20" cy="20" r={r}
-            className="fill-none transition-all duration-700"
-            strokeWidth="3"
-            stroke={color}
-            strokeLinecap="round"
-            strokeDasharray={circ}
-            strokeDashoffset={offset}
-          />
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center text-[11px] font-bold tabular-nums text-white">
-          {value}
+    <div className={`vz-crm-stat ${pulse ? 'animate-pulse' : ''}`}>
+      <div className="vz-crm-label">
+        <span>{label}</span>
+        {trend === 'up' ? (
+          <ArrowUpRight className="h-3 w-3" style={{ color: VZ.teal }} />
+        ) : (
+          <ArrowDownRight className="h-3 w-3" style={{ color: VZ.rose }} />
+        )}
+      </div>
+      <div className="vz-crm-value-row">
+        <div className="flex-shrink-0 text-muted-foreground">{icon}</div>
+        <div className="flex-grow-1">
+          <span className="vz-crm-num vz-crm-counter">{value}</span>
+          {valueSuffix && <span className="text-xs text-muted-foreground ml-1">{valueSuffix}</span>}
         </div>
       </div>
-      <div className="leading-tight">
-        <div className="text-[10px] text-white/75 font-medium">{label}</div>
-        <div className="text-[10px] text-white/55">%</div>
+      <div className="text-[10px] text-muted-foreground mt-1">
+        {trend === 'up' ? (
+          <span style={{ color: VZ.teal }}>▲ {trendText}</span>
+        ) : (
+          <span style={{ color: VZ.rose }}>▼ {trendText}</span>
+        )}
       </div>
     </div>
   )
 }
 
-// ===== Velzon stat card — signature pattern =====
-// Layout: icon avatar LEFT + (eyebrow label + big number + trend pill) RIGHT
-const VZ_COLORS: Record<string, { fg: string; soft: string }> = {
-  primary: { fg: VZ.primary, soft: VZ_SOFT.primary },
-  teal:    { fg: VZ.teal,    soft: VZ_SOFT.teal },
-  amber:   { fg: VZ.amber,   soft: VZ_SOFT.amber },
-  rose:    { fg: VZ.rose,    soft: VZ_SOFT.rose },
-  purple:  { fg: VZ.purple,  soft: VZ_SOFT.purple },
-  slate:    { fg: VZ.slate,    soft: VZ_SOFT.slate },
+// ===== Sort Dropdown — Velzon CRM "Sort by: <value> ▾" pattern =====
+function SortDropdown({
+  value, onChange, options,
+}: {
+  value: string
+  onChange: (v: string) => void
+  options: string[]
+}) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="relative">
+      <button className="vz-crm-sort-btn" onClick={() => setOpen(!open)}>
+        <span>Sort by:</span> <b>{value}</b> <ChevronDown className="h-3 w-3" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 mt-1 bg-card border border-border rounded-md shadow-md z-20 min-w-[120px]">
+            {options.map((opt) => (
+              <button
+                key={opt}
+                className={`block w-full text-left px-3 py-1.5 text-[11px] hover:bg-muted/40 transition-smooth ${opt === value ? 'text-primary font-semibold' : 'text-foreground'}`}
+                onClick={() => { onChange(opt); setOpen(false) }}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
 }
 
-function VelzonStatCard({
-  label, value, icon, color, onClick, pulse, trend,
+// ===== Status Donut Chart (Deal Type pattern) =====
+function StatusDonut({
+  available, onLoan, inRepair, other, total,
 }: {
-  label: string
-  value: number | string
-  icon: React.ReactNode
-  color: string
-  onClick?: () => void
-  pulse?: boolean
-  trend?: { delta: string; label: string; up: boolean }
+  available: number
+  onLoan: number
+  inRepair: number
+  other: number
+  total: number
 }) {
-  const c = VZ_COLORS[color] || VZ_COLORS.primary
+  const segments = [
+    { value: available, color: VZ.teal, label: 'พร้อมใช้' },
+    { value: onLoan, color: VZ.amber, label: 'กำลังยืม' },
+    { value: inRepair, color: VZ.purple, label: 'ส่งซ่อม' },
+    { value: other, color: VZ.slate, label: 'อื่น ๆ' },
+  ]
+  const r = 50
+  const stroke = 14
+  const circ = 2 * Math.PI * r
+  let offsetAcc = 0
+
   return (
-    <div
-      className={`vz-card p-4 transition-smooth ${onClick ? 'cursor-pointer hover:-translate-y-0.5' : ''}`}
-      onClick={onClick}
-    >
-      <div className="flex items-start gap-3">
-        <span
-          className={`vz-icon-soft h-10 w-10 ${pulse ? 'animate-pulse' : ''}`}
-          style={{ backgroundColor: c.soft }}
-        >
-          <span style={{ color: c.fg }}>{icon}</span>
-        </span>
-        <div className="flex-1 min-w-0">
-          <div className="vz-eyebrow truncate">{label}</div>
-          <div className="vz-stat-num mt-1 mb-1.5">{value}</div>
-          {trend && (
-            <div className="flex items-center gap-1.5">
-              <span className={`vz-pill ${trend.up ? 'vz-pill-success' : 'vz-pill-danger'}`}>
-                {trend.up ? <ArrowUpRight className="h-2.5 w-2.5" /> : <ArrowDownRight className="h-2.5 w-2.5" />}
-                {trend.delta}
-              </span>
-              {trend.label && (
-                <span className="text-[10px] text-muted-foreground truncate">{trend.label}</span>
-              )}
-            </div>
-          )}
+    <div className="flex items-center gap-4">
+      <div className="relative h-32 w-32 flex-shrink-0">
+        <svg className="h-32 w-32 -rotate-90" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r={r} className="fill-none" stroke="currentColor" strokeWidth={stroke} opacity="0.15" />
+          {segments.map((seg, i) => {
+            const pct = total > 0 ? seg.value / total : 0
+            const dash = pct * circ
+            const gap = circ - dash
+            const offset = -offsetAcc * circ
+            offsetAcc += pct
+            return (
+              <circle
+                key={i}
+                cx="60" cy="60" r={r}
+                className="fill-none transition-all duration-700"
+                stroke={seg.color}
+                strokeWidth={stroke}
+                strokeDasharray={`${dash} ${gap}`}
+                strokeDashoffset={offset}
+              />
+            )
+          })}
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-foreground">{total}</div>
+          <div className="text-[10px] text-muted-foreground">ทั้งหมด</div>
         </div>
+      </div>
+      <div className="space-y-1.5 flex-1">
+        {segments.map((seg, i) => {
+          const pct = total > 0 ? Math.round((seg.value / total) * 100) : 0
+          return (
+            <div key={i} className="flex items-center gap-2 text-xs">
+              <span className="h-2.5 w-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: seg.color }} />
+              <span className="font-medium text-foreground flex-1 truncate">{seg.label}</span>
+              <span className="text-muted-foreground tabular-nums">{seg.value}</span>
+              <span className="text-muted-foreground/70 tabular-nums text-[10px] w-8 text-right">{pct}%</span>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

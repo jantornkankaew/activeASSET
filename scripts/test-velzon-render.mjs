@@ -57,17 +57,16 @@ try {
     await page.waitForTimeout(2000) // allow client-side auth bootstrap
   })
 
-  await step('Wait for dashboard hero banner', async () => {
-    // Velzon gradient banner should be present
-    await page.waitForSelector('.vz-banner', { timeout: 10000 })
+  await step('Wait for CRM page-title-box', async () => {
+    // Velzon CRM uses page-title-box instead of vz-banner
+    await page.waitForSelector('.vz-crm-widget, .vz-card', { timeout: 10000 })
   })
 
-  await step('Verify 6 KPI stat cards render', async () => {
-    const count = await page.locator('.vz-card').count()
-    if (count < 6) throw new Error(`Expected ≥6 vz-card, got ${count}`)
-    // Check vz-stat-num (big number) is present
-    const nums = await page.locator('.vz-stat-num').count()
-    if (nums < 4) throw new Error(`Expected ≥4 vz-stat-num, got ${nums}`)
+  await step('Verify 5 CRM mini stats + KPI cards render', async () => {
+    const widgetCount = await page.locator('.vz-crm-widget').count()
+    const statCount = await page.locator('.vz-crm-stat').count()
+    if (widgetCount === 0) throw new Error(`Expected crm-widget, got ${widgetCount}`)
+    if (statCount < 5) throw new Error(`Expected ≥5 crm-stat, got ${statCount}`)
   })
 
   await step('Screenshot OverviewTab', async () => {
