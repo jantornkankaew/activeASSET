@@ -843,3 +843,60 @@ Stage Summary:
 - หน้า detail ของตัวสินค้าใช้ Velzon product-details design ครบ
 - ผ่านการทดสอบ E2E และ VLM
 - ไม่มี runtime errors
+
+---
+Task ID: asset-detail-velzon-v2-faithful
+Agent: main
+Task: เขียน AssetDetailView ใหม่ให้ตรงกับ Velzon product-details จริง ๆ (หลังจากที่ user บอกว่าไม่เหมือนตัวอย่าง)
+
+Root cause:
+- ครั้งที่แล้วผมใช้ imagination ของ Velzon ไม่ได้อ่าน HTML จริง → ออกแบบเองเยอะ (gradient + watermark + ribbon + vz-eyebrow + การ์ดเยอะ)
+- Velzon จริง ๆ เป็นแบบเรียบ ๆ ใช้ single card + dashed border stat boxes + table-responsive spec table
+
+Action:
+- ดาวน์โหลด HTML จริงของ Velzon (https://themesbrand.com/velzon/html/master/apps-ecommerce-product-details.html)
+- อ่าน structure ทั้งหมด เพื่อเข้าใจ signature elements:
+  - page-title-box (h4 + breadcrumb on right)
+  - single card wrapping content
+  - col-xl-4 (image) + col-xl-8 (info)
+  - bg-light p-2 rounded image panel (เรียบ ๆ ไม่มี gradient/watermark/ribbon)
+  - 4 thumbnail nav strip below image
+  - title row: h4 + hstack (brand link | vr | seller | vr | published)
+  - 5 stars text-warning + "(X.XXk Customer Review)"
+  - 4 stat boxes ใน col-lg-3: p-2 border border-dashed rounded + avatar-sm + avatar-title rounded bg-transparent text-success fs-24 + "label :" + h5 value
+  - description + features (ul list-unstyled with mdi-circle-medium dots) + services
+  - action buttons: Buy Now + Add to Cart + avatar-xs rounded-circle icon buttons
+  - product-content mt-5: h5 + nav-tabs nav-tabs-custom nav-success + tab-content border border-top-0 p-4 + table-responsive + table (Specification) / paragraph + bullets (Details)
+  - Ratings & Reviews mt-5: col-lg-4 (bg-light rounded-2 summary box with stars + X.X out of 5 + total reviews + 5 progress bars 5★→1★) + col-lg-8 (review list)
+
+- เพิ่ม CSS utilities ใน globals.css:
+  - .vz-dashed-box (Velzon signature dashed border)
+  - .vz-tabs-custom + .vz-tabs-custom-trigger (Velzon nav-tabs-custom with colored bottom border)
+  - .vz-tab-content (border border-top-0 p-4)
+  - .vz-table (table-responsive spec table)
+  - .vz-services-box (bg-light px-3 py-2 rounded-2)
+
+- เขียน AssetDetailView ใหม่ทั้งฟังก์ชัน:
+  - page-title-box card + h4 "รายละเอียดทรัพย์สิน" + breadcrumb right
+  - main product-details card
+  - 12-col grid: LEFT col-xl-4 (image panel simple bg-light + 4 thumbnails + status badges) + RIGHT col-xl-8 (info)
+  - h4 model + meta row with dividers + Edit pencil button
+  - 5 stars amber + "(X ครั้งยืม)"
+  - 4 VelzonDashedStat boxes (ยืมทั้งหมด / คืนแล้ว / เสียหาย / ส่งซ่อม) with transparent bg + colored icon avatar
+  - description + features + services (with bullet dots)
+  - action buttons: gradient "ขอยืม" + "กลับ" + 4 round circle icon buttons (Star/Heart/Share/More)
+  - "ข้อมูลเพิ่มเติม :" section with Velzon nav-tabs-custom
+  - Tab 1 Specification: vz-table with rows (หมวดหมู่, ยี่ห้อ, รุ่น, Tag ID, S/N, แหล่ง, ที่ตั้ง, วันซื้อ, รับประกัน, มัดจำ, + Supplier info)
+  - Tab 2 Details: paragraph + bullet list with status/grade/loan count/accessories
+  - Tab 3 Ratings & Reviews: 2-col — LEFT col-4 summary card with bg-light box + stars + "X.0 out of 5" + total + 4 progress bars (คืนแล้ว/กำลังยืม/เสียหาย/ส่งซ่อม) | RIGHT col-8 = loan history list with avatar + name + status pill + star rating + date row + damage box
+
+- เพิ่ม imports: Heart, Share2, MoreHorizontal, ShoppingCart
+
+Test:
+- รัน test-asset-detail.mjs (Playwright): login → ทรัพย์สิน → catalog → unit → detail view
+- ผล: vz-card count=2, 3 tab triggers, 6 star icons, 0 page errors, 0 real errors ✓ PASS
+- VLM ยืนยัน 10/10 visible elements ตรงกับ Velzon (page-title-box ✓, single card ✓, image LEFT 33% + info RIGHT 67% ✓, 4 thumbnails ✓, h4+dividers+Edit ✓, 5 amber stars ✓, 4 DASHED stat boxes ✓, description+features+services ✓, action buttons+4 circle icons ✓, nav-tabs-custom with colored border ✓)
+
+Stage Summary:
+- หน้า detail ตรงกับ Velzon product-details จริง ๆ ทุก signature element
+- ไม่มี runtime errors, ผ่าน E2E test และ VLM

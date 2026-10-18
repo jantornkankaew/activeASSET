@@ -18,7 +18,8 @@ import {
   Smartphone, Printer, ScanLine, Tablet, Boxes, History, Wrench,
   CheckCircle2, AlertTriangle, Clock, TrendingUp, FileText, Camera,
   Star, Shield, MapPin, Calendar, Phone, User, DollarSign, CreditCard,
-  Truck, Package2, Cpu, HardDrive,
+  Truck, Package2, Cpu, HardDrive, Heart, Share2, MoreHorizontal,
+  ShoppingCart,
 } from 'lucide-react'
 import {
   ASSET_STATUS_LABELS, CATEGORY_LABELS, SOURCE_LABELS,
@@ -490,7 +491,7 @@ function UnitsView({
   )
 }
 
-// ===== Level 3: Asset Detail + History (Velzon product-details style) =====
+// ===== Level 3: Asset Detail (Velzon product-details style — faithful reproduction) =====
 function AssetDetailView({
   detail, loading, onBack,
 }: {
@@ -507,497 +508,541 @@ function AssetDetailView({
   const gradeToStars: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
   const stars = asset.conditionGrade ? (gradeToStars[asset.conditionGrade] || 4) : 4
 
-  // Status color tokens
-  const statusColor: Record<string, { fg: string; soft: string; label: string }> = {
-    Available:             { fg: '#0ab39c', soft: 'rgba(10,179,156,0.10)', label: 'พร้อมใช้' },
-    On_Loan:               { fg: '#f7b84b', soft: 'rgba(247,184,75,0.12)', label: 'กำลังยืม' },
-    In_Repair:             { fg: '#a071f0', soft: 'rgba(160,113,240,0.10)', label: 'ส่งซ่อม' },
-    In_Inspection:         { fg: '#405189', soft: 'rgba(64,81,137,0.10)', label: 'ตรวจสภาพ' },
-    Lost:                  { fg: '#f06548', soft: 'rgba(240,101,72,0.10)', label: 'สูญหาย' },
-    Disposed:              { fg: '#74788d', soft: 'rgba(116,120,141,0.12)', label: 'ตัดจำหน่าย' },
-    Returned_To_Supplier:  { fg: '#74788d', soft: 'rgba(116,120,141,0.12)', label: 'คืน Supplier' },
-  }
-  const sc = statusColor[asset.status] || statusColor.Available
-
   return (
     <div className="space-y-4 animate-fade-in">
-      {/* ===== Velzon breadcrumb ===== */}
-      <div className="flex items-center gap-1.5 text-xs">
-        <button onClick={onBack} className="text-muted-foreground hover:text-foreground transition-smooth">ทรัพย์สิน</button>
-        <ChevronRight className="h-3 w-3 text-muted-foreground/60" />
-        <span className="text-muted-foreground">{asset.brand} {asset.model}</span>
-        <ChevronRight className="h-3 w-3 text-muted-foreground/60" />
-        <span className="font-mono font-semibold text-foreground">{asset.tagId}</span>
-      </div>
-
-      {/* ===== Top section — Velzon product-details layout ===== */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        {/* LEFT — Asset "image" card (Velzon product image panel) */}
-        <div className="lg:col-span-2">
-          <div className="vz-card overflow-hidden">
-            {/* Hero "image" panel — Velzon-style with gradient + brand watermark */}
-            <div
-              className="relative aspect-[4/3] flex items-center justify-center"
-              style={{ background: `linear-gradient(135deg, ${sc.soft}, rgba(255,255,255,0.5))` }}
-            >
-              {/* Subtle pattern overlay */}
-              <div className="absolute inset-0 opacity-30" style={{
-                backgroundImage: 'linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px)',
-                backgroundSize: '24px 24px',
-              }} />
-
-              {/* Brand watermark (top-right, large) */}
-              <div className="absolute top-4 right-4 text-3xl font-bold text-foreground/5 leading-none tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
-                {asset.brand}
-              </div>
-
-              {/* Center — category icon */}
-              <div
-                className="vz-icon-soft h-24 w-24 relative z-10"
-                style={{ backgroundColor: 'rgba(255,255,255,0.6)', boxShadow: `inset 0 0 0 1px ${sc.fg}22` }}
-              >
-                <span style={{ color: sc.fg }} className="scale-150">
-                  {CATEGORY_ICONS[asset.category] || <Package className="h-12 w-12" />}
-                </span>
-              </div>
-
-              {/* Status ribbon (top-left) */}
-              <div
-                className="absolute top-3 left-3 vz-pill text-[10px] font-semibold"
-                style={{ backgroundColor: sc.soft, color: sc.fg }}
-              >
-                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: sc.fg }} />
-                {sc.label}
-              </div>
-
-              {/* Tag ID badge (bottom-left) */}
-              <div className="absolute bottom-3 left-3 bg-card/90 backdrop-blur-sm rounded px-2 py-1 border border-border/50 shadow-sm">
-                <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Tag ID</div>
-                <div className="font-mono text-xs font-bold text-foreground">{asset.tagId}</div>
-              </div>
-
-              {/* Grade badge (bottom-right) */}
-              {asset.conditionGrade && (
-                <div className="absolute bottom-3 right-3 bg-card/90 backdrop-blur-sm rounded px-2 py-1 border border-border/50 shadow-sm">
-                  <div className="text-[9px] text-muted-foreground uppercase tracking-wider">เกรด</div>
-                  <div className="text-sm font-bold" style={{ color: sc.fg }}>{asset.conditionGrade}</div>
-                </div>
-              )}
-            </div>
-
-            {/* Mini meta strip below image */}
-            <div className="px-4 py-3 vz-divider">
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div>
-                  <div className="vz-eyebrow">Serial No</div>
-                  <div className="font-mono font-semibold text-foreground truncate">{asset.serialNo}</div>
-                </div>
-                <div>
-                  <div className="vz-eyebrow">หมวดหมู่</div>
-                  <div className="font-medium text-foreground truncate">{CATEGORY_LABELS[asset.category] || asset.category}</div>
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* ===== Velzon page-title-box ===== */}
+      <div className="vz-card p-4 flex items-center justify-between">
+        <div>
+          <h4 className="text-base font-semibold text-foreground mb-0" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
+            รายละเอียดทรัพย์สิน
+          </h4>
         </div>
-
-        {/* RIGHT — Product info (Velzon product info panel) */}
-        <div className="lg:col-span-3 space-y-4">
-          {/* Title + brand + rating */}
-          <div className="vz-card p-5">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="vz-eyebrow" style={{ color: '#405189' }}>{asset.brand}</span>
-              <span className="text-muted-foreground/50">•</span>
-              <span className="vz-eyebrow">{SOURCE_LABELS[asset.source]?.label || asset.source}</span>
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground mb-2" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
-              {asset.model}
-            </h1>
-
-            {/* Star rating + review count */}
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex items-center gap-0.5">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Star
-                    key={i}
-                    className={`h-4 w-4 ${i <= stars ? 'fill-current text-amber-400' : 'text-muted-foreground/40'}`}
-                    style={{ color: i <= stars ? '#f7b84b' : undefined }}
-                  />
-                ))}
-              </div>
-              <span className="text-xs text-muted-foreground">
-                {asset.conditionGrade ? `เกรด ${asset.conditionGrade}` : 'ยังไม่ประเมิน'} · {stats.totalLoans} ครั้งยืม
-              </span>
-            </div>
-
-            {/* Quick stats — Velzon 4-stat row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <VelzonMiniStat
-                label="ยืมทั้งหมด"
-                value={stats.totalLoans}
-                icon={<History className="h-4 w-4" />}
-                color="#405189"
-              />
-              <VelzonMiniStat
-                label="คืนแล้ว"
-                value={stats.completedLoans}
-                icon={<CheckCircle2 className="h-4 w-4" />}
-                color="#0ab39c"
-              />
-              <VelzonMiniStat
-                label="เสียหาย"
-                value={stats.damagedCount}
-                icon={<AlertTriangle className="h-4 w-4" />}
-                color="#f06548"
-                highlight={stats.damagedCount > 0}
-              />
-              <VelzonMiniStat
-                label="ส่งซ่อม"
-                value={stats.repairCount}
-                icon={<Wrench className="h-4 w-4" />}
-                color="#a071f0"
-                highlight={stats.repairCount > 0}
-              />
-            </div>
-
-            {/* Loan count limit indicator */}
-            {asset.maxLoanCount && (
-              <div className="mt-4 pt-3 vz-divider">
-                <div className="flex items-center justify-between text-xs mb-1.5">
-                  <span className="text-muted-foreground">สถานะการยืม</span>
-                  <span className="font-semibold tabular-nums text-foreground">{asset.loanCount} / {asset.maxLoanCount} ครั้ง</span>
-                </div>
-                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${Math.min(100, (asset.loanCount / asset.maxLoanCount) * 100)}%`,
-                      background: asset.loanCount >= asset.maxLoanCount ? '#f06548' : asset.loanCount >= asset.maxLoanCount * 0.8 ? '#f7b84b' : '#0ab39c',
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Features + Services (Velzon-style) */}
-          <div className="vz-card p-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Features — accessories */}
-              <div>
-                <div className="vz-eyebrow mb-2">อุปกรณ์เสริม ({asset.defaultAccessories.length})</div>
-                {asset.defaultAccessories.length === 0 ? (
-                  <div className="text-xs text-muted-foreground">ไม่มีอุปกรณ์เสริม</div>
-                ) : (
-                  <ul className="space-y-1.5">
-                    {asset.defaultAccessories.slice(0, 6).map((a, i) => (
-                      <li key={i} className="flex items-center gap-2 text-xs">
-                        <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#0ab39c' }} />
-                        <span className="text-foreground">{a}</span>
-                      </li>
-                    ))}
-                    {asset.defaultAccessories.length > 6 && (
-                      <li className="text-[10px] text-muted-foreground pl-5">+{asset.defaultAccessories.length - 6} รายการ</li>
-                    )}
-                  </ul>
-                )}
-              </div>
-
-              {/* Services */}
-              <div>
-                <div className="vz-eyebrow mb-2">บริการ</div>
-                <ul className="space-y-1.5">
-                  <li className="flex items-center gap-2 text-xs">
-                    <Shield className="h-3.5 w-3.5 flex-shrink-0" style={{ color: asset.warrantyExpireDate ? '#0ab39c' : '#74788d' }} />
-                    <span className="text-foreground">
-                      {asset.warrantyExpireDate ? `รับประกันถึง ${formatThaiDate(asset.warrantyExpireDate)}` : 'ไม่มีรับประกัน'}
-                    </span>
-                  </li>
-                  {asset.location && (
-                    <li className="flex items-center gap-2 text-xs">
-                      <MapPin className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#405189' }} />
-                      <span className="text-foreground">{asset.location.name} <span className="text-muted-foreground">({asset.location.zone})</span></span>
-                    </li>
-                  )}
-                  {asset.purchaseDate && (
-                    <li className="flex items-center gap-2 text-xs">
-                      <Calendar className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#405189' }} />
-                      <span className="text-foreground">ซื้อ {formatThaiDate(asset.purchaseDate)}</span>
-                    </li>
-                  )}
-                  {asset.depositPrice && (
-                    <li className="flex items-center gap-2 text-xs">
-                      <DollarSign className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#f7b84b' }} />
-                      <span className="text-foreground">มัดจำ ฿{asset.depositPrice.toLocaleString()}</span>
-                    </li>
-                  )}
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex flex-wrap gap-2">
-            <Button variant="soft" size="sm" onClick={onBack} className="text-xs">
-              <ArrowLeft className="h-3.5 w-3.5 mr-1" /> กลับ
-            </Button>
-            {asset.source === 'Supplier' && asset.supplierName && (
-              <span className="vz-pill vz-pill-info inline-flex items-center gap-1">
-                <Truck className="h-3 w-3" /> Supplier: {asset.supplierName}
-              </span>
-            )}
-          </div>
+        <div className="flex items-center gap-2 text-xs">
+          <button onClick={onBack} className="text-muted-foreground hover:text-primary transition-smooth">ทรัพย์สิน</button>
+          <ChevronRight className="h-3 w-3 text-muted-foreground/60" />
+          <span className="text-muted-foreground">{asset.brand} {asset.model}</span>
+          <ChevronRight className="h-3 w-3 text-muted-foreground/60" />
+          <span className="text-primary font-medium font-mono">{asset.tagId}</span>
         </div>
       </div>
 
-      {/* ===== Tabbed section — Velzon-style tabs ===== */}
-      <Tabs defaultValue="info" className="w-full">
-        <div className="vz-card px-2 pt-2">
-          <TabsList className="bg-transparent p-0 h-auto gap-1">
-            <TabsTrigger
-              value="info"
-              className="text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md px-3 py-1.5 data-[state=active]:shadow-sm"
-            >
-              <FileText className="h-3.5 w-3.5 mr-1.5" /> ข้อมูลทรัพย์สิน
-            </TabsTrigger>
-            <TabsTrigger
-              value="accessories"
-              className="text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md px-3 py-1.5 data-[state=active]:shadow-sm"
-            >
-              <Package2 className="h-3.5 w-3.5 mr-1.5" /> อุปกรณ์เสริม ({asset.defaultAccessories.length})
-            </TabsTrigger>
-            <TabsTrigger
-              value="history"
-              className="text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md px-3 py-1.5 data-[state=active]:shadow-sm"
-            >
-              <History className="h-3.5 w-3.5 mr-1.5" /> ประวัติยืม-คืน ({history.length})
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        {/* Tab 1 — Spec table */}
-        <TabsContent value="info" className="mt-3">
-          <div className="vz-card overflow-hidden">
-            {/* Header */}
-            <div className="px-4 py-3 vz-divider flex items-center gap-2.5">
-              <span className="vz-icon-soft h-8 w-8" style={{ backgroundColor: 'rgba(64,81,137,0.10)' }}>
-                <FileText className="h-4 w-4" style={{ color: '#405189' }} />
-              </span>
-              <div className="leading-tight">
-                <div className="text-sm font-semibold text-foreground">ข้อมูลทรัพย์สิน</div>
-                <div className="text-[10px] text-muted-foreground">รายละเอียดและสเปค</div>
-              </div>
-            </div>
-
-            {/* Spec table — Velzon 2-column table style */}
-            <div className="px-4 py-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0">
-                <VelzonSpecRow icon={<MapPin className="h-3.5 w-3.5" />} label="ที่ตั้ง" value={asset.location ? `${asset.location.name} (${asset.location.zone})` : 'ไม่ระบุ'} />
-                <VelzonSpecRow icon={<Calendar className="h-3.5 w-3.5" />} label="วันที่ซื้อ" value={asset.purchaseDate ? formatThaiDate(asset.purchaseDate) : '-'} />
-                <VelzonSpecRow icon={<Shield className="h-3.5 w-3.5" />} label="รับประกันถึง" value={asset.warrantyExpireDate ? formatThaiDate(asset.warrantyExpireDate) : '-'} />
-                <VelzonSpecRow icon={<Package className="h-3.5 w-3.5" />} label="แหล่ง" value={SOURCE_LABELS[asset.source]?.label || asset.source} />
-                <VelzonSpecRow icon={<Cpu className="h-3.5 w-3.5" />} label="รหัส Tag" value={asset.tagId} mono />
-                <VelzonSpecRow icon={<HardDrive className="h-3.5 w-3.5" />} label="Serial No" value={asset.serialNo} mono />
-                {asset.source === 'Supplier' && (
-                  <>
-                    <VelzonSpecRow icon={<Building2 className="h-3.5 w-3.5" />} label="Supplier" value={asset.supplierName || '-'} />
-                    {asset.supplierContact && <VelzonSpecRow icon={<User className="h-3.5 w-3.5" />} label="ผู้ติดต่อ" value={asset.supplierContact} />}
-                    {asset.supplierPhone && <VelzonSpecRow icon={<Phone className="h-3.5 w-3.5" />} label="โทร" value={asset.supplierPhone} />}
-                    <VelzonSpecRow icon={<Calendar className="h-3.5 w-3.5" />} label="กำหนดคืน Supplier" value={asset.supplierLoanDue ? formatThaiDate(asset.supplierLoanDue) : '-'} />
-                    {asset.depositPrice && <VelzonSpecRow icon={<DollarSign className="h-3.5 w-3.5" />} label="มัดจำ" value={`฿${asset.depositPrice.toLocaleString()}`} />}
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Tab 2 — Accessories grid */}
-        <TabsContent value="accessories" className="mt-3">
-          <div className="vz-card overflow-hidden">
-            <div className="px-4 py-3 vz-divider flex items-center gap-2.5">
-              <span className="vz-icon-soft h-8 w-8" style={{ backgroundColor: 'rgba(10,179,156,0.10)' }}>
-                <Package2 className="h-4 w-4" style={{ color: '#0ab39c' }} />
-              </span>
-              <div className="leading-tight">
-                <div className="text-sm font-semibold text-foreground">อุปกรณ์เสริมในชุด</div>
-                <div className="text-[10px] text-muted-foreground">{asset.defaultAccessories.length} รายการ</div>
-              </div>
-            </div>
-            <div className="p-4">
-              {asset.defaultAccessories.length === 0 ? (
-                <div className="py-8 text-center text-xs text-muted-foreground">
-                  <Package2 className="h-10 w-10 mx-auto mb-2 text-muted-foreground/30" />
-                  <div className="font-medium">ไม่มีอุปกรณ์เสริม</div>
+      {/* ===== Velzon product-details single card ===== */}
+      <div className="vz-card">
+        <div className="p-4 lg:p-5">
+          <div className="grid grid-cols-12 gap-5">
+            {/* LEFT — Product image panel (col-xl-4 = 33%) */}
+            <div className="col-span-12 lg:col-span-5 xl:col-span-4">
+              <div className="vz-product-image-panel">
+                {/* Main image — bg-light p-2 rounded, simple */}
+                <div className="bg-muted/40 p-3 rounded-md">
+                  <div className="aspect-square flex items-center justify-center bg-card rounded-md border border-border/40">
+                    {CATEGORY_ICONS[asset.category] || <Package className="h-24 w-24 text-muted-foreground/40" />}
+                  </div>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {asset.defaultAccessories.map((a, i) => (
+
+                {/* Thumbnail nav slider — 4 mini thumbnails */}
+                <div className="grid grid-cols-4 gap-2 mt-2">
+                  {[0, 1, 2, 3].map((i) => (
                     <div
                       key={i}
-                      className="flex items-center gap-2.5 p-2.5 rounded-md border border-border/50 bg-card hover:bg-muted/30 transition-smooth"
+                      className={`aspect-square flex items-center justify-center bg-card rounded-md border cursor-pointer transition-smooth ${i === 0 ? 'border-primary' : 'border-border hover:border-primary/50'}`}
                     >
-                      <span className="vz-icon-soft h-7 w-7 flex-shrink-0" style={{ backgroundColor: 'rgba(10,179,156,0.10)' }}>
-                        <CheckCircle2 className="h-3.5 w-3.5" style={{ color: '#0ab39c' }} />
-                      </span>
-                      <span className="text-xs font-medium text-foreground truncate">{a}</span>
+                      <div className="scale-75 text-muted-foreground/60">
+                        {CATEGORY_ICONS[asset.category] || <Package className="h-6 w-6" />}
+                      </div>
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
-          </div>
-        </TabsContent>
 
-        {/* Tab 3 — Loan history timeline */}
-        <TabsContent value="history" className="mt-3">
-          <div className="vz-card overflow-hidden">
-            <div className="px-4 py-3 vz-divider flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="vz-icon-soft h-8 w-8" style={{ backgroundColor: 'rgba(247,184,75,0.12)' }}>
-                  <History className="h-4 w-4" style={{ color: '#f7b84b' }} />
-                </span>
-                <div className="leading-tight">
-                  <div className="text-sm font-semibold text-foreground">ประวัติการยืม-คืน</div>
-                  <div className="text-[10px] text-muted-foreground">{history.length} รายการ</div>
+                {/* Status + Grade badge row */}
+                <div className="flex items-center gap-2 mt-3">
+                  <AssetStatusBadge status={asset.status} />
+                  {asset.conditionGrade && <GradeBadge grade={asset.conditionGrade} />}
+                  <SourceBadge source={asset.source} />
                 </div>
               </div>
-              <div className="flex items-center gap-1">
-                <span className="vz-pill vz-pill-success">
-                  {stats.completedLoans} คืนแล้ว
-                </span>
-                <span className="vz-pill vz-pill-warning">
-                  {history.filter((h) => h.lineStatus !== 'Returned').length} กำลังยืม
-                </span>
-              </div>
             </div>
 
-            <ScrollArea className="h-[400px]">
-              <div>
-                {history.length === 0 && (
-                  <div className="p-8 text-center">
-                    <History className="h-10 w-10 mx-auto mb-2 text-muted-foreground/30" />
-                    <div className="text-sm font-medium text-foreground">ยังไม่มีประวัติการยืม</div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5">เครื่องนี้ยังไม่เคยถูกยืม</div>
+            {/* RIGHT — Product info (col-xl-8 = 67%) */}
+            <div className="col-span-12 lg:col-span-7 xl:col-span-8">
+              {/* Title block + Edit button */}
+              <div className="flex items-start gap-3">
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-lg font-semibold text-foreground mb-2" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
+                    {asset.brand} {asset.model}
+                  </h4>
+                  {/* Meta row — Velzon hstack with brand link | vr | seller | vr | published */}
+                  <div className="flex items-center gap-3 flex-wrap text-xs">
+                    <span className="text-primary font-medium">{asset.brand}</span>
+                    <span className="text-border" aria-hidden>|</span>
+                    <span className="text-muted-foreground">แหล่ง : <span className="text-foreground font-medium">{SOURCE_LABELS[asset.source]?.label || asset.source}</span></span>
+                    <span className="text-border" aria-hidden>|</span>
+                    <span className="text-muted-foreground">ลงทะเบียน : <span className="text-foreground font-medium">{asset.purchaseDate ? formatThaiDate(asset.purchaseDate) : '-'}</span></span>
                   </div>
-                )}
-                {history.map((h, i) => {
-                  const isReturned = h.lineStatus === 'Returned'
-                  const dotColor = isReturned ? '#0ab39c' : '#f7b84b'
-                  const dotSoft = isReturned ? 'rgba(10,179,156,0.10)' : 'rgba(247,184,75,0.12)'
-                  return (
-                    <div
-                      key={i}
-                      className={`px-4 py-3 flex items-start gap-3 hover:bg-muted/30 transition-smooth ${i < history.length - 1 ? 'vz-divider' : ''}`}
-                    >
-                      {/* Timeline dot avatar */}
-                      <div
-                        className="vz-avatar h-9 w-9 flex-shrink-0"
-                        style={{ backgroundColor: dotSoft, color: dotColor, boxShadow: `inset 0 0 0 1px ${dotColor}33` }}
-                      >
-                        {isReturned ? <CheckCircle2 className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
-                      </div>
+                </div>
+                <div className="flex-shrink-0">
+                  <button
+                    onClick={onBack}
+                    title="กลับ"
+                    className="vz-icon-soft h-8 w-8 bg-muted/40 hover:bg-muted transition-smooth border border-border rounded text-muted-foreground hover:text-foreground"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
 
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-mono font-semibold text-sm text-foreground">{h.loanDocNo}</span>
-                          <span
-                            className="vz-pill"
-                            style={{ backgroundColor: dotSoft, color: dotColor }}
-                          >
-                            {isReturned ? 'คืนแล้ว' : 'กำลังยืม'}
-                          </span>
-                          {h.conditionGrade && <GradeBadge grade={h.conditionGrade} />}
-                          {h.isDamaged && (
-                            <span className="vz-pill vz-pill-danger">
-                              <AlertTriangle className="h-2.5 w-2.5" /> เสียหาย
-                            </span>
+              {/* Stars + review count */}
+              <div className="flex items-center gap-2 mt-3">
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Star
+                      key={i}
+                      className={`h-4 w-4 ${i <= stars ? 'fill-current' : ''}`}
+                      style={{ color: i <= stars ? '#f7b84b' : 'rgba(116,120,141,0.3)' }}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  ( {stats.totalLoans} ครั้งยืม )
+                </span>
+              </div>
+
+              {/* 4 Stat boxes — Velzon DASHED BORDER signature */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
+                <VelzonDashedStat
+                  label="ยืมทั้งหมด"
+                  value={stats.totalLoans}
+                  icon={<History className="h-5 w-5" />}
+                  color="#405189"
+                />
+                <VelzonDashedStat
+                  label="คืนแล้ว"
+                  value={stats.completedLoans}
+                  icon={<CheckCircle2 className="h-5 w-5" />}
+                  color="#0ab39c"
+                />
+                <VelzonDashedStat
+                  label="เสียหาย"
+                  value={stats.damagedCount}
+                  icon={<AlertTriangle className="h-5 w-5" />}
+                  color="#f06548"
+                />
+                <VelzonDashedStat
+                  label="ส่งซ่อม"
+                  value={stats.repairCount}
+                  icon={<Wrench className="h-5 w-5" />}
+                  color="#a071f0"
+                />
+              </div>
+
+              {/* Description section */}
+              <div className="mt-4">
+                <h5 className="text-sm font-semibold text-foreground mb-2">รายละเอียด :</h5>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {asset.brand} {asset.model} — หมวด {CATEGORY_LABELS[asset.category] || asset.category} · สถานะ {ASSET_STATUS_LABELS[asset.status]?.label || asset.status} · Serial {asset.serialNo} · {asset.defaultAccessories.length} อุปกรณ์เสริมในชุด
+                </p>
+              </div>
+
+              {/* Features + Services (Velzon 2-col) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                {/* Features */}
+                <div>
+                  <h5 className="text-sm font-semibold text-foreground mb-2">อุปกรณ์เสริม ({asset.defaultAccessories.length}) :</h5>
+                  {asset.defaultAccessories.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">ไม่มีอุปกรณ์เสริม</p>
+                  ) : (
+                    <ul className="list-none space-y-1">
+                      {asset.defaultAccessories.slice(0, 6).map((a, i) => (
+                        <li key={i} className="text-xs text-foreground py-0.5 flex items-center gap-1.5">
+                          <span className="h-1 w-1 rounded-full bg-muted-foreground inline-block" />
+                          {a}
+                        </li>
+                      ))}
+                      {asset.defaultAccessories.length > 6 && (
+                        <li className="text-[10px] text-muted-foreground pl-2.5">+{asset.defaultAccessories.length - 6} รายการ</li>
+                      )}
+                    </ul>
+                  )}
+                </div>
+
+                {/* Services */}
+                <div>
+                  <h5 className="text-sm font-semibold text-foreground mb-2">บริการ :</h5>
+                  <ul className="list-none space-y-1">
+                    <li className="text-xs text-foreground py-0.5 flex items-center gap-1.5">
+                      <span className="h-1 w-1 rounded-full bg-muted-foreground inline-block" />
+                      {asset.warrantyExpireDate ? `รับประกันถึง ${formatThaiDate(asset.warrantyExpireDate)}` : 'ไม่มีรับประกัน'}
+                    </li>
+                    {asset.location && (
+                      <li className="text-xs text-foreground py-0.5 flex items-center gap-1.5">
+                        <span className="h-1 w-1 rounded-full bg-muted-foreground inline-block" />
+                        ตั้งอยู่ {asset.location.name} ({asset.location.zone})
+                      </li>
+                    )}
+                    {asset.depositPrice && (
+                      <li className="text-xs text-foreground py-0.5 flex items-center gap-1.5">
+                        <span className="h-1 w-1 rounded-full bg-muted-foreground inline-block" />
+                        มัดจำ ฿{asset.depositPrice.toLocaleString()}
+                      </li>
+                    )}
+                    {asset.maxLoanCount && (
+                      <li className="text-xs text-foreground py-0.5 flex items-center gap-1.5">
+                        <span className="h-1 w-1 rounded-full bg-muted-foreground inline-block" />
+                        จำกัดยืม {asset.maxLoanCount} ครั้ง (ใช้แล้ว {asset.loanCount})
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Action buttons — Velzon style */}
+              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
+                <button
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-semibold text-white shadow-sm transition-smooth hover:shadow-md"
+                  style={{ background: 'linear-gradient(135deg, #405189 0%, #2c3a5e 100%)' }}
+                  onClick={onBack}
+                >
+                  <ShoppingCart className="h-3.5 w-3.5" /> ขอยืม
+                </button>
+                <button
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-medium bg-muted/50 text-foreground border border-border hover:bg-muted transition-smooth"
+                  onClick={onBack}
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" /> กลับ
+                </button>
+                <div className="flex items-center gap-1 ml-auto">
+                  {['text-primary', 'text-warning', 'text-danger', 'text-info'].map((c, i) => {
+                    const Icon = [Star, Heart, Share2, MoreHorizontal][i]
+                    const color = ['#405189', '#f7b84b', '#f06548', '#50b1d0'][i]
+                    return (
+                      <button
+                        key={i}
+                        className="vz-icon-soft h-8 w-8 border border-border rounded-full hover:bg-muted transition-smooth"
+                        title={i === 0 ? 'บุคมาร์ก' : i === 1 ? 'ถูกใจ' : i === 2 ? 'แชร์' : 'เพิ่มเติม'}
+                      >
+                        <Icon className="h-3.5 w-3.5" style={{ color }} />
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ===== Product Description section (mt-5) ===== */}
+          <div className="mt-6 pt-5 border-t border-border">
+            <h5 className="text-sm font-semibold text-foreground mb-3">ข้อมูลเพิ่มเติม :</h5>
+
+            <Tabs defaultValue="spec" className="w-full">
+              {/* Velzon nav-tabs-custom style */}
+              <TabsList className="vz-tabs-custom bg-transparent p-0 h-auto">
+                <TabsTrigger value="spec" className="vz-tabs-custom-trigger">
+                  Specification
+                </TabsTrigger>
+                <TabsTrigger value="detail" className="vz-tabs-custom-trigger">
+                  Details
+                </TabsTrigger>
+                <TabsTrigger value="reviews" className="vz-tabs-custom-trigger">
+                  Ratings &amp; Reviews
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Tab content — border border-top-0 p-4 */}
+              <TabsContent value="spec" className="vz-tab-content mt-0">
+                <div className="overflow-x-auto">
+                  <table className="vz-table">
+                    <tbody>
+                      <tr>
+                        <th scope="row">หมวดหมู่</th>
+                        <td>{CATEGORY_LABELS[asset.category] || asset.category}</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">ยี่ห้อ</th>
+                        <td>{asset.brand}</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">รุ่น</th>
+                        <td>{asset.model}</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Tag ID</th>
+                        <td className="font-mono">{asset.tagId}</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Serial Number</th>
+                        <td className="font-mono">{asset.serialNo}</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">แหล่งที่มา</th>
+                        <td>{SOURCE_LABELS[asset.source]?.label || asset.source}</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">ที่ตั้ง</th>
+                        <td>{asset.location ? `${asset.location.name} (${asset.location.zone})` : 'ไม่ระบุ'}</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">วันที่ซื้อ</th>
+                        <td>{asset.purchaseDate ? formatThaiDate(asset.purchaseDate) : '-'}</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">รับประกันถึง</th>
+                        <td>{asset.warrantyExpireDate ? formatThaiDate(asset.warrantyExpireDate) : '-'}</td>
+                      </tr>
+                      {asset.depositPrice && (
+                        <tr>
+                          <th scope="row">มัดจำ</th>
+                          <td>฿{asset.depositPrice.toLocaleString()}</td>
+                        </tr>
+                      )}
+                      {asset.source === 'Supplier' && asset.supplierName && (
+                        <>
+                          <tr>
+                            <th scope="row">Supplier</th>
+                            <td>{asset.supplierName}</td>
+                          </tr>
+                          {asset.supplierContact && (
+                            <tr>
+                              <th scope="row">ผู้ติดต่อ</th>
+                              <td>{asset.supplierContact}</td>
+                            </tr>
                           )}
-                          {h.sendToRepair && (
-                            <span className="vz-pill" style={{ backgroundColor: 'rgba(160,113,240,0.10)', color: '#a071f0' }}>
-                              <Wrench className="h-2.5 w-2.5" /> ส่งซ่อม
-                            </span>
+                          {asset.supplierPhone && (
+                            <tr>
+                              <th scope="row">เบอร์โทร</th>
+                              <td>{asset.supplierPhone}</td>
+                            </tr>
                           )}
-                        </div>
-                        <div className="text-sm mt-1 font-medium text-foreground">
-                          {h.customerName} {h.customerCompany ? <span className="text-muted-foreground">— {h.customerCompany}</span> : null}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2 flex-wrap">
-                          <span>ยืม {h.dispatchedAt ? formatThaiDate(h.dispatchedAt) : '-'}</span>
-                          <span className="text-muted-foreground/40">·</span>
-                          <span>กำหนดคืน {formatThaiDate(h.expectedReturnDate)}</span>
-                          {h.returnedAt && (
-                            <>
-                              <span className="text-muted-foreground/40">·</span>
-                              <span style={{ color: '#0ab39c' }}>คืน {formatThaiDate(h.returnedAt)}</span>
-                            </>
+                          {asset.supplierLoanDue && (
+                            <tr>
+                              <th scope="row">กำหนดคืน Supplier</th>
+                              <td>{formatThaiDate(asset.supplierLoanDue)}</td>
+                            </tr>
                           )}
+                        </>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="detail" className="vz-tab-content mt-0">
+                <div>
+                  <h6 className="text-sm font-semibold text-foreground mb-2">
+                    {asset.brand} {asset.model}
+                  </h6>
+                  <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+                    ทรัพย์สินนี้เป็น {CATEGORY_LABELS[asset.category] || asset.category} ของ {asset.brand} รุ่น {asset.model} ที่ใช้สำหรับการยืมเดโมให้ลูกค้าได้ทดลองใช้งาน ติดตามประวัติการยืม-คืน สภาพ และความเสียหายจากแทป Ratings & Reviews ด้านล่าง
+                  </p>
+                  <div className="space-y-2">
+                    <p className="text-xs text-foreground flex items-center gap-1.5">
+                      <span className="h-1 w-1 rounded-full bg-muted-foreground inline-block" />
+                      สถานะปัจจุบัน: <b className="text-foreground">{ASSET_STATUS_LABELS[asset.status]?.label || asset.status}</b>
+                    </p>
+                    <p className="text-xs text-foreground flex items-center gap-1.5">
+                      <span className="h-1 w-1 rounded-full bg-muted-foreground inline-block" />
+                      เกรดสภาพ: <b className="text-foreground">{asset.conditionGrade || 'ยังไม่ประเมิน'}</b>
+                    </p>
+                    <p className="text-xs text-foreground flex items-center gap-1.5">
+                      <span className="h-1 w-1 rounded-full bg-muted-foreground inline-block" />
+                      จำนวนครั้งยืม: <b className="text-foreground">{stats.totalLoans}</b> ครั้ง (คืนแล้ว {stats.completedLoans})
+                    </p>
+                    <p className="text-xs text-foreground flex items-center gap-1.5">
+                      <span className="h-1 w-1 rounded-full bg-muted-foreground inline-block" />
+                      อุปกรณ์เสริมในชุด: <b className="text-foreground">{asset.defaultAccessories.length}</b> รายการ
+                    </p>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* Ratings & Reviews tab — adapted to loan history */}
+              <TabsContent value="reviews" className="vz-tab-content mt-0">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+                  {/* LEFT — Summary card (col-lg-4) */}
+                  <div className="lg:col-span-2">
+                    <div className="vz-services-box">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-0.5">
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <Star
+                              key={i}
+                              className={`h-4 w-4 ${i <= stars ? 'fill-current' : ''}`}
+                              style={{ color: i <= stars ? '#f7b84b' : 'rgba(116,120,141,0.3)' }}
+                            />
+                          ))}
                         </div>
-                        {h.damageDescription && (
-                          <div className="text-xs mt-1.5 p-2 rounded" style={{ backgroundColor: 'rgba(240,101,72,0.06)', color: '#f06548', border: '1px solid rgba(240,101,72,0.15)' }}>
-                            ⚠ {h.damageDescription}
-                          </div>
-                        )}
+                        <h6 className="text-xs font-semibold text-foreground mb-0">{stars}.0 out of 5</h6>
                       </div>
                     </div>
-                  )
-                })}
-              </div>
-            </ScrollArea>
+                    <div className="text-center mt-2 text-xs text-muted-foreground">
+                      รวม <span className="font-medium text-foreground">{history.length}</span> รายการ
+                    </div>
+
+                    {/* Status breakdown — progress bars (Velzon 5★ breakdown style) */}
+                    <div className="mt-3 space-y-2">
+                      <VelzonBreakdownRow
+                        label="คืนแล้ว"
+                        count={stats.completedLoans}
+                        total={Math.max(stats.totalLoans, 1)}
+                        color="#0ab39c"
+                      />
+                      <VelzonBreakdownRow
+                        label="กำลังยืม"
+                        count={history.filter((h) => h.lineStatus !== 'Returned').length}
+                        total={Math.max(stats.totalLoans, 1)}
+                        color="#f7b84b"
+                      />
+                      <VelzonBreakdownRow
+                        label="เสียหาย"
+                        count={stats.damagedCount}
+                        total={Math.max(stats.totalLoans, 1)}
+                        color="#f06548"
+                      />
+                      <VelzonBreakdownRow
+                        label="ส่งซ่อม"
+                        count={stats.repairCount}
+                        total={Math.max(stats.totalLoans, 1)}
+                        color="#a071f0"
+                      />
+                    </div>
+                  </div>
+
+                  {/* RIGHT — Review list (col-lg-8) */}
+                  <div className="lg:col-span-3">
+                    {history.length === 0 ? (
+                      <div className="text-center py-8">
+                        <History className="h-10 w-10 mx-auto mb-2 text-muted-foreground/30" />
+                        <div className="text-sm font-medium text-foreground">ยังไม่มีประวัติการยืม</div>
+                        <div className="text-[11px] text-muted-foreground mt-0.5">เครื่องนี้ยังไม่เคยถูกยืม</div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                        {history.map((h, i) => {
+                          const isReturned = h.lineStatus === 'Returned'
+                          const color = isReturned ? '#0ab39c' : '#f7b84b'
+                          return (
+                            <div key={i} className="border border-border rounded-md p-3">
+                              {/* Top row — avatar + name + status */}
+                              <div className="flex items-center gap-2.5">
+                                <div
+                                  className="vz-avatar h-8 w-8 text-xs"
+                                  style={{ backgroundColor: `${color}11`, color }}
+                                >
+                                  {h.customerName.charAt(0)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-xs font-semibold text-foreground truncate">
+                                    {h.customerName} {h.customerCompany ? <span className="text-muted-foreground">— {h.customerCompany}</span> : null}
+                                  </div>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    {isReturned ? (
+                                      <span className="vz-pill vz-pill-success">คืนแล้ว</span>
+                                    ) : (
+                                      <span className="vz-pill vz-pill-warning">กำลังยืม</span>
+                                    )}
+                                    <span className="text-[10px] text-muted-foreground">{h.loanDocNo}</span>
+                                  </div>
+                                </div>
+                                {/* Star rating for this loan */}
+                                <div className="flex items-center gap-0.5">
+                                  {[1, 2, 3, 4, 5].map((s) => {
+                                    const gradeStars: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
+                                    const loanStars = h.conditionGrade ? (gradeStars[h.conditionGrade] || 4) : 4
+                                    return (
+                                      <Star
+                                        key={s}
+                                        className={`h-3 w-3 ${s <= loanStars ? 'fill-current' : ''}`}
+                                        style={{ color: s <= loanStars ? '#f7b84b' : 'rgba(116,120,141,0.3)' }}
+                                      />
+                                    )
+                                  })}
+                                </div>
+                              </div>
+
+                              {/* Bottom row — date */}
+                              <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground">
+                                <span>ยืม {h.dispatchedAt ? formatThaiDate(h.dispatchedAt) : '-'}</span>
+                                <span aria-hidden>•</span>
+                                <span>กำหนดคืน {formatThaiDate(h.expectedReturnDate)}</span>
+                                {h.returnedAt && (
+                                  <>
+                                    <span aria-hidden>•</span>
+                                    <span style={{ color: '#0ab39c' }}>คืน {formatThaiDate(h.returnedAt)}</span>
+                                  </>
+                                )}
+                              </div>
+
+                              {h.damageDescription && (
+                                <div className="text-xs mt-2 p-2 rounded" style={{ backgroundColor: 'rgba(240,101,72,0.06)', color: '#f06548' }}>
+                                  ⚠ {h.damageDescription}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   )
 }
 
-// ===== Velzon mini stat card (for the 4-stat row) =====
-function VelzonMiniStat({
-  label, value, icon, color, highlight,
+// ===== Velzon DASHED stat box — Velzon signature =====
+function VelzonDashedStat({
+  label, value, icon, color,
 }: {
   label: string
   value: number
   icon: React.ReactNode
   color: string
-  highlight?: boolean
 }) {
   return (
-    <div
-      className={`p-2.5 rounded-md border transition-smooth ${highlight ? 'animate-pulse' : ''}`}
-      style={{
-        backgroundColor: `${color}11`,
-        borderColor: `${color}33`,
-      }}
-    >
-      <div className="flex items-center gap-1.5 mb-1">
-        <span className="vz-icon-soft h-5 w-5" style={{ backgroundColor: `${color}22` }}>
-          <span style={{ color }}>{icon}</span>
-        </span>
-        <span className="vz-eyebrow truncate">{label}</span>
-      </div>
-      <div className="text-lg font-bold tabular-nums tracking-tight" style={{ color }}>
-        {value}
+    <div className="vz-dashed-box">
+      <div className="flex items-center gap-2">
+        {/* avatar-sm with avatar-title rounded bg-transparent text-success fs-24 */}
+        <div className="vz-icon-soft h-9 w-9 bg-transparent" style={{ color }}>
+          {icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] text-muted-foreground mb-0.5">{label} :</p>
+          <h5 className="text-sm font-semibold text-foreground mb-0 tabular-nums">{value}</h5>
+        </div>
       </div>
     </div>
   )
 }
 
-// ===== Velzon spec row — Velzon 2-column spec table style =====
-function VelzonSpecRow({
-  icon, label, value, mono,
+// ===== Velzon breakdown row — for the rating breakdown progress bars =====
+function VelzonBreakdownRow({
+  label, count, total, color,
 }: {
-  icon: React.ReactNode
   label: string
-  value: React.ReactNode
-  mono?: boolean
+  count: number
+  total: number
+  color: string
 }) {
+  const pct = total > 0 ? (count / total) * 100 : 0
   return (
-    <div className="flex items-center gap-2 py-2 border-b border-border/40 last:border-b-0">
-      <span className="text-muted-foreground flex-shrink-0">{icon}</span>
-      <span className="text-xs text-muted-foreground flex-shrink-0 w-28">{label}</span>
-      <span className={`text-xs font-medium text-foreground flex-1 truncate ${mono ? 'font-mono' : ''}`}>
-        {value}
-      </span>
+    <div className="flex items-center gap-2">
+      <div className="w-16">
+        <h6 className="text-xs font-medium text-foreground mb-0">{label}</h6>
+      </div>
+      <div className="flex-1">
+        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{ width: `${pct}%`, backgroundColor: color }}
+          />
+        </div>
+      </div>
+      <div className="w-10 text-right">
+        <h6 className="text-xs font-medium text-muted-foreground mb-0 tabular-nums">{count}</h6>
+      </div>
     </div>
   )
 }
