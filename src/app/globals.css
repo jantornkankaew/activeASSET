@@ -79,15 +79,36 @@
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
+  font-family: var(--font-sans), var(--font-sans-thai), 'Inter', 'IBM Plex Sans Thai', system-ui, sans-serif;
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv11', 'ss01', 'ss03'; /* Inter stylistic alternates for cleaner numbers */
+  text-rendering: optimizeLegibility;
 }
 
 h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display), var(--font-display-thai), 'Poppins', 'Prompt', var(--font-sans), sans-serif;
   font-weight: 600;
   letter-spacing: -0.01em;
+}
+
+/* Thai text tweaks — IBM Plex Sans Thai / Prompt render with tighter line-height */
+:lang(th) {
+  line-height: 1.6;
+}
+
+/* Tabular numbers for stat cards / data tables */
+.vz-stat-num, .vz-pill, .tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum', 'lnum';
+}
+
+/* Headings get Poppins/Prompt explicitly via .vz-display */
+.vz-display, h1.vz-display, h2.vz-display, h3.vz-display {
+  font-family: var(--font-display), var(--font-display-thai), 'Poppins', 'Prompt', sans-serif;
+  letter-spacing: -0.02em;
 }
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }

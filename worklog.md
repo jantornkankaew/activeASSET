@@ -766,3 +766,42 @@ Stage Summary:
 - Hydration mismatch error หายไปแล้ว — รันผ่านหลัง reload ด้วย token ใน localStorage
 - มี loading splash สั้น ๆ (~50ms) ระหว่าง auth bootstrap แทนที่จะเห็น login flash
 - SSR/CSR render ตรงกันทั้ง 3 states: loading, unauth, auth
+
+---
+Task ID: font-upgrade
+Agent: main
+Task: อัปเกรด font ให้สวยขึ้น (จาก Geist ที่ไม่มี Thai)
+
+Root cause:
+- ตอนเดิมใช้ Geist (จาก Vercel) เป็น font หลัก แต่ Geist ไม่รองรับ Thai glyphs
+- เลยทำให้ text ไทยทั้งหมดตกไป render ด้วย system Thai font ของ OS ที่ไม่สวย/ไม่ match กับ latin
+- ดูไม่ professional และไม่เหมาะกับ enterprise dashboard แบบ Velzon
+
+Fix:
+1. layout.tsx — สลับจาก Geist/Geist_Mono เป็น 4 Google fonts:
+   - Inter (latin body — Velzon signature font)
+   - IBM_Plex_Sans_Thai (thai body — clean modern Thai font, matches Inter weight/x-height)
+   - Poppins (latin display — Velzon signature heading font, geometric)
+   - Prompt (thai display — geometric Thai display font, matches Poppins feel)
+2. tailwind.config.js — เพิ่ม font-sans (Inter+Plex Thai) และ font-display (Poppins+Prompt) พร้อม fallback chain
+3. globals.css:
+   - body ใช้ font-family: var(--font-sans), var(--font-sans-thai), Inter, IBM Plex Sans Thai
+   - h1-h6 ใช้ font-family: var(--font-display), var(--font-display-thai), Poppins, Prompt
+   - เพิ่ม font-feature-settings: 'cv11', 'ss01', 'ss03' ของ Inter (stylistic alternates สำหรับเลขสวยขึ้น)
+   - เพิ่ม .vz-stat-num, .vz-pill, .tabular-nums { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum', 'lnum' }
+   - เพิ่ม :lang(th) { line-height: 1.6 } สำหรับ Thai ที่ต้องการ line-height กว้างกว่า latin
+
+Work Log:
+- แก้ layout.tsx: โหลด 4 Google fonts ผ่าน next/font/google (Inter, IBM_Plex_Sans_Thai, Poppins, Prompt)
+- แก้ tailwind.config.js: เพิ่ม fontFamily.sans และ fontFamily.display พร้อม fallback chain
+- แก้ globals.css: กำหนด font-family บน body/h1-h6 + เพิ่ม tabular-nums + เพิ่ม .vz-display class
+- Restart dev server ใหม่, ล้าง .next cache
+- รัน E2E test: ผ่าน 0 page errors
+- VLM ยืนยัน: Thai text "rendered smoothly with excellent legibility", big numbers "exceptionally crisp", "premium enterprise-grade feel"
+- VLM ระบุตรง ๆ ว่าได้เห็น "IBM Plex Sans Thai (or similar high-quality geometric sans-serif)" — คือ font โหลดและ render ถูกต้อง
+
+Stage Summary:
+- ระบบใหม่: 4 fonts (Inter + IBM Plex Sans Thai + Poppins + Prompt)
+- รองรับ Thai + Latin ทั้ง body และ headings
+- ตัวเลข stat card ใช้ tabular-nums (ตัวเลขตรงแนว, สวยแบบ Velzon)
+- ผ่านการตรวจสอบจาก VLM ว่าเหมาะกับ enterprise dashboard

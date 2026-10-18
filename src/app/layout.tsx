@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, IBM_Plex_Sans_Thai, Poppins, Prompt } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Providers } from "@/components/auth/Providers";
@@ -7,14 +7,35 @@ import { SimpleAuthProvider } from "@/components/auth/SimpleAuth";
 import { PWARegister } from "@/components/pwa/PWARegister";
 import { ThemeProvider } from "next-themes";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// === Velzon-style typography ===
+// Body: Inter (Latin) + IBM Plex Sans Thai (Thai) — clean, modern, very readable for dashboards
+// Display/Headings: Poppins (Latin) + Prompt (Thai) — geometric, premium feel matching Velzon
+const inter = Inter({
+  variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const ibmPlexThai = IBM_Plex_Sans_Thai({
+  variable: "--font-sans-thai",
+  subsets: ["thai"],
+  display: "swap",
+  weight: ["300", "400", "500", "600", "700"],
+});
+
+const poppins = Poppins({
+  variable: "--font-display",
   subsets: ["latin"],
+  display: "swap",
+  weight: ["500", "600", "700"],
+});
+
+const prompt = Prompt({
+  variable: "--font-display-thai",
+  subsets: ["thai"],
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -57,7 +78,7 @@ export default function RootLayout({
         <link rel="stylesheet" href="/tailwind.css" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${inter.variable} ${ibmPlexThai.variable} ${poppins.variable} ${prompt.variable} antialiased bg-background text-foreground`}
       >
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <SimpleAuthProvider>

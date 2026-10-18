@@ -64,8 +64,9 @@ module.exports = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-geist-mono)', 'monospace'],
+        sans: ['var(--font-sans)', 'var(--font-sans-thai)', 'Inter', 'IBM Plex Sans Thai', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'var(--font-display-thai)', 'Poppins', 'Prompt', 'var(--font-sans)', 'sans-serif'],
+        mono: ['var(--font-geist-mono)', 'ui-monospace', 'monospace'],
       },
       keyframes: {
         'fade-in': {
