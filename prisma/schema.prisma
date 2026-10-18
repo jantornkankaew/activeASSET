@@ -1,0 +1,448 @@
+// activeASSET v2 - รองรับ Flow 3 เฟส: Request → Dispatch → Deliver
+// + Waiting List + Source tracking (Demo/Sales/Supplier) + Photos + Add-on accessories
+// v3: + User/Auth + LINE notify + Export + Auto-return alerts
+// v5: + Multi-tenant + Customizable Dashboard + PWA + Real-time
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// === Tenant (หน่วยงาน/บริษัท ที่ใช้ระบบ — Multi-tenant) ===
+model Tenant {
+  id          String   @id @default(cuid())
+  name        String   @unique // ชื่อบริษัท เช่น "Active ID Solutions"
+  code        String   @unique // รหัสย่อ เช่น "AIS"
+  plan        String   @default("standard") // free, standard, enterprise
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  users       User[]
+  userTenants UserTenant[] // many-to-many
+  customers   Customer[]
+  catalogs    ProductCatalog[]
+  locations   Location[]
+  suppliers   Supplier[]
+  assets      AssetUnit[]
+  loans       LoanTransaction[]
+  reservations Reservation[]
+  auditSessions AuditSession[]
+}
+
+// === UserTenant (many-to-many — 1 user เข้าถึงหลาย tenant) ===
+model UserTenant {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  role      String   @default("sales") // role เฉพาะใน tenant นี้ (admin/sales/store/manager)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, tenantId])
+}
+
+// === User (สำหรับ Authentication + สิทธิ์) ===
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  password     String   // hashed with bcrypt
+  name         String
+  role         String   @default("sales") // default role (admin, sales, store, manager)
+  tenantId     String?  // primary tenant (legacy + default)
+  tenant       Tenant?  @relation(fields: [tenantId], references: [id])
+  activeTenantId String? // active tenant สำหรับ multi-tenant switcher
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  userTenants  UserTenant[] // many-to-many access
+  dashboardPrefs UserDashboardPreference[]
+  notifications Notification[]
+  activities  Activity[]
+  pushSubscriptions PushSubscription[]
+}
+
+// === UserDashboardPreference (Customizable dashboard) ===
+model UserDashboardPreference {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  widgetKey String   // เช่น "stats", "overdue", "supplier-alerts", "trend", "top-models"
+  position  Int      @default(0) // ลำดับการแสดงผล
+  visible   Boolean  @default(true)
+  config    String?  // JSON สำหรับ widget-specific config
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, widgetKey])
+}
+
+// === Notification (Real-time + ประวัติการแจ้งเตือน) ===
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   // ผู้รับ
+  user      User     @relation(fields: [userId], references: [id])
+  type      String   // loan_created, dispatch_done, deliver_done, return_done, overdue, supplier_alert, reservation_request
+  title     String
+  message   String
+  link      String?  // URL ที่เกี่ยวข้อง
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// === Activity (Real-time activity feed) ===
+model Activity {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String   // create_loan, dispatch, deliver, return, register_asset, create_reservation
+  targetType String? // Loan, Asset, Customer, etc.
+  targetId  String?
+  description String
+  createdAt DateTime @default(now())
+}
+
+// === PushSubscription (Web Push — VAPID) ===
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   // URL ของ push service
+  p256dh    String   // public key
+  auth      String   // auth secret
+  userAgent String?  // browser info
+  createdAt DateTime @default(now())
+
+  @@unique([userId, endpoint])
+}
+
+
+
+model ProductCatalog {
+  id                  String   @id @default(cuid())
+  tenantId            String?
+  tenant              Tenant?  @relation(fields: [tenantId], references: [id])
+  model               String
+  brand               String
+  category            String
+  defaultSpecs        String?
+  defaultAccessories  String?  // JSON: ["Power Adapter","Power Cord",...]
+  imageUrl            String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([tenantId, model])
+  units         AssetUnit[]
+  requestLines  LoanRequestLine[]
+  waitingList   WaitingList[]
+  reservations  Reservation[]
+}
+
+model Location {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  tenant    Tenant?  @relation(fields: [tenantId], references: [id])
+  name      String
+  zone      String?
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, name])
+  assets       AssetUnit[]
+  auditSessions AuditSession[]
+}
+
+// === AssetUnit ===
+// source: Demo_Stock (คลังเดโม), Sales_Stock (คลังขาย), Supplier (ยืมจาก supplier มาให้ลูกค้าอีกทอด)
+model AssetUnit {
+  tagId               String   @id
+  tenantId            String?
+  tenant              Tenant?  @relation(fields: [tenantId], references: [id])
+  serialNo            String
+  catalogId           String
+  catalog             ProductCatalog @relation(fields: [catalogId], references: [id])
+  source              String   @default("Demo_Stock") // Demo_Stock, Sales_Stock, Supplier
+  supplierId          String?
+  supplier            Supplier? @relation(fields: [supplierId], references: [id])
+  supplierLoanStart   DateTime? // วันที่ยืมจาก supplier
+  supplierLoanDue     DateTime? // กำหนดคืน supplier
+  depositPrice        Float?   // ราคามัดจำ (ถ้ามี)
+  maxLoanCount        Int?     // จำกัดจำนวนครั้งยืม (Supplier มัก 2-3 ครั้ง)
+  loanCount           Int      @default(0) // นับครั้งที่ยืนไปแล้ว
+  status              String   // Available, On_Loan, In_Inspection, In_Repair, Lost, Disposed, Reserved, Returned_To_Supplier
+  locationId          String?
+  location            Location? @relation(fields: [locationId], references: [id])
+  conditionGrade      String?
+  registeredAccessories String?
+  purchaseDate        DateTime?
+  warrantyExpireDate  DateTime?
+  notes               String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([tenantId, serialNo])
+  loanLines   LoanLineItem[]
+  maintenanceTickets MaintenanceTicket[]
+  auditItems  AuditItem[]
+}
+
+// === Supplier (ยืมจาก supplier มาให้ลูกค้าอีกทอด) ===
+model Supplier {
+  id          String   @id @default(cuid())
+  tenantId    String?
+  tenant      Tenant?  @relation(fields: [tenantId], references: [id])
+  name        String
+  contactName String?
+  phone       String?
+  email       String?
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  @@unique([tenantId, name])
+  assets AssetUnit[]
+}
+
+// === Customer (track industry สำหรับ analytics) ===
+model Customer {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  tenant    Tenant?  @relation(fields: [tenantId], references: [id])
+  name      String
+  company   String
+  industry  String?  // Logistics, Garment, Retail, Healthcare, Manufacturing, Other
+  phone     String?
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, company])
+  loans LoanTransaction[]
+  reservations Reservation[]
+}
+
+// === Loan Transaction (3-phase) ===
+// Status flow:
+//   Requested → Dispatching → Dispatched → Delivered → Partially_Returned → Returned
+//   Requested → Queued (ถ้าขอไม่พอ → เข้า waiting list)
+//   Requested → Cancelled
+model LoanTransaction {
+  docNo               String   @id // LOAN-YYYYMM-XXX
+  tenantId            String?
+  tenant              Tenant?  @relation(fields: [tenantId], references: [id])
+  customerId          String?
+  customer            Customer? @relation(fields: [customerId], references: [id])
+  customerName        String   // snapshot
+  customerCompany     String?  // snapshot
+  customerIndustry    String?  // snapshot สำหรับ analytics
+  salesRepName        String
+  purpose             String   // Demo, Standby_Repair, Internal_Test, POC
+  industry            String?  // อุตสาหกรรมของลูกค้า (Logistics, Garment, ...)
+
+  // Phase 1: Request (Sales ขอยืม)
+  requestedAt         DateTime @default(now())
+  expectedReturnDate  DateTime
+  termsAndNotes       String?
+
+  // Phase 2: Dispatch (Store จัดของจริง)
+  dispatchedBy        String?
+  dispatchedAt        DateTime?
+
+  // Phase 3: Deliver (ส่งมอบให้ลูกค้า)
+  deliveredBy         String?
+  deliveredAt         DateTime?
+  customerSignature   String?  // base64 PNG — ลูกค้าเซ็นรับของ
+  customerSignAt      DateTime?
+  customerSignBy      String?
+
+  // Return
+  closedAt            DateTime?
+  status              String   @default("Requested")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  requestLines  LoanRequestLine[]
+  lines         LoanLineItem[]
+  returnEvents  ReturnEvent[]
+  waitingList   WaitingList[]
+}
+
+// === LoanRequestLine (Phase 1: Sales ขอเป็นรุ่น+จำนวน) ===
+model LoanRequestLine {
+  id          String   @id @default(cuid())
+  loanDocNo   String
+  loan        LoanTransaction @relation(fields: [loanDocNo], references: [docNo])
+  catalogId   String
+  catalog     ProductCatalog @relation(fields: [catalogId], references: [id])
+  quantity    Int      @default(1)
+  notes       String?  // เช่น "เอาแบบ with Cradle"
+  fulfilledQty Int     @default(0) // จำนวนที่ Store หยิบจริงได้
+
+  lines LoanLineItem[]
+}
+
+// === LoanLineItem (Phase 2: Store หยิบเครื่องจริง + สแกน + ถ่ายรูป) ===
+model LoanLineItem {
+  id                String   @id @default(cuid())
+  loanDocNo         String
+  loan              LoanTransaction @relation(fields: [loanDocNo], references: [docNo])
+  requestLineId     String?
+  requestLine       LoanRequestLine? @relation(fields: [requestLineId], references: [id])
+  assetTagId        String
+  asset             AssetUnit @relation(fields: [assetTagId], references: [tagId])
+  source            String   @default("Demo_Stock") // Demo_Stock, Sales_Stock, Supplier
+  accessoriesHandedOver String? // JSON: default + add-on ที่ส่งมอบ
+  conditionPhoto    String?  // path รูปสภาพตอนส่งออก
+  dispatchedBy      String?
+  dispatchedAt      DateTime?
+  status            String   @default("Out") // Out, Returned, Lost
+  returnedAt        DateTime?
+  notes             String?
+
+  returnItems ReturnEventItem[]
+  photos      AssetPhoto[]
+}
+
+// === AssetPhoto (รูปหลักฐานหลายรูปต่อเครื่อง) ===
+model AssetPhoto {
+  id            String   @id @default(cuid())
+  loanLineItemId String
+  loanLineItem  LoanLineItem @relation(fields: [loanLineItemId], references: [id])
+  photoPath     String   // /uploads/xxx.jpg
+  caption       String?  // "หน้าจอ", "ข้างซ้าย", "อุปกรณ์เสริม"
+  takenAt       DateTime @default(now())
+  takenBy       String?
+}
+
+// === ReturnEvent (เหมือนเดิม แต่รองรับ source-based return) ===
+model ReturnEvent {
+  id                  String   @id @default(cuid())
+  loanDocNo           String
+  loan                LoanTransaction @relation(fields: [loanDocNo], references: [docNo])
+  returnDate          DateTime @default(now())
+  inspectorName       String
+  inspectorSignature  String?
+  inspectorSignAt     DateTime?
+  notes               String?
+  createdAt           DateTime @default(now())
+
+  items ReturnEventItem[]
+}
+
+model ReturnEventItem {
+  id                String   @id @default(cuid())
+  returnEventId     String
+  returnEvent       ReturnEvent @relation(fields: [returnEventId], references: [id])
+  loanLineItemId    String
+  loanLineItem      LoanLineItem @relation(fields: [loanLineItemId], references: [id])
+  conditionGrade    String
+  accessoriesReturned String?
+  isDamaged         Boolean  @default(false)
+  damageDescription String?
+  sendToRepair      Boolean  @default(false)
+  returnToSource    Boolean  @default(true) // คืนไปยัง source ต้นทาง (Demo→Demo, Sales→Sales, Supplier→Supplier)
+  nextLocationId    String?
+}
+
+// === WaitingList (เมื่อขอยืมไม่พอ → เข้าคิว) ===
+model WaitingList {
+  id          String   @id @default(cuid())
+  loanDocNo   String?  // null = standalone queue, ไม่ใช่ null = link to loan
+  loan        LoanTransaction? @relation(fields: [loanDocNo], references: [docNo])
+  catalogId   String
+  catalog     ProductCatalog @relation(fields: [catalogId], references: [id])
+  customerName    String
+  customerCompany String?
+  customerIndustry String?
+  salesRepName    String
+  purpose         String
+  quantity    Int
+  position    Int      // ลำดับคิว
+  status      String   @default("Waiting") // Waiting, Notified, Fulfilled, Cancelled
+  createdAt   DateTime @default(now())
+  notifiedAt  DateTime?
+  fulfilledAt DateTime?
+  fulfilledLoanDocNo String? // ใบยืมที่เติมให้
+}
+
+model MaintenanceTicket {
+  id          String   @id @default(cuid())
+  ticketNo    String   @unique
+  assetTagId  String
+  asset       AssetUnit @relation(fields: [assetTagId], references: [tagId])
+  loanDocNo   String?
+  reason      String
+  openedAt    DateTime @default(now())
+  closedAt    DateTime?
+  status      String
+  notes       String?
+}
+
+model AuditSession {
+  id            String   @id @default(cuid())
+  tenantId      String?
+  tenant        Tenant?  @relation(fields: [tenantId], references: [id])
+  sessionNo     String
+  locationId    String
+  location      Location @relation(fields: [locationId], references: [id])
+  auditorName   String
+  startedAt     DateTime @default(now())
+  closedAt      DateTime?
+  status        String
+  expectedCount Int
+  scannedCount  Int      @default(0)
+  unexpectedCount Int    @default(0)
+  notes         String?
+
+  @@unique([tenantId, sessionNo])
+  items         AuditItem[]
+}
+
+model AuditItem {
+  id          String   @id @default(cuid())
+  sessionId   String
+  session     AuditSession @relation(fields: [sessionId], references: [id])
+  assetTagId  String
+  asset       AssetUnit @relation(fields: [assetTagId], references: [tagId])
+  expected    Boolean  @default(true)
+  scanned     Boolean  @default(false)
+  scannedAt   DateTime?
+  discrepancy String?
+}
+
+// === Reservation (จองล่วงหน้า — รวม Waiting List) ===
+// ใช้สำหรับ: (1) จองเครื่องในช่วงวันที่ล่วงหน้า (2) ต่อคิวเมื่อขอไม่พอ (auto-created from loan)
+// origin: manual (จองอิสระ) | auto_queue (สร้างอัตโนมัติจากใบยืมที่ขอไม่พอ)
+// status: Pending (รออนุมัติ/รอคิว), Approved (อนุมัติ/พอจัดได้), Notified (แจ้งแล้ว),
+//         Converted (แปลงเป็นใบยืม), Rejected, Cancelled
+model Reservation {
+  id              String   @id @default(cuid())
+  tenantId        String?
+  tenant          Tenant?  @relation(fields: [tenantId], references: [id])
+  resNo           String   // RES-YYYYMM-XXX
+  customerId      String?
+  customer        Customer? @relation(fields: [customerId], references: [id])
+  customerName    String
+  customerCompany String?
+  customerIndustry String?
+  salesRepName    String
+  purpose         String
+  catalogId       String
+  catalog         ProductCatalog @relation(fields: [catalogId], references: [id])
+  quantity        Int
+  startDate       DateTime // วันที่ต้องการเครื่อง
+  endDate         DateTime // วันที่คืน
+  notes           String?
+  origin          String   @default("manual") // manual | auto_queue
+  sourceLoanDocNo String?  // ใบยืมที่สร้าง reservation นี้ (ถ้า origin=auto_queue)
+  status          String   @default("Pending") // Pending, Approved, Notified, Converted, Rejected, Cancelled
+  approvedBy      String?
+  approvedAt      DateTime?
+  rejectedReason  String?
+  convertedLoanDocNo String?
+  notifiedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([tenantId, resNo])
+}
+
