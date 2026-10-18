@@ -1388,3 +1388,47 @@ Stage Summary:
 - ดาวระดับ S/N คำนวณจากทุก return review ของเครื่องนั้น (ตัดข้ามหลายใบยืม) — แสดงใน AssetDetailView
 - ดาวระดับใบยืม คำนวณจาก item-level reviews ในใบยืมนั้น (เหมือนเดิม) — แสดงใน ReturnLoanSheet + LoanDetailSheet
 - comment แสดงทั้งใน S/N review list (AssetDetailView Ratings & Reviews tab) และใน loan detail (LoanDetailSheet) และใน return form (ReturnLoanSheet past events)
+
+---
+Task ID: return-per-item-star-widget
+Agent: main
+Task: หมายถึงตอนรับคืนต้องมีรีวิวรายตัวของที่ยืมด้วยดาว และ comment
+
+User clarification: ในขั้นตอนรับคืน (ReturnLoanSheet) ต้องมี widget ดาวที่คลิกได้ต่อไอเทม (ไม่ใช่แค่ radio + small stars) + comment textarea
+
+Action:
+- แทนที่ RadioGroup (4 grade radios with small stars next to each) ด้วย clickable star widget แบบ Velzon review:
+  - 5 stars ขนาด h-7 w-7 (ใหญ่กว่าเดิม) ที่คลิกได้
+  - คลิก star 1-5 → map เป็น grade D/C/B/A อัตโนมัติ
+  - 5★ = A (สมบูรณ์), 4★ = B (ดี), 3★ = C (มีรอย), 2★ = D (ชำรุด)
+  - ดาวที่ active = fill-current สี amber (#f7b84b), ดาวที่ไม่ active = สี slate จาง ๆ
+  - hover: scale-110 + transition-smooth (animation feedback)
+  - tooltip: "5 ดาว = Grade A" etc.
+- Below stars: แสดง grade label + description + star count ("Grade A · 5/5 ดาว" + "สมบูรณ์ 100% ไร้รอยขีดข่วน")
+- Below description: 4 mapping hint pills (5★ = A / 4★ = B / 3★ = C / 2★ = D) แบบ vz-pill
+- คงไว้ซึ่ง comment textarea (ที่เพิ่มจาก task ก่อน) ใต้ star widget
+
+Work Log:
+- ลบ RadioGroup + RadioGroupItem imports ออก (ไม่ใช้แล้ว)
+- แทนที่ block "Grade — Velzon radio with descriptions" ด้วย "Star rating — Velzon clickable stars pattern"
+- ใช้ button + Star icon (lucide) พร้อมี onClick handler
+- map star to grade: { 5: 'A', 4: 'B', 3: 'C', 2: 'D', 1: 'D' }
+- updateForm เดิมยังใช้ได้ (conditionGrade, sendToRepair, isDamaged)
+- Deploy + รัน test
+- Test result:
+  - vz-card count=5 (loan summary + items to return + past reviews + inspector info + extra)
+  - Star icons: 10 (5 in sidebar summary + 5 in star widget for selected item)
+  - Radio buttons (grade): 0 ✓ (replaced!)
+  - Checkboxes: 1 → 4 after expand (item + 3 accessories)
+  - 0 page errors, 0 console errors
+- VLM ยืนยัน:
+  1. ✓ 5 clickable stars (filled yellow for Grade A, empty gray for unselected)
+  2. ✓ Comment textarea below star rating with placeholder text
+  3. ✓ Layout: sidebar (5.0-star rating summary) + main content with item card showing 5 stars + comment textarea
+
+Stage Summary:
+- Return form per-item review now uses Velzon-style clickable star widget
+- Stars are visually prominent (h-7 w-7) and interactive (hover scale, click to rate)
+- Comment textarea is always visible when item is selected (separate from damage description)
+- Grade mapping is visible via 4 hint pills below the stars
+- Backend (API + DB schema) unchanged — still stores conditionGrade + comment fields

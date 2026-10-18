@@ -428,45 +428,65 @@ export function ReturnLoanSheet({ open, onOpenChange, loan, onDone }: ReturnLoan
                                 </div>
                               </div>
 
-                              {/* Grade — Velzon radio with descriptions */}
+                              {/* === Star rating — Velzon clickable stars pattern === */}
                               <div>
-                                <div className="text-xs font-medium text-foreground mb-1.5">เกรดสภาพ (รีวิวสภาพเครื่อง)</div>
-                                <RadioGroup
-                                  value={f.conditionGrade}
-                                  onValueChange={(g) => updateForm(line.id, {
-                                    conditionGrade: g as 'A' | 'B' | 'C' | 'D',
-                                    sendToRepair: g === 'D' ? true : f.sendToRepair,
-                                    isDamaged: g === 'D' ? true : f.isDamaged,
-                                  })}
-                                  className="grid grid-cols-2 gap-1.5"
-                                >
-                                  {(['A', 'B', 'C', 'D'] as const).map((g) => {
-                                    const info = GRADE_LABELS[g]
+                                <div className="text-xs font-medium text-foreground mb-1.5">รีวิวสภาพเครื่อง (ดาว)</div>
+                                {/* Clickable star widget — 5★=A, 4★=B, 3★=C, 2★=D, 1★=E */}
+                                <div className="flex items-center gap-2 mb-2">
+                                  <div className="flex items-center gap-0.5">
+                                    {[1, 2, 3, 4, 5].map((s) => {
+                                      const currentStars = GRADE_TO_STARS[f.conditionGrade] || 0
+                                      const isFilled = s <= currentStars
+                                      return (
+                                        <button
+                                          key={s}
+                                          type="button"
+                                          onClick={() => {
+                                            // Map stars back to grade
+                                            const starToGrade: Record<number, 'A' | 'B' | 'C' | 'D'> = {
+                                              5: 'A', 4: 'B', 3: 'C', 2: 'D', 1: 'D',
+                                            }
+                                            const newGrade = starToGrade[s]
+                                            updateForm(line.id, {
+                                              conditionGrade: newGrade,
+                                              sendToRepair: newGrade === 'D' ? true : f.sendToRepair,
+                                              isDamaged: newGrade === 'D' ? true : f.isDamaged,
+                                            })
+                                          }}
+                                          className="p-0.5 hover:scale-110 transition-smooth"
+                                          title={`${s} ดาว = Grade ${s === 5 ? 'A' : s === 4 ? 'B' : s === 3 ? 'C' : 'D'}`}
+                                        >
+                                          <Star
+                                            className={`h-7 w-7 transition-smooth ${isFilled ? 'fill-current' : ''}`}
+                                            style={{ color: isFilled ? VZ.amber : 'rgba(116,120,141,0.30)' }}
+                                          />
+                                        </button>
+                                      )
+                                    })}
+                                  </div>
+                                  {/* Current grade label */}
+                                  {(() => {
+                                    const info = GRADE_LABELS[f.conditionGrade]
+                                    const stars = GRADE_TO_STARS[f.conditionGrade] || 0
                                     return (
-                                      <label
-                                        key={g}
-                                        className={`flex items-start gap-1.5 p-1.5 border rounded cursor-pointer text-xs transition-smooth ${f.conditionGrade === g ? `${info.bg} border-current` : 'bg-card border-border hover:bg-muted/30'}`}
-                                      >
-                                        <RadioGroupItem value={g} className="mt-0.5 h-3 w-3" />
-                                        <div>
-                                          <div className={`font-bold ${info.color} flex items-center gap-1`}>
-                                            Grade {info.label}
-                                            <span className="flex gap-0">
-                                              {[1, 2, 3, 4, 5].map((s) => (
-                                                <Star
-                                                  key={s}
-                                                  className={`h-2.5 w-2.5 ${s <= GRADE_TO_STARS[g] ? 'fill-current' : ''}`}
-                                                  style={{ color: s <= GRADE_TO_STARS[g] ? VZ.amber : 'rgba(116,120,141,0.3)' }}
-                                                />
-                                              ))}
-                                            </span>
-                                          </div>
-                                          <div className="text-muted-foreground text-[10px] mt-0.5">{info.description}</div>
-                                        </div>
-                                      </label>
+                                      <div className="flex items-center gap-2">
+                                        <span className={`text-xs font-bold ${info.color}`}>Grade {info.label}</span>
+                                        <span className="text-[10px] text-muted-foreground">{stars}/5 ดาว</span>
+                                      </div>
                                     )
-                                  })}
-                                </RadioGroup>
+                                  })()}
+                                </div>
+                                {/* Grade description */}
+                                <p className="text-[10px] text-muted-foreground mb-2">
+                                  {GRADE_LABELS[f.conditionGrade].description}
+                                </p>
+                                {/* Grade mapping hint */}
+                                <div className="flex flex-wrap gap-1 text-[9px] text-muted-foreground mb-1">
+                                  <span className="vz-pill vz-pill-success">5★ = A สมบูรณ์</span>
+                                  <span className="vz-pill vz-pill-info">4★ = B ดี</span>
+                                  <span className="vz-pill vz-pill-warning">3★ = C มีรอย</span>
+                                  <span className="vz-pill vz-pill-danger">2★ = D ชำรุด</span>
+                                </div>
                               </div>
 
                               {/* Review comment — Velzon review text pattern (always visible when selected) */}

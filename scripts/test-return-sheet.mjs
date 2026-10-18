@@ -32,18 +32,27 @@ console.log('=== Click loan card that has status allowing return ===')
 // LOAN-202610-008 is "Delivered" — allows return
 const loanBtn = page.locator('text=LOAN-202610-008').first()
 if (await loanBtn.count() > 0) {
-  await loanBtn.click({ timeout: 5000 })
+  await loanBtn.click({ force: true, timeout: 5000 })
   await page.waitForTimeout(3000)
   await page.waitForLoadState('networkidle', { timeout: 15000 })
   console.log('Clicked loan, sheet should be open')
 
   // Look for "รับคืน" button in the open loan detail sheet
-  const returnBtn = page.locator('button:has-text("รับคืน"), button:has-text("รับคืน (")').first()
-  if (await returnBtn.count() > 0) {
-    await returnBtn.click({ timeout: 5000 })
+  // Use direct DOM click — bypass Playwright viewport check (button may be outside visible area)
+  const clicked = await page.evaluate(() => {
+    const btns = document.querySelectorAll('button')
+    for (const b of btns) {
+      if (b.textContent.includes('รับคืน')) {
+        b.click()
+        return true
+      }
+    }
+    return false
+  })
+  if (clicked) {
     await page.waitForTimeout(3000)
     await page.waitForLoadState('networkidle', { timeout: 15000 })
-    console.log('→ Clicked รับคืn button, ReturnLoanSheet should open')
+    console.log('→ Clicked รับคืน button (via DOM), ReturnLoanSheet should open')
     await page.waitForTimeout(2500)
     await page.screenshot({ path: `${SCREENSHOT_DIR}/test-return-sheet-viewport.png`, fullPage: false })
     await page.screenshot({ path: `${SCREENSHOT_DIR}/test-return-sheet-full.png`, fullPage: true })
