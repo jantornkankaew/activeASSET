@@ -1,7 +1,11 @@
 {
+  "/api/auth/simple-login/route": "app/api/auth/simple-login/route.js",
+  "/api/notify/route": "app/api/notify/route.js",
+  "/api/dashboard/route": "app/api/dashboard/route.js",
+  "/api/loans/route": "app/api/loans/route.js",
   "/api/notifications/route": "app/api/notifications/route.js",
+  "/api/user-tenants/route": "app/api/user-tenants/route.js",
   "/api/activities/route": "app/api/activities/route.js",
   "/api/analytics/route": "app/api/analytics/route.js",
-  "/api/dashboard/route": "app/api/dashboard/route.js",
   "/page": "app/page.js"
 }
