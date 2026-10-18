@@ -1,0 +1,361 @@
+{
+  "version": 3,
+  "pages404": true,
+  "appType": "app",
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/api/assets/[tagId]/history",
+      "regex": "^/api/assets/([^/]+?)/history(?:/)?$",
+      "routeKeys": {
+        "nxtPtagId": "nxtPtagId"
+      },
+      "namedRegex": "^/api/assets/(?<nxtPtagId>[^/]+?)/history(?:/)?$"
+    },
+    {
+      "page": "/api/audit/[id]",
+      "regex": "^/api/audit/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/audit/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/audit/[id]/close",
+      "regex": "^/api/audit/([^/]+?)/close(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/audit/(?<nxtPid>[^/]+?)/close(?:/)?$"
+    },
+    {
+      "page": "/api/audit/[id]/scan",
+      "regex": "^/api/audit/([^/]+?)/scan(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/audit/(?<nxtPid>[^/]+?)/scan(?:/)?$"
+    },
+    {
+      "page": "/api/auth/[...nextauth]",
+      "regex": "^/api/auth/(.+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPnextauth": "nxtPnextauth"
+      },
+      "namedRegex": "^/api/auth/(?<nxtPnextauth>.+?)(?:/)?$"
+    },
+    {
+      "page": "/api/loans/[docNo]",
+      "regex": "^/api/loans/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPdocNo": "nxtPdocNo"
+      },
+      "namedRegex": "^/api/loans/(?<nxtPdocNo>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/loans/[docNo]/auto-dispatch",
+      "regex": "^/api/loans/([^/]+?)/auto\\-dispatch(?:/)?$",
+      "routeKeys": {
+        "nxtPdocNo": "nxtPdocNo"
+      },
+      "namedRegex": "^/api/loans/(?<nxtPdocNo>[^/]+?)/auto\\-dispatch(?:/)?$"
+    },
+    {
+      "page": "/api/loans/[docNo]/deliver",
+      "regex": "^/api/loans/([^/]+?)/deliver(?:/)?$",
+      "routeKeys": {
+        "nxtPdocNo": "nxtPdocNo"
+      },
+      "namedRegex": "^/api/loans/(?<nxtPdocNo>[^/]+?)/deliver(?:/)?$"
+    },
+    {
+      "page": "/api/loans/[docNo]/dispatch",
+      "regex": "^/api/loans/([^/]+?)/dispatch(?:/)?$",
+      "routeKeys": {
+        "nxtPdocNo": "nxtPdocNo"
+      },
+      "namedRegex": "^/api/loans/(?<nxtPdocNo>[^/]+?)/dispatch(?:/)?$"
+    },
+    {
+      "page": "/api/loans/[docNo]/pdf",
+      "regex": "^/api/loans/([^/]+?)/pdf(?:/)?$",
+      "routeKeys": {
+        "nxtPdocNo": "nxtPdocNo"
+      },
+      "namedRegex": "^/api/loans/(?<nxtPdocNo>[^/]+?)/pdf(?:/)?$"
+    },
+    {
+      "page": "/api/loans/[docNo]/return",
+      "regex": "^/api/loans/([^/]+?)/return(?:/)?$",
+      "routeKeys": {
+        "nxtPdocNo": "nxtPdocNo"
+      },
+      "namedRegex": "^/api/loans/(?<nxtPdocNo>[^/]+?)/return(?:/)?$"
+    },
+    {
+      "page": "/api/reservations/[id]",
+      "regex": "^/api/reservations/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/reservations/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/reservations/[id]/convert",
+      "regex": "^/api/reservations/([^/]+?)/convert(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/reservations/(?<nxtPid>[^/]+?)/convert(?:/)?$"
+    },
+    {
+      "page": "/api/suppliers/[id]",
+      "regex": "^/api/suppliers/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/suppliers/(?<nxtPid>[^/]+?)(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/api",
+      "regex": "^/api(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api(?:/)?$"
+    },
+    {
+      "page": "/api/activities",
+      "regex": "^/api/activities(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/activities(?:/)?$"
+    },
+    {
+      "page": "/api/analytics",
+      "regex": "^/api/analytics(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/analytics(?:/)?$"
+    },
+    {
+      "page": "/api/assets",
+      "regex": "^/api/assets(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/assets(?:/)?$"
+    },
+    {
+      "page": "/api/assets/quick-register",
+      "regex": "^/api/assets/quick\\-register(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/assets/quick\\-register(?:/)?$"
+    },
+    {
+      "page": "/api/assets/return-to-supplier",
+      "regex": "^/api/assets/return\\-to\\-supplier(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/assets/return\\-to\\-supplier(?:/)?$"
+    },
+    {
+      "page": "/api/audit",
+      "regex": "^/api/audit(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/audit(?:/)?$"
+    },
+    {
+      "page": "/api/auth/simple-login",
+      "regex": "^/api/auth/simple\\-login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/simple\\-login(?:/)?$"
+    },
+    {
+      "page": "/api/auth/simple-session",
+      "regex": "^/api/auth/simple\\-session(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/simple\\-session(?:/)?$"
+    },
+    {
+      "page": "/api/catalog",
+      "regex": "^/api/catalog(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/catalog(?:/)?$"
+    },
+    {
+      "page": "/api/cron/overdue-loans",
+      "regex": "^/api/cron/overdue\\-loans(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/cron/overdue\\-loans(?:/)?$"
+    },
+    {
+      "page": "/api/cron/supplier-alerts",
+      "regex": "^/api/cron/supplier\\-alerts(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/cron/supplier\\-alerts(?:/)?$"
+    },
+    {
+      "page": "/api/customers",
+      "regex": "^/api/customers(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/customers(?:/)?$"
+    },
+    {
+      "page": "/api/dashboard",
+      "regex": "^/api/dashboard(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/dashboard(?:/)?$"
+    },
+    {
+      "page": "/api/dashboard-prefs",
+      "regex": "^/api/dashboard\\-prefs(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/dashboard\\-prefs(?:/)?$"
+    },
+    {
+      "page": "/api/export/analytics",
+      "regex": "^/api/export/analytics(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/export/analytics(?:/)?$"
+    },
+    {
+      "page": "/api/export/assets",
+      "regex": "^/api/export/assets(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/export/assets(?:/)?$"
+    },
+    {
+      "page": "/api/export/loans",
+      "regex": "^/api/export/loans(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/export/loans(?:/)?$"
+    },
+    {
+      "page": "/api/loans",
+      "regex": "^/api/loans(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/loans(?:/)?$"
+    },
+    {
+      "page": "/api/locations",
+      "regex": "^/api/locations(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/locations(?:/)?$"
+    },
+    {
+      "page": "/api/notifications",
+      "regex": "^/api/notifications(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/notifications(?:/)?$"
+    },
+    {
+      "page": "/api/notify",
+      "regex": "^/api/notify(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/notify(?:/)?$"
+    },
+    {
+      "page": "/api/push/subscribe",
+      "regex": "^/api/push/subscribe(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/push/subscribe(?:/)?$"
+    },
+    {
+      "page": "/api/reservations",
+      "regex": "^/api/reservations(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/reservations(?:/)?$"
+    },
+    {
+      "page": "/api/suppliers",
+      "regex": "^/api/suppliers(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/suppliers(?:/)?$"
+    },
+    {
+      "page": "/api/tenants",
+      "regex": "^/api/tenants(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/tenants(?:/)?$"
+    },
+    {
+      "page": "/api/test-prisma",
+      "regex": "^/api/test\\-prisma(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/test\\-prisma(?:/)?$"
+    },
+    {
+      "page": "/api/uploads",
+      "regex": "^/api/uploads(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/uploads(?:/)?$"
+    },
+    {
+      "page": "/api/user-tenants",
+      "regex": "^/api/user\\-tenants(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/user\\-tenants(?:/)?$"
+    },
+    {
+      "page": "/api/user-tenants/switch",
+      "regex": "^/api/user\\-tenants/switch(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/user\\-tenants/switch(?:/)?$"
+    },
+    {
+      "page": "/api/waiting-list",
+      "regex": "^/api/waiting\\-list(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/waiting\\-list(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}

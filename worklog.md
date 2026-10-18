@@ -1027,3 +1027,47 @@ Stage Summary:
 - Dev mode ไม่มี SW แล้ว → user จะเห็น code ใหม่ทุกครั้งที่ refresh
 - ไม่ต้อง hard refresh / clear cache / unregister manual อีกต่อไป
 - Production mode ยัง register SW ปกติ (PWA/offline features ยังใช้ได้)
+
+---
+Task ID: deploy-fix
+Agent: main
+Task: แก้ปัญหา "deploy ไม่เคยได้เลย ต้องดูใน preview เอา" — production build ไม่เคยสำเร็จ
+
+Root cause:
+- `src/app/globals.css` มี `@import "/tailwind.css";` (server-relative import)
+- ใน dev mode Next.js ใช้ webpack ซึ่ง tolerate แบบนี้ (resolve เป็น URL ที่ runtime)
+- แต่ใน production build Next.js ใช้ Turbopack ซึ่ง NOT support server-relative imports
+- ทำให้ `bun run build` fail ทุกครั้งด้วย error:
+  ```
+  > Build error occurred
+  Error: Turbopack build failed with 2 errors:
+  ./src/app
+  Module not found: Can't resolve './tailwind.css'
+  server relative imports are not implemented yet.
+  ./src/app/globals.css:4:2
+  Module not found: Can't resolve '/tailwind.css'
+  ```
+
+Fix:
+1. ลบ `@import "/tailwind.css";` ออกจาก globals.css
+2. layout.tsx มี `<link rel="stylesheet" href="/tailwind.css" />` อยู่แล้ว — ใช้ runtime load แทน (works ทั้ง dev และ prod)
+3. เพิ่ม comment อธิบายใน globals.css ว่าทำไม่ใช้ @import
+
+Verification:
+- `bun run build` → SUCCESS (สร้าง .next/standalone/server.js ขนาด 3247 bytes)
+- `bun .next/standalone/server.js` → "Ready in 77ms"
+- HTTP 200 บน port 3000
+- /api/dashboard (auth) → 200, /api/analytics (auth) → 200
+- E2E tests ผ่านครบ (register form: 8 vz-cards, 3 tabs, 11 controls, 0 errors / asset detail: 0 page errors)
+- VLM ยืนยัน: "production build looks stable and visually intact"
+
+สร้าง start-prod.sh (daemon แบบเดียวกับ start-dev.sh):
+- pkill processes เก่าก่อน
+- ถ้าไม่มี .next/standalone/server.js → รัน `bun run build` อัตโนมัติ
+- ใช้ double-fork + setsid + disown เป็น POSIX daemon
+- log ไปที่ prod.log
+
+Stage Summary:
+- Deploy สำเร็จแล้ว — production build/start ทั้งคู่ผ่าน
+- มี start-prod.sh script สำหรับรัน production server เป็น daemon
+- ใช้ port 3000 เหมือน dev server (preview URL ใช้ได้เหมือนเดิม)

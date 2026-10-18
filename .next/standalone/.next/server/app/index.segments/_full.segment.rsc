@@ -1,0 +1,37 @@
+1:"$Sreact.fragment"
+2:I[63178,["/_next/static/chunks/e54dc1cb61138562.js","/_next/static/chunks/9aa825fcb93320a7.js"],"ThemeProvider"]
+3:I[53126,["/_next/static/chunks/e54dc1cb61138562.js","/_next/static/chunks/9aa825fcb93320a7.js"],"SimpleAuthProvider"]
+4:I[9589,["/_next/static/chunks/e54dc1cb61138562.js","/_next/static/chunks/9aa825fcb93320a7.js"],"Providers"]
+5:I[39756,["/_next/static/chunks/2f236954d6a65e12.js"],"default"]
+6:I[37457,["/_next/static/chunks/2f236954d6a65e12.js"],"default"]
+7:I[77855,["/_next/static/chunks/e54dc1cb61138562.js","/_next/static/chunks/9aa825fcb93320a7.js"],"Toaster"]
+8:I[8476,["/_next/static/chunks/e54dc1cb61138562.js","/_next/static/chunks/9aa825fcb93320a7.js"],"PWARegister"]
+9:I[47257,["/_next/static/chunks/2f236954d6a65e12.js"],"ClientPageRoot"]
+a:I[52683,["/_next/static/chunks/e54dc1cb61138562.js","/_next/static/chunks/9aa825fcb93320a7.js","/_next/static/chunks/f5ae2f18aa28be2f.js"],"default"]
+d:I[97367,["/_next/static/chunks/2f236954d6a65e12.js"],"OutletBoundary"]
+e:"$Sreact.suspense"
+10:I[97367,["/_next/static/chunks/2f236954d6a65e12.js"],"ViewportBoundary"]
+12:I[97367,["/_next/static/chunks/2f236954d6a65e12.js"],"MetadataBoundary"]
+14:I[68027,["/_next/static/chunks/2f236954d6a65e12.js"],"default"]
+:HL["/_next/static/chunks/5b38f6c619675df8.css","style"]
+:HL["/_next/static/media/411573def610439a-s.p.b7d92953.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/_next/static/media/413670c8b897121b-s.p.0824205a.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/_next/static/media/4341de68155aee74-s.p.04718d15.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/_next/static/media/464d62f7fb45826c-s.p.6dcb3aaf.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/_next/static/media/47fe1b7cd6e6ed85-s.p.855a563b.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/_next/static/media/63c76f91296e9485-s.p.4b7345bb.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/_next/static/media/83afe278b6a6bb3c-s.p.3a6ba036.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/_next/static/media/86fee4a10e2832ea-s.p.ad7a5276.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/_next/static/media/89970c532165c566-s.p.999ce90f.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/_next/static/media/8e6fa89aa22d24ec-s.p.3aec397d.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/_next/static/media/966a1ae9b0187c65-s.p.930a8de6.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/_next/static/media/c73fb3e54683eaf8-s.p.906d019a.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/_next/static/media/e2334d715941921e-s.p.d82a9aff.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/tailwind.css","style"]
+0:{"P":null,"b":"5XDCSUhBURcjQPFKETmww","c":["",""],"q":"","i":false,"f":[[["",{"children":["__PAGE__",{}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/chunks/5b38f6c619675df8.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}],["$","script","script-0",{"src":"/_next/static/chunks/e54dc1cb61138562.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/_next/static/chunks/9aa825fcb93320a7.js","async":true,"nonce":"$undefined"}]],["$","html",null,{"lang":"th","suppressHydrationWarning":true,"children":[["$","head",null,{"children":["$","link",null,{"rel":"stylesheet","href":"/tailwind.css"}]}],["$","body",null,{"className":"inter_473578d6-module__mvFGcq__variable ibm_plex_sans_thai_205367af-module__HtVUta__variable poppins_df334ce9-module__m-fD6q__variable prompt_169bd07a-module__n9LRjW__variable antialiased bg-background text-foreground","children":["$","$L2",null,{"attribute":"class","defaultTheme":"light","enableSystem":true,"children":["$","$L3",null,{"children":["$","$L4",null,{"children":[["$","$L5",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L6",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}],["$","$L7",null,{}],["$","$L8",null,{}]]}]}]}]}]]}]]}],{"children":[["$","$1","c",{"children":[["$","$L9",null,{"Component":"$a","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@b","$@c"]}}],[["$","script","script-0",{"src":"/_next/static/chunks/f5ae2f18aa28be2f.js","async":true,"nonce":"$undefined"}]],["$","$Ld",null,{"children":["$","$e",null,{"name":"Next.MetadataOutlet","children":"$@f"}]}]]}],{},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$L10",null,{"children":"$L11"}],["$","div",null,{"hidden":true,"children":["$","$L12",null,{"children":["$","$e",null,{"name":"Next.Metadata","children":"$L13"}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],false]],"m":"$undefined","G":["$14",[]],"S":true}
+b:{}
+c:"$0:f:0:1:1:children:0:props:children:0:props:serverProvidedParams:params"
+11:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"}],["$","meta","2",{"name":"theme-color","content":"#0f172a"}]]
+15:I[27201,["/_next/static/chunks/2f236954d6a65e12.js"],"IconMark"]
+f:null
+13:[["$","title","0",{"children":"activeASSET — ระบบบริหารทรัพย์สินถาวรและเครื่องเดโม"}],["$","meta","1",{"name":"description","content":"ระบบบริหารจัดการอุปกรณ์ Auto-ID / AIDC: Mobile Computer, Barcode Scanner, Barcode Printer, RFID Reader และ Tablet — รองรับการยืมเดโม ตรวจสภาพ ตรวจนับ และเอกสารลายเซ็นดิจิทัล"}],["$","meta","2",{"name":"author","content":"activeASSET"}],["$","link","3",{"rel":"manifest","href":"/manifest.json","crossOrigin":"$undefined"}],["$","meta","4",{"name":"keywords","content":"activeASSET,Fixed Asset,Demo Equipment,Auto-ID,AIDC,Loan Management"}],["$","meta","5",{"name":"mobile-web-app-capable","content":"yes"}],["$","meta","6",{"name":"apple-mobile-web-app-title","content":"activeASSET"}],["$","meta","7",{"name":"apple-mobile-web-app-status-bar-style","content":"default"}],["$","link","8",{"rel":"icon","href":"/icon-192.png","sizes":"192x192","type":"image/png"}],["$","link","9",{"rel":"icon","href":"/icon-512.png","sizes":"512x512","type":"image/png"}],["$","link","10",{"rel":"apple-touch-icon","href":"/icon-192.png","sizes":"192x192"}],["$","$L15","11",{}]]

@@ -688,8 +688,8 @@
   \*****************************************************************************************************************************************************************************************************************************************************************/
 /* activeASSET — globals.css (loads pre-compiled Tailwind v3 + custom utilities) */
 
-/* Load pre-compiled Tailwind v3 from public/tailwind.css */
-@import "/tailwind.css";
+/* NOTE: tailwind.css is loaded via <link rel="stylesheet" href="/tailwind.css" /> in layout.tsx
+   (Cannot use @import "/tailwind.css" because Turbopack production build doesn't support server-relative imports) */
 
 /* === HSL Variables (Velzon theme) === */
 :root {

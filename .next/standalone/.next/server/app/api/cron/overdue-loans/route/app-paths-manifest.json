@@ -1,0 +1,3 @@
+{
+  "/api/cron/overdue-loans/route": "app/api/cron/overdue-loans/route.js"
+}
