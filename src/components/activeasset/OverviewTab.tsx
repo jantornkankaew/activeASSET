@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -69,6 +68,26 @@ interface OverviewTabProps {
   onOpenLoan: (docNo: string) => void
 }
 
+// === Velzon color tokens (matched to brand palette) ===
+const VZ = {
+  primary: '#405189',   // Velzon indigo
+  teal:    '#0ab39c',  // Velzon growth teal
+  amber:   '#f7b84b',  // Velzon warning amber
+  rose:    '#f06548',  // Velzon danger coral
+  purple:  '#a071f0',  // Velzon accent purple
+  slate:   '#74788d',  // Velzon muted slate
+}
+
+// Velzon soft bg map (rgba of the brand color)
+const VZ_SOFT: Record<string, string> = {
+  primary: 'rgba(64, 81, 137, 0.10)',
+  teal:    'rgba(10, 179, 156, 0.10)',
+  amber:   'rgba(247, 184, 75, 0.12)',
+  rose:    'rgba(240, 101, 72, 0.10)',
+  purple:  'rgba(160, 113, 240, 0.10)',
+  slate:   'rgba(116, 120, 141, 0.12)',
+}
+
 export function OverviewTab({ onNavigate, onCreateLoan, onStartAudit, onOpenLoan }: OverviewTabProps) {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -90,6 +109,7 @@ export function OverviewTab({ onNavigate, onCreateLoan, onStartAudit, onOpenLoan
   const healthScore = s.totalAssets > 0
     ? Math.round(((s.available + s.inRepair) / s.totalAssets) * 100)
     : 0
+  const availablePct = s.totalAssets > 0 ? Math.round((s.available / s.totalAssets) * 100) : 0
 
   // Greeting based on time
   const hour = new Date().getHours()
@@ -97,84 +117,90 @@ export function OverviewTab({ onNavigate, onCreateLoan, onStartAudit, onOpenLoan
 
   return (
     <div className="space-y-5 animate-fade-in">
-      {/* ===== Hero header — Velzon premium gradient banner ===== */}
-      <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-primary/8 via-card to-accent/6 p-5 shadow-sm">
-        {/* Decorative blobs */}
-        <div className="absolute -top-12 -right-12 h-40 w-40 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-accent/10 blur-3xl pointer-events-none" />
-
-        <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1.5">
+      {/* ===== Velzon gradient hero banner ===== */}
+      <div className="vz-banner p-5 lg:p-6">
+        <div className="vz-banner-pattern" />
+        <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div className="space-y-2 text-white">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-accent" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-accent">{greeting}</span>
+              <Sparkles className="h-4 w-4 text-white/80" />
+              <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/85">{greeting}</span>
             </div>
             <h2 className="text-2xl font-bold tracking-tight">ภาพรวมระบบบริหารทรัพย์สิน</h2>
-            <p className="text-xs text-muted-foreground">
-              ติดตามสถานะทรัพย์สิน ใบยืม และคิวการยืมแบบเรียลไทม์
+            <p className="text-xs text-white/75 max-w-lg leading-relaxed">
+              ติดตามสถานะทรัพย์สิน ใบยืม และคิวการยืมแบบเรียลไทม์ — ข้อมูลอัปเดตล่าสุดทุกการรีเฟรช
             </p>
           </div>
 
-          {/* Right — health score + utilization mini gauges */}
-          <div className="flex items-center gap-3">
-            <GaugeMini label="สุขภาพคลัง" value={healthScore} color="accent" />
-            <div className="h-12 w-px bg-border" />
-            <GaugeMini label="อัตราใช้งาน" value={utilization} color="primary" />
-            <div className="h-12 w-px bg-border" />
-            <Button size="sm" variant="soft" className="text-xs" onClick={() => setWidgetEditorOpen(true)}>
+          {/* Right — Velzon-style stat summary on banner */}
+          <div className="flex items-center gap-5">
+            <VelzonRingMini label="สุขภาพคลัง" value={healthScore} color={VZ.teal} />
+            <div className="h-12 w-px bg-white/15" />
+            <VelzonRingMini label="อัตราใช้งาน" value={utilization} color="#fff" />
+            <div className="h-12 w-px bg-white/15 hidden lg:block" />
+            <Button
+              size="sm"
+              variant="secondary"
+              className="bg-white/15 hover:bg-white/25 text-white border-0 shadow-none text-xs"
+              onClick={() => setWidgetEditorOpen(true)}
+            >
               <Settings2 className="h-3.5 w-3.5 mr-1" /> จัดวิดเจ็ต
             </Button>
           </div>
         </div>
       </div>
 
-      {/* ===== Quick Actions — Velzon-style horizontal icon buttons ===== */}
+      {/* ===== Quick Actions — Velzon button bar ===== */}
       <div className="flex flex-wrap gap-2">
         <button
-          className="group relative overflow-hidden flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-sm transition-smooth hover:shadow-md hover:-translate-y-0.5 shimmer"
+          className="group relative overflow-hidden inline-flex items-center gap-2 px-4 py-2 rounded text-white text-sm font-semibold shadow-sm transition-smooth hover:shadow-md hover:-translate-y-0.5"
+          style={{ background: `linear-gradient(135deg, ${VZ.primary} 0%, ${VZ.purple} 100%)` }}
           onClick={onCreateLoan}
         >
           <ShoppingCart className="h-4 w-4" />
-          <span className="text-sm font-semibold">ขอยืมใหม่</span>
+          ขอยืมใหม่
         </button>
         {[
-          { icon: Truck, label: 'จัดของ', color: 'text-amber-500', bg: 'bg-amber-500/10', action: () => onNavigate('loans') },
-          { icon: ScanLine, label: 'รับคืน', color: 'text-accent', bg: 'bg-accent/10', action: () => onNavigate('loans') },
-          { icon: ClipboardCheck, label: 'ตรวจนับ', color: 'text-primary', bg: 'bg-primary/10', action: onStartAudit },
-          { icon: TrendingUp, label: 'Analytics', color: 'text-purple-500', bg: 'bg-purple-500/10', action: () => onNavigate('analytics') },
+          { icon: Truck, label: 'จัดของ', color: VZ.amber, action: () => onNavigate('loans') },
+          { icon: ScanLine, label: 'รับคืน', color: VZ.teal, action: () => onNavigate('loans') },
+          { icon: ClipboardCheck, label: 'ตรวจนับ', color: VZ.primary, action: onStartAudit },
+          { icon: TrendingUp, label: 'Analytics', color: VZ.purple, action: () => onNavigate('analytics') },
         ].map((a, i) => (
           <button
             key={i}
-            className="group flex items-center gap-2 px-4 py-2.5 rounded-lg bg-card border border-border shadow-sm transition-smooth hover:shadow-md hover:-translate-y-0.5 hover:border-primary/40"
+            className="group vz-card inline-flex items-center gap-2 px-3.5 py-2 transition-smooth hover:-translate-y-0.5"
             onClick={a.action}
           >
-            <span className={`h-7 w-7 rounded-md ${a.bg} flex items-center justify-center transition-smooth`}>
-              <a.icon className={`h-4 w-4 ${a.color}`} />
+            <span
+              className="vz-icon-soft h-7 w-7"
+              style={{ backgroundColor: VZ_SOFT[i % 6 === 0 ? 'amber' : i === 1 ? 'teal' : i === 2 ? 'primary' : 'purple'] }}
+            >
+              <a.icon className="h-4 w-4" style={{ color: a.color }} />
             </span>
             <span className="text-sm font-medium text-foreground">{a.label}</span>
           </button>
         ))}
       </div>
 
-      {/* ===== Primary KPI row — Velzon premium stat cards with trend deltas ===== */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <StatWidget
+      {/* ===== KPI stat cards — Velzon signature pattern ===== */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+        <VelzonStatCard
           label="ทรัพย์สินทั้งหมด"
           value={s.totalAssets}
           icon={<Package className="h-5 w-5" />}
           color="primary"
-          trend={{ delta: '+3', label: 'เดือนนี้', up: true }}
+          trend={{ delta: '+3', label: 'เพิ่มเดือนนี้', up: true }}
           onClick={() => onNavigate('assets')}
         />
-        <StatWidget
+        <VelzonStatCard
           label="พร้อมใช้"
           value={s.available}
           icon={<CheckCircle2 className="h-5 w-5" />}
-          color="accent"
-          trend={{ delta: `${s.totalAssets > 0 ? Math.round((s.available / s.totalAssets) * 100) : 0}%`, label: 'ของทั้งหมด', up: true }}
+          color="teal"
+          trend={{ delta: `${availablePct}%`, label: 'ของทั้งหมด', up: availablePct >= 50 }}
           onClick={() => onNavigate('assets')}
         />
-        <StatWidget
+        <VelzonStatCard
           label="กำลังยืม"
           value={s.onLoan}
           icon={<Boxes className="h-5 w-5" />}
@@ -182,243 +208,253 @@ export function OverviewTab({ onNavigate, onCreateLoan, onStartAudit, onOpenLoan
           trend={{ delta: `${s.activeLoans}`, label: 'ใบยืม', up: true }}
           onClick={() => onNavigate('loans')}
         />
-        <StatWidget
+        <VelzonStatCard
           label="ส่งซ่อม"
           value={s.inRepair}
           icon={<Wrench className="h-5 w-5" />}
           color="purple"
-          trend={{ delta: s.openTickets > 0 ? `${s.openTickets} tickets` : '—', label: 'เปิดอยู่', up: false }}
+          trend={{ delta: s.openTickets > 0 ? `${s.openTickets}` : '0', label: s.openTickets > 0 ? 'tickets' : 'ไม่มี', up: s.openTickets === 0 }}
+          onClick={() => onNavigate('assets')}
         />
-        <StatWidget
+        <VelzonStatCard
           label="เกินกำหนด"
           value={s.overdueLoans}
           icon={<AlertTriangle className="h-5 w-5" />}
           color="rose"
           pulse={s.overdueLoans > 0}
-          trend={{ delta: s.overdueLoans > 0 ? 'ต้องดำเนินการ' : 'ปกติ', label: '', up: s.overdueLoans === 0 }}
+          trend={{ delta: s.overdueLoans > 0 ? 'ด่วน' : 'ปกติ', label: '', up: s.overdueLoans === 0 }}
           onClick={() => onNavigate('loans')}
         />
-        <StatWidget
+        <VelzonStatCard
           label="Dead Stock"
           value={s.deadStockCount}
           icon={<Clock className="h-5 w-5" />}
           color="slate"
-          trend={{ delta: s.deadStockCount > 0 ? 'พิจารณาตัด' : '—', label: '', up: s.deadStockCount === 0 }}
+          trend={{ delta: s.deadStockCount > 0 ? 'พิจารณา' : '—', label: '', up: s.deadStockCount === 0 }}
           onClick={() => onNavigate('assets')}
         />
       </div>
 
-      {/* ===== Secondary row — Overdue + Standby with Velzon depth ===== */}
+      {/* ===== Overdue + Standby — Velzon card pattern ===== */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Overdue */}
-        <Card className="shadow-sm overflow-hidden border-rose-200/60 dark:border-rose-900/30">
-          <CardHeader className="pb-2 px-4 pt-3 bg-gradient-to-r from-rose-500/5 to-transparent">
+        <div className="vz-card overflow-hidden" style={{ borderColor: 'rgba(240, 101, 72, 0.20)' }}>
+          <div className="px-4 py-3 vz-divider" style={{ background: 'linear-gradient(90deg, rgba(240, 101, 72, 0.06), transparent)' }}>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-rose-500/10 flex items-center justify-center ring-1 ring-rose-500/20">
-                  <AlertTriangle className="h-4 w-4 text-rose-500" />
+              <div className="flex items-center gap-2.5">
+                <span className="vz-icon-soft h-9 w-9" style={{ backgroundColor: VZ_SOFT.rose, boxShadow: 'inset 0 0 0 1px rgba(240, 101, 72, 0.18)' }}>
+                  <AlertTriangle className="h-4 w-4" style={{ color: VZ.rose }} />
+                </span>
+                <div className="leading-tight">
+                  <div className="text-sm font-semibold text-foreground">เกินกำหนดคืน</div>
+                  <div className="text-[10px] text-muted-foreground">ต้องติดตามด่วน</div>
                 </div>
-                <div>
-                  <span className="block">เกินกำหนดคืน</span>
-                  <span className="text-[10px] font-normal text-muted-foreground">ต้องติดตามด่วน</span>
-                </div>
-              </CardTitle>
-              <Badge variant="outline" className="text-xs bg-rose-500/8 text-rose-600 border-rose-500/20">
+              </div>
+              <span className="vz-pill vz-pill-danger">
                 {data.overdueLoans.length} ใบ
-              </Badge>
+              </span>
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-border">
-              {data.overdueLoans.length === 0 && (
-                <div className="p-8 text-center text-xs text-muted-foreground">
-                  <CheckCircle2 className="h-10 w-10 mx-auto mb-2 text-accent" />
-                  <div className="font-medium">ไม่มีใบยืมเกินกำหนด</div>
-                  <div className="text-[10px] mt-0.5">ระบบปกติดี</div>
-                </div>
-              )}
-              {data.overdueLoans.map((l) => {
-                const days = daysUntil(l.expectedReturnDate)
-                return (
-                  <button
-                    key={l.docNo}
-                    onClick={() => onOpenLoan(l.docNo)}
-                    className="w-full text-left px-4 py-2.5 hover:bg-rose-500/4 transition-smooth flex items-center gap-3 group"
+          </div>
+          <div>
+            {data.overdueLoans.length === 0 && (
+              <div className="p-8 text-center">
+                <CheckCircle2 className="h-10 w-10 mx-auto mb-2" style={{ color: VZ.teal }} />
+                <div className="text-sm font-medium text-foreground">ไม่มีใบยืมเกินกำหนด</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">ระบบปกติดี</div>
+              </div>
+            )}
+            {data.overdueLoans.map((l, i) => {
+              const days = daysUntil(l.expectedReturnDate)
+              return (
+                <button
+                  key={l.docNo}
+                  onClick={() => onOpenLoan(l.docNo)}
+                  className={`w-full text-left px-4 py-2.5 hover:bg-rose-500/4 transition-smooth flex items-center gap-3 group ${i < data.overdueLoans.length - 1 ? 'vz-divider' : ''}`}
+                >
+                  <div
+                    className="vz-avatar h-9 w-9 text-xs"
+                    style={{ backgroundColor: VZ_SOFT.rose, color: VZ.rose, boxShadow: 'inset 0 0 0 1px rgba(240, 101, 72, 0.18)' }}
                   >
-                    <div className="h-9 w-9 rounded-full bg-rose-500/10 ring-1 ring-rose-500/20 flex items-center justify-center text-xs font-bold text-rose-600 flex-shrink-0">
-                      {l.customerName.charAt(0)}
+                    {l.customerName.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-semibold text-foreground">{l.docNo}</span>
+                      <span className="vz-pill vz-pill-danger">เกิน {Math.abs(days)}d</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-semibold">{l.docNo}</span>
-                        <span className="text-[10px] font-bold text-rose-600 bg-rose-500/10 px-1.5 py-0.5 rounded-full tabular-nums">เกิน {Math.abs(days)}d</span>
-                      </div>
-                      <div className="text-xs truncate mt-0.5 font-medium">{l.customerName} {l.customerCompany ? `· ${l.customerCompany}` : ''}</div>
-                      <div className="text-[10px] text-muted-foreground">โดย {l.salesRepName} • {l.items.length} ชิ้น</div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 group-hover:text-rose-500 group-hover:translate-x-0.5 transition-smooth" />
-                  </button>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                    <div className="text-xs truncate mt-0.5 font-medium text-foreground">{l.customerName} {l.customerCompany ? `· ${l.customerCompany}` : ''}</div>
+                    <div className="text-[10px] text-muted-foreground">โดย {l.salesRepName} • {l.items.length} ชิ้น</div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 group-hover:text-rose-500 group-hover:translate-x-0.5 transition-smooth" />
+                </button>
+              )
+            })}
+          </div>
+        </div>
 
         {/* Standby */}
-        <Card className="shadow-sm overflow-hidden border-amber-200/60 dark:border-amber-900/30">
-          <CardHeader className="pb-2 px-4 pt-3 bg-gradient-to-r from-amber-500/5 to-transparent">
+        <div className="vz-card overflow-hidden" style={{ borderColor: 'rgba(247, 184, 75, 0.20)' }}>
+          <div className="px-4 py-3 vz-divider" style={{ background: 'linear-gradient(90deg, rgba(247, 184, 75, 0.06), transparent)' }}>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center ring-1 ring-amber-500/20">
-                  <Wrench className="h-4 w-4 text-amber-500" />
+              <div className="flex items-center gap-2.5">
+                <span className="vz-icon-soft h-9 w-9" style={{ backgroundColor: VZ_SOFT.amber, boxShadow: 'inset 0 0 0 1px rgba(247, 184, 75, 0.20)' }}>
+                  <Wrench className="h-4 w-4" style={{ color: VZ.amber }} />
+                </span>
+                <div className="leading-tight">
+                  <div className="text-sm font-semibold text-foreground">เครื่องสำรองซ่อม</div>
+                  <div className="text-[10px] text-muted-foreground">ที่ยังไม่คืนของจริง</div>
                 </div>
-                <div>
-                  <span className="block">เครื่องสำรองซ่อม</span>
-                  <span className="text-[10px] font-normal text-muted-foreground">ที่ยังไม่คืนของจริง</span>
-                </div>
-              </CardTitle>
-              <Badge variant="outline" className="text-xs bg-amber-500/8 text-amber-600 border-amber-500/20">
+              </div>
+              <span className="vz-pill vz-pill-warning">
                 {data.standbyLoans.length} ใบ
-              </Badge>
+              </span>
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-border">
-              {data.standbyLoans.length === 0 && (
-                <div className="p-8 text-center text-xs text-muted-foreground">
-                  <CheckCircle2 className="h-10 w-10 mx-auto mb-2 text-accent" />
-                  <div className="font-medium">ไม่มีเครื่องสำรองค้าง</div>
-                  <div className="text-[10px] mt-0.5">ทุกใบคืนครบแล้ว</div>
-                </div>
-              )}
-              {data.standbyLoans.map((l) => {
-                const days = daysUntil(l.expectedReturnDate)
-                return (
-                  <button
-                    key={l.docNo}
-                    onClick={() => onOpenLoan(l.docNo)}
-                    className="w-full text-left px-4 py-2.5 hover:bg-amber-500/4 transition-smooth flex items-center gap-3 group"
+          </div>
+          <div>
+            {data.standbyLoans.length === 0 && (
+              <div className="p-8 text-center">
+                <CheckCircle2 className="h-10 w-10 mx-auto mb-2" style={{ color: VZ.teal }} />
+                <div className="text-sm font-medium text-foreground">ไม่มีเครื่องสำรองค้าง</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">ทุกใบคืนครบแล้ว</div>
+              </div>
+            )}
+            {data.standbyLoans.map((l, i) => {
+              const days = daysUntil(l.expectedReturnDate)
+              return (
+                <button
+                  key={l.docNo}
+                  onClick={() => onOpenLoan(l.docNo)}
+                  className={`w-full text-left px-4 py-2.5 hover:bg-amber-500/4 transition-smooth flex items-center gap-3 group ${i < data.standbyLoans.length - 1 ? 'vz-divider' : ''}`}
+                >
+                  <div
+                    className="vz-avatar h-9 w-9 text-xs"
+                    style={{ backgroundColor: VZ_SOFT.amber, color: VZ.amber, boxShadow: 'inset 0 0 0 1px rgba(247, 184, 75, 0.20)' }}
                   >
-                    <div className="h-9 w-9 rounded-full bg-amber-500/10 ring-1 ring-amber-500/20 flex items-center justify-center text-xs font-bold text-amber-600 flex-shrink-0">
-                      {l.customerName.charAt(0)}
+                    {l.customerName.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-semibold text-foreground">{l.docNo}</span>
+                      {days < 0 && <span className="vz-pill vz-pill-danger">เกิน {Math.abs(days)}d</span>}
+                      {days >= 0 && <span className="vz-pill vz-pill-warning">{days}d left</span>}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-semibold">{l.docNo}</span>
-                        {days < 0 && <span className="text-[10px] font-bold text-rose-600 bg-rose-500/10 px-1.5 py-0.5 rounded-full tabular-nums">เกิน {Math.abs(days)}d</span>}
-                        {days >= 0 && <span className="text-[10px] font-medium text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded-full tabular-nums">{days}d left</span>}
-                      </div>
-                      <div className="text-xs truncate mt-0.5 font-medium">{l.customerName} {l.customerCompany ? `· ${l.customerCompany}` : ''}</div>
-                      <div className="text-[10px] text-muted-foreground">คืน {formatThaiDate(l.expectedReturnDate)}</div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-smooth" />
-                  </button>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                    <div className="text-xs truncate mt-0.5 font-medium text-foreground">{l.customerName} {l.customerCompany ? `· ${l.customerCompany}` : ''}</div>
+                    <div className="text-[10px] text-muted-foreground">คืน {formatThaiDate(l.expectedReturnDate)}</div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-smooth" />
+                </button>
+              )
+            })}
+          </div>
+        </div>
       </div>
 
-      {/* ===== Brand + Dead Stock ===== */}
+      {/* ===== Brand + Dead Stock — Velzon pattern ===== */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Brand distribution */}
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3 px-4 pt-3 border-b border-border/50">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                </div>
-                <span>สัดส่วนแบรนด์</span>
-              </CardTitle>
-              <span className="text-[10px] text-muted-foreground">{data.brandDistribution.length} แบรนด์</span>
+        <div className="vz-card">
+          <div className="px-4 py-3 vz-divider flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="vz-icon-soft h-8 w-8" style={{ backgroundColor: VZ_SOFT.primary }}>
+                <TrendingUp className="h-4 w-4" style={{ color: VZ.primary }} />
+              </span>
+              <div className="leading-tight">
+                <div className="text-sm font-semibold text-foreground">สัดส่วนแบรนด์</div>
+                <div className="text-[10px] text-muted-foreground">การกระจายตามยี่ห้อ</div>
+              </div>
             </div>
-          </CardHeader>
-          <CardContent className="px-4 py-3">
+            <span className="vz-pill vz-pill-muted">{data.brandDistribution.length} แบรนด์</span>
+          </div>
+          <div className="px-4 py-3">
             <div className="space-y-3">
               {data.brandDistribution.map((b, i) => {
                 const pct = s.totalAssets > 0 ? (b.count / s.totalAssets) * 100 : 0
-                const colors = ['bg-primary', 'bg-accent', 'bg-amber-500', 'bg-purple-500', 'bg-rose-500', 'bg-slate-400']
-                const color = colors[i % colors.length]
+                const colorHex = [VZ.primary, VZ.teal, VZ.amber, VZ.purple, VZ.rose, VZ.slate][i % 6]
                 return (
                   <div key={b.brand}>
                     <div className="flex items-center justify-between text-xs mb-1.5">
-                      <span className="font-semibold flex items-center gap-2">
-                        <span className={`h-2 w-2 rounded-full ${color}`} />
+                      <span className="font-semibold text-foreground flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: colorHex }} />
                         {b.brand}
                       </span>
                       <span className="text-muted-foreground tabular-nums">
                         <b className="text-foreground">{b.count}</b> ({pct.toFixed(0)}%)
                       </span>
                     </div>
-                    <div className="h-2 rounded-full bg-muted overflow-hidden">
-                      <div className={`h-full rounded-full ${color} transition-all duration-500`} style={{ width: `${pct}%` }} />
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${pct}%`,
+                          background: `linear-gradient(90deg, ${colorHex}, ${colorHex}aa)`,
+                        }}
+                      />
                     </div>
                   </div>
                 )
               })}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Dead stock */}
-        <Card className="shadow-sm overflow-hidden">
-          <CardHeader className="pb-3 px-4 pt-3 border-b border-border/50">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <div className="h-7 w-7 rounded-md bg-slate-400/10 flex items-center justify-center">
-                  <Clock className="h-4 w-4 text-slate-400" />
-                </div>
-                <span>ของดอง — ไม่เคยถูกยืม</span>
-              </CardTitle>
-              <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">{data.deadStockAssets.length}</Badge>
+        <div className="vz-card overflow-hidden">
+          <div className="px-4 py-3 vz-divider flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="vz-icon-soft h-8 w-8" style={{ backgroundColor: VZ_SOFT.slate }}>
+                <Clock className="h-4 w-4" style={{ color: VZ.slate }} />
+              </span>
+              <div className="leading-tight">
+                <div className="text-sm font-semibold text-foreground">ของดอง — ไม่เคยถูกยืม</div>
+                <div className="text-[10px] text-muted-foreground">รอการพิจารณาตัดออก</div>
+              </div>
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-border max-h-[220px] overflow-y-auto">
-              {data.deadStockAssets.length === 0 && (
-                <div className="p-8 text-center text-xs text-muted-foreground">
-                  <CheckCircle2 className="h-10 w-10 mx-auto mb-2 text-accent" />
-                  <div className="font-medium">ไม่มีของดอง</div>
+            <span className="vz-pill vz-pill-muted">{data.deadStockAssets.length}</span>
+          </div>
+          <div className="max-h-[220px] overflow-y-auto">
+            {data.deadStockAssets.length === 0 && (
+              <div className="p-8 text-center">
+                <CheckCircle2 className="h-10 w-10 mx-auto mb-2" style={{ color: VZ.teal }} />
+                <div className="text-sm font-medium text-foreground">ไม่มีของดอง</div>
+              </div>
+            )}
+            {data.deadStockAssets.slice(0, 10).map((a, i) => {
+              const age = a.purchaseDate ? daysUntil(a.purchaseDate) : null
+              return (
+                <div
+                  key={a.tagId}
+                  className={`px-4 py-2 flex items-center gap-2.5 text-xs hover:bg-muted/30 transition-smooth ${i < Math.min(data.deadStockAssets.length, 10) - 1 ? 'vz-divider' : ''}`}
+                >
+                  <span className="vz-icon-soft h-7 w-7 flex-shrink-0" style={{ backgroundColor: VZ_SOFT.slate }}>
+                    <Package className="h-3.5 w-3.5" style={{ color: VZ.slate }} />
+                  </span>
+                  <span className="font-mono font-semibold text-foreground">{a.tagId}</span>
+                  <span className="text-muted-foreground truncate flex-1">{a.brand} {a.model}</span>
+                  {age !== null && (
+                    <span className="vz-pill vz-pill-muted">{Math.abs(age)}d</span>
+                  )}
                 </div>
-              )}
-              {data.deadStockAssets.slice(0, 10).map((a) => {
-                const age = a.purchaseDate ? daysUntil(a.purchaseDate) : null
-                return (
-                  <div key={a.tagId} className="px-4 py-2 flex items-center gap-2.5 text-xs hover:bg-muted/30 transition-smooth">
-                    <div className="h-7 w-7 rounded-md bg-slate-400/10 flex items-center justify-center flex-shrink-0">
-                      <Package className="h-3.5 w-3.5 text-slate-400" />
-                    </div>
-                    <span className="font-mono font-semibold">{a.tagId}</span>
-                    <span className="text-muted-foreground truncate flex-1">{a.brand} {a.model}</span>
-                    {age !== null && (
-                      <span className="text-[10px] text-slate-500 bg-slate-500/10 px-1.5 py-0.5 rounded-full tabular-nums whitespace-nowrap">
-                        {Math.abs(age)}d
-                      </span>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
+              )
+            })}
+          </div>
+        </div>
       </div>
 
-      {/* ===== Activity Feed ===== */}
-      <Card className="shadow-sm">
-        <CardHeader className="pb-3 px-4 pt-3 border-b border-border/50">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center">
-              <Activity className="h-4 w-4 text-primary" />
+      {/* ===== Activity Feed — Velzon card ===== */}
+      <div className="vz-card">
+        <div className="px-4 py-3 vz-divider flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="vz-icon-soft h-8 w-8" style={{ backgroundColor: VZ_SOFT.primary }}>
+              <Activity className="h-4 w-4" style={{ color: VZ.primary }} />
+            </span>
+            <div className="leading-tight">
+              <div className="text-sm font-semibold text-foreground">กิจกรรมล่าสุด</div>
+              <div className="text-[10px] text-muted-foreground">จากทุกโมดูลในระบบ</div>
             </div>
-            <span>กิจกรรมล่าสุด</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <ActivityFeed embedded />
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+        <ActivityFeed embedded />
+      </div>
 
       <WidgetEditor
         open={widgetEditorOpen}
@@ -429,51 +465,50 @@ export function OverviewTab({ onNavigate, onCreateLoan, onStartAudit, onOpenLoan
   )
 }
 
-// ===== Gauge Mini — premium circular gauge =====
-function GaugeMini({ label, value, color }: { label: string; value: number; color: 'primary' | 'accent' }) {
-  const r = 18
+// ===== Velzon ring gauge (mini, for banner) =====
+function VelzonRingMini({ label, value, color }: { label: string; value: number; color: string }) {
+  const r = 16
   const circ = 2 * Math.PI * r
   const offset = circ - (value / 100) * circ
-  const colorClass = color === 'primary' ? 'text-primary' : 'text-accent'
-  const strokeClass = color === 'primary' ? 'stroke-primary' : 'stroke-accent'
-
   return (
     <div className="flex items-center gap-2.5">
-      <div className="relative h-12 w-12">
-        <svg className="h-12 w-12 -rotate-90" viewBox="0 0 44 44">
-          <circle cx="22" cy="22" r={r} className="stroke-muted fill-none" strokeWidth="3.5" />
+      <div className="relative h-10 w-10">
+        <svg className="h-10 w-10 -rotate-90" viewBox="0 0 40 40">
+          <circle cx="20" cy="20" r={r} className="fill-none" strokeWidth="3" stroke="rgba(255,255,255,0.20)" />
           <circle
-            cx="22" cy="22" r={r}
-            className={`${strokeClass} fill-none transition-all duration-700`}
-            strokeWidth="3.5"
+            cx="20" cy="20" r={r}
+            className="fill-none transition-all duration-700"
+            strokeWidth="3"
+            stroke={color}
             strokeLinecap="round"
             strokeDasharray={circ}
             strokeDashoffset={offset}
           />
         </svg>
-        <div className={`absolute inset-0 flex items-center justify-center text-xs font-bold tabular-nums ${colorClass}`}>
+        <div className="absolute inset-0 flex items-center justify-center text-[11px] font-bold tabular-nums text-white">
           {value}
         </div>
       </div>
-      <div>
-        <div className="text-[10px] text-muted-foreground font-medium">{label}</div>
-        <div className="text-[10px] text-muted-foreground/70">%</div>
+      <div className="leading-tight">
+        <div className="text-[10px] text-white/75 font-medium">{label}</div>
+        <div className="text-[10px] text-white/55">%</div>
       </div>
     </div>
   )
 }
 
-// ===== Premium Stat Widget with trend delta =====
-const STAT_COLORS: Record<string, { bg: string; text: string; value: string; ring: string }> = {
-  primary: { bg: 'bg-primary/10', text: 'text-primary', value: '', ring: 'ring-primary/20' },
-  accent: { bg: 'bg-accent/10', text: 'text-accent', value: 'text-accent', ring: 'ring-accent/20' },
-  amber: { bg: 'bg-amber-500/10', text: 'text-amber-500', value: 'text-amber-600', ring: 'ring-amber-500/20' },
-  purple: { bg: 'bg-purple-500/10', text: 'text-purple-500', value: 'text-purple-600', ring: 'ring-purple-500/20' },
-  rose: { bg: 'bg-rose-500/10', text: 'text-rose-500', value: 'text-rose-600', ring: 'ring-rose-500/20' },
-  slate: { bg: 'bg-slate-400/10', text: 'text-slate-500', value: '', ring: 'ring-slate-400/20' },
+// ===== Velzon stat card — signature pattern =====
+// Layout: icon avatar LEFT + (eyebrow label + big number + trend pill) RIGHT
+const VZ_COLORS: Record<string, { fg: string; soft: string }> = {
+  primary: { fg: VZ.primary, soft: VZ_SOFT.primary },
+  teal:    { fg: VZ.teal,    soft: VZ_SOFT.teal },
+  amber:   { fg: VZ.amber,   soft: VZ_SOFT.amber },
+  rose:    { fg: VZ.rose,    soft: VZ_SOFT.rose },
+  purple:  { fg: VZ.purple,  soft: VZ_SOFT.purple },
+  slate:    { fg: VZ.slate,    soft: VZ_SOFT.slate },
 }
 
-function StatWidget({
+function VelzonStatCard({
   label, value, icon, color, onClick, pulse, trend,
 }: {
   label: string
@@ -484,27 +519,34 @@ function StatWidget({
   pulse?: boolean
   trend?: { delta: string; label: string; up: boolean }
 }) {
-  const c = STAT_COLORS[color] || STAT_COLORS.primary
+  const c = VZ_COLORS[color] || VZ_COLORS.primary
   return (
     <div
-      className={`group relative p-3.5 rounded-lg bg-card border border-border shadow-sm transition-smooth ${onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:border-primary/30' : ''}`}
+      className={`vz-card p-4 transition-smooth ${onClick ? 'cursor-pointer hover:-translate-y-0.5' : ''}`}
       onClick={onClick}
     >
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className={`h-10 w-10 rounded-full ${c.bg} ring-1 ${c.ring} flex items-center justify-center flex-shrink-0 ${pulse ? 'animate-pulse' : ''}`}>
-          <span className={c.text}>{icon}</span>
+      <div className="flex items-start gap-3">
+        <span
+          className={`vz-icon-soft h-10 w-10 ${pulse ? 'animate-pulse' : ''}`}
+          style={{ backgroundColor: c.soft }}
+        >
+          <span style={{ color: c.fg }}>{icon}</span>
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="vz-eyebrow truncate">{label}</div>
+          <div className="vz-stat-num mt-1 mb-1.5">{value}</div>
+          {trend && (
+            <div className="flex items-center gap-1.5">
+              <span className={`vz-pill ${trend.up ? 'vz-pill-success' : 'vz-pill-danger'}`}>
+                {trend.up ? <ArrowUpRight className="h-2.5 w-2.5" /> : <ArrowDownRight className="h-2.5 w-2.5" />}
+                {trend.delta}
+              </span>
+              {trend.label && (
+                <span className="text-[10px] text-muted-foreground truncate">{trend.label}</span>
+              )}
+            </div>
+          )}
         </div>
-        {trend && (
-          <div className={`flex items-center gap-0.5 text-[10px] font-semibold tabular-nums ${trend.up ? 'text-accent' : 'text-rose-500'}`}>
-            {trend.up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-            <span>{trend.delta}</span>
-          </div>
-        )}
-      </div>
-      <div>
-        <div className="text-2xl font-bold tabular-nums tracking-tight leading-none mb-1">{value}</div>
-        <div className="text-[11px] text-muted-foreground font-medium truncate">{label}</div>
-        {trend?.label && <div className="text-[10px] text-muted-foreground/70 mt-0.5 truncate">{trend.label}</div>}
       </div>
     </div>
   )

@@ -712,3 +712,29 @@ Stage Summary:
 - Premium UI: gradient header, status bars, timeline dots, stagger animation
 
 ---
+
+---
+Task ID: velzon-revamp
+Agent: main
+Task: ปรับหน้ารวม (Overview) + Analytics ให้ใช้ Velzon design language (https://themesbrand.com/velzon/html/master/dashboard-analytics.html)
+
+Work Log:
+- เพิ่ม Velzon utilities ใน globals.css: .vz-card, .vz-banner, .vz-banner-pattern, .vz-pill (success/danger/warning/info/muted), .vz-icon-soft, .vz-avatar, .vz-divider, .vz-eyebrow, .vz-stat-num
+- ปรับ OverviewTab.tsx:
+  * Hero banner เป็น Velzon gradient (indigo → purple → teal) พร้อม grid pattern overlay + radial highlights
+  * Ring gauge 2 ตัว (สุขภาพคลัง + อัตราใช้งาน) สีขาวบน gradient
+  * 6 KPI cards ใช้ Velzon signature pattern: icon avatar (rounded square soft bg) + uppercase eyebrow label + big number 28px + trend pill (สีเขียว/แดง)
+  * Overdue/Standby cards ใช้ vz-card + soft color border + pill badges
+  * Brand distribution + Dead stock + Activity feed ใช้ vz-card pattern (radius 4px, shadow subtle)
+- ปรับ AnalyticsTab.tsx:
+  * Hero banner ใช้ vz-banner เดียวกัน + completion donut บน gradient
+  * 4 KPI cards ใช้ VelzonStatCard pattern เดียวกัน
+  * Trend chart เปลี่ยนจาก bars เป็น gradient area chart (smooth cubic-bezier line + gradient fill + grid lines + value labels)
+  * Donut chart ใช้ Velzon style (thicker stroke, soft inner ring, gradient legend)
+  * Top Models + Demand vs Supply + Purpose + Industry + Top Customers ทั้งหมดใช้ vz-card + Velzon number badges (solid color square)
+
+Stage Summary:
+- หน้ารวม + Analytics ใช้ Velzon design language ครบ: gradient hero, vz-card (4px radius, soft shadow, subtle border), Velzon stat card pattern (icon left + eyebrow + big num + trend pill), gradient area chart, refined donut
+- Velzon palette: #405189 indigo, #0ab39c teal, #f7b84b amber, #f06548 rose, #a071f0 purple, #74788d slate
+- ไม่กระทบ data flow / API — แก้เฉพาะ visual layer
+- Dev server ยังรันปกติ HTTP 200, /api/dashboard + /api/analytics ตอบ 401 (ต้อง login) ไม่มี compile error
