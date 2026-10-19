@@ -6,7 +6,7 @@ import { requireAuthWithReq } from '@/lib/auth/api-guard'
 // ถ้าขอไม่พอ → status = Queued + สร้าง WaitingList entry อัตโนมัติ
 // สิทธิ์: sales, store, admin (ทุกคนที่ล็อกอินยกเว้น manager ที่ดูอย่างเดียว)
 export async function POST(request: Request) {
-  const { response } = await requireAuthWithReq(request)
+  const { response, user, session } = await requireAuthWithReq(request)
   if (response) return response
 
   const body = await request.json()
@@ -14,7 +14,11 @@ export async function POST(request: Request) {
     customerName, customerCompany, customerIndustry,
     salesRepName, purpose, expectedReturnDate, termsAndNotes,
     items, // [{ catalogId, quantity, notes }]
+    actualRequesterName,
   } = body
+
+  const actualUser = user?.name || (session?.user as { name?: string })?.name || actualRequesterName || 'ไม่ระบุ'
+  const actualUserId = user?.id || (session?.user as { id?: string })?.id || null
 
   if (!customerName?.trim()) return NextResponse.json({ error: 'ต้องระบุชื่อลูกค้า' }, { status: 400 })
   if (!salesRepName?.trim()) return NextResponse.json({ error: 'ต้องระบุชื่อพนักงาน' }, { status: 400 })
@@ -78,6 +82,13 @@ export async function POST(request: Request) {
   const status = hasShortfall ? 'Queued' : 'Requested'
 
   const loan = await db.$transaction(async (tx) => {
+    // บันทึก audit note หากผู้ยืมที่ระบุไม่ตรงกับผู้ล็อกอินจริง
+    let finalTermsAndNotes = termsAndNotes?.trim() || null
+    if (actualUser && salesRepName.trim() !== actualUser && actualUser !== 'ไม่ระบุ') {
+      const auditTag = `[ผู้บันทึกระบบ: ${actualUser}]`
+      finalTermsAndNotes = finalTermsAndNotes ? `${finalTermsAndNotes}\n${auditTag}` : auditTag
+    }
+
     const created = await tx.loanTransaction.create({
       data: {
         docNo,
@@ -90,7 +101,18 @@ export async function POST(request: Request) {
         industry: customerIndustry || null,
         expectedReturnDate: new Date(expectedReturnDate),
         status,
-        termsAndNotes: termsAndNotes?.trim() || null,
+        termsAndNotes: finalTermsAndNotes,
+      },
+    })
+
+    // บันทึก Log การสร้างเอกสารลงตาราง Activity
+    await tx.activity.create({
+      data: {
+        userId: actualUserId,
+        action: 'create_loan',
+        targetType: 'Loan',
+        targetId: docNo,
+        description: `สร้างคำขอยืม ${docNo} ให้กับ ${customerCompany?.trim() || customerName.trim()} (ผู้ยืม: ${salesRepName.trim()} | บันทึกจริงโดย: ${actualUser})`,
       },
     })
 

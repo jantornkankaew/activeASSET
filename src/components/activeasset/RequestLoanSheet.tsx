@@ -1,19 +1,19 @@
 'use client'
 
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useToast } from '@/hooks/use-toast'
+import { useSimpleAuth } from '@/components/auth/SimpleAuth'
 import { LoadingState, CategoryBadge } from './shared'
 import {
   Search, ShoppingCart, Plus, Minus, X, User, Building2,
   Calendar, FileText, AlertTriangle, Clock,
   ArrowLeft, Package, Trash2, Filter, Check, ListPlus,
-  Send,
+  Send, ChevronDown, CheckCircle2, Sparkles, HelpCircle,
 } from 'lucide-react'
 import {
   PURPOSE_LABELS, INDUSTRY_LABELS, CATEGORY_LABELS, formatThaiDate,
@@ -34,15 +34,171 @@ interface CatalogItem {
   availabilityLevel: 'green' | 'yellow' | 'red'
 }
 
+interface CustomerItem {
+  id: string
+  name: string
+  company: string
+  industry: string | null
+  phone: string | null
+  loanCount?: number
+}
+
 interface RequestLoanSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onCreated: (docNo: string, queued: boolean) => void
 }
 
+// Helper: คำนวณวันที่ล่วงหน้าตามจำนวนสัปดาห์
+const getFutureDate = (weeks: number): string => {
+  const d = new Date()
+  d.setDate(d.getDate() + weeks * 7)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+const WEEKS_PRESETS = [
+  { label: '1 สัปดาห์', weeks: 1 },
+  { label: '2 สัปดาห์', weeks: 2 },
+  { label: '3 สัปดาห์', weeks: 3 },
+  { label: '4 สัปดาห์', weeks: 4 },
+]
+
+// ================= REUSABLE AUTOCOMPLETE / SEARCHABLE COMBOBOX =================
+interface AutocompleteComboboxProps {
+  value: string
+  onChange: (val: string) => void
+  options: Array<{ value: string; label: string; sublabel?: string }>
+  placeholder?: string
+  className?: string
+  onSelectOption?: (val: string, option: { value: string; label: string; sublabel?: string }) => void
+}
+
+function AutocompleteCombobox({
+  value,
+  onChange,
+  options,
+  placeholder = '',
+  className = '',
+  onSelectOption,
+}: AutocompleteComboboxProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // กรองตัวเลือกตามสิ่งที่ผู้ใช้พิมพ์ (case-insensitive)
+  const filtered = useMemo(() => {
+    const q = (value || '').trim().toLowerCase()
+    if (!q) return options.slice(0, 50)
+    return options.filter(
+      (opt) =>
+        opt.label.toLowerCase().includes(q) ||
+        opt.value.toLowerCase().includes(q) ||
+        (opt.sublabel && opt.sublabel.toLowerCase().includes(q))
+    )
+  }, [options, value])
+
+  // ปิด dropdown เมื่อคลิกนอกคอมโพเนนต์
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  return (
+    <div ref={containerRef} className="relative w-full">
+      <div className="relative">
+        <Input
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value)
+            setIsOpen(true)
+          }}
+          onFocus={() => setIsOpen(true)}
+          placeholder={placeholder}
+          className={`h-8.5 text-xs rounded-lg pr-12 ${className}`}
+        />
+        <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+          {value && (
+            <button
+              type="button"
+              onClick={() => {
+                onChange('')
+                setIsOpen(false)
+              }}
+              className="p-1 text-muted-foreground hover:text-foreground rounded"
+              title="ล้างข้อความ"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setIsOpen(!isOpen)}
+            className="p-1 text-muted-foreground hover:text-foreground rounded"
+            title="แสดงรายการตัวเลือก"
+          >
+            <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {isOpen && (
+        <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-56 overflow-y-auto rounded-xl border border-border bg-popover p-1 shadow-lg animate-in fade-in-0 zoom-in-95 duration-100">
+          {filtered.length === 0 ? (
+            <div className="px-3 py-2 text-[11px] text-muted-foreground text-center">
+              ไม่พบตัวเลือกตรงกัน • ใช้ค่าที่พิมพ์: &quot;<span className="font-medium text-foreground">{value}</span>&quot;
+            </div>
+          ) : (
+            filtered.map((opt) => {
+              const isSelected = opt.value === value || opt.label === value
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value)
+                    if (onSelectOption) onSelectOption(opt.value, opt)
+                    setIsOpen(false)
+                  }}
+                  className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex flex-col transition-colors ${
+                    isSelected
+                      ? 'bg-primary/10 text-primary font-semibold'
+                      : 'hover:bg-muted text-foreground'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span>{opt.label}</span>
+                    {isSelected && <Check className="h-3 w-3 text-primary ml-1 flex-shrink-0" />}
+                  </div>
+                  {opt.sublabel && (
+                    <span className="text-[10px] text-muted-foreground font-normal line-clamp-1 mt-0.5">
+                      {opt.sublabel}
+                    </span>
+                  )}
+                </button>
+              )
+            })
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanSheetProps) {
   const { toast } = useToast()
+  const { user } = useSimpleAuth()
+
+  // Catalogs & Customers database
   const [catalogs, setCatalogs] = useState<CatalogItem[]>([])
+  const [customers, setCustomers] = useState<CustomerItem[]>([])
+  const [salesRepsList, setSalesRepsList] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
@@ -50,8 +206,9 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
   const [cart, setCart] = useState<Record<string, { catalog: CatalogItem; quantity: number; notes: string }>>({})
 
   // Form fields (หัวเอกสาร)
-  const [customerName, setCustomerName] = useState('')
+  // ลำดับ: ชื่อบริษัท -> ผู้ติดต่อ -> กลุ่มอุตสาหกรรม -> พนักงานขาย -> วัตถุประสงค์ -> กำหนดวันคืน
   const [customerCompany, setCustomerCompany] = useState('')
+  const [customerName, setCustomerName] = useState('')
   const [customerIndustry, setCustomerIndustry] = useState('Logistics')
   const [salesRepName, setSalesRepName] = useState('')
   const [purpose, setPurpose] = useState('Demo')
@@ -73,7 +230,33 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
     }
   }, [open, onOpenChange])
 
-  // Load catalogs from API
+  // ตั้งค่าเริ่มต้นเมื่อเปิดหน้าต่าง:
+  // 1. พนักงานขาย: เอาชื่อ user ที่ login มาใช้
+  // 2. กำหนดวันคืน: ตั้งอัตโนมัติ 2 สัปดาห์
+  useEffect(() => {
+    if (open) {
+      if (!salesRepName && user?.name) {
+        setSalesRepName(user.name)
+      }
+      if (!expectedReturnDate) {
+        setExpectedReturnDate(getFutureDate(2))
+      }
+    }
+  }, [open, user, salesRepName, expectedReturnDate])
+
+  // โหลดรายชื่อลูกค้าและพนักงานขาย
+  const loadCustomersAndSalesReps = useCallback(async () => {
+    try {
+      const res = await fetch('/api/customers')
+      const data = await res.json()
+      if (data.customers) setCustomers(data.customers)
+      if (data.salesReps) setSalesRepsList(data.salesReps)
+    } catch {
+      // ignore silently
+    }
+  }, [])
+
+  // โหลดรายการสินค้าจาก API
   const loadCatalogs = useCallback(async () => {
     setLoading(true)
     try {
@@ -92,10 +275,103 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
 
   useEffect(() => {
     if (open) {
+      loadCustomersAndSalesReps()
       const t = setTimeout(loadCatalogs, 200)
       return () => clearTimeout(t)
     }
-  }, [open, loadCatalogs])
+  }, [open, loadCatalogs, loadCustomersAndSalesReps])
+
+  // ================= AUTOCOMPLETE OPTIONS =================
+
+  // 1. รายชื่อบริษัท (Distinct company names)
+  const companyOptions = useMemo(() => {
+    const map = new Map<string, { company: string; contact: string; industry: string }>()
+    customers.forEach((c) => {
+      const comp = c.company?.trim()
+      if (comp && !map.has(comp.toLowerCase())) {
+        map.set(comp.toLowerCase(), {
+          company: comp,
+          contact: c.name?.trim() || '',
+          industry: c.industry || '',
+        })
+      }
+    })
+    return Array.from(map.values()).map((item) => ({
+      value: item.company,
+      label: item.company,
+      sublabel: [
+        item.contact ? `ผู้ติดต่อ: ${item.contact}` : '',
+        item.industry ? `อุตสาหกรรม: ${INDUSTRY_LABELS[item.industry] || item.industry}` : '',
+      ]
+        .filter(Boolean)
+        .join(' • '),
+    }))
+  }, [customers])
+
+  // 2. รายชื่อผู้ติดต่อ (Contact Names)
+  const contactOptions = useMemo(() => {
+    // ถ้ามีการพิมพ์/เลือกบริษัท ให้กรองผู้ติดต่อของบริษัทนั้นขึ้นมาก่อน
+    const qComp = customerCompany.trim().toLowerCase()
+    const relevant = qComp
+      ? customers.filter((c) => c.company?.toLowerCase().trim() === qComp)
+      : customers
+
+    const names = Array.from(new Set(relevant.map((c) => c.name?.trim()).filter(Boolean)))
+    return names.map((n) => ({
+      value: n,
+      label: n,
+      sublabel: customerCompany ? customerCompany : undefined,
+    }))
+  }, [customers, customerCompany])
+
+  // 3. กลุ่มอุตสาหกรรม (Industry Options)
+  const industryOptions = useMemo(() => {
+    return Object.entries(INDUSTRY_LABELS).map(([k, v]) => ({
+      value: k,
+      label: `${v} (${k})`,
+    }))
+  }, [])
+
+  // 4. รายชื่อพนักงานขาย (Sales Rep Options)
+  const salesRepOptions = useMemo(() => {
+    const set = new Set<string>()
+    if (user?.name) set.add(user.name)
+    salesRepsList.forEach((s) => {
+      if (s?.trim()) set.add(s.trim())
+    })
+    return Array.from(set).map((name) => ({
+      value: name,
+      label: name,
+      sublabel: name === user?.name ? 'คุณ (ผู้ใช้ที่ล็อกอิน)' : undefined,
+    }))
+  }, [user, salesRepsList])
+
+  // 5. วัตถุประสงค์ (Purpose Options)
+  const purposeOptions = useMemo(() => {
+    return Object.entries(PURPOSE_LABELS).map(([k, v]) => ({
+      value: k,
+      label: v,
+    }))
+  }, [])
+
+  // ================= AUTO-FILL LOGIC เมื่อเลือกหรือพิมพ์ชื่อบริษัท =================
+  const handleSelectCompany = (compName: string) => {
+    setCustomerCompany(compName)
+    // ค้นหาว่าบริษัทนี้มีอยู่ในฐานข้อมูลหรือไม่
+    const matched = customers.find(
+      (c) => c.company?.toLowerCase().trim() === compName.toLowerCase().trim()
+    )
+    if (matched) {
+      // ล้อกลุ่มอุตสาหกรรมตามบริษัททันที
+      if (matched.industry) {
+        setCustomerIndustry(matched.industry)
+      }
+      // หากยังไม่ได้กรอกชื่อผู้ติดต่อ ให้นำชื่อผู้ติดต่อเดิมมาใส่ให้
+      if (matched.name && !customerName.trim()) {
+        setCustomerName(matched.name)
+      }
+    }
+  }
 
   // Cart operations
   const addToCart = (c: CatalogItem) => {
@@ -132,41 +408,45 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
 
   const cartItems = Object.values(cart)
   const totalRequested = cartItems.reduce((s, x) => s + x.quantity, 0)
-  const shortfallItems = cartItems.filter(x => x.quantity > x.catalog.available)
+  const shortfallItems = cartItems.filter((x) => x.quantity > x.catalog.available)
   const hasShortfall = shortfallItems.length > 0
 
   // Filtered catalogs for display
   const displayedCatalogs = useMemo(() => {
     if (!filterAvailableOnly) return catalogs
-    return catalogs.filter(c => c.available > 0)
+    return catalogs.filter((c) => c.available > 0)
   }, [catalogs, filterAvailableOnly])
 
   const resetForm = () => {
     setCart({})
-    setCustomerName('')
     setCustomerCompany('')
+    setCustomerName('')
     setCustomerIndustry('Logistics')
-    setSalesRepName('')
+    setSalesRepName(user?.name || '')
     setPurpose('Demo')
-    setExpectedReturnDate('')
+    setExpectedReturnDate(getFutureDate(2))
     setTermsAndNotes('ผู้ยืมรับผิดชอบความเสียหายที่เกิดขึ้นระหว่างการยืม')
   }
 
   const handleSubmit = async () => {
-    if (!customerName.trim()) {
-      toast({ title: 'กรุณากรอกชื่อลูกค้า / ผู้ติดต่อ ในหัวเอกสาร', variant: 'destructive' })
+    if (!customerCompany.trim() && !customerName.trim()) {
+      toast({ title: 'กรุณากรอกชื่อบริษัท หรือชื่อผู้ติดต่อ', variant: 'destructive' })
       return
     }
     if (!salesRepName.trim()) {
-      toast({ title: 'กรุณากรอกชื่อพนักงานขายผู้รับผิดชอบ ในหัวเอกสาร', variant: 'destructive' })
+      toast({ title: 'กรุณาระบุพนักงานขายผู้รับผิดชอบ', variant: 'destructive' })
       return
     }
     if (!expectedReturnDate) {
-      toast({ title: 'กรุณาระบุกำหนดวันคืนสินค้า ในหัวเอกสาร', variant: 'destructive' })
+      toast({ title: 'กรุณาระบุกำหนดวันคืนสินค้า', variant: 'destructive' })
       return
     }
     if (cartItems.length === 0) {
-      toast({ title: 'ยังไม่มีสินค้าในรายการขอยืม', description: 'กรุณาเลือกรายการสินค้าเข้า List ด้านล่างอย่างน้อย 1 รุ่น', variant: 'destructive' })
+      toast({
+        title: 'ยังไม่มีสินค้าในรายการขอยืม',
+        description: 'กรุณาเลือกรายการสินค้าเข้า List ด้านล่างอย่างน้อย 1 รุ่น',
+        variant: 'destructive',
+      })
       return
     }
 
@@ -176,10 +456,12 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customerName: customerName.trim(),
           customerCompany: customerCompany.trim(),
+          customerName: customerName.trim() || customerCompany.trim(),
           customerIndustry,
           salesRepName: salesRepName.trim(),
+          actualRequesterName: user?.name,
+          actualRequesterId: user?.id,
           purpose,
           expectedReturnDate,
           termsAndNotes,
@@ -215,6 +497,14 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
 
   if (!open) return null
 
+  // ตรวจสอบว่าวันที่เลือกตรงกับ preset สัปดาห์ไหนหรือไม่
+  const currentPresetWeeks = WEEKS_PRESETS.find(
+    (w) => getFutureDate(w.weeks) === expectedReturnDate
+  )?.weeks
+
+  // เช็คว่าผู้ขอยืมต่างจากผู้ล็อกอินจริงหรือไม่
+  const isBorrowingForOther = user?.name && salesRepName.trim() && salesRepName.trim() !== user.name
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex flex-col animate-in fade-in-0 duration-200">
       {/* Container เต็มหน้าจอ */}
@@ -247,7 +537,7 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground hidden sm:block">
-                  กรอกข้อมูลหัวเอกสารผู้ยืม → เลือกรายการสินค้าเข้า List → บันทึกส่งต่อให้ฝ่ายคลังจัดเครื่องจริง
+                  กรอกข้อมูลบริษัทและผู้ติดต่อ → เลือกรายการสินค้าเข้า List → บันทึกส่งต่อให้ฝ่ายคลังจัดเครื่อง
                 </p>
               </div>
             </div>
@@ -272,7 +562,13 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
             <Button
               size="sm"
               onClick={handleSubmit}
-              disabled={submitting || cartItems.length === 0 || !customerName.trim() || !salesRepName.trim() || !expectedReturnDate}
+              disabled={
+                submitting ||
+                cartItems.length === 0 ||
+                (!customerCompany.trim() && !customerName.trim()) ||
+                !salesRepName.trim() ||
+                !expectedReturnDate
+              }
               className="rounded-xl h-9 text-xs font-bold px-4 gap-1.5 shadow-sm"
             >
               {submitting ? (
@@ -301,115 +597,171 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-7xl mx-auto p-3 sm:p-4 lg:p-5 space-y-4">
             
-            {/* ================= 1. หัวเอกสาร (DOCUMENT HEADER - COMPACT) ================= */}
+            {/* ================= 1. หัวเอกสาร (DOCUMENT HEADER - AUTOCOMPLETE & COMPACT) ================= */}
             <div className="bg-card rounded-xl border border-border p-3 sm:p-4 shadow-xs">
-              <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-border/80">
+              <div className="flex items-center justify-between pb-2 mb-3 border-b border-border/80">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                     <User className="h-3.5 w-3.5 text-primary" /> 1. ข้อมูลหัวเอกสารผู้ขอยืม
                   </span>
-                  <span className="text-[11px] text-muted-foreground hidden sm:inline">• ข้อมูลลูกค้าและกำหนดส่งคืน</span>
+                  <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                    • พิมพ์เพื่อค้นหาบริษัท/ผู้ติดต่อ ระบบจะช่วยดึงกลุ่มอุตสาหกรรมให้อัตโนมัติ
+                  </span>
                 </div>
-                <span className="text-[10px] font-medium text-rose-500 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-800">
-                  * ช่องที่จำเป็นต้องกรอก
-                </span>
+                {user?.name && (
+                  <span className="text-[11px] text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-md">
+                    ผู้ล็อกอินปัจจุบัน: <span className="font-semibold text-foreground">{user.name}</span>
+                  </span>
+                )}
               </div>
 
-              {/* Form Grid: 6 columns on desktop (Row 1: 6 essential inputs, Row 2: compact notes) */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5">
+              {/* Form Grid: 
+                  Row 1: ชื่อบริษัท (Autocomplete) -> ผู้ติดต่อ (Autocomplete) -> กลุ่มอุตสาหกรรม (Autocomplete)
+                  Row 2: พนักงานขาย (Autocomplete) -> วัตถุประสงค์ (Autocomplete) -> วันกำหนดคืน (Preset + Datepicker)
+                  Row 3: เงื่อนไข / หมายเหตุเอกสาร
+              */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 
-                {/* 1.1 Customer Name */}
+                {/* 1.1 ชื่อบริษัท (Autocomplete มาก่อน) */}
                 <div>
-                  <label className="text-[11px] font-medium text-muted-foreground block mb-1">
-                    ชื่อลูกค้า / ผู้ติดต่อ <span className="text-rose-500">*</span>
-                  </label>
-                  <Input
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="เช่น คุณสมชาย"
-                    className="h-8.5 text-xs rounded-lg"
-                  />
-                </div>
-
-                {/* 1.2 Customer Company */}
-                <div>
-                  <label className="text-[11px] font-medium text-muted-foreground block mb-1">
-                    ชื่อบริษัท / องค์กร
-                  </label>
-                  <Input
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-semibold text-foreground flex items-center gap-1">
+                      <Building2 className="h-3 w-3 text-muted-foreground" />
+                      ชื่อบริษัท / องค์กร <span className="text-rose-500">*</span>
+                    </label>
+                    <span className="text-[10px] text-muted-foreground">พิมพ์ค้นหาได้</span>
+                  </div>
+                  <AutocompleteCombobox
                     value={customerCompany}
-                    onChange={(e) => setCustomerCompany(e.target.value)}
-                    placeholder="เช่น บจก. เอสซีจี"
-                    className="h-8.5 text-xs rounded-lg"
+                    onChange={(val) => handleSelectCompany(val)}
+                    onSelectOption={(val) => handleSelectCompany(val)}
+                    options={companyOptions}
+                    placeholder="พิมพ์หรือเลือกชื่อบริษัท..."
                   />
                 </div>
 
-                {/* 1.3 Industry */}
+                {/* 1.2 ผู้ติดต่อ (ชื่อลูกค้า Autocomplete) */}
                 <div>
-                  <label className="text-[11px] font-medium text-muted-foreground block mb-1">
-                    กลุ่มอุตสาหกรรม
-                  </label>
-                  <Select value={customerIndustry} onValueChange={setCustomerIndustry}>
-                    <SelectTrigger className="h-8.5 text-xs rounded-lg">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(INDUSTRY_LABELS).map(([k, v]) => (
-                        <SelectItem key={k} value={k} className="text-xs">{v}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-semibold text-foreground flex items-center gap-1">
+                      <User className="h-3 w-3 text-muted-foreground" />
+                      ชื่อผู้ติดต่อ / ลูกค้า <span className="text-rose-500">*</span>
+                    </label>
+                    <span className="text-[10px] text-muted-foreground">พิมพ์ค้นหาได้</span>
+                  </div>
+                  <AutocompleteCombobox
+                    value={customerName}
+                    onChange={setCustomerName}
+                    options={contactOptions}
+                    placeholder="พิมพ์หรือเลือกชื่อผู้ติดต่อ..."
+                  />
                 </div>
 
-                {/* 1.4 Sales Rep */}
+                {/* 1.3 กลุ่มอุตสาหกรรม (ล้อตามชื่อบริษัท + Autocomplete) */}
                 <div>
-                  <label className="text-[11px] font-medium text-muted-foreground block mb-1">
-                    พนักงานขาย / ผู้ยืม <span className="text-rose-500">*</span>
-                  </label>
-                  <Input
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-semibold text-foreground flex items-center gap-1">
+                      กลุ่มอุตสาหกรรม
+                    </label>
+                    <span className="text-[10px] text-emerald-600 font-medium">ล้อตามบริษัทอัตโนมัติ</span>
+                  </div>
+                  <AutocompleteCombobox
+                    value={customerIndustry}
+                    onChange={setCustomerIndustry}
+                    options={industryOptions}
+                    placeholder="เลือกหรือค้นหากลุ่มอุตสาหกรรม..."
+                  />
+                </div>
+
+                {/* 1.4 พนักงานขาย / ผู้ขอยืม (Default จาก User Login, เปลี่ยนได้, เก็บ log) */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-semibold text-foreground flex items-center gap-1">
+                      พนักงานขาย / ผู้ยืม <span className="text-rose-500">*</span>
+                    </label>
+                    {isBorrowingForOther ? (
+                      <span className="text-[10px] text-amber-600 font-medium">
+                        (บันทึกจริง: {user?.name})
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground">จากชื่อ Login</span>
+                    )}
+                  </div>
+                  <AutocompleteCombobox
                     value={salesRepName}
-                    onChange={(e) => setSalesRepName(e.target.value)}
-                    placeholder="เช่น สมหญิง (Sales)"
-                    className="h-8.5 text-xs rounded-lg"
+                    onChange={setSalesRepName}
+                    options={salesRepOptions}
+                    placeholder="พิมพ์หรือเลือกพนักงานขาย..."
                   />
                 </div>
 
-                {/* 1.5 Purpose */}
+                {/* 1.5 วัตถุประสงค์ (Autocomplete พิมพ์ได้) */}
                 <div>
-                  <label className="text-[11px] font-medium text-muted-foreground block mb-1">
-                    วัตถุประสงค์การยืม
-                  </label>
-                  <Select value={purpose} onValueChange={setPurpose}>
-                    <SelectTrigger className="h-8.5 text-xs rounded-lg">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(PURPOSE_LABELS).map(([k, v]) => (
-                        <SelectItem key={k} value={k} className="text-xs">{v}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* 1.6 Return Date */}
-                <div>
-                  <label className="text-[11px] font-medium text-muted-foreground block mb-1">
-                    กำหนดวันคืน <span className="text-rose-500">*</span>
-                  </label>
-                  <Input
-                    type="date"
-                    value={expectedReturnDate}
-                    onChange={(e) => setExpectedReturnDate(e.target.value)}
-                    className="h-8.5 text-xs rounded-lg"
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-semibold text-foreground flex items-center gap-1">
+                      วัตถุประสงค์การยืม
+                    </label>
+                    <span className="text-[10px] text-muted-foreground">พิมพ์ค้นหาได้</span>
+                  </div>
+                  <AutocompleteCombobox
+                    value={purpose}
+                    onChange={setPurpose}
+                    options={purposeOptions}
+                    placeholder="เลือกหรือพิมพ์วัตถุประสงค์..."
                   />
                 </div>
 
-                {/* 1.7 Terms & Notes (Span full row, compact single line) */}
-                <div className="col-span-2 sm:col-span-3 lg:col-span-6 pt-0.5">
+                {/* 1.6 กำหนดวันคืน (Auto 2 สัปดาห์ + Preset 1,2,3,4 สัปดาห์ + ปฏิทิน) */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-semibold text-foreground flex items-center gap-1">
+                      <Calendar className="h-3 w-3 text-muted-foreground" />
+                      กำหนดวันคืน <span className="text-rose-500">*</span>
+                    </label>
+                    <span className="text-[10px] text-primary font-medium">อัตโนมัติ 2 สัปดาห์</span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    {/* Shortcut preset pills */}
+                    <div className="grid grid-cols-4 gap-1">
+                      {WEEKS_PRESETS.map((p) => {
+                        const isSelected = currentPresetWeeks === p.weeks
+                        return (
+                          <button
+                            key={p.weeks}
+                            type="button"
+                            onClick={() => setExpectedReturnDate(getFutureDate(p.weeks))}
+                            className={`py-1 px-1.5 text-[10px] rounded-md font-semibold transition-colors text-center ${
+                              isSelected
+                                ? 'bg-primary text-primary-foreground shadow-xs'
+                                : 'bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground'
+                            }`}
+                          >
+                            {p.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {/* Manual date input */}
+                    <Input
+                      type="date"
+                      value={expectedReturnDate}
+                      onChange={(e) => setExpectedReturnDate(e.target.value)}
+                      className="h-8.5 text-xs rounded-lg"
+                    />
+                  </div>
+                </div>
+
+                {/* 1.7 Terms & Notes (Span full row) */}
+                <div className="col-span-1 md:col-span-2 lg:col-span-3 pt-1">
+                  <label className="text-[11px] font-medium text-muted-foreground block mb-1">
+                    เงื่อนไข / ข้อตกลง / หมายเหตุเอกสาร
+                  </label>
                   <Input
                     value={termsAndNotes}
                     onChange={(e) => setTermsAndNotes(e.target.value)}
-                    placeholder="เงื่อนไข / หมายเหตุเอกสาร (เช่น ผู้ยืมรับผิดชอบความเสียหายระหว่างการยืม)..."
+                    placeholder="เงื่อนไขการยืม / หมายเหตุเอกสาร (เช่น ผู้ยืมรับผิดชอบความเสียหายระหว่างการยืม)..."
                     className="h-8 text-xs rounded-lg text-muted-foreground bg-muted/20"
                   />
                 </div>
@@ -418,22 +770,22 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
             </div>
 
             {/* ================= 2. รายการสินค้าที่เลือกเข้า LIST (SELECTED ITEMS LIST) ================= */}
-            <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 shadow-xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-border gap-2">
+            <div className="bg-card rounded-xl border border-border p-3 sm:p-4 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-3 border-b border-border/80 gap-2">
                 <div className="flex items-center gap-2.5">
-                  <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold">
+                  <div className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold">
                     <ShoppingCart className="h-4 w-4" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="text-base font-bold text-foreground">
+                      <h2 className="text-sm font-bold text-foreground">
                         2. รายการสินค้าที่ขอยืม (Item List)
                       </h2>
                       <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 hover:bg-emerald-100 border-0 text-xs">
                         {cartItems.length} รุ่น • {totalRequested} เครื่อง
                       </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground">
                       รายการรุ่นและจำนวนที่จะส่งให้สโตร์เตรียมเครื่อง (เลือกเพิ่มได้จากหัวข้อที่ 3 ด้านล่าง)
                     </p>
                   </div>
@@ -453,11 +805,11 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
 
               {/* Table of selected items */}
               {cartItems.length === 0 ? (
-                <div className="py-10 text-center border-2 border-dashed border-border rounded-2xl bg-muted/20">
-                  <ListPlus className="h-10 w-10 mx-auto text-muted-foreground/40 mb-2.5" />
-                  <p className="text-sm font-semibold text-foreground">ยังไม่มีรายการสินค้าใน List</p>
-                  <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
-                    กรุณาเลื่อนลงไปที่ <span className="font-semibold text-primary">&quot;หัวข้อที่ 3: เลือกสินค้าเข้า List&quot;</span> ด้านล่าง เพื่อคลิกเพิ่มสินค้าที่ต้องการยืม
+                <div className="py-8 text-center border-2 border-dashed border-border rounded-xl bg-muted/20">
+                  <ListPlus className="h-9 w-9 mx-auto text-muted-foreground/40 mb-2" />
+                  <p className="text-xs sm:text-sm font-semibold text-foreground">ยังไม่มีรายการสินค้าใน List</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 max-w-md mx-auto">
+                    กรุณาเลื่อนลงไปที่ <span className="font-semibold text-primary">&quot;หัวข้อที่ 3: ค้นหาและเลือกสินค้าเข้า List&quot;</span> ด้านล่าง เพื่อคลิกเพิ่มสินค้าที่ต้องการยืม
                   </p>
                 </div>
               ) : (
@@ -490,7 +842,7 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
                             {/* Model / Brand */}
                             <TableCell>
                               <div className="text-[11px] font-semibold uppercase text-muted-foreground">{c.brand}</div>
-                              <div className="text-sm font-bold text-foreground">{c.model}</div>
+                              <div className="text-xs sm:text-sm font-bold text-foreground">{c.model}</div>
                               {c.defaultSpecs && (
                                 <div className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">{c.defaultSpecs}</div>
                               )}
@@ -586,7 +938,7 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
 
               {/* Waiting List Alert Banner */}
               {hasShortfall && (
-                <div className="mt-4 p-3.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 rounded-xl flex items-start gap-3 text-xs text-amber-800 dark:text-amber-200">
+                <div className="mt-3.5 p-3.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 rounded-xl flex items-start gap-3 text-xs text-amber-800 dark:text-amber-200">
                   <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
                   <div className="leading-relaxed">
                     <span className="font-bold">หมายเหตุเกี่ยวกับสินค้าที่ขอเกินสต็อก:</span>
@@ -599,17 +951,17 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
             </div>
 
             {/* ================= 3. ค้นหาและเลือกสินค้าเข้า LIST (CATALOG PICKER) ================= */}
-            <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 shadow-xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-border gap-2">
+            <div className="bg-card rounded-xl border border-border p-3 sm:p-4 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-3 border-b border-border/80 gap-2">
                 <div className="flex items-center gap-2.5">
-                  <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold">
+                  <div className="h-7 w-7 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold">
                     <Package className="h-4 w-4" />
                   </div>
                   <div>
-                    <h2 className="text-base font-bold text-foreground">
+                    <h2 className="text-sm font-bold text-foreground">
                       3. ค้นหาและเลือกสินค้าเข้า List (Catalog Inventory)
                     </h2>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground">
                       คลิกปุ่ม &quot;+ เพิ่มเข้า List&quot; เพื่อเลือกสินค้าเข้าใบคำขอยืมด้านบน
                     </p>
                   </div>
@@ -624,20 +976,20 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
                     className="rounded-xl h-8 px-3 text-xs gap-1.5"
                   >
                     <Check className={`h-3 w-3 ${filterAvailableOnly ? 'opacity-100' : 'opacity-40'}`} />
-                    เฉพาะพร้อมใช้ ({catalogs.filter(c => c.available > 0).length})
+                    เฉพาะพร้อมใช้ ({catalogs.filter((c) => c.available > 0).length})
                   </Button>
                 </div>
               </div>
 
               {/* Search & Category Pills */}
-              <div className="space-y-3 mb-5">
+              <div className="space-y-3 mb-4">
                 <div className="relative">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="พิมพ์ค้นหาชื่อรุ่น ยี่ห้อ หรือสเปก เช่น TC21, Zebra, PM85..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-10 h-11 rounded-xl text-sm bg-background border-border"
+                    className="pl-10 h-10 rounded-xl text-xs sm:text-sm bg-background border-border"
                   />
                   {search && (
                     <button
@@ -656,7 +1008,7 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
                   </span>
                   <button
                     onClick={() => setSelectedCategory('all')}
-                    className={`px-3 py-1.5 rounded-xl font-medium transition-smooth whitespace-nowrap ${
+                    className={`px-3 py-1 rounded-lg font-medium transition-smooth whitespace-nowrap ${
                       selectedCategory === 'all'
                         ? 'bg-primary text-primary-foreground shadow-xs'
                         : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -665,12 +1017,12 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
                     ทั้งหมด ({catalogs.length})
                   </button>
                   {Object.entries(CATEGORY_LABELS).map(([key, label]) => {
-                    const count = catalogs.filter(c => c.category === key).length
+                    const count = catalogs.filter((c) => c.category === key).length
                     return (
                       <button
                         key={key}
                         onClick={() => setSelectedCategory(key)}
-                        className={`px-3 py-1.5 rounded-xl font-medium transition-smooth whitespace-nowrap flex items-center gap-1.5 ${
+                        className={`px-3 py-1 rounded-lg font-medium transition-smooth whitespace-nowrap flex items-center gap-1.5 ${
                           selectedCategory === key
                             ? 'bg-primary text-primary-foreground shadow-xs'
                             : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -696,7 +1048,7 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
               )}
 
               {!loading && displayedCatalogs.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
                   {displayedCatalogs.map((c) => {
                     const inCart = !!cart[c.id]
                     const currentQty = cart[c.id]?.quantity || 0
@@ -705,7 +1057,7 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
                     return (
                       <div
                         key={c.id}
-                        className={`rounded-2xl border p-4 transition-all duration-200 flex flex-col justify-between ${
+                        className={`rounded-xl border p-3.5 transition-all duration-200 flex flex-col justify-between ${
                           inCart
                             ? 'bg-primary/[0.04] border-primary/40 ring-2 ring-primary/20 shadow-xs'
                             : 'bg-card border-border hover:border-border/80 hover:shadow-xs'
@@ -713,15 +1065,15 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
                       >
                         {/* Top: Category & Stock Badge */}
                         <div>
-                          <div className="flex items-center justify-between gap-1.5 mb-2">
+                          <div className="flex items-center justify-between gap-1.5 mb-1.5">
                             <CategoryBadge category={c.category} />
                             {isAvailable ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
                                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                                 พร้อมใช้ {c.available}
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800">
                                 <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
                                 ของหมด
                               </span>
@@ -729,15 +1081,15 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
                           </div>
 
                           {/* Brand & Model */}
-                          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                             {c.brand}
                           </div>
-                          <h3 className="text-sm sm:text-base font-bold text-foreground mt-0.5 leading-snug line-clamp-1">
+                          <h3 className="text-xs sm:text-sm font-bold text-foreground mt-0.5 leading-snug line-clamp-1">
                             {c.model}
                           </h3>
 
                           {/* Stock Breakdown */}
-                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-2 py-1 px-2 rounded-lg bg-muted/40">
+                          <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-1.5 py-1 px-2 rounded-lg bg-muted/40">
                             <div>ทั้งหมด: <span className="font-semibold text-foreground">{c.total}</span></div>
                             <div>•</div>
                             <div>กำลังยืม: <span className="font-semibold text-amber-600">{c.onLoan}</span></div>
@@ -745,14 +1097,14 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
 
                           {/* Specs */}
                           {c.defaultSpecs && (
-                            <p className="text-[11px] text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
+                            <p className="text-[10px] text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
                               {c.defaultSpecs}
                             </p>
                           )}
                         </div>
 
                         {/* Bottom Action */}
-                        <div className="mt-3 pt-3 border-t border-border/60">
+                        <div className="mt-3 pt-2.5 border-t border-border/60">
                           {inCart ? (
                             <div className="flex items-center justify-between gap-2">
                               <span className="text-xs font-bold text-primary flex items-center gap-1">
@@ -762,9 +1114,9 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
                                 size="sm"
                                 variant="outline"
                                 onClick={() => addToCart(c)}
-                                className="h-8 px-2.5 rounded-xl text-xs font-semibold gap-1"
+                                className="h-7 px-2.5 rounded-lg text-xs font-semibold gap-1"
                               >
-                                <Plus className="h-3.5 w-3.5" /> เพิ่มอีก
+                                <Plus className="h-3 w-3" /> เพิ่มอีก
                               </Button>
                             </div>
                           ) : (
@@ -772,7 +1124,7 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
                               size="sm"
                               variant={isAvailable ? 'default' : 'outline'}
                               onClick={() => addToCart(c)}
-                              className={`w-full rounded-xl h-9 text-xs font-semibold gap-1.5 ${
+                              className={`w-full rounded-lg h-8 text-xs font-semibold gap-1.5 ${
                                 !isAvailable ? 'text-amber-700 border-amber-300 hover:bg-amber-50 dark:border-amber-700' : ''
                               }`}
                             >
@@ -827,7 +1179,13 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
             <Button
               size="sm"
               onClick={handleSubmit}
-              disabled={submitting || cartItems.length === 0 || !customerName.trim() || !salesRepName.trim() || !expectedReturnDate}
+              disabled={
+                submitting ||
+                cartItems.length === 0 ||
+                (!customerCompany.trim() && !customerName.trim()) ||
+                !salesRepName.trim() ||
+                !expectedReturnDate
+              }
               className="rounded-xl h-10 px-5 text-xs font-bold gap-2 shadow-sm"
             >
               {submitting ? (
