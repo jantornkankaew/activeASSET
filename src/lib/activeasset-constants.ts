@@ -1,5 +1,14 @@
 // ค่าคงที่และ label ภาษาไทยสำหรับ activeASSET
 
+export const VZ = {
+  primary: '#405189',
+  teal: '#0ab39c',
+  amber: '#f7b84b',
+  rose: '#f06548',
+  purple: '#a071f0',
+  slate: '#74788d',
+}
+
 export const ASSET_STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
   Available: { label: 'พร้อมใช้', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
   On_Loan: { label: 'กำลังยืม', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },

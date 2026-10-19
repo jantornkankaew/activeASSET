@@ -451,7 +451,7 @@ async function main() {
   }
 
   // สร้าง waiting list เพิ่มอีก 1 รายการ (ไม่ผูกใบยืม)
-  const tc53Catalog = await db.productCatalog.findUnique({ where: { model: 'TC53' } })
+  const tc53Catalog = await db.productCatalog.findFirst({ where: { model: 'TC53' } })
   if (tc53Catalog) {
     await db.waitingList.create({
       data: {

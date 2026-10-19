@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   // หาหรือสร้าง customer
   let customerId: string | null = null
   if (customerCompany) {
-    const existing = await db.customer.findUnique({ where: { company: customerCompany } })
+    const existing = await db.customer.findFirst({ where: { company: customerCompany } })
     if (existing) {
       customerId = existing.id
     } else {
@@ -51,7 +51,14 @@ export async function POST(request: Request) {
   }
 
   // ตรวจ availability รายรุ่น
-  const availabilityCheck = []
+  const availabilityCheck: {
+    catalogId: string
+    model: string
+    brand: string
+    requestedQty: number
+    availableQty: number
+    shortfall: number
+  }[] = []
   for (const item of items) {
     const catalog = await db.productCatalog.findUnique({ where: { id: item.catalogId } })
     if (!catalog) continue
@@ -225,6 +232,9 @@ export async function GET(request: Request) {
         status: line.status,
         returnedAt: line.returnedAt,
         conditionPhoto: line.conditionPhoto,
+        accessoriesHandedOver: line.accessoriesHandedOver
+          ? (() => { try { return JSON.parse(line.accessoriesHandedOver) } catch { return [] } })()
+          : [],
       })),
     }
   })

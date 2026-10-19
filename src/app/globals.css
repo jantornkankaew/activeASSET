@@ -171,6 +171,33 @@ a:hover { opacity: 0.8; }
 .dark .vz-card { box-shadow: 0 0.125rem 0.25rem rgb(0 0 0 / 0.2); }
 .dark .vz-card:hover { box-shadow: 0 0.25rem 0.5rem rgb(0 0 0 / 0.3); }
 
+/* Calendar layout and 7-column grid rules */
+.vz-calendar-main-layout {
+  display: grid !important;
+  grid-template-columns: 280px minmax(0, 1fr) !important;
+  gap: 1rem !important;
+  align-items: start !important;
+  width: 100% !important;
+}
+
+@media (min-width: 1280px) {
+  .vz-calendar-main-layout {
+    grid-template-columns: 310px minmax(0, 1fr) !important;
+  }
+}
+
+@media (max-width: 960px) {
+  .vz-calendar-main-layout {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.vz-calendar-grid {
+  display: grid !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  width: 100% !important;
+}
+
 /* Velzon gradient banner — signature hero gradient (indigo → teal) */
 .vz-banner {
   background: linear-gradient(135deg, hsl(var(--primary) / 0.92) 0%, hsl(var(--chart-5) / 0.85) 50%, hsl(var(--accent) / 0.80) 100%);

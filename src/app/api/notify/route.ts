@@ -11,7 +11,17 @@ export async function POST(request: Request) {
   const { waitingListId, message: customMessage } = body
 
   // ถ้ามี waitingListId → ดึงข้อมูลคิว + อัปเดต status เป็น Notified
-  let waitingItem: Awaited<ReturnType<typeof db.waitingList.findUnique>> = null
+  let waitingItem: {
+    id: string
+    customerName: string
+    customerCompany: string | null
+    customerIndustry: string | null
+    salesRepName: string
+    purpose: string
+    quantity: number
+    status: string
+    catalog: { model: string; brand: string }
+  } | null = null
   let messageText = customMessage || ''
 
   if (waitingListId) {

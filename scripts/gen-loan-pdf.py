@@ -52,7 +52,7 @@ COLOR_BG_LIGHT = HexColor('#f8fafc')
 COLOR_EMERALD = HexColor('#059669')
 COLOR_AMBER = HexColor('#d97706')
 
-DB_PATH = '/home/z/my-project/db/custom.db'
+DB_PATH = str(Path(__file__).resolve().parent.parent / 'prisma' / 'custom.db')
 
 # Helpers
 def parse_json(value):

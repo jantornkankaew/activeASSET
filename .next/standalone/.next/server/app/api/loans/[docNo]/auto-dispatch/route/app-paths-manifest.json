@@ -1,3 +1,0 @@
-{
-  "/api/loans/[docNo]/auto-dispatch/route": "app/api/loans/[docNo]/auto-dispatch/route.js"
-}

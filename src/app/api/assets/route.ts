@@ -81,7 +81,7 @@ export async function POST(request: Request) {
   if (source === 'Supplier' && !supplierId) return NextResponse.json({ error: 'source=Supplier ต้องระบุ supplier' }, { status: 400 })
 
   // ตรวจ serial ซ้ำ
-  const existSn = await db.assetUnit.findUnique({ where: { serialNo } })
+  const existSn = await db.assetUnit.findFirst({ where: { serialNo } })
   if (existSn) return NextResponse.json({ error: `Serial Number ${serialNo} มีอยู่แล้ว` }, { status: 400 })
   const existTag = await db.assetUnit.findUnique({ where: { tagId } })
   if (existTag) return NextResponse.json({ error: `Tag ID ${tagId} มีอยู่แล้ว` }, { status: 400 })

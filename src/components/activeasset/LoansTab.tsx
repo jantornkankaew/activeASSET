@@ -13,8 +13,8 @@ import { DispatchSheet } from './DispatchSheet'
 import { DeliverSheet } from './DeliverSheet'
 import { ReturnLoanSheet } from './ReturnLoanSheet'
 import {
-  Search, Plus, FileText, Clock, CheckCircle2, AlertTriangle,
-  ChevronRight, ChevronDown, Package, Truck, ScanLine,
+  Search, Plus, FileText, Clock, CheckCircle2, AlertTriangle, AlertCircle,
+  ChevronRight, ChevronDown, Package, Truck, ScanLine, Layers,
 } from 'lucide-react'
 import {
   formatThaiDate, daysUntil,
@@ -62,33 +62,61 @@ interface LoansTabProps {
   onConsumeInitialDocNo?: () => void
 }
 
-// 3 main columns + sub-statuses stacked inside
-const MAIN_COLUMNS = [
+// 5 main columns based on demo loan lifecycle
+interface SubGroupDef {
+  key: string
+  label: string
+  match: (l: LoanListItem) => boolean
+}
+
+interface ColumnDef {
+  id: string
+  label: string
+  color: 'blue' | 'purple' | 'emerald' | 'rose' | 'amber'
+  icon: React.ReactNode
+  subGroups: SubGroupDef[]
+}
+
+const MAIN_COLUMNS: ColumnDef[] = [
   {
-    id: 'pre-delivery',
-    label: 'ก่อนส่งมอบ',
+    id: 'requesting',
+    label: 'รอจัดของ',
     color: 'blue',
     icon: <Package className="h-4 w-4" />,
-    statuses: ['Queued', 'Requested', 'Dispatching', 'Dispatched'],
-    subLabels: { Queued: 'ติดคิว', Requested: 'รอจัด', Dispatching: 'กำลังจัด', Dispatched: 'รอส่งมอบ' },
+    subGroups: [
+      { key: 'Requested', label: 'รอจัด', match: (l) => l.status === 'Requested' },
+      { key: 'Dispatching', label: 'กำลังจัด', match: (l) => l.status === 'Dispatching' },
+    ],
   },
   {
-    id: 'active',
+    id: 'dispatched',
+    label: 'รอส่งมอบ',
+    color: 'purple',
+    icon: <Truck className="h-4 w-4" />,
+    subGroups: [
+      { key: 'Dispatched', label: 'รอส่งมอบ', match: (l) => l.status === 'Dispatched' },
+    ],
+  },
+  {
+    id: 'in-use',
     label: 'กำลังยืม',
     color: 'emerald',
-    icon: <Truck className="h-4 w-4" />,
-    statuses: ['Delivered'],
-    subLabels: { Delivered: 'กำลังยืม' },
+    icon: <Clock className="h-4 w-4" />,
+    subGroups: [
+      { key: 'Delivered', label: 'กำลังยืม', match: (l) => l.status === 'Delivered' && daysUntil(l.expectedReturnDate) >= 0 },
+    ],
   },
   {
-    id: 'returned',
-    label: 'คืนแล้ว',
-    color: 'slate',
-    icon: <CheckCircle2 className="h-4 w-4" />,
-    statuses: ['Partially_Returned', 'Returned'],
-    subLabels: { Partially_Returned: 'คืนบางส่วน', Returned: 'คืนครบ' },
+    id: 'overdue-and-partial',
+    label: 'เกินกำหนด / คืนไม่ครบ',
+    color: 'rose',
+    icon: <AlertCircle className="h-4 w-4" />,
+    subGroups: [
+      { key: 'Overdue', label: 'เกินกำหนด', match: (l) => ['Delivered', 'Partially_Returned'].includes(l.status) && daysUntil(l.expectedReturnDate) < 0 },
+      { key: 'Partially_Returned', label: 'คืนไม่ครบ', match: (l) => l.status === 'Partially_Returned' && daysUntil(l.expectedReturnDate) >= 0 },
+    ],
   },
-] as const
+]
 
 const COLUMN_STYLES: Record<string, { header: string; dot: string; count: string; subBadge: string }> = {
   blue: {
@@ -97,17 +125,29 @@ const COLUMN_STYLES: Record<string, { header: string; dot: string; count: string
     count: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
     subBadge: 'bg-blue-500/8 text-blue-600 dark:text-blue-400 border-blue-500/15',
   },
+  purple: {
+    header: 'text-purple-700 dark:text-purple-300',
+    dot: 'bg-purple-500',
+    count: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+    subBadge: 'bg-purple-500/8 text-purple-600 dark:text-purple-400 border-purple-500/15',
+  },
   emerald: {
     header: 'text-emerald-700 dark:text-emerald-300',
     dot: 'bg-emerald-500',
     count: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
     subBadge: 'bg-emerald-500/8 text-emerald-600 dark:text-emerald-400 border-emerald-500/15',
   },
-  slate: {
-    header: 'text-slate-600 dark:text-slate-300',
-    dot: 'bg-slate-400',
-    count: 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
-    subBadge: 'bg-slate-500/8 text-slate-600 dark:text-slate-400 border-slate-500/15',
+  rose: {
+    header: 'text-rose-700 dark:text-rose-300',
+    dot: 'bg-rose-500',
+    count: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+    subBadge: 'bg-rose-500/8 text-rose-600 dark:text-rose-400 border-rose-500/15',
+  },
+  amber: {
+    header: 'text-amber-700 dark:text-amber-300',
+    dot: 'bg-amber-500',
+    count: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+    subBadge: 'bg-amber-500/8 text-amber-600 dark:text-amber-400 border-amber-500/15',
   },
 }
 
@@ -117,6 +157,20 @@ export function LoansTab({ createLoanOpen, onOpenCreateLoan, refreshKey, initial
   const [search, setSearch] = useState('')
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban')
   const [statusFilter, setStatusFilter] = useState('all')
+
+  // จดจำมุมมอง kanban / list เมื่อ refresh
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const saved = sessionStorage.getItem('activeasset_loans_viewMode')
+    if (saved === 'kanban' || saved === 'list') {
+      setViewMode(saved)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    sessionStorage.setItem('activeasset_loans_viewMode', viewMode)
+  }, [viewMode])
 
   const [detailDocNo, setDetailDocNo] = useState<string | null>(null)
   const [dispatchLoan, setDispatchLoan] = useState<LoanDetail | null>(null)
@@ -156,12 +210,12 @@ export function LoansTab({ createLoanOpen, onOpenCreateLoan, refreshKey, initial
     const grouped: Record<string, { status: string; label: string; items: LoanListItem[] }[]> = {}
     for (const col of MAIN_COLUMNS) {
       const subGroups: { status: string; label: string; items: LoanListItem[] }[] = []
-      for (const st of col.statuses) {
-        const items = loans.filter(l => l.status === st)
+      for (const sg of col.subGroups) {
+        const items = loans.filter(sg.match)
         if (items.length > 0) {
           subGroups.push({
-            status: st,
-            label: col.subLabels[st as keyof typeof col.subLabels] || st,
+            status: sg.key,
+            label: sg.label,
             items,
           })
         }

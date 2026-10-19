@@ -238,6 +238,7 @@ export function AssetsTab({ onBorrow }: AssetsTabProps) {
         onSearch={setUnitSearch}
         onBack={() => setView('catalog')}
         onSelectUnit={loadDetail}
+        onBorrow={onBorrow}
       />
     )
   }
@@ -464,7 +465,7 @@ export function AssetsTab({ onBorrow }: AssetsTabProps) {
 
 // ===== Level 2: Units of a model =====
 function UnitsView({
-  catalog, units, loading, search, onSearch, onBack, onSelectUnit,
+  catalog, units, loading, search, onSearch, onBack, onSelectUnit, onBorrow,
 }: {
   catalog: CatalogSummary
   units: AssetUnit[]
@@ -473,6 +474,7 @@ function UnitsView({
   onSearch: (v: string) => void
   onBack: () => void
   onSelectUnit: (tagId: string) => void
+  onBorrow?: () => void
 }) {
   const filtered = search
     ? units.filter(u =>
@@ -502,7 +504,7 @@ function UnitsView({
             <h2 className="text-xl font-bold tracking-tight">{catalog.brand} {catalog.model}</h2>
             <p className="text-xs text-muted-foreground">{CATEGORY_LABELS[catalog.category] || catalog.category} · {catalog.defaultSpecs}</p>
           </div>
-          <div className="flex gap-4 text-center">
+          <div className="flex gap-4 text-center items-center">
             <div>
               <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{catalog.available}</div>
               <div className="text-[10px] text-muted-foreground">พร้อมใช้</div>
@@ -515,6 +517,16 @@ function UnitsView({
               <div className="text-2xl font-bold tabular-nums">{catalog.total}</div>
               <div className="text-[10px] text-muted-foreground">ทั้งหมด</div>
             </div>
+            {onBorrow && (
+              <Button
+                size="sm"
+                className="text-xs ml-2 h-9"
+                style={{ backgroundColor: VZ.primary, color: 'white' }}
+                onClick={onBorrow}
+              >
+                <ShoppingCart className="h-3.5 w-3.5 mr-1" /> ขอยืมรุ่นนี้
+              </Button>
+            )}
           </div>
         </div>
       </div>

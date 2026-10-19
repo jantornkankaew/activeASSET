@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   }
 
   // ตรวจ serial ซ้ำ
-  const exist = await db.assetUnit.findUnique({ where: { serialNo } })
+  const exist = await db.assetUnit.findFirst({ where: { serialNo } })
   if (exist) return NextResponse.json({ error: `Serial Number ${serialNo} มีอยู่แล้ว` }, { status: 400 })
 
   // สร้าง Tag ID อัตโนมัติ: SUP-YYYYMMDD-XXX หรือ SAL-YYYYMMDD-XXX

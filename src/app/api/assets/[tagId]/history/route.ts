@@ -121,7 +121,7 @@ export async function GET(
           damageDescription: item.damageDescription || null,
           sendToRepair: item.sendToRepair,
           inspectorName: item.returnEvent.inspectorName,
-          returnDate: item.returnEvent.returnDate,
+          returnDate: item.returnEvent.returnDate.toISOString(),
         })
       }
     }

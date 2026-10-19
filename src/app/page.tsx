@@ -13,6 +13,7 @@ import { ReturnCalendarTab } from '@/components/activeasset/ReturnCalendarTab'
 import { ReservationTab } from '@/components/activeasset/ReservationTab'
 import { RegisterAssetView, SuppliersView } from '@/components/activeasset/AssetsManagementViews'
 import { RequestLoanSheet } from '@/components/activeasset/RequestLoanSheet'
+import { StoreView } from '@/components/activeasset/StoreView'
 import { SupplierAlertsWidget } from '@/components/activeasset/SupplierAlertsWidget'
 import { Sidebar, type SidebarPage } from '@/components/activeasset/Sidebar'
 import { AuthGate } from '@/components/auth/AuthGate'
@@ -25,6 +26,20 @@ export default function Home() {
     </AuthGate>
   )
 }
+
+const VALID_PAGES: SidebarPage[] = [
+  'overview',
+  'loans',
+  'store-counter',
+  'reservations',
+  'assets',
+  'assets-register',
+  'assets-suppliers',
+  'audit',
+  'return-calendar',
+  'analytics',
+  'team',
+]
 
 function AppShell() {
   const { user, logout } = useSimpleAuth()
@@ -40,9 +55,50 @@ function AppShell() {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  const handleOpenLoanFromOverview = (docNo: string) => {
-    setOpenLoanDocNo(docNo)
-    setPage('loans')
+  // อ่านหน้าเดิมจาก URL hash, query param หรือ localStorage ทันทีที่โหลด/refresh
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const hash = window.location.hash.replace(/^#/, '') as SidebarPage
+    const query = new URLSearchParams(window.location.search).get('page') as SidebarPage
+    const saved = localStorage.getItem('activeasset_current_page') as SidebarPage
+
+    const initial = [hash, query, saved].find((p): p is SidebarPage => !!p && VALID_PAGES.includes(p))
+    if (initial) {
+      setPage(initial)
+      if (window.location.hash.replace(/^#/, '') !== initial) {
+        window.history.replaceState(null, '', `#${initial}`)
+      }
+    }
+  }, [])
+
+  // บันทึกหน้าปัจจุบันลง localStorage และ URL hash ทุกครั้งที่เปลี่ยนหน้า (กด refresh จะได้หน้าเดิมเสมอ)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (VALID_PAGES.includes(page)) {
+      localStorage.setItem('activeasset_current_page', page)
+      if (window.location.hash.replace(/^#/, '') !== page) {
+        window.history.replaceState(null, '', `#${page}`)
+      }
+    }
+  }, [page])
+
+  // รองรับปุ่ม Back / Forward ของเบราว์เซอร์
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace(/^#/, '') as SidebarPage
+      if (VALID_PAGES.includes(hash)) {
+        setPage(hash)
+      }
+    }
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
+
+  const handleOpenLoanFromOverview = (docNo: string | null) => {
+    if (docNo) {
+      setOpenLoanDocNo(docNo)
+      setPage('loans')
+    }
   }
 
   useEffect(() => {
@@ -66,19 +122,23 @@ function AppShell() {
     if (newPage === 'export-assets') { window.open('/api/export/assets', '_blank'); return }
     if (newPage === 'export-analytics') { window.open('/api/export/analytics', '_blank'); return }
     if (newPage === 'audit') { setAuditStartTrigger(x => x + 1) }
+    setCreateLoanOpen(false)
     setPage(newPage)
   }
 
   // Get page title for header
   const pageTitles: Record<string, string> = {
     overview: 'ภาพรวม',
-    loans: 'ใบยืม',
+    loans: 'ใบยืม & จัดส่ง',
+    'store-counter': 'เคาน์เตอร์รับคืน (Store Check-In)',
     reservations: 'จอง & คิวยืม',
     assets: 'ทรัพย์สิน',
     'assets-register': 'ลงทะเบียนใหม่',
     'assets-suppliers': 'Suppliers',
     audit: 'ตรวจนับ',
+    'return-calendar': 'ปฏิทินคืน',
     analytics: 'Analytics',
+    team: 'ทีม & สิทธิ์การใช้งาน',
   }
 
   return (
@@ -160,7 +220,13 @@ function AppShell() {
           {page === 'overview' && (
             <OverviewTab
               onNavigate={(t) => {
-                if (t === 'assets' || t === 'loans' || t === 'audit' || t === 'reservations' || t === 'analytics') setPage(t as SidebarPage)
+                if (t === 'waiting') {
+                  setPage('reservations')
+                } else if (t === 'store-counter') {
+                  setPage('store-counter')
+                } else {
+                  setPage(t)
+                }
               }}
               onCreateLoan={() => setCreateLoanOpen(true)}
               onStartAudit={() => { setPage('audit'); setAuditStartTrigger(x => x + 1) }}
@@ -186,8 +252,9 @@ function AppShell() {
               onConsumeInitialDocNo={() => setOpenLoanDocNo(null)}
             />
           )}
+          {page === 'store-counter' && <StoreView />}
           {page === 'reservations' && <ReservationTab />}
-          {page === 'return-calendar' && <ReturnCalendarTab onOpenLoan={setOpenLoanDocNo} />}
+          {page === 'return-calendar' && <ReturnCalendarTab onOpenLoan={handleOpenLoanFromOverview} />}
           {page === 'audit' && <AuditTab startNewTrigger={auditStartTrigger} />}
           {page === 'analytics' && <AnalyticsTab />}
           {page === 'team' && <TeamTab />}

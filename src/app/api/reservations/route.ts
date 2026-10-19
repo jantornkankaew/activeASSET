@@ -111,7 +111,7 @@ export async function POST(request: Request) {
   // หาหรือสร้าง customer
   let customerId: string | null = null
   if (customerCompany) {
-    const existing = await db.customer.findUnique({ where: { company: customerCompany } })
+    const existing = await db.customer.findFirst({ where: { company: customerCompany } })
     if (existing) {
       customerId = existing.id
     } else {

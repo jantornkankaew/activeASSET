@@ -351,20 +351,28 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
           </ScrollArea>
 
           <div className="border-t p-3 space-y-2">
-            <Button
-              className="w-full"
-              size="lg"
-              onClick={handleSubmit}
-              disabled={submitting || cartItems.length === 0 || !customerName || !salesRepName || !expectedReturnDate}
-            >
-              {submitting ? 'กำลังสร้าง...' : (
-                <>
-                  <FileText className="h-4 w-4 mr-2" />
-                  ส่งคำขอยืม ({totalRequested} เครื่อง)
-                  {hasShortfall && <Clock className="h-4 w-4 ml-2" />}
-                </>
-              )}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="w-1/3"
+                onClick={() => onOpenChange(false)}
+              >
+                ยกเลิก
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={handleSubmit}
+                disabled={submitting || cartItems.length === 0 || !customerName || !salesRepName || !expectedReturnDate}
+              >
+                {submitting ? 'กำลังสร้าง...' : (
+                  <>
+                    <FileText className="h-4 w-4 mr-2" />
+                    ส่งคำขอยืม ({totalRequested} เครื่อง)
+                    {hasShortfall && <Clock className="h-4 w-4 ml-2" />}
+                  </>
+                )}
+              </Button>
+            </div>
             <p className="text-xs text-slate-500 text-center">
               ระบบจะแจ้งเจ้าหน้าที่คลังไปหยิบเครื่องจริง + สแกน S/N + ถ่ายรูป
             </p>

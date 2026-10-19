@@ -32,7 +32,7 @@ interface RequestLine {
   quantity: number
   fulfilledQty: number
   notes: string | null
-  defaultAccessories: string[]
+  defaultAccessories?: string[]
   catalog?: { model: string; brand: string; category: string; defaultAccessories: string[] }
 }
 
@@ -468,8 +468,8 @@ export function DispatchSheet({ open, onOpenChange, loan, onDone }: DispatchShee
                               <SourceBadge source={a.source} className="ml-auto" />
                               {/* แสดง loan count warning สำหรับ Supplier */}
                               {a.source === 'Supplier' && a.maxLoanCount && (
-                                <Badge variant="outline" className={`text-xs ${a.loanCount >= a.maxLoanCount ? 'text-rose-700 bg-rose-50' : 'text-amber-700 bg-amber-50'}`}>
-                                  {a.loanCount}/{a.maxLoanCount}
+                                <Badge variant="outline" className={`text-xs ${(a.loanCount ?? 0) >= a.maxLoanCount ? 'text-rose-700 bg-rose-50' : 'text-amber-700 bg-amber-50'}`}>
+                                  {a.loanCount ?? 0}/{a.maxLoanCount}
                                 </Badge>
                               )}
                             </button>

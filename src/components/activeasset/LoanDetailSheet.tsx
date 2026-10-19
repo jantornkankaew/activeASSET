@@ -168,7 +168,7 @@ export function LoanDetailSheet({ open, onOpenChange, docNo, onDispatch, onDeliv
       sub: 'โดย ' + loan.salesRepName,
       color: VZ.teal, done: true,
       body: [
-        { title: `วัตถุประสงค์: ${PURPOSE_LABELS[loan.purpose]?.label || loan.purpose}`, date: formatThaiDateTime(loan.requestedAt) },
+        { title: `วัตถุประสงค์: ${PURPOSE_LABELS[loan.purpose] || loan.purpose}`, date: formatThaiDateTime(loan.requestedAt) },
         ...(loan.customerCompany ? [{ title: `บริษัท: ${loan.customerCompany}`, date: '' }] : []),
       ],
     },
@@ -519,7 +519,7 @@ export function LoanDetailSheet({ open, onOpenChange, docNo, onDispatch, onDeliv
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">วัตถุประสงค์:</span>
-                        <span className="text-foreground text-right">{PURPOSE_LABELS[loan.purpose]?.label || loan.purpose}</span>
+                        <span className="text-foreground text-right">{PURPOSE_LABELS[loan.purpose] || loan.purpose}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">วันที่ขอ:</span>

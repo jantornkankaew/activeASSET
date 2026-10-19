@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   })
 
   // นับ available stock รายรุ่น
-  const result = []
+  const result: any[] = []
   for (const w of items) {
     const availableCount = await db.assetUnit.count({
       where: { catalogId: w.catalogId, status: 'Available' },

@@ -10,12 +10,12 @@ import { NotificationBell } from '@/components/notifications/NotificationBell'
 import {
   Boxes, FileText, Calendar, CalendarDays, ClipboardCheck, TrendingUp,
   Package, Plus, Building2, Download, Users,
-  Home, Wrench,
+  Home, Wrench, ScanLine,
   Menu, X, Clock, AlertTriangle,
 } from 'lucide-react'
 
 export type SidebarPage =
-  | 'overview' | 'loans' | 'reservations' | 'return-calendar'
+  | 'overview' | 'loans' | 'store-counter' | 'reservations' | 'return-calendar'
   | 'assets' | 'assets-register' | 'assets-suppliers'
   | 'audit' | 'analytics' | 'team'
   | 'export-loans' | 'export-assets' | 'export-analytics'
@@ -62,8 +62,11 @@ export function Sidebar({
       items: [
         { id: 'overview', label: 'ภาพรวม', icon: <Home className="h-4 w-4" /> },
         {
-          id: 'loans', label: 'ใบยืม', icon: <FileText className="h-4 w-4" />,
+          id: 'loans', label: 'ใบยืม & จัดส่ง', icon: <FileText className="h-4 w-4" />,
           badge: stats?.overdueLoans || 0, badgeColor: 'rose',
+        },
+        {
+          id: 'store-counter', label: 'เคาน์เตอร์รับคืน', icon: <ScanLine className="h-4 w-4" />,
         },
         {
           id: 'reservations', label: 'จอง & คิวยืม', icon: <Calendar className="h-4 w-4" />,

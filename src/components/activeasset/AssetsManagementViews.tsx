@@ -90,7 +90,10 @@ export function RegisterAssetView({ onDone, onBack }: { onDone: () => void; onBa
     <div className="space-y-4 animate-fade-in">
       {/* ===== Velzon page-title-box ===== */}
       <div className="vz-card p-4 flex items-center justify-between">
-        <div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={onBack} className="text-xs h-8">
+            <ArrowLeft className="h-3.5 w-3.5 mr-1" /> ย้อนกลับ
+          </Button>
           <h4 className="text-base font-semibold text-foreground mb-0" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
             ลงทะเบียนทรัพย์สินใหม่
           </h4>
@@ -492,9 +495,12 @@ export function SuppliersView({ onBack }: { onBack: () => void }) {
     <div className="space-y-4 animate-fade-in">
       {/* ===== Velzon page-title-box ===== */}
       <div className="vz-card p-4 flex items-center justify-between">
-        <div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={onBack} className="text-xs h-8">
+            <ArrowLeft className="h-3.5 w-3.5 mr-1" /> ย้อนกลับ
+          </Button>
           <h4 className="text-base font-semibold text-foreground mb-0" style={{ fontFamily: 'var(--font-display), var(--font-display-thai)' }}>
-            Suppliers
+            Suppliers (ผู้จัดจำหน่าย)
           </h4>
         </div>
         <div className="flex items-center gap-2 text-xs">
