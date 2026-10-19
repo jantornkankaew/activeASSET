@@ -239,7 +239,7 @@ export function ReturnCalendarTab({ onOpenLoan }: ReturnCalendarTabProps) {
   if (loading) return <LoadingState />
 
   return (
-    <div className="w-full animate-fade-in flex flex-col">
+    <div className="w-full flex flex-col">
       {/* ===== FULL-WIDTH & FULL-HEIGHT CALENDAR CARD ===== */}
       <div className="vz-card p-3 sm:p-4 w-full shadow-sm flex flex-col bg-card">
         

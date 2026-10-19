@@ -308,7 +308,7 @@ export function StoreView() {
   }
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-140px)] space-y-4 animate-fade-in">
+    <div className="flex flex-col min-h-[calc(100vh-140px)] space-y-4">
       {/* ===== Velzon page-title-box ===== */}
       <div className="vz-card p-4 flex items-center justify-between flex-shrink-0">
         <div>
@@ -397,7 +397,19 @@ export function StoreView() {
         <div className="flex-1 p-0 min-h-0 bg-muted/15">
           <ScrollArea className="h-[calc(100vh-365px)] min-h-[480px]">
             <div className="p-4 sm:p-5 space-y-3">
-              {loading && <p className="p-8 text-center text-muted-foreground text-sm">กำลังโหลดข้อมูล...</p>}
+              {loading && (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-24 bg-card rounded-xl border border-border/40 p-4 animate-pulse flex items-center gap-4">
+                      <div className="h-12 w-12 bg-muted/60 rounded-xl" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-40 bg-muted/60 rounded" />
+                        <div className="h-3 w-64 bg-muted/40 rounded" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
               {!loading && filteredLoans.length === 0 && (
                 <div className="p-16 text-center text-muted-foreground">
                   <Package className="h-10 w-10 mx-auto mb-2.5 opacity-25" />
@@ -580,7 +592,7 @@ function LoanReturnPanel({
   const selectedCount = Object.values(returnForms).filter((f) => f.selected).length
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-4">
       <div className="vz-card p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="h-4 w-4 mr-1" /> กลับ</Button>

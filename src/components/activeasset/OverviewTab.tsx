@@ -149,7 +149,7 @@ export function OverviewTab({ onNavigate, onCreateLoan, onStartAudit, onOpenLoan
   const availablePct = s.totalAssets > 0 ? Math.round((s.available / s.totalAssets) * 100) : 0
 
   return (
-    <div className="space-y-4 animate-fade-in pb-8">
+    <div className="space-y-4 pb-8">
       {/* ============================================================== */}
       {/* 1. VELZON PAGE TITLE & GREETING BOX                           */}
       {/* ============================================================== */}

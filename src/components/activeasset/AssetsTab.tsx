@@ -248,7 +248,7 @@ export function AssetsTab({ onBorrow }: AssetsTabProps) {
   const categories = Array.from(new Set(catalogs.map((c) => c.category)))
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-4">
       {/* ===== Velzon products page-title-box ===== */}
       <div className="vz-card p-4 flex items-center justify-between">
         <div>
@@ -484,7 +484,7 @@ function UnitsView({
     : units
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-4">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm">
         <button onClick={onBack} className="text-muted-foreground hover:text-foreground transition-smooth flex items-center gap-1">
@@ -650,7 +650,7 @@ function AssetDetailView({
   const allReviews = ratingStats?.allReviews ?? []
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-4">
       {/* ===== Velzon page-title-box ===== */}
       <div className="vz-card p-4 flex items-center justify-between">
         <div>

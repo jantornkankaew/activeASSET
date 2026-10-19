@@ -80,7 +80,7 @@ export function AnalyticsTab() {
     : 0
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-4">
       {/* ===== Velzon CRM page-title-box ===== */}
       <div className="vz-card p-4 flex items-center justify-between">
         <div>

@@ -27,20 +27,34 @@ const SimpleAuthContext = createContext<SimpleAuthContextType>({
   logout: () => {},
 })
 
-export function SimpleAuthProvider({ children }: { children: ReactNode }) {
-  // === Hydration-safe initial state ===
-  // SSR and client first render BOTH see user=null + loading=true (no localStorage access during render).
-  // We read localStorage in useEffect AFTER hydration → triggers re-render with real user.
-  // This eliminates the SSR/CSR hydration mismatch that was breaking the page.
-  const [user, setUser] = useState<SimpleUser | null>(null)
-  const [loading, setLoading] = useState(true)
+export function SimpleAuthProvider({
+  children,
+  initialUser = null,
+}: {
+  children: ReactNode
+  initialUser?: SimpleUser | null
+}) {
+  // === Synchronous initial state from initialUser or client localStorage ===
+  const [user, setUser] = useState<SimpleUser | null>(() => {
+    if (initialUser) return initialUser
+    if (typeof window === 'undefined') return null
+    try {
+      const savedUser = localStorage.getItem(USER_KEY)
+      return savedUser ? JSON.parse(savedUser) : null
+    } catch {
+      return null
+    }
+  })
+  const [loading, setLoading] = useState<boolean>(false)
 
-  // Read saved user from localStorage AFTER hydration (client-only)
+  // Read/sync saved user from localStorage and keep cookies in sync for SSR
   useEffect(() => {
     try {
       const savedUser = localStorage.getItem(USER_KEY)
       if (savedUser) {
         setUser(JSON.parse(savedUser))
+        document.cookie = `activeasset_auth=1; path=/; max-age=31536000; SameSite=Lax`
+        document.cookie = `activeasset_user=${encodeURIComponent(savedUser)}; path=/; max-age=31536000; SameSite=Lax`
       }
     } catch {
       // ignore parse errors
@@ -88,6 +102,10 @@ export function SimpleAuthProvider({ children }: { children: ReactNode }) {
       }
       localStorage.setItem(TOKEN_KEY, data.token)
       localStorage.setItem(USER_KEY, JSON.stringify(data.user))
+      try {
+        document.cookie = `activeasset_auth=1; path=/; max-age=31536000; SameSite=Lax`
+        document.cookie = `activeasset_user=${encodeURIComponent(JSON.stringify(data.user))}; path=/; max-age=31536000; SameSite=Lax`
+      } catch {}
       setUser(data.user)
       return { ok: true }
     } catch (e: any) {
@@ -98,6 +116,12 @@ export function SimpleAuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
+    try {
+      document.cookie = `activeasset_auth=; path=/; max-age=0; SameSite=Lax`
+      document.cookie = `activeasset_user=; path=/; max-age=0; SameSite=Lax`
+      document.cookie = `activeasset_page=; path=/; max-age=0; SameSite=Lax`
+      document.cookie = `activeasset_create_loan=; path=/; max-age=0; SameSite=Lax`
+    } catch {}
     setUser(null)
   }, [])
 

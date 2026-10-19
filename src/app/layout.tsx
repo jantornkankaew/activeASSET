@@ -66,11 +66,22 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-export default function RootLayout({
+import { cookies } from "next/headers";
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  let initialUser = null;
+  const rawUser = cookieStore.get("activeasset_user")?.value;
+  if (rawUser) {
+    try {
+      initialUser = JSON.parse(decodeURIComponent(rawUser));
+    } catch {}
+  }
+
   return (
     <html lang="th" suppressHydrationWarning>
       <head>
@@ -81,7 +92,7 @@ export default function RootLayout({
         className={`${inter.variable} ${ibmPlexThai.variable} ${poppins.variable} ${prompt.variable} antialiased bg-background text-foreground`}
       >
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          <SimpleAuthProvider>
+          <SimpleAuthProvider initialUser={initialUser}>
             <Providers>
               {children}
               <Toaster />

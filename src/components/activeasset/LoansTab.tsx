@@ -221,7 +221,7 @@ export function LoansTab({ createLoanOpen, onOpenCreateLoan, refreshKey, initial
   }, [loans])
 
   return (
-    <div className="space-y-3 animate-fade-in">
+    <div className="space-y-3">
       {/* Top bar — search + view toggle + create */}
       <Card className="shadow-premium">
         <CardContent className="p-3">
@@ -257,8 +257,20 @@ export function LoansTab({ createLoanOpen, onOpenCreateLoan, refreshKey, initial
         </CardContent>
       </Card>
 
-      {/* Loading */}
-      {loading && <LoadingState />}
+      {/* Loading Skeleton matching Kanban columns to prevent layout shift */}
+      {loading && (
+        <div className="overflow-x-auto pb-4">
+          <div className="flex gap-4 min-w-max">
+            {MAIN_COLUMNS.map((col) => (
+              <div key={col.id} className="w-80 flex-shrink-0 bg-muted/20 border border-border/40 rounded-xl p-3 min-h-[380px] flex flex-col gap-2.5">
+                <div className="h-6 w-28 bg-muted/50 rounded-md animate-pulse" />
+                <div className="h-24 w-full bg-card rounded-lg border border-border/30 animate-pulse" />
+                <div className="h-24 w-full bg-card rounded-lg border border-border/30 animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ===== KANBAN VIEW — 3 main columns + sub-status stacks ===== */}
       {!loading && viewMode === 'kanban' && (

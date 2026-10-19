@@ -169,7 +169,7 @@ export function TeamTab() {
   }
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-4">
       {/* ===== Velzon page-title-box ===== */}
       <div className="vz-card p-4 flex items-center justify-between">
         <div>
@@ -522,7 +522,7 @@ function UserProfileView({
   }
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-4">
       {/* ===== Velzon profile-foreground — full-width gradient cover ===== */}
       <div className="vz-card overflow-hidden">
         {/* Cover gradient */}

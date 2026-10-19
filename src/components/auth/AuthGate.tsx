@@ -23,31 +23,26 @@ const DEMO_ACCOUNTS = [
   { email: 'manager@activeasset.local', password: 'manager123', role: 'manager', label: 'ผู้จัดการ' },
 ]
 
-export function AuthGate({ children }: { children: React.ReactNode }) {
-  const { user, login, logout, loading } = useSimpleAuth()
+export function AuthGate({
+  children,
+  initialIsAuthenticated = false,
+}: {
+  children: React.ReactNode
+  initialIsAuthenticated?: boolean
+}) {
+  const { user, login, logout } = useSimpleAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loadingLogin, setLoadingLogin] = useState(false)
 
-  // === Loading state (during initial localStorage read after hydration) ===
-  // Renders the same minimal skeleton on server and client first render — no hydration mismatch.
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3 animate-fade-in">
-          <div className="h-12 w-12 rounded-xl gradient-brand flex items-center justify-center shadow-lift">
-            <Boxes className="h-6 w-6 text-primary-foreground animate-pulse" />
-          </div>
-          <div className="text-xs text-muted-foreground">กำลังโหลด...</div>
-        </div>
-      </div>
-    )
-  }
+  // On server (SSR): use initialIsAuthenticated from cookie to render correct state immediately.
+  // On client: use synchronously resolved user from localStorage.
+  const isAuthed = typeof window === 'undefined' ? initialIsAuthenticated : !!user
 
   // ถ้ายังไม่ login → แสดง login form
   // ถ้า login แล้ว → แสดง children (AppShell)
-  if (!user) {
+  if (!isAuthed) {
     const handleLogin = async (e?: React.FormEvent, preset?: { email: string; password: string }) => {
       e?.preventDefault()
       const emailVal = preset?.email || email

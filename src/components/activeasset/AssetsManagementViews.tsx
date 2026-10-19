@@ -87,7 +87,7 @@ export function RegisterAssetView({ onDone, onBack }: { onDone: () => void; onBa
   const selectedCatalog = catalogs.find((c) => c.id === form.catalogId)
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-4">
       {/* ===== Velzon page-title-box ===== */}
       <div className="vz-card p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -492,7 +492,7 @@ export function SuppliersView({ onBack }: { onBack: () => void }) {
   })
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-4">
       {/* ===== Velzon page-title-box ===== */}
       <div className="vz-card p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
