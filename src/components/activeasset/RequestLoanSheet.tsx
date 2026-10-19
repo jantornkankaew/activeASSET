@@ -299,76 +299,63 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
 
         {/* ================= SCROLLABLE PAGE BODY ================= */}
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+          <div className="max-w-7xl mx-auto p-3 sm:p-4 lg:p-5 space-y-4">
             
-            {/* ================= 1. หัวเอกสาร (DOCUMENT HEADER) ================= */}
-            <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 shadow-xs">
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-border">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold">
-                    <User className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-bold text-foreground">
-                      1. ข้อมูลหัวเอกสารและผู้ขอยืม
-                    </h2>
-                    <p className="text-xs text-muted-foreground">
-                      ระบุข้อมูลลูกค้า วันที่กำหนดคืน และพนักงานผู้รับผิดชอบ
-                    </p>
-                  </div>
+            {/* ================= 1. หัวเอกสาร (DOCUMENT HEADER - COMPACT) ================= */}
+            <div className="bg-card rounded-xl border border-border p-3 sm:p-4 shadow-xs">
+              <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-border/80">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <User className="h-3.5 w-3.5 text-primary" /> 1. ข้อมูลหัวเอกสารผู้ขอยืม
+                  </span>
+                  <span className="text-[11px] text-muted-foreground hidden sm:inline">• ข้อมูลลูกค้าและกำหนดส่งคืน</span>
                 </div>
-                <span className="text-[11px] font-medium text-rose-500 bg-rose-50 dark:bg-rose-950/40 px-2.5 py-1 rounded-lg border border-rose-200 dark:border-rose-800">
+                <span className="text-[10px] font-medium text-rose-500 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-800">
                   * ช่องที่จำเป็นต้องกรอก
                 </span>
               </div>
 
-              {/* Form Grid: 3 columns layout on desktop */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Form Grid: 6 columns on desktop (Row 1: 6 essential inputs, Row 2: compact notes) */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5">
                 
                 {/* 1.1 Customer Name */}
                 <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1.5">
+                  <label className="text-[11px] font-medium text-muted-foreground block mb-1">
                     ชื่อลูกค้า / ผู้ติดต่อ <span className="text-rose-500">*</span>
                   </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder="เช่น คุณสมชาย มั่งมี"
-                      className="pl-9 h-10 text-sm rounded-xl"
-                    />
-                  </div>
+                  <Input
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="เช่น คุณสมชาย"
+                    className="h-8.5 text-xs rounded-lg"
+                  />
                 </div>
 
                 {/* 1.2 Customer Company */}
                 <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1.5">
-                    ชื่อบริษัท / องค์กรลูกค้า
+                  <label className="text-[11px] font-medium text-muted-foreground block mb-1">
+                    ชื่อบริษัท / องค์กร
                   </label>
-                  <div className="relative">
-                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      value={customerCompany}
-                      onChange={(e) => setCustomerCompany(e.target.value)}
-                      placeholder="เช่น บจก. เอสซีจี โลจิสติกส์"
-                      className="pl-9 h-10 text-sm rounded-xl"
-                    />
-                  </div>
+                  <Input
+                    value={customerCompany}
+                    onChange={(e) => setCustomerCompany(e.target.value)}
+                    placeholder="เช่น บจก. เอสซีจี"
+                    className="h-8.5 text-xs rounded-lg"
+                  />
                 </div>
 
                 {/* 1.3 Industry */}
                 <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1.5">
-                    กลุ่มอุตสาหกรรมลูกค้า
+                  <label className="text-[11px] font-medium text-muted-foreground block mb-1">
+                    กลุ่มอุตสาหกรรม
                   </label>
                   <Select value={customerIndustry} onValueChange={setCustomerIndustry}>
-                    <SelectTrigger className="h-10 text-sm rounded-xl">
+                    <SelectTrigger className="h-8.5 text-xs rounded-lg">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(INDUSTRY_LABELS).map(([k, v]) => (
-                        <SelectItem key={k} value={k} className="text-sm">{v}</SelectItem>
+                        <SelectItem key={k} value={k} className="text-xs">{v}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -376,29 +363,29 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
 
                 {/* 1.4 Sales Rep */}
                 <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1.5">
-                    พนักงานขาย / ผู้รับผิดชอบ <span className="text-rose-500">*</span>
+                  <label className="text-[11px] font-medium text-muted-foreground block mb-1">
+                    พนักงานขาย / ผู้ยืม <span className="text-rose-500">*</span>
                   </label>
                   <Input
                     value={salesRepName}
                     onChange={(e) => setSalesRepName(e.target.value)}
                     placeholder="เช่น สมหญิง (Sales)"
-                    className="h-10 text-sm rounded-xl"
+                    className="h-8.5 text-xs rounded-lg"
                   />
                 </div>
 
                 {/* 1.5 Purpose */}
                 <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1.5">
+                  <label className="text-[11px] font-medium text-muted-foreground block mb-1">
                     วัตถุประสงค์การยืม
                   </label>
                   <Select value={purpose} onValueChange={setPurpose}>
-                    <SelectTrigger className="h-10 text-sm rounded-xl">
+                    <SelectTrigger className="h-8.5 text-xs rounded-lg">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(PURPOSE_LABELS).map(([k, v]) => (
-                        <SelectItem key={k} value={k} className="text-sm">{v}</SelectItem>
+                        <SelectItem key={k} value={k} className="text-xs">{v}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -406,31 +393,24 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
 
                 {/* 1.6 Return Date */}
                 <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1.5">
-                    กำหนดวันคืนสินค้า <span className="text-rose-500">*</span>
+                  <label className="text-[11px] font-medium text-muted-foreground block mb-1">
+                    กำหนดวันคืน <span className="text-rose-500">*</span>
                   </label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="date"
-                      value={expectedReturnDate}
-                      onChange={(e) => setExpectedReturnDate(e.target.value)}
-                      className="pl-9 h-10 text-sm rounded-xl"
-                    />
-                  </div>
+                  <Input
+                    type="date"
+                    value={expectedReturnDate}
+                    onChange={(e) => setExpectedReturnDate(e.target.value)}
+                    className="h-8.5 text-xs rounded-lg"
+                  />
                 </div>
 
-                {/* 1.7 Terms & Notes (Span full row) */}
-                <div className="sm:col-span-2 lg:col-span-3">
-                  <label className="text-xs font-semibold text-foreground block mb-1.5">
-                    เงื่อนไข / ข้อตกลง / หมายเหตุเอกสาร
-                  </label>
-                  <textarea
-                    rows={2}
-                    className="w-full text-xs sm:text-sm p-3 rounded-xl border border-border bg-background focus:ring-1 focus:ring-primary focus:outline-none resize-none leading-relaxed"
+                {/* 1.7 Terms & Notes (Span full row, compact single line) */}
+                <div className="col-span-2 sm:col-span-3 lg:col-span-6 pt-0.5">
+                  <Input
                     value={termsAndNotes}
                     onChange={(e) => setTermsAndNotes(e.target.value)}
-                    placeholder="ระบุข้อตกลงพิเศษ เงื่อนไขการยืม หรือข้อความสำหรับเจ้าหน้าที่คลัง..."
+                    placeholder="เงื่อนไข / หมายเหตุเอกสาร (เช่น ผู้ยืมรับผิดชอบความเสียหายระหว่างการยืม)..."
+                    className="h-8 text-xs rounded-lg text-muted-foreground bg-muted/20"
                   />
                 </div>
 
