@@ -155,17 +155,12 @@ export function LoansTab({ createLoanOpen, onOpenCreateLoan, refreshKey, initial
   const [loans, setLoans] = useState<LoanListItem[]>([])
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
-  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban')
-  const [statusFilter, setStatusFilter] = useState('all')
-
-  // จดจำมุมมอง kanban / list เมื่อ refresh
-  useEffect(() => {
-    if (typeof window === 'undefined') return
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>(() => {
+    if (typeof window === 'undefined') return 'kanban'
     const saved = sessionStorage.getItem('activeasset_loans_viewMode')
-    if (saved === 'kanban' || saved === 'list') {
-      setViewMode(saved)
-    }
-  }, [])
+    return (saved === 'kanban' || saved === 'list') ? saved : 'kanban'
+  })
+  const [statusFilter, setStatusFilter] = useState('all')
 
   useEffect(() => {
     if (typeof window === 'undefined') return

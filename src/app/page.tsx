@@ -44,8 +44,32 @@ const VALID_PAGES: SidebarPage[] = [
 function AppShell() {
   const { user, logout } = useSimpleAuth()
   const session = user ? { user } : null
-  const [page, setPage] = useState<SidebarPage>('overview')
-  const [createLoanOpen, setCreateLoanOpen] = useState(false)
+
+  // อ่านหน้าเริ่มต้นจาก URL hash, query param หรือ localStorage ทันทีที่โหลด (Synchronous lazy initializer)
+  const [page, setPage] = useState<SidebarPage>(() => {
+    if (typeof window === 'undefined') return 'overview'
+    try {
+      const rawHash = window.location.hash.replace(/^#/, '').split('?')[0] as SidebarPage
+      const query = new URLSearchParams(window.location.search).get('page') as SidebarPage
+      const saved = localStorage.getItem('activeasset_current_page') as SidebarPage
+      const candidate = [rawHash, query, saved].find((p): p is SidebarPage => !!p && VALID_PAGES.includes(p))
+      if (candidate) return candidate
+    } catch {}
+    return 'overview'
+  })
+
+  // อ่านสถานะหน้าต่าง "ขอยืมใหม่" ว่าเปิดอยู่หรือไม่ (จาก hash หรือ localStorage)
+  const [createLoanOpen, setCreateLoanOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    try {
+      const rawHash = window.location.hash.replace(/^#/, '')
+      const action = new URLSearchParams(window.location.search).get('action')
+      const saved = localStorage.getItem('activeasset_create_loan_open')
+      return rawHash === 'create-loan' || action === 'create-loan' || saved === 'true'
+    } catch {}
+    return false
+  })
+
   const [auditStartTrigger, setAuditStartTrigger] = useState(0)
   const [globalStats, setGlobalStats] = useState<{ totalAssets: number; available: number; onLoan: number; overdueLoans: number; queuedLoans: number } | null>(null)
   const [openLoanDocNo, setOpenLoanDocNo] = useState<string | null>(null)
@@ -55,39 +79,54 @@ function AppShell() {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  // อ่านหน้าเดิมจาก URL hash, query param หรือ localStorage ทันทีที่โหลด/refresh
+  // ฟังก์ชันเปิด-ปิด "ขอยืมใหม่" พร้อม sync กับ URL hash และ localStorage
+  const handleOpenCreateLoan = () => {
+    setCreateLoanOpen(true)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('activeasset_create_loan_open', 'true')
+      window.history.replaceState(null, '', '#create-loan')
+    }
+  }
+
+  const handleCloseCreateLoan = (openState: boolean) => {
+    setCreateLoanOpen(openState)
+    if (!openState && typeof window !== 'undefined') {
+      localStorage.removeItem('activeasset_create_loan_open')
+      window.history.replaceState(null, '', `#${page}`)
+    }
+  }
+
+  // บันทึกหน้าปัจจุบันลง localStorage และ URL hash ทุกครั้งที่เปลี่ยนหน้า (กด refresh จะได้หน้าเดิมเสมอ 100%)
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const hash = window.location.hash.replace(/^#/, '') as SidebarPage
-    const query = new URLSearchParams(window.location.search).get('page') as SidebarPage
-    const saved = localStorage.getItem('activeasset_current_page') as SidebarPage
-
-    const initial = [hash, query, saved].find((p): p is SidebarPage => !!p && VALID_PAGES.includes(p))
-    if (initial) {
-      setPage(initial)
-      if (window.location.hash.replace(/^#/, '') !== initial) {
-        window.history.replaceState(null, '', `#${initial}`)
+    if (createLoanOpen) {
+      localStorage.setItem('activeasset_create_loan_open', 'true')
+      if (window.location.hash !== '#create-loan') {
+        window.history.replaceState(null, '', '#create-loan')
+      }
+    } else {
+      localStorage.removeItem('activeasset_create_loan_open')
+      if (VALID_PAGES.includes(page)) {
+        localStorage.setItem('activeasset_current_page', page)
+        if (window.location.hash !== `#${page}`) {
+          window.history.replaceState(null, '', `#${page}`)
+        }
       }
     }
-  }, [])
-
-  // บันทึกหน้าปัจจุบันลง localStorage และ URL hash ทุกครั้งที่เปลี่ยนหน้า (กด refresh จะได้หน้าเดิมเสมอ)
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    if (VALID_PAGES.includes(page)) {
-      localStorage.setItem('activeasset_current_page', page)
-      if (window.location.hash.replace(/^#/, '') !== page) {
-        window.history.replaceState(null, '', `#${page}`)
-      }
-    }
-  }, [page])
+  }, [page, createLoanOpen])
 
   // รองรับปุ่ม Back / Forward ของเบราว์เซอร์
   useEffect(() => {
+    if (typeof window === 'undefined') return
     const handleHashChange = () => {
-      const hash = window.location.hash.replace(/^#/, '') as SidebarPage
-      if (VALID_PAGES.includes(hash)) {
-        setPage(hash)
+      const rawHash = window.location.hash.replace(/^#/, '')
+      if (rawHash === 'create-loan') {
+        setCreateLoanOpen(true)
+        return
+      }
+      if (VALID_PAGES.includes(rawHash as SidebarPage)) {
+        setCreateLoanOpen(false)
+        setPage(rawHash as SidebarPage)
       }
     }
     window.addEventListener('hashchange', handleHashChange)
@@ -123,6 +162,11 @@ function AppShell() {
     if (newPage === 'export-analytics') { window.open('/api/export/analytics', '_blank'); return }
     if (newPage === 'audit') { setAuditStartTrigger(x => x + 1) }
     setCreateLoanOpen(false)
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('activeasset_create_loan_open')
+      localStorage.setItem('activeasset_current_page', newPage)
+      window.history.replaceState(null, '', `#${newPage}`)
+    }
     setPage(newPage)
   }
 
@@ -148,7 +192,7 @@ function AppShell() {
         currentPage={page}
         onPageChange={handlePageChange}
         stats={globalStats || undefined}
-        onOpenCreateLoan={() => setCreateLoanOpen(true)}
+        onOpenCreateLoan={handleOpenCreateLoan}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed(!collapsed)}
         mobileOpen={mobileOpen}
@@ -228,12 +272,12 @@ function AppShell() {
                   setPage(t)
                 }
               }}
-              onCreateLoan={() => setCreateLoanOpen(true)}
+              onCreateLoan={handleOpenCreateLoan}
               onStartAudit={() => { setPage('audit'); setAuditStartTrigger(x => x + 1) }}
               onOpenLoan={handleOpenLoanFromOverview}
             />
           )}
-          {page === 'assets' && <AssetsTab onBorrow={() => setCreateLoanOpen(true)} />}
+          {page === 'assets' && <AssetsTab onBorrow={handleOpenCreateLoan} />}
           {page === 'assets-register' && (
             <RegisterAssetView
               onDone={() => setPage('assets')}
@@ -246,7 +290,7 @@ function AppShell() {
           {page === 'loans' && (
             <LoansTab
               createLoanOpen={createLoanOpen}
-              onOpenCreateLoan={() => setCreateLoanOpen(true)}
+              onOpenCreateLoan={handleOpenCreateLoan}
               refreshKey={loansRefreshKey}
               initialOpenDocNo={openLoanDocNo}
               onConsumeInitialDocNo={() => setOpenLoanDocNo(null)}
@@ -277,7 +321,7 @@ function AppShell() {
 
       <RequestLoanSheet
         open={createLoanOpen}
-        onOpenChange={setCreateLoanOpen}
+        onOpenChange={handleCloseCreateLoan}
         onCreated={() => setLoansRefreshKey(k => k + 1)}
       />
     </div>

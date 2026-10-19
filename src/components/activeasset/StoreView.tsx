@@ -69,17 +69,12 @@ export function StoreView() {
   const [loans, setLoans] = useState<LoanListItem[]>([])
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
-  const [filterTab, setFilterTab] = useState<'pending' | 'overdue' | 'partial' | 'closed' | 'all'>('pending')
-  const [selectedLoan, setSelectedLoan] = useState<LoanListItem | null>(null)
-
-  // จดจำแท็บของเคาน์เตอร์รับคืนเมื่อ refresh
-  useEffect(() => {
-    if (typeof window === 'undefined') return
+  const [filterTab, setFilterTab] = useState<'pending' | 'overdue' | 'partial' | 'closed' | 'all'>(() => {
+    if (typeof window === 'undefined') return 'pending'
     const saved = sessionStorage.getItem('activeasset_store_filterTab')
-    if (saved && ['pending', 'overdue', 'partial', 'closed', 'all'].includes(saved)) {
-      setFilterTab(saved as typeof filterTab)
-    }
-  }, [])
+    return (saved && ['pending', 'overdue', 'partial', 'closed', 'all'].includes(saved)) ? (saved as 'pending' | 'overdue' | 'partial' | 'closed' | 'all') : 'pending'
+  })
+  const [selectedLoan, setSelectedLoan] = useState<LoanListItem | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
