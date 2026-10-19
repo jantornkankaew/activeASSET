@@ -5,14 +5,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useToast } from '@/hooks/use-toast'
-import { EmptyState, LoadingState, CategoryBadge } from './shared'
+import { LoadingState, CategoryBadge } from './shared'
 import {
   Search, ShoppingCart, Plus, Minus, X, User, Building2,
-  Calendar, FileText, AlertTriangle, CheckCircle2, Clock,
-  ArrowLeft, Package, Trash2, Sparkles, Filter, Layers, Info, Check,
+  Calendar, FileText, AlertTriangle, Clock,
+  ArrowLeft, Package, Trash2, Filter, Check, ListPlus,
+  Send,
 } from 'lucide-react'
 import {
   PURPOSE_LABELS, INDUSTRY_LABELS, CATEGORY_LABELS, formatThaiDate,
@@ -48,7 +49,7 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
   const [filterAvailableOnly, setFilterAvailableOnly] = useState(false)
   const [cart, setCart] = useState<Record<string, { catalog: CatalogItem; quantity: number; notes: string }>>({})
 
-  // Form fields
+  // Form fields (หัวเอกสาร)
   const [customerName, setCustomerName] = useState('')
   const [customerCompany, setCustomerCompany] = useState('')
   const [customerIndustry, setCustomerIndustry] = useState('Logistics')
@@ -100,7 +101,7 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
   const addToCart = (c: CatalogItem) => {
     setCart((prev) => ({
       ...prev,
-      [c.id]: { catalog: c, quantity: 1, notes: '' },
+      [c.id]: { catalog: c, quantity: (prev[c.id]?.quantity || 0) + 1, notes: prev[c.id]?.notes || '' },
     }))
   }
 
@@ -153,19 +154,19 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
 
   const handleSubmit = async () => {
     if (!customerName.trim()) {
-      toast({ title: 'กรุณากรอกชื่อลูกค้า / ผู้ติดต่อ', variant: 'destructive' })
+      toast({ title: 'กรุณากรอกชื่อลูกค้า / ผู้ติดต่อ ในหัวเอกสาร', variant: 'destructive' })
       return
     }
     if (!salesRepName.trim()) {
-      toast({ title: 'กรุณากรอกชื่อพนักงานขายผู้รับผิดชอบ', variant: 'destructive' })
+      toast({ title: 'กรุณากรอกชื่อพนักงานขายผู้รับผิดชอบ ในหัวเอกสาร', variant: 'destructive' })
       return
     }
     if (!expectedReturnDate) {
-      toast({ title: 'กรุณาระบุกำหนดวันคืนสินค้า', variant: 'destructive' })
+      toast({ title: 'กรุณาระบุกำหนดวันคืนสินค้า ในหัวเอกสาร', variant: 'destructive' })
       return
     }
     if (cartItems.length === 0) {
-      toast({ title: 'ยังไม่มีสินค้าในรายการขอยืม', description: 'กรุณาเลือกอย่างน้อย 1 รุ่น', variant: 'destructive' })
+      toast({ title: 'ยังไม่มีสินค้าในรายการขอยืม', description: 'กรุณาเลือกรายการสินค้าเข้า List ด้านล่างอย่างน้อย 1 รุ่น', variant: 'destructive' })
       return
     }
 
@@ -219,8 +220,8 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
       {/* Container เต็มหน้าจอ */}
       <div className="w-full h-full bg-slate-50 dark:bg-background flex flex-col overflow-hidden">
         
-        {/* ================= HEADER BAR (เต็มความกว้าง) ================= */}
-        <header className="h-16 px-4 sm:px-6 bg-card border-b border-border flex items-center justify-between flex-shrink-0 shadow-xs">
+        {/* ================= HEADER BAR ================= */}
+        <header className="h-16 px-4 sm:px-6 bg-card border-b border-border flex items-center justify-between flex-shrink-0 shadow-xs z-10">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -234,19 +235,19 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
             <Separator orientation="vertical" className="h-6" />
             <div className="flex items-center gap-2.5">
               <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
-                <ShoppingCart className="h-4 w-4" />
+                <FileText className="h-4 w-4" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-base sm:text-lg font-bold text-foreground tracking-tight">
-                    สร้างคำขอยืมสินค้าใหม่
+                    ใบขอยืมสินค้าใหม่ (New Loan Request)
                   </h1>
                   <Badge variant="outline" className="hidden sm:inline-flex bg-primary/5 text-primary border-primary/20 text-[11px] font-medium">
-                    Phase 1: Sales ขอตามรุ่น
+                    Phase 1: Sales Request
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground hidden sm:block">
-                  เลือกสินค้าและจำนวนเครื่องที่ต้องการ → ระบบจะสร้างใบคำขอส่งต่อไปยังฝ่ายคลังเพื่อหยิบเครื่องจริง
+                  กรอกข้อมูลหัวเอกสารผู้ยืม → เลือกรายการสินค้าเข้า List → บันทึกส่งต่อให้ฝ่ายคลังจัดเครื่องจริง
                 </p>
               </div>
             </div>
@@ -257,7 +258,7 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
             {cartItems.length > 0 && (
               <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-xl text-xs font-semibold">
                 <Package className="h-3.5 w-3.5" />
-                <span>{cartItems.length} รุ่น ({totalRequested} เครื่อง)</span>
+                <span>ใน List: {cartItems.length} รุ่น ({totalRequested} เครื่อง)</span>
               </div>
             )}
             <Button
@@ -272,14 +273,14 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
               size="sm"
               onClick={handleSubmit}
               disabled={submitting || cartItems.length === 0 || !customerName.trim() || !salesRepName.trim() || !expectedReturnDate}
-              className="rounded-xl h-9 text-xs font-semibold px-4 gap-1.5 shadow-sm"
+              className="rounded-xl h-9 text-xs font-bold px-4 gap-1.5 shadow-sm"
             >
               {submitting ? (
                 <>กำลังบันทึก...</>
               ) : (
                 <>
-                  <FileText className="h-3.5 w-3.5" />
-                  <span>บันทึกส่งคำขอ</span>
+                  <Send className="h-3.5 w-3.5" />
+                  <span>บันทึกส่งคำขอยืม</span>
                   {totalRequested > 0 && <span>({totalRequested})</span>}
                 </>
               )}
@@ -296,97 +297,429 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
           </div>
         </header>
 
-        {/* ================= MAIN CONTENT (2-COLUMN FULL LAYOUT) ================= */}
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-          
-          {/* ----- LEFT COLUMN: CATALOG PICKER (60-65% width) ----- */}
-          <div className="flex-1 flex flex-col overflow-hidden border-b lg:border-b-0 lg:border-r border-border bg-background">
+        {/* ================= SCROLLABLE PAGE BODY ================= */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
             
-            {/* Search & Category Filter Header */}
-            <div className="p-4 sm:p-5 border-b border-border bg-card/60 space-y-3 flex-shrink-0">
-              <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            {/* ================= 1. หัวเอกสาร (DOCUMENT HEADER) ================= */}
+            <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 shadow-xs">
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-border">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold">
+                    <User className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-foreground">
+                      1. ข้อมูลหัวเอกสารและผู้ขอยืม
+                    </h2>
+                    <p className="text-xs text-muted-foreground">
+                      ระบุข้อมูลลูกค้า วันที่กำหนดคืน และพนักงานผู้รับผิดชอบ
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[11px] font-medium text-rose-500 bg-rose-50 dark:bg-rose-950/40 px-2.5 py-1 rounded-lg border border-rose-200 dark:border-rose-800">
+                  * ช่องที่จำเป็นต้องกรอก
+                </span>
+              </div>
+
+              {/* Form Grid: 3 columns layout on desktop */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                
+                {/* 1.1 Customer Name */}
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1.5">
+                    ชื่อลูกค้า / ผู้ติดต่อ <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="เช่น คุณสมชาย มั่งมี"
+                      className="pl-9 h-10 text-sm rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                {/* 1.2 Customer Company */}
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1.5">
+                    ชื่อบริษัท / องค์กรลูกค้า
+                  </label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={customerCompany}
+                      onChange={(e) => setCustomerCompany(e.target.value)}
+                      placeholder="เช่น บจก. เอสซีจี โลจิสติกส์"
+                      className="pl-9 h-10 text-sm rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                {/* 1.3 Industry */}
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1.5">
+                    กลุ่มอุตสาหกรรมลูกค้า
+                  </label>
+                  <Select value={customerIndustry} onValueChange={setCustomerIndustry}>
+                    <SelectTrigger className="h-10 text-sm rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(INDUSTRY_LABELS).map(([k, v]) => (
+                        <SelectItem key={k} value={k} className="text-sm">{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* 1.4 Sales Rep */}
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1.5">
+                    พนักงานขาย / ผู้รับผิดชอบ <span className="text-rose-500">*</span>
+                  </label>
                   <Input
-                    placeholder="ค้นหาชื่อรุ่น ยี่ห้อ หรือคำอธิบายสินค้า..."
+                    value={salesRepName}
+                    onChange={(e) => setSalesRepName(e.target.value)}
+                    placeholder="เช่น สมหญิง (Sales)"
+                    className="h-10 text-sm rounded-xl"
+                  />
+                </div>
+
+                {/* 1.5 Purpose */}
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1.5">
+                    วัตถุประสงค์การยืม
+                  </label>
+                  <Select value={purpose} onValueChange={setPurpose}>
+                    <SelectTrigger className="h-10 text-sm rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(PURPOSE_LABELS).map(([k, v]) => (
+                        <SelectItem key={k} value={k} className="text-sm">{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* 1.6 Return Date */}
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1.5">
+                    กำหนดวันคืนสินค้า <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="date"
+                      value={expectedReturnDate}
+                      onChange={(e) => setExpectedReturnDate(e.target.value)}
+                      className="pl-9 h-10 text-sm rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                {/* 1.7 Terms & Notes (Span full row) */}
+                <div className="sm:col-span-2 lg:col-span-3">
+                  <label className="text-xs font-semibold text-foreground block mb-1.5">
+                    เงื่อนไข / ข้อตกลง / หมายเหตุเอกสาร
+                  </label>
+                  <textarea
+                    rows={2}
+                    className="w-full text-xs sm:text-sm p-3 rounded-xl border border-border bg-background focus:ring-1 focus:ring-primary focus:outline-none resize-none leading-relaxed"
+                    value={termsAndNotes}
+                    onChange={(e) => setTermsAndNotes(e.target.value)}
+                    placeholder="ระบุข้อตกลงพิเศษ เงื่อนไขการยืม หรือข้อความสำหรับเจ้าหน้าที่คลัง..."
+                  />
+                </div>
+
+              </div>
+            </div>
+
+            {/* ================= 2. รายการสินค้าที่เลือกเข้า LIST (SELECTED ITEMS LIST) ================= */}
+            <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-border gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold">
+                    <ShoppingCart className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-base font-bold text-foreground">
+                        2. รายการสินค้าที่ขอยืม (Item List)
+                      </h2>
+                      <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 hover:bg-emerald-100 border-0 text-xs">
+                        {cartItems.length} รุ่น • {totalRequested} เครื่อง
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      รายการรุ่นและจำนวนที่จะส่งให้สโตร์เตรียมเครื่อง (เลือกเพิ่มได้จากหัวข้อที่ 3 ด้านล่าง)
+                    </p>
+                  </div>
+                </div>
+
+                {cartItems.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearCart}
+                    className="text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl h-8 self-start sm:self-auto"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-1" /> ล้างรายการทั้งหมด
+                  </Button>
+                )}
+              </div>
+
+              {/* Table of selected items */}
+              {cartItems.length === 0 ? (
+                <div className="py-10 text-center border-2 border-dashed border-border rounded-2xl bg-muted/20">
+                  <ListPlus className="h-10 w-10 mx-auto text-muted-foreground/40 mb-2.5" />
+                  <p className="text-sm font-semibold text-foreground">ยังไม่มีรายการสินค้าใน List</p>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
+                    กรุณาเลื่อนลงไปที่ <span className="font-semibold text-primary">&quot;หัวข้อที่ 3: เลือกสินค้าเข้า List&quot;</span> ด้านล่าง เพื่อคลิกเพิ่มสินค้าที่ต้องการยืม
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-xl border border-border">
+                  <Table>
+                    <TableHeader className="bg-muted/50">
+                      <TableRow>
+                        <TableHead className="w-12 text-center text-xs">#</TableHead>
+                        <TableHead className="text-xs">รุ่น / ยี่ห้อ</TableHead>
+                        <TableHead className="text-xs">หมวดหมู่</TableHead>
+                        <TableHead className="text-xs">สต็อกคงเหลือ</TableHead>
+                        <TableHead className="text-xs text-center w-36">จำนวนที่ขอ</TableHead>
+                        <TableHead className="text-xs">หมายเหตุเฉพาะเครื่อง</TableHead>
+                        <TableHead className="text-xs text-center">สถานะการจัด</TableHead>
+                        <TableHead className="w-16 text-center text-xs">ลบ</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {cartItems.map(({ catalog: c, quantity, notes }, idx) => {
+                        const short = quantity > c.available
+                        const overCount = quantity - c.available
+
+                        return (
+                          <TableRow key={c.id} className={short ? 'bg-amber-50/40 dark:bg-amber-950/20' : ''}>
+                            {/* # */}
+                            <TableCell className="text-center font-medium text-xs text-muted-foreground">
+                              {idx + 1}
+                            </TableCell>
+
+                            {/* Model / Brand */}
+                            <TableCell>
+                              <div className="text-[11px] font-semibold uppercase text-muted-foreground">{c.brand}</div>
+                              <div className="text-sm font-bold text-foreground">{c.model}</div>
+                              {c.defaultSpecs && (
+                                <div className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">{c.defaultSpecs}</div>
+                              )}
+                            </TableCell>
+
+                            {/* Category */}
+                            <TableCell>
+                              <CategoryBadge category={c.category} />
+                            </TableCell>
+
+                            {/* Stock Available */}
+                            <TableCell>
+                              <div className="text-xs">
+                                <span className={c.available > 0 ? 'font-semibold text-emerald-600' : 'font-semibold text-rose-600'}>
+                                  พร้อมใช้ {c.available}
+                                </span>
+                                <span className="text-muted-foreground text-[11px] ml-1.5">(ทั้งหมด {c.total})</span>
+                              </div>
+                            </TableCell>
+
+                            {/* Stepper */}
+                            <TableCell className="text-center">
+                              <div className="inline-flex items-center gap-1 bg-card border border-border rounded-xl p-0.5 shadow-2xs">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7 rounded-lg"
+                                  onClick={() => updateQty(c.id, quantity - 1)}
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  value={quantity}
+                                  onChange={(e) => updateQty(c.id, parseInt(e.target.value) || 1)}
+                                  className="h-7 w-12 text-center text-xs font-bold border-0 bg-transparent p-0 focus-visible:ring-0"
+                                />
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7 rounded-lg"
+                                  onClick={() => updateQty(c.id, quantity + 1)}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
+
+                            {/* Item Notes */}
+                            <TableCell>
+                              <Input
+                                placeholder="เช่น ขอแท่นชาร์จ, แบตสำรอง, สาย USB..."
+                                value={notes}
+                                onChange={(e) => updateNotes(c.id, e.target.value)}
+                                className="h-8 text-xs rounded-lg max-w-sm"
+                              />
+                            </TableCell>
+
+                            {/* Fulfillment Status */}
+                            <TableCell className="text-center">
+                              {short ? (
+                                <Badge variant="outline" className="text-[11px] bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-200">
+                                  <AlertTriangle className="h-3 w-3 mr-1 text-amber-600" />
+                                  เข้าคิว ({overCount} เครื่อง)
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-[11px] bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                  <Check className="h-3 w-3 mr-1 text-emerald-600" />
+                                  พร้อมจัดครบ
+                                </Badge>
+                              )}
+                            </TableCell>
+
+                            {/* Delete */}
+                            <TableCell className="text-center">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => removeFromCart(c.id)}
+                                className="h-7 w-7 text-muted-foreground hover:text-rose-600 rounded-lg"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+
+              {/* Waiting List Alert Banner */}
+              {hasShortfall && (
+                <div className="mt-4 p-3.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 rounded-xl flex items-start gap-3 text-xs text-amber-800 dark:text-amber-200">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="leading-relaxed">
+                    <span className="font-bold">หมายเหตุเกี่ยวกับสินค้าที่ขอเกินสต็อก:</span>
+                    <div className="text-[11px] opacity-90 mt-0.5">
+                      รายการที่สต็อกไม่เพียงพอจะถูกบรรจุเข้าสู่ <b>Waiting List</b> โดยอัตโนมัติ เมื่อฝ่ายสโตร์ได้รับเครื่องคืนและตรวจสภาพพร้อมใช้งาน ระบบจะแจ้งเตือนเพื่อเตรียมจัดส่งทันที
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ================= 3. ค้นหาและเลือกสินค้าเข้า LIST (CATALOG PICKER) ================= */}
+            <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-border gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold">
+                    <Package className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-foreground">
+                      3. ค้นหาและเลือกสินค้าเข้า List (Catalog Inventory)
+                    </h2>
+                    <p className="text-xs text-muted-foreground">
+                      คลิกปุ่ม &quot;+ เพิ่มเข้า List&quot; เพื่อเลือกสินค้าเข้าใบคำขอยืมด้านบน
+                    </p>
+                  </div>
+                </div>
+
+                {/* Filter Controls */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={filterAvailableOnly ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilterAvailableOnly(!filterAvailableOnly)}
+                    className="rounded-xl h-8 px-3 text-xs gap-1.5"
+                  >
+                    <Check className={`h-3 w-3 ${filterAvailableOnly ? 'opacity-100' : 'opacity-40'}`} />
+                    เฉพาะพร้อมใช้ ({catalogs.filter(c => c.available > 0).length})
+                  </Button>
+                </div>
+              </div>
+
+              {/* Search & Category Pills */}
+              <div className="space-y-3 mb-5">
+                <div className="relative">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="พิมพ์ค้นหาชื่อรุ่น ยี่ห้อ หรือสเปก เช่น TC21, Zebra, PM85..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9 h-10 rounded-xl text-sm bg-background border-border"
+                    className="pl-10 h-11 rounded-xl text-sm bg-background border-border"
                   />
                   {search && (
                     <button
                       onClick={() => setSearch('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
-                      <X className="h-3.5 w-3.5" />
+                      <X className="h-4 w-4" />
                     </button>
                   )}
                 </div>
 
-                <Button
-                  variant={filterAvailableOnly ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setFilterAvailableOnly(!filterAvailableOnly)}
-                  className="rounded-xl h-10 px-3.5 text-xs gap-1.5 flex-shrink-0"
-                >
-                  <Check className={`h-3.5 w-3.5 ${filterAvailableOnly ? 'opacity-100' : 'opacity-40'}`} />
-                  เฉพาะพร้อมใช้ ({catalogs.filter(c => c.available > 0).length})
-                </Button>
+                {/* Category Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
+                  <span className="text-muted-foreground flex items-center gap-1 mr-1 flex-shrink-0">
+                    <Filter className="h-3 w-3" /> หมวดหมู่:
+                  </span>
+                  <button
+                    onClick={() => setSelectedCategory('all')}
+                    className={`px-3 py-1.5 rounded-xl font-medium transition-smooth whitespace-nowrap ${
+                      selectedCategory === 'all'
+                        ? 'bg-primary text-primary-foreground shadow-xs'
+                        : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground'
+                    }`}
+                  >
+                    ทั้งหมด ({catalogs.length})
+                  </button>
+                  {Object.entries(CATEGORY_LABELS).map(([key, label]) => {
+                    const count = catalogs.filter(c => c.category === key).length
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setSelectedCategory(key)}
+                        className={`px-3 py-1.5 rounded-xl font-medium transition-smooth whitespace-nowrap flex items-center gap-1.5 ${
+                          selectedCategory === key
+                            ? 'bg-primary text-primary-foreground shadow-xs'
+                            : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground'
+                        }`}
+                      >
+                        <span>{label}</span>
+                        <span className="opacity-70 text-[10px]">({count})</span>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
-              {/* Category Pills */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
-                <span className="text-muted-foreground flex items-center gap-1 mr-1 flex-shrink-0">
-                  <Filter className="h-3 w-3" /> หมวดหมู่:
-                </span>
-                <button
-                  onClick={() => setSelectedCategory('all')}
-                  className={`px-3 py-1 rounded-lg font-medium transition-smooth whitespace-nowrap ${
-                    selectedCategory === 'all'
-                      ? 'bg-primary text-primary-foreground shadow-xs'
-                      : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground'
-                  }`}
-                >
-                  ทั้งหมด ({catalogs.length})
-                </button>
-                {Object.entries(CATEGORY_LABELS).map(([key, label]) => {
-                  const count = catalogs.filter(c => c.category === key).length
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => setSelectedCategory(key)}
-                      className={`px-3 py-1 rounded-lg font-medium transition-smooth whitespace-nowrap flex items-center gap-1.5 ${
-                        selectedCategory === key
-                          ? 'bg-primary text-primary-foreground shadow-xs'
-                          : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground'
-                      }`}
-                    >
-                      <span>{label}</span>
-                      <span className="opacity-70 text-[10px]">({count})</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Catalog Grid View */}
-            <ScrollArea className="flex-1 p-4 sm:p-5">
+              {/* Catalog Cards Grid */}
               {loading && <LoadingState message="กำลังค้นหารายการสินค้า..." />}
 
               {!loading && displayedCatalogs.length === 0 && (
-                <div className="py-16 text-center">
-                  <Package className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
-                  <p className="text-sm font-medium text-foreground">ไม่พบรายการรุ่นสินค้า</p>
+                <div className="py-12 text-center">
+                  <Package className="h-10 w-10 mx-auto text-muted-foreground/30 mb-2" />
+                  <p className="text-sm font-medium text-foreground">ไม่พบรายการสินค้าที่ค้นหา</p>
                   <p className="text-xs text-muted-foreground mt-1">ลองเปลี่ยนคำค้นหา หรือเลือกหมวดหมู่อื่น</p>
                 </div>
               )}
 
               {!loading && displayedCatalogs.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3.5">
                   {displayedCatalogs.map((c) => {
-                    const cartEntry = cart[c.id]
-                    const inCart = !!cartEntry
-                    const qty = cartEntry?.quantity || 0
+                    const inCart = !!cart[c.id]
+                    const currentQty = cart[c.id]?.quantity || 0
                     const isAvailable = c.available > 0
 
                     return (
@@ -394,13 +727,13 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
                         key={c.id}
                         className={`rounded-2xl border p-4 transition-all duration-200 flex flex-col justify-between ${
                           inCart
-                            ? 'bg-primary/[0.03] border-primary/40 ring-1 ring-primary/30 shadow-xs'
+                            ? 'bg-primary/[0.04] border-primary/40 ring-2 ring-primary/20 shadow-xs'
                             : 'bg-card border-border hover:border-border/80 hover:shadow-xs'
                         }`}
                       >
                         {/* Top: Category & Stock Badge */}
                         <div>
-                          <div className="flex items-center justify-between gap-2 mb-2">
+                          <div className="flex items-center justify-between gap-1.5 mb-2">
                             <CategoryBadge category={c.category} />
                             {isAvailable ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
@@ -410,30 +743,24 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
                             ) : (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800">
                                 <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-                                ของหมด (คิว)
+                                ของหมด
                               </span>
                             )}
                           </div>
 
                           {/* Brand & Model */}
-                          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                             {c.brand}
                           </div>
-                          <h3 className="text-base font-bold text-foreground mt-0.5 leading-snug">
+                          <h3 className="text-sm sm:text-base font-bold text-foreground mt-0.5 leading-snug line-clamp-1">
                             {c.model}
                           </h3>
 
                           {/* Stock Breakdown */}
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-2 py-1.5 px-2.5 rounded-xl bg-muted/40">
+                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-2 py-1 px-2 rounded-lg bg-muted/40">
                             <div>ทั้งหมด: <span className="font-semibold text-foreground">{c.total}</span></div>
                             <div>•</div>
                             <div>กำลังยืม: <span className="font-semibold text-amber-600">{c.onLoan}</span></div>
-                            {c.inRepair > 0 && (
-                              <>
-                                <div>•</div>
-                                <div>ซ่อม: <span className="font-semibold text-rose-600">{c.inRepair}</span></div>
-                              </>
-                            )}
                           </div>
 
                           {/* Specs */}
@@ -444,44 +771,20 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
                           )}
                         </div>
 
-                        {/* Bottom: Action Stepper or Add button */}
-                        <div className="mt-4 pt-3 border-t border-border/60">
+                        {/* Bottom Action */}
+                        <div className="mt-3 pt-3 border-t border-border/60">
                           {inCart ? (
                             <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-1 bg-card border border-primary/30 rounded-xl p-0.5 shadow-2xs">
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8 rounded-lg text-foreground hover:bg-muted"
-                                  onClick={() => updateQty(c.id, qty - 1)}
-                                >
-                                  <Minus className="h-3.5 w-3.5" />
-                                </Button>
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  value={qty}
-                                  onChange={(e) => updateQty(c.id, parseInt(e.target.value) || 1)}
-                                  className="h-8 w-12 text-center text-sm font-bold border-0 bg-transparent p-0 focus-visible:ring-0"
-                                />
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8 rounded-lg text-foreground hover:bg-muted"
-                                  onClick={() => updateQty(c.id, qty + 1)}
-                                >
-                                  <Plus className="h-3.5 w-3.5" />
-                                </Button>
-                              </div>
-
+                              <span className="text-xs font-bold text-primary flex items-center gap-1">
+                                <Check className="h-3.5 w-3.5" /> ใน List ({currentQty})
+                              </span>
                               <Button
                                 size="sm"
-                                variant="ghost"
-                                onClick={() => removeFromCart(c.id)}
-                                className="h-8 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl text-xs gap-1"
+                                variant="outline"
+                                onClick={() => addToCart(c)}
+                                className="h-8 px-2.5 rounded-xl text-xs font-semibold gap-1"
                               >
-                                <Trash2 className="h-3.5 w-3.5" />
-                                <span className="hidden sm:inline">ลบ</span>
+                                <Plus className="h-3.5 w-3.5" /> เพิ่มอีก
                               </Button>
                             </div>
                           ) : (
@@ -494,7 +797,7 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
                               }`}
                             >
                               <Plus className="h-3.5 w-3.5" />
-                              {isAvailable ? 'ขอยืมรุ่นนี้' : 'ขอจองคิว (เกินสต็อก)'}
+                              {isAvailable ? 'เพิ่มเข้า List' : 'ขอจองคิว (เกินสต็อก)'}
                             </Button>
                           )}
                         </div>
@@ -503,308 +806,61 @@ export function RequestLoanSheet({ open, onOpenChange, onCreated }: RequestLoanS
                   })}
                 </div>
               )}
-            </ScrollArea>
+            </div>
+
+            {/* Bottom spacer for comfortable scrolling */}
+            <div className="h-20" />
+
           </div>
+        </div>
 
-          {/* ----- RIGHT COLUMN: CART & BORROW FORM (35-40% width) ----- */}
-          <div className="w-full lg:w-[460px] xl:w-[500px] flex flex-col bg-card flex-shrink-0 overflow-hidden shadow-sm">
-            
-            {/* Header of Form Panel */}
-            <div className="p-4 border-b border-border bg-card flex items-center justify-between flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold">
-                  <FileText className="h-4 w-4" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-foreground">รายละเอียดคำขอยืม</h2>
-                  <p className="text-[11px] text-muted-foreground">รายการสินค้าและข้อมูลลูกค้า</p>
-                </div>
-              </div>
-
-              {cartItems.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearCart}
-                  className="h-7 text-[11px] text-muted-foreground hover:text-rose-600 px-2 rounded-lg"
-                >
-                  ล้างรายการ
-                </Button>
+        {/* ================= STICKY BOTTOM ACTION BAR ================= */}
+        <footer className="h-16 px-4 sm:px-6 bg-card border-t border-border flex items-center justify-between flex-shrink-0 shadow-lg z-10">
+          <div className="flex items-center gap-3">
+            <div className="text-xs sm:text-sm">
+              <span className="text-muted-foreground">สรุปคำขอยืม: </span>
+              <span className="font-bold text-foreground">
+                {cartItems.length} รุ่น ({totalRequested} เครื่อง)
+              </span>
+              {expectedReturnDate && (
+                <span className="text-muted-foreground hidden md:inline ml-2">
+                  • กำหนดคืน: <span className="text-foreground font-semibold">{formatThaiDate(expectedReturnDate)}</span>
+                </span>
               )}
             </div>
-
-            {/* Scrollable Form Body */}
-            <ScrollArea className="flex-1 p-4 space-y-4">
-              <div className="space-y-4">
-                
-                {/* 1. รายการในตะกร้า (Cart Items) */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      รายการที่เลือก ({cartItems.length} รุ่น, {totalRequested} เครื่อง)
-                    </span>
-                  </div>
-
-                  {cartItems.length === 0 ? (
-                    <div className="p-6 text-center border-2 border-dashed border-border rounded-2xl bg-muted/20">
-                      <ShoppingCart className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
-                      <p className="text-xs font-medium text-foreground">ยังไม่มีรายการที่เลือก</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
-                        คลิกปุ่ม &quot;ขอยืมรุ่นนี้&quot; จากรายการสินค้าด้านซ้าย
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2.5">
-                      {cartItems.map(({ catalog: c, quantity, notes }) => {
-                        const short = quantity > c.available
-                        const overCount = quantity - c.available
-
-                        return (
-                          <div
-                            key={c.id}
-                            className={`p-3 rounded-xl border transition-all ${
-                              short
-                                ? 'bg-amber-50/70 border-amber-300 dark:bg-amber-950/20 dark:border-amber-800'
-                                : 'bg-background border-border'
-                            }`}
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <div className="text-[10px] font-semibold uppercase text-muted-foreground">
-                                  {c.brand}
-                                </div>
-                                <div className="text-sm font-bold text-foreground truncate">
-                                  {c.model}
-                                </div>
-                                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
-                                  <span>สต็อกพร้อมใช้: {c.available}</span>
-                                  {short && (
-                                    <Badge variant="outline" className="text-[10px] bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-200">
-                                      เกินสต็อก {overCount} ชิ้น (รอคิว)
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Stepper */}
-                              <div className="flex items-center gap-1 bg-muted/60 rounded-lg p-0.5">
-                                <button
-                                  onClick={() => updateQty(c.id, quantity - 1)}
-                                  className="h-6 w-6 flex items-center justify-center rounded hover:bg-background text-foreground"
-                                >
-                                  <Minus className="h-3 w-3" />
-                                </button>
-                                <span className="w-8 text-center text-xs font-bold text-foreground">
-                                  {quantity}
-                                </span>
-                                <button
-                                  onClick={() => updateQty(c.id, quantity + 1)}
-                                  className="h-6 w-6 flex items-center justify-center rounded hover:bg-background text-foreground"
-                                >
-                                  <Plus className="h-3 w-3" />
-                                </button>
-                              </div>
-
-                              <button
-                                onClick={() => removeFromCart(c.id)}
-                                className="text-muted-foreground hover:text-rose-600 p-1"
-                              >
-                                <X className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
-
-                            {/* Item specific notes */}
-                            <Input
-                              placeholder="หมายเหตุเฉพาะรุ่นนี้ เช่น เอาแท่นชาร์จ, แบตสำรอง..."
-                              value={notes}
-                              onChange={(e) => updateNotes(c.id, e.target.value)}
-                              className="mt-2 h-7 text-xs bg-card border-border/80 rounded-lg"
-                            />
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-
-                  {/* Shortfall warning notice */}
-                  {hasShortfall && (
-                    <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl flex items-start gap-2.5 text-xs text-amber-800 dark:text-amber-200">
-                      <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <div className="leading-relaxed">
-                        <span className="font-bold">รุ่นที่ขอเกินสต็อกจะติดคิว Waiting List อัตโนมัติ:</span>
-                        <div className="text-[11px] opacity-90 mt-0.5">
-                          เมื่อมีเครื่องถูกนำมาคืนที่เคาน์เตอร์และผ่านการตรวจสอบสภาพ ระบบจะแจ้งเตือนเพื่อจัดส่งให้คิวนี้ทันที
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <Separator />
-
-                {/* 2. ข้อมูลลูกค้าและผู้ยืม (Customer & Loan Info) */}
-                <div className="space-y-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-                    ข้อมูลผู้ยืมและลูกค้า
-                  </span>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {/* Customer Name */}
-                    <div>
-                      <label className="text-xs font-medium text-foreground block mb-1">
-                        ชื่อลูกค้า / ผู้ติดต่อ <span className="text-rose-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <User className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                        <Input
-                          value={customerName}
-                          onChange={(e) => setCustomerName(e.target.value)}
-                          placeholder="เช่น คุณสมชาย มั่งมี"
-                          className="pl-8 h-9 text-xs rounded-xl"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Customer Company */}
-                    <div>
-                      <label className="text-xs font-medium text-foreground block mb-1">
-                        ชื่อบริษัท / องค์กร
-                      </label>
-                      <div className="relative">
-                        <Building2 className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                        <Input
-                          value={customerCompany}
-                          onChange={(e) => setCustomerCompany(e.target.value)}
-                          placeholder="เช่น บจก. ซีพี ออลล์"
-                          className="pl-8 h-9 text-xs rounded-xl"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Industry */}
-                    <div>
-                      <label className="text-xs font-medium text-foreground block mb-1">
-                        กลุ่มอุตสาหกรรม
-                      </label>
-                      <Select value={customerIndustry} onValueChange={setCustomerIndustry}>
-                        <SelectTrigger className="h-9 text-xs rounded-xl">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(INDUSTRY_LABELS).map(([k, v]) => (
-                            <SelectItem key={k} value={k} className="text-xs">{v}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Sales Rep */}
-                    <div>
-                      <label className="text-xs font-medium text-foreground block mb-1">
-                        พนักงานขาย / ผู้รับผิดชอบ <span className="text-rose-500">*</span>
-                      </label>
-                      <Input
-                        value={salesRepName}
-                        onChange={(e) => setSalesRepName(e.target.value)}
-                        placeholder="เช่น สมหญิง (Sales)"
-                        className="h-9 text-xs rounded-xl"
-                      />
-                    </div>
-
-                    {/* Purpose */}
-                    <div>
-                      <label className="text-xs font-medium text-foreground block mb-1">
-                        วัตถุประสงค์การยืม
-                      </label>
-                      <Select value={purpose} onValueChange={setPurpose}>
-                        <SelectTrigger className="h-9 text-xs rounded-xl">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(PURPOSE_LABELS).map(([k, v]) => (
-                            <SelectItem key={k} value={k} className="text-xs">{v}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Return Date */}
-                    <div>
-                      <label className="text-xs font-medium text-foreground block mb-1">
-                        กำหนดวันคืน <span className="text-rose-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                        <Input
-                          type="date"
-                          value={expectedReturnDate}
-                          onChange={(e) => setExpectedReturnDate(e.target.value)}
-                          className="pl-8 h-9 text-xs rounded-xl"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Terms & Notes */}
-                  <div>
-                    <label className="text-xs font-medium text-foreground block mb-1">
-                      เงื่อนไขการยืม / หมายเหตุเพิ่มเติม
-                    </label>
-                    <textarea
-                      rows={2}
-                      className="w-full text-xs p-2.5 rounded-xl border border-border bg-background focus:ring-1 focus:ring-primary focus:outline-none resize-none leading-relaxed"
-                      value={termsAndNotes}
-                      onChange={(e) => setTermsAndNotes(e.target.value)}
-                      placeholder="ระบุข้อตกลงพิเศษ หรือเงื่อนไขเพิ่มเติม..."
-                    />
-                  </div>
-                </div>
-
-              </div>
-            </ScrollArea>
-
-            {/* Footer Submit Button Panel */}
-            <div className="p-4 border-t border-border bg-card flex-shrink-0 space-y-2.5 shadow-sm">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">ยอดรวมคำขอ:</span>
-                <span className="font-bold text-foreground text-sm">
-                  {cartItems.length} รุ่น • {totalRequested} เครื่อง
-                </span>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                  className="rounded-xl h-11 text-xs px-4"
-                >
-                  ยกเลิก
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={submitting || cartItems.length === 0 || !customerName.trim() || !salesRepName.trim() || !expectedReturnDate}
-                  className="flex-1 rounded-xl h-11 text-xs font-bold gap-2 shadow-sm"
-                >
-                  {submitting ? (
-                    'กำลังสร้างใบคำขอ...'
-                  ) : (
-                    <>
-                      <FileText className="h-4 w-4" />
-                      <span>ส่งคำขอยืมสินค้า ({totalRequested} เครื่อง)</span>
-                      {hasShortfall && <Clock className="h-4 w-4 ml-1 opacity-70" />}
-                    </>
-                  )}
-                </Button>
-              </div>
-
-              <p className="text-[11px] text-muted-foreground text-center">
-                ระบบจะสร้างใบคำขอยืมสถานะ &quot;รอจัด&quot; เพื่อให้สโตร์สแกน S/N และส่งมอบต่อไป
-              </p>
-            </div>
-
+            {hasShortfall && (
+              <Badge variant="outline" className="hidden sm:inline-flex bg-amber-100 text-amber-800 border-amber-300 text-xs gap-1">
+                <Clock className="h-3 w-3" /> มีรายการติดคิว {shortfallItems.length} รุ่น
+              </Badge>
+            )}
           </div>
 
-        </div>
+          <div className="flex items-center gap-2.5">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+              className="rounded-xl h-10 px-4 text-xs"
+            >
+              ยกเลิก
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSubmit}
+              disabled={submitting || cartItems.length === 0 || !customerName.trim() || !salesRepName.trim() || !expectedReturnDate}
+              className="rounded-xl h-10 px-5 text-xs font-bold gap-2 shadow-sm"
+            >
+              {submitting ? (
+                <>กำลังบันทึกคำขอ...</>
+              ) : (
+                <>
+                  <Send className="h-4 w-4" />
+                  <span>บันทึกส่งคำขอยืมสินค้า ({totalRequested} เครื่อง)</span>
+                </>
+              )}
+            </Button>
+          </div>
+        </footer>
 
       </div>
     </div>
