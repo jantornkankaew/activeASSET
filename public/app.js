@@ -311,28 +311,17 @@ function showConfirmDialog({
       dlg.removeEventListener('close', onClose);
     };
 
-    const onCancel = () => {
+    const finish = (result) => {
       if (answered) return;
       answered = true;
       cleanup();
-      dlg.close();
-      resolve(false);
+      smoothCloseDialog(dlg);
+      resolve(result);
     };
 
-    const onApprove = () => {
-      if (answered) return;
-      answered = true;
-      cleanup();
-      dlg.close();
-      resolve(true);
-    };
-
-    const onClose = () => {
-      if (answered) return;
-      answered = true;
-      cleanup();
-      resolve(false);
-    };
+    const onCancel = () => finish(false);
+    const onApprove = () => finish(true);
+    const onClose = () => finish(false);
 
     if (btnCancel) btnCancel.addEventListener('click', onCancel);
     if (btnClose) btnClose.addEventListener('click', onCancel);
@@ -7493,13 +7482,22 @@ function setupCompanySettingsModal() {
   let inlineEditingRoleId = null;
   let inlineEditingRoleName = '';
 
-  async function loadRolesAndUsersUI() {
+  async function loadRolesAndUsersUI(opts = {}) {
+    const isSilent = opts && opts.silent === true;
+    const preserveUsers = opts && opts.preserveUsersList === true;
     const matrixWrap = document.getElementById('rolesMatrixWrap');
     const usersList = document.getElementById('usersRolesList');
 
     try {
-      if (matrixWrap) matrixWrap.innerHTML = '<div style="padding:24px; text-align:center; color:#64748b;">กำลังโหลดตารางสิทธิ์แนวคอลัมน์...</div>';
-      if (usersList) usersList.innerHTML = '<div style="padding:14px; color:#64748b;">กำลังโหลดรายชื่อผู้ใช้...</div>';
+      // Only show placeholder if not silent and container is empty to prevent page flickering
+      if (!isSilent) {
+        if (matrixWrap && !matrixWrap.children.length) {
+          matrixWrap.innerHTML = '<div style="padding:24px; text-align:center; color:#64748b;">กำลังโหลดตารางสิทธิ์แนวคอลัมน์...</div>';
+        }
+        if (usersList && !usersList.children.length) {
+          usersList.innerHTML = '<div style="padding:14px; color:#64748b;">กำลังโหลดรายชื่อผู้ใช้...</div>';
+        }
+      }
 
       const [rolesRes, usersRes] = await Promise.all([
         fetch('/api/roles'),
@@ -7516,9 +7514,12 @@ function setupCompanySettingsModal() {
       cachedUsers = usersData.users || [];
 
       renderRolesColumnMatrix(cachedRoles, cachedPermissionKeys);
-      renderUsersRolesList(cachedUsers, cachedRoles);
+      if (!preserveUsers) {
+        renderUsersRolesList(cachedUsers, cachedRoles);
+      }
     } catch (err) {
-      if (matrixWrap) matrixWrap.innerHTML = `<div style="color:#ef4444; padding:16px;">❌ ${escapeHtml(err.message)}</div>`;
+      if (matrixWrap && !matrixWrap.children.length) matrixWrap.innerHTML = `<div style="color:#ef4444; padding:16px;">❌ ${escapeHtml(err.message)}</div>`;
+      if (usersList && !usersList.children.length) usersList.innerHTML = `<div style="color:#ef4444; padding:16px;">❌ ${escapeHtml(err.message)}</div>`;
     }
   }
 
@@ -8424,7 +8425,7 @@ function setupCompanySettingsModal() {
       if (!res.ok) throw new Error(data.error || 'ลบบทบาทไม่สำเร็จ');
       cachedRoles = data.roles || [];
       renderRolesCards(cachedRoles, cachedPermissionKeys);
-      await loadRolesAndUsersUI();
+      await loadRolesAndUsersUI({ silent: true });
       showToast(data.message || 'ลบบทบาทเรียบร้อยแล้ว');
     } catch (err) {
       showToast(`❌ ${err.message}`);
@@ -8460,10 +8461,14 @@ function setupCompanySettingsModal() {
       if (!res.ok) throw new Error(data.error || 'เปลี่ยนสถานะไม่สำเร็จ');
 
       showToast(data.message || 'อัปเดตสถานะผู้ใช้เรียบร้อยแล้ว');
-      await loadRolesAndUsersUI();
+      // Update locally without flickering
+      const user = cachedUsers.find(u => u.email === email);
+      if (user) user.status = newStatus;
+      renderUsersRolesList(cachedUsers, cachedRoles);
+      await loadRolesAndUsersUI({ silent: true, preserveUsersList: true });
     } catch (err) {
       showToast(`❌ ${err.message}`);
-      await loadRolesAndUsersUI();
+      await loadRolesAndUsersUI({ silent: true });
     }
   }
 
@@ -8482,6 +8487,15 @@ function setupCompanySettingsModal() {
     });
     if (!confirmed) return;
 
+    // Smoothly animate the row slide-out without flickering the entire list
+    const rowEl = document.querySelector(`.user-role-row[data-user-email="${CSS.escape(email)}"]`);
+    if (rowEl) {
+      rowEl.style.transition = 'opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1), transform 0.22s cubic-bezier(0.4, 0, 0.2, 1)';
+      rowEl.style.opacity = '0';
+      rowEl.style.transform = 'translateX(24px) scale(0.97)';
+      rowEl.style.pointerEvents = 'none';
+    }
+
     try {
       const res = await fetch(`/api/users/${encodeURIComponent(email)}`, {
         method: 'DELETE'
@@ -8490,10 +8504,34 @@ function setupCompanySettingsModal() {
       if (!res.ok) throw new Error(data.error || 'ลบผู้ใช้ไม่สำเร็จ');
 
       showToast(data.message || 'ลบผู้ใช้เรียบร้อยแล้ว');
-      await loadRolesAndUsersUI();
+      
+      // Update local array & smoothly collapse row height without rebuilding DOM
+      cachedUsers = cachedUsers.filter(u => u.email !== email);
+      if (rowEl) {
+        rowEl.style.transition = 'max-height 0.22s ease-out, padding 0.22s ease-out, margin 0.22s ease-out';
+        rowEl.style.maxHeight = '0px';
+        rowEl.style.paddingTop = '0px';
+        rowEl.style.paddingBottom = '0px';
+        rowEl.style.marginTop = '0px';
+        rowEl.style.marginBottom = '0px';
+        rowEl.style.border = 'none';
+        rowEl.style.overflow = 'hidden';
+        setTimeout(() => rowEl.remove(), 240);
+      }
+      
+      const countBadge = document.getElementById('usersRolesCountBadge');
+      if (countBadge) countBadge.textContent = cachedUsers.length;
+
+      // Silently sync role user counts in background
+      await loadRolesAndUsersUI({ silent: true, preserveUsersList: true });
     } catch (err) {
+      if (rowEl) {
+        rowEl.style.opacity = '1';
+        rowEl.style.transform = 'none';
+        rowEl.style.pointerEvents = 'auto';
+      }
       showToast(`❌ ${err.message}`);
-      await loadRolesAndUsersUI();
+      await loadRolesAndUsersUI({ silent: true });
     }
   }
 
@@ -8516,10 +8554,13 @@ function setupCompanySettingsModal() {
         applyPermissionsToUI();
         renderActiveView();
       }
-      await loadRolesAndUsersUI();
+      const user = cachedUsers.find(u => u.email === email);
+      if (user) user.role_id = newRoleId;
+      renderUsersRolesList(cachedUsers, cachedRoles);
+      await loadRolesAndUsersUI({ silent: true, preserveUsersList: true });
     } catch (err) {
       showToast(`❌ ${err.message}`);
-      await loadRolesAndUsersUI();
+      await loadRolesAndUsersUI({ silent: true });
     }
   }
 
@@ -8745,9 +8786,12 @@ async function renderMasterCustomersTab(container) {
   await fetchAndRenderCustomers(tableContainer);
 }
 
-async function fetchAndRenderCustomers(container) {
+async function fetchAndRenderCustomers(container, opts = {}) {
   if (!container) return;
-  container.innerHTML = `<div style="padding:32px; text-align:center; color:#64748b;"><span class="status-spinner"></span> กำลังโหลด...</div>`;
+  const isSilent = opts && opts.silent === true;
+  if (!isSilent && !container.querySelector('table')) {
+    container.innerHTML = `<div style="padding:32px; text-align:center; color:#64748b;"><span class="status-spinner"></span> กำลังโหลด...</div>`;
+  }
   try {
     const res = await fetch(`/api/master/customers?q=${encodeURIComponent(masterCustomerQuery)}&page=${masterCustomerPage}&limit=25`);
     const data = await res.json();
@@ -8865,14 +8909,22 @@ async function fetchAndRenderCustomers(container) {
         });
         if (!confirmed) return;
 
+        const tr = btn.closest('tr');
+        if (tr) {
+          tr.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+          tr.style.opacity = '0';
+          tr.style.transform = 'translateX(16px)';
+        }
+
         try {
           const delRes = await fetch(`/api/master/customers/${id}`, { method: 'DELETE' });
           const delData = await delRes.json();
           if (!delRes.ok) throw new Error(delData.error || 'ลบข้อมูลลูกค้าไม่สำเร็จ');
           showToast(`✅ ${delData.message || 'ลบข้อมูลลูกค้าเรียบร้อยแล้ว'}`);
           await updateMasterBadgeCounts();
-          fetchAndRenderCustomers(container);
+          fetchAndRenderCustomers(container, { silent: true });
         } catch (err) {
+          if (tr) { tr.style.opacity = '1'; tr.style.transform = 'none'; }
           showToast(`❌ ${err.message}`);
         }
       });
@@ -8982,9 +9034,12 @@ async function renderMasterCatalogsTab(container) {
   await fetchAndRenderCatalogs(tableContainer);
 }
 
-async function fetchAndRenderCatalogs(container) {
+async function fetchAndRenderCatalogs(container, opts = {}) {
   if (!container) return;
-  container.innerHTML = `<div style="padding:32px; text-align:center; color:#64748b;"><span class="status-spinner"></span> กำลังโหลด...</div>`;
+  const isSilent = opts && opts.silent === true;
+  if (!isSilent && !container.querySelector('table')) {
+    container.innerHTML = `<div style="padding:32px; text-align:center; color:#64748b;"><span class="status-spinner"></span> กำลังโหลด...</div>`;
+  }
   try {
     const res = await fetch(`/api/master/catalogs?q=${encodeURIComponent(masterCatalogQuery)}`);
     const data = await res.json();
@@ -9087,14 +9142,22 @@ async function fetchAndRenderCatalogs(container) {
         });
         if (!confirmed) return;
 
+        const tr = btn.closest('tr');
+        if (tr) {
+          tr.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+          tr.style.opacity = '0';
+          tr.style.transform = 'translateX(16px)';
+        }
+
         try {
           const delRes = await fetch(`/api/master/catalogs/${id}`, { method: 'DELETE' });
           const delData = await delRes.json();
           if (!delRes.ok) throw new Error(delData.error || 'ลบแคตตาล็อกไม่สำเร็จ');
           showToast(`✅ ${delData.message || 'ลบเรียบร้อยแล้ว'}`);
           await updateMasterBadgeCounts();
-          fetchAndRenderCatalogs(container);
+          fetchAndRenderCatalogs(container, { silent: true });
         } catch (err) {
+          if (tr) { tr.style.opacity = '1'; tr.style.transform = 'none'; }
           showToast(`❌ ${err.message}`);
         }
       });
@@ -9243,6 +9306,13 @@ async function fetchAndRenderOptions(container, type) {
         });
         if (!confirmed) return;
 
+        const card = btn.closest('.master-simple-card');
+        if (card) {
+          card.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+          card.style.opacity = '0';
+          card.style.transform = 'scale(0.95)';
+        }
+
         try {
           const delRes = await fetch(`/api/master/options/${id}`, { method: 'DELETE' });
           const delData = await delRes.json();
@@ -9251,6 +9321,7 @@ async function fetchAndRenderOptions(container, type) {
           await updateMasterBadgeCounts();
           fetchAndRenderOptions(container, type);
         } catch (err) {
+          if (card) { card.style.opacity = '1'; card.style.transform = 'none'; }
           showToast(`❌ ${err.message}`);
         }
       });
