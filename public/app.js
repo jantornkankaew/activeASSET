@@ -4965,8 +4965,11 @@ function renderDispatchTable() {
     return;
   }
 
-  // Restore regular picking thead if not in return mode
-  const canDeleteItems = !state.dispatchReturnMode && (loan?.status === 'Requested' || loan?.status === 'Dispatching');
+  // Restore regular picking thead if not in return mode (only allow deleting if more than 1 item remains)
+  const draftItemCount = (state.dispatchDraftItems && state.dispatchDraftItems.length) || (loan?.items && loan.items.length) || 0;
+  const canDeleteItems = !state.dispatchReturnMode && 
+    (loan?.status === 'Requested' || loan?.status === 'Dispatching') && 
+    draftItemCount > 1;
 
   if (thead) {
     thead.innerHTML = `
