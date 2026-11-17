@@ -350,6 +350,9 @@ function applyServerState(data) {
   state.loans = data.loans || [];
   state.accessorySuggestions = data.accessorySuggestions || [];
   state.locations = data.locations || [];
+  if (data.users) {
+    state.users = data.users;
+  }
   if (data.companySettings) {
     state.companySettings = { ...state.companySettings, ...data.companySettings };
   }
@@ -9884,8 +9887,59 @@ function setupSendEmailModal() {
     const toInp = document.getElementById('emailToInput');
     if (toInp) toInp.value = loan.customer_email || '';
 
+    // Resolve CC email to the creator of this specific loan
+    function resolveLoanCreatorEmail(l) {
+      if (!l) return '';
+      // 1. Direct created_by email if it contains '@'
+      if (l.created_by && l.created_by.includes('@')) {
+        return l.created_by.trim();
+      }
+
+      const users = state.users || [];
+      const searchTarget = (l.created_by || l.borrower_name || '').trim();
+      if (searchTarget) {
+        // Strip suffixes like '(Sales)', '(Admin)', etc.
+        const cleanName = searchTarget.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+
+        // Exact match with user name
+        const exact = users.find(u => (u.name || '').trim().toLowerCase() === cleanName);
+        if (exact && exact.email) return exact.email.trim();
+
+        // Substring / partial match with user name or email
+        const partial = users.find(u => {
+          const uName = (u.name || '').trim().toLowerCase();
+          return uName && (cleanName.includes(uName) || uName.includes(cleanName));
+        });
+        if (partial && partial.email) return partial.email.trim();
+      }
+
+      // 2. Current user if name matches borrower_name
+      if (state.currentUser && state.currentUser.email) {
+        const curName = (state.currentUser.name || '').trim().toLowerCase();
+        const bName = (l.borrower_name || '').toLowerCase();
+        if (curName && bName.includes(curName)) {
+          return state.currentUser.email.trim();
+        }
+      }
+
+      // 3. Fallback: current logged in user
+      if (state.currentUser && state.currentUser.email) {
+        return state.currentUser.email.trim();
+      }
+
+      // 4. Fallback to company email
+      return c.company_email || '';
+    }
+
+    const creatorEmail = resolveLoanCreatorEmail(loan);
     const ccInp = document.getElementById('emailCcInput');
-    if (ccInp) ccInp.value = c.company_email || '';
+    if (ccInp) ccInp.value = creatorEmail;
+
+    const ccLabel = document.getElementById('emailCcLabel');
+    if (ccLabel) {
+      const creatorName = (loan.created_by && !loan.created_by.includes('@') ? loan.created_by : loan.borrower_name || '').replace(/\s*\([^)]*\)/g, '').trim();
+      ccLabel.textContent = creatorName ? `สำเนา (CC) • ${creatorName}` : 'สำเนา (CC) • ผู้สร้างใบยืม';
+    }
 
     const subjInp = document.getElementById('emailSubjectInput');
     if (subjInp) {
@@ -12271,7 +12325,8 @@ function setupEventListeners() {
       status: submitStatus,
       checkout_date: document.getElementById('loanCheckoutDate').value,
       due_date: document.getElementById('loanDueDate').value,
-      items: validRows
+      items: validRows,
+      created_by: (state.currentUser && state.currentUser.email) || ''
     };
 
     try {

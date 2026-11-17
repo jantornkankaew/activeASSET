@@ -1463,7 +1463,8 @@ function getFullState() {
     locations: [...allLocations],
     companySettings: getCompanySettings(),
     roles: getAllRoles(),
-    permissionKeys: PERMISSION_KEYS
+    permissionKeys: PERMISSION_KEYS,
+    users: db.prepare("SELECT email, name, role FROM users WHERE status = 'active'").all()
   };
 }
 
@@ -2491,7 +2492,13 @@ const server = http.createServer(async (req, res) => {
         ? saveBase64Image(body.borrower_signature, `sig-${loanId}`)
         : '';
 
-      const createdBy = (body.created_by || borrowerName || '').trim();
+      let createdBy = String(body.created_by || '').trim();
+      if (!createdBy.includes('@') && borrowerName) {
+        const cleanName = borrowerName.replace(/\s*\([^)]*\)/g, '').trim();
+        const u = db.prepare("SELECT email FROM users WHERE name = ? OR name LIKE '%' || ? || '%'").get(cleanName, cleanName);
+        if (u && u.email) createdBy = u.email;
+      }
+      if (!createdBy) createdBy = (borrowerName || '').trim();
 
       db.exec('BEGIN TRANSACTION');
       try {
