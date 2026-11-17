@@ -8834,7 +8834,7 @@ async function fetchAndRenderCustomers(container, opts = {}) {
     container.innerHTML = `<div style="padding:32px; text-align:center; color:#64748b;"><span class="status-spinner"></span> กำลังโหลด...</div>`;
   }
   try {
-    const res = await fetch(`/api/master/customers?q=${encodeURIComponent(masterCustomerQuery)}&page=${masterCustomerPage}&limit=25`);
+    const res = await fetch(`/api/master/customers?q=${encodeURIComponent(masterCustomerQuery)}&page=${masterCustomerPage}&limit=50`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'โหลดข้อมูลลูกค้าไม่สำเร็จ');
 

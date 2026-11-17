@@ -15090,6 +15090,11 @@ dialog.modal-company-settings.modal-fullscreen {
   padding-bottom: 0 !important;
 }
 
+/* Hide duplicate bottom footer in fullscreen mode - header already contains 'กลับ' and 'บันทึกการตั้งค่า' */
+.modal-company-settings .modal-footer {
+  display: none !important;
+}
+
 .company-settings-body {
   padding: 16px 22px;
   display: flex;
@@ -15098,6 +15103,7 @@ dialog.modal-company-settings.modal-fullscreen {
   flex: 1 1 auto !important;
   overflow-y: auto !important;
   box-sizing: border-box;
+  min-height: 0;
 }
 
 @media (max-width: 768px) {
@@ -21946,20 +21952,33 @@ html.is-unauthenticated .app-shell {
 /* ==========================================================================
    MASTER DATA (ข้อมูลหลัก) STYLING - Clean, Minimal & Borderless (GEMINI.md)
    ========================================================================== */
+#tabPanelCompanyMaster.company-tab-panel {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
 .master-data-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   width: 100%;
+  max-width: 100% !important;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
 }
 
 .master-sub-nav-bar {
   display: flex;
   align-items: center;
   border-bottom: 1px solid #e2e8f0;
-  padding-bottom: 2px;
+  padding-bottom: 4px;
   overflow-x: auto;
   scrollbar-width: thin;
+  flex-shrink: 0;
 }
 
 .master-sub-tabs {
@@ -22018,8 +22037,11 @@ html.is-unauthenticated .app-shell {
 .master-data-content-area {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
 }
 
 .master-toolbar {
@@ -22028,8 +22050,9 @@ html.is-unauthenticated .app-shell {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 2px 0 10px 0;
+  padding: 2px 0 8px 0;
   border-bottom: 1px solid #f1f5f9;
+  flex-shrink: 0;
 }
 
 .master-toolbar-title-group {
@@ -22065,11 +22088,20 @@ html.is-unauthenticated .app-shell {
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .master-table-scroll {
-  overflow-x: auto;
-  max-height: 60vh;
+  overflow: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  max-height: none !important;
+  display: flex;
+  flex-direction: column;
 }
 
 .master-table {
@@ -22077,6 +22109,7 @@ html.is-unauthenticated .app-shell {
   border-collapse: collapse;
   text-align: left;
   font-size: 13px;
+  flex: 1 0 auto;
 }
 
 .master-table thead {
@@ -22190,6 +22223,11 @@ html.is-unauthenticated .app-shell {
   border-top: 1px solid #e2e8f0;
   font-size: 12.5px;
   color: #64748b;
+  position: sticky;
+  bottom: 0;
+  z-index: 9;
+  margin-top: auto;
+  flex-shrink: 0;
 }
 
 .master-page-btn-group {
@@ -22284,13 +22322,22 @@ html.is-unauthenticated .app-shell {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
+#masterOptionListContainer {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .master-opt-list {
   display: flex;
   flex-direction: column;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  overflow: hidden;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .master-opt-row {
