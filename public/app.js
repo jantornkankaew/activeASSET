@@ -400,6 +400,28 @@ function applyServerState(data) {
       }, 200);
     }
 
+    const openCreate = urlParams.get('openCreate');
+    if (openCreate) {
+      setTimeout(() => {
+        document.getElementById('btnOpenCreateLoan')?.click();
+        const testComp = urlParams.get('searchComp');
+        if (testComp) {
+          setTimeout(() => {
+            const accordion = document.getElementById('topInfoDetails');
+            if (accordion && accordion.classList.contains('hidden')) {
+              document.getElementById('btnToggleTopInfo')?.click();
+            }
+            const compInput = document.getElementById('loanCompany');
+            if (compInput) {
+              compInput.value = testComp;
+              compInput.dispatchEvent(new Event('input', { bubbles: true }));
+              compInput.focus();
+            }
+          }, 350);
+        }
+      }, 200);
+    }
+
     // Auto-focus search input on initial page load if no modal is requested
     if (!openDetailTag && !openSigRole && !document.querySelector('dialog[open]')) {
       focusSearchInputIfIdle(200);
@@ -1471,6 +1493,7 @@ function initCompanyAutocomplete() {
   const companyInput = document.getElementById('loanCompany');
   const dropdown = document.getElementById('companyDropdownMenu');
   const spinner = document.getElementById('companySearchSpinner');
+  const btnToggleDropdown = document.getElementById('btnToggleCompanyDropdown');
   if (!companyInput || !dropdown) return;
 
   let debounceTimer = null;
@@ -1485,16 +1508,25 @@ function initCompanyAutocomplete() {
     if (spinner) spinner.classList.add('hidden');
   };
 
-  const renderDropdown = (results, query, isOnline = false) => {
+  const renderDropdown = (results, query) => {
     dropdown.innerHTML = '';
     currentResults = results || [];
     activeIndex = -1;
 
     const trimmedQuery = (query || '').trim();
 
-    if (!trimmedQuery) {
+    // If no query and no results, close
+    if (!trimmedQuery && currentResults.length === 0) {
       closeDropdown();
       return;
+    }
+
+    // Header if showing recent / top customers
+    if (!trimmedQuery) {
+      const headerEl = document.createElement('div');
+      headerEl.style.cssText = 'padding:6px 10px; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.02em; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; gap:5px;';
+      headerEl.innerHTML = `<span>🏢 ลูกค้าที่ใช้งานบ่อย / ล่าสุด</span>`;
+      dropdown.appendChild(headerEl);
     }
 
     // 1. Render matched results from local/DBD
@@ -1514,7 +1546,7 @@ function initCompanyAutocomplete() {
         icon = '🏢';
       } else if (item.source === 'dbd') {
         badgeClass = 'badge-dbd';
-        badgeText = 'DBD';
+        badgeText = 'DBD นิติบุคคล';
         icon = '🌐';
       }
 
@@ -1523,7 +1555,11 @@ function initCompanyAutocomplete() {
         subParts.push(`<span class="company-item-en">${escapeHtml(item.name_en)}</span>`);
       }
       if (item.tax_id) {
-        subParts.push(`<span class="company-item-tax">เลขทะเบียน: ${escapeHtml(item.tax_id)}</span>`);
+        subParts.push(`<span class="company-item-tax" style="color:#0284c7; font-weight:500;">เลขภาษี: ${escapeHtml(item.tax_id)}</span>`);
+      }
+      if (item.contact_name || item.phone) {
+        const contactInfo = [item.contact_name, item.phone].filter(Boolean).join(' ');
+        subParts.push(`<span style="color:#64748b;">👤 ${escapeHtml(contactInfo)}</span>`);
       }
       const subInfo = subParts.length > 0 ? `<div class="company-item-sub">${subParts.join(' · ')}</div>` : '';
 
@@ -1540,6 +1576,20 @@ function initCompanyAutocomplete() {
 
       itemEl.addEventListener('click', () => {
         companyInput.value = item.name;
+
+        // Autofill contact & phone if available and currently empty
+        const customerInput = document.getElementById('loanCustomer');
+        const phoneInput = document.getElementById('loanCustomerPhone');
+        if (customerInput && !customerInput.value.trim() && item.contact_name) {
+          customerInput.value = item.contact_name;
+          customerInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        if (phoneInput && !phoneInput.value.trim() && item.phone) {
+          phoneInput.value = item.phone;
+          phoneInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+
+        companyInput.dispatchEvent(new Event('input', { bubbles: true }));
         closeDropdown();
         updateTopInfoSummary();
       });
@@ -1547,37 +1597,36 @@ function initCompanyAutocomplete() {
       dropdown.appendChild(itemEl);
     });
 
-    // 2. If online wasn't triggered yet, provide one-click online search button
-    if (!isOnline && trimmedQuery.length >= 2) {
-      const onlineTrigger = document.createElement('div');
-      onlineTrigger.className = 'company-online-trigger';
-      onlineTrigger.innerHTML = `<span>🌐 ค้นหาออนไลน์จาก DBD ("${escapeHtml(trimmedQuery)}")</span>`;
-      onlineTrigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        fetchCompanies(trimmedQuery, true);
-      });
-      dropdown.appendChild(onlineTrigger);
-    } else if (isOnline && currentResults.length === 0) {
-      const emptyMsg = document.createElement('div');
-      emptyMsg.className = 'company-dropdown-empty';
-      emptyMsg.textContent = 'ℹ️ ไม่พบข้อมูลในระบบ DBD';
-      dropdown.appendChild(emptyMsg);
-    }
-
-    // 3. Fallback: Always allow selecting/saving the custom typed name
+    // 2. Fallback: Always allow selecting and auto-saving the custom typed name
     if (trimmedQuery && !currentResults.some(r => r.name.toLowerCase() === trimmedQuery.toLowerCase())) {
       const addNewEl = document.createElement('div');
       addNewEl.className = 'company-add-new-item';
+      addNewEl.style.cssText = 'display:flex; align-items:center; gap:8px; padding:10px 12px; background:#eff6ff; border:1px dashed #93c5fd; border-radius:8px; cursor:pointer; color:#1d4ed8; font-size:13px; margin-top:4px;';
       addNewEl.innerHTML = `
-        <span>➕</span>
+        <span style="font-size:15px;">➕</span>
         <div style="min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-          ใช้ชื่อใหม่: <strong>${escapeHtml(trimmedQuery)}</strong>
+          ใช้ชื่อใหม่: <strong>"${escapeHtml(trimmedQuery)}"</strong> <span style="font-size:11px; color:#2563eb; opacity:0.85;">(บันทึกอัตโนมัติ)</span>
         </div>
       `;
-      addNewEl.addEventListener('click', () => {
+      addNewEl.addEventListener('click', async () => {
         companyInput.value = trimmedQuery;
+        companyInput.dispatchEvent(new Event('input', { bubbles: true }));
         closeDropdown();
         updateTopInfoSummary();
+
+        // Auto-learn in background into Master Data customers
+        try {
+          const learnRes = await fetch('/api/customers/learn', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: trimmedQuery })
+          });
+          const learnData = await learnRes.json();
+          if (learnRes.ok && learnData.isNew) {
+            showToast(`✨ บันทึก "${trimmedQuery}" เข้าสู่ข้อมูลหลักอัตโนมัติแล้ว`);
+            window.updateMasterBadgeCounts?.();
+          }
+        } catch (_) {}
       });
       dropdown.appendChild(addNewEl);
     }
@@ -1585,14 +1634,14 @@ function initCompanyAutocomplete() {
     dropdown.classList.remove('hidden');
   };
 
-  const fetchCompanies = async (q, online = false) => {
+  const fetchCompanies = async (q) => {
     if (spinner) spinner.classList.remove('hidden');
     try {
-      const res = await fetch(`/api/customers/search?q=${encodeURIComponent(q)}&online=${online ? '1' : '0'}`);
+      const res = await fetch(`/api/customers/search?q=${encodeURIComponent(q)}`);
       const json = await res.json();
       if (spinner) spinner.classList.add('hidden');
       if (json.success) {
-        renderDropdown(json.results, q, json.fromOnline);
+        renderDropdown(json.results, q);
       }
     } catch {
       if (spinner) spinner.classList.add('hidden');
@@ -1602,21 +1651,24 @@ function initCompanyAutocomplete() {
   companyInput.addEventListener('input', () => {
     clearTimeout(debounceTimer);
     const q = companyInput.value.trim();
-    if (!q) {
-      closeDropdown();
-      return;
-    }
     debounceTimer = setTimeout(() => {
-      fetchCompanies(q, false);
-    }, 200);
+      fetchCompanies(q);
+    }, 180);
   });
 
   companyInput.addEventListener('focus', () => {
     const q = companyInput.value.trim();
-    if (q) {
-      fetchCompanies(q, false);
-    } else {
+    fetchCompanies(q);
+  });
+
+  // Dropdown toggle arrow button (GEMINI.md Rule 1)
+  btnToggleDropdown?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!dropdown.classList.contains('hidden')) {
       closeDropdown();
+    } else {
+      fetchCompanies(companyInput.value.trim());
+      companyInput.focus();
     }
   });
 

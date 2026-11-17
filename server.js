@@ -445,6 +445,125 @@ function getCompanySettings() {
   return settings;
 }
 
+const PREFIX_REGEX = /^(บริษัท\s*มหาชน\s*จำกัด|บริษัท\s*จำกัด\s*\(มหาชน\)|บริษัท\s*\(มหาชน\)|บริษัท|บจก\.?|บมจ\.?|ห้างหุ้นส่วนจำกัด|หจก\.?|ห้างหุ้นส่วน|โรงพยาบาล|รพ\.?|ธนาคาร|บ\.?)\s*/i;
+const SUFFIX_REGEX = /\s*(จำกัด\s*\(มหาชน\)|จำกัด\s*มหาชน|\(มหาชน\)|มหาชน|จำกัด|co\.,?\s*ltd\.?|co\.?\s*ltd\.?|ltd\.?|public\s*company\s*limited|plc\.?|inc\.?|corp\.?)$/i;
+
+function stripCorporateAffixes(str) {
+  if (!str) return '';
+  return str.trim().replace(PREFIX_REGEX, '').replace(SUFFIX_REGEX, '').trim();
+}
+
+const CORPORATE_ALIASES = {
+  // Retail & Wholesale
+  'crc': ['เซ็นทรัล', 'เซ็นทรัลรีเทล', 'เซ็นทรัล รีเทล', 'Central Retail', 'Central', 'บมจ. เซ็นทรัล รีเทล คอร์ปอเรชั่น'],
+  'cpn': ['เซ็นทรัลพัฒนา', 'เซ็นทรัล', 'Central Pattana'],
+  'central': ['เซ็นทรัล', 'เซ็นทรัลพัฒนา', 'เซ็นทรัลรีเทล', 'CRC', 'CPN'],
+  'เซ็นทรัล': ['CRC', 'CPN', 'Central', 'เซ็นทรัล รีเทล', 'เซ็นทรัลพัฒนา'],
+  'cpall': ['ซีพี ออลล์', 'ซีพีออลล์', 'ซีพี', '7-Eleven', 'เซเว่น', 'CP ALL'],
+  'cp all': ['ซีพี ออลล์', 'ซีพีออลล์', 'ซีพี', '7-Eleven', 'เซเว่น', 'CPALL'],
+  'ซีพี': ['CP ALL', 'ซีพี ออลล์', 'เครือเจริญโภคภัณฑ์', 'เจริญโภคภัณฑ์อาหาร', 'CPF'],
+  'cpf': ['เจริญโภคภัณฑ์อาหาร', 'ซีพีเอฟ', 'ซีพี'],
+  'makro': ['สยามแม็คโคร', 'แม็คโคร', 'ซีพี แอ็กซ์ตร้า', 'CPAXT'],
+  'แม็คโคร': ['สยามแม็คโคร', 'Makro', 'ซีพี แอ็กซ์ตร้า', 'CPAXT'],
+  'cpaxt': ['ซีพี แอ็กซ์ตร้า', 'สยามแม็คโคร', 'แม็คโคร', 'โลตัส'],
+  'lotus': ['โลตัส', 'เอก-ชัย ดิสทริบิวชั่น', 'เทสโก้ โลตัส'],
+  'โลตัส': ['Lotus', 'เอก-ชัย ดิสทริบิวชั่น', 'เทสโก้ โลตัส'],
+  'big c': ['บิ๊กซี', 'บิ๊กซี ซูเปอร์เซ็นเตอร์', 'BJC'],
+  'บิ๊กซี': ['Big C', 'บิ๊กซี ซูเปอร์เซ็นเตอร์', 'เบอร์ลี่ ยุคเกอร์'],
+  'homepro': ['โฮมโปร', 'โฮม โปรดักส์ เซ็นเตอร์', 'HMPRO'],
+  'โฮมโปร': ['HomePro', 'โฮม โปรดักส์ เซ็นเตอร์', 'HMPRO'],
+  'hmpro': ['โฮมโปร', 'โฮม โปรดักส์ เซ็นเตอร์', 'HomePro'],
+  'dohome': ['ดูโฮม', 'DOHOME'],
+  'ดูโฮม': ['DOHOME', 'ดูโฮม'],
+  'global house': ['สยามโกลบอลเฮ้าส์', 'โกลบอลเฮ้าส์', 'GLOBAL'],
+  'โกลบอลเฮ้าส์': ['สยามโกลบอลเฮ้าส์', 'GLOBAL'],
+  'index': ['อินเด็กซ์ ลิฟวิ่งมอลล์', 'ILM'],
+  'อินเด็กซ์': ['Index Living Mall', 'อินเด็กซ์ ลิฟวิ่งมอลล์'],
+
+  // Logistics & Transport
+  'dhl': ['ดีเอชแอล', 'ดีเอชแอล ซัพพลายเชน', 'ดีเอชแอล เอ๊กซ์เพรส', 'DHL Supply Chain'],
+  'ดีเอชแอล': ['DHL', 'ดีเอชแอล ซัพพลายเชน', 'ดีเอชแอล เอ๊กซ์เพรส', 'DHL Supply Chain'],
+  'flash': ['แฟลช เอ็กซ์เพรส', 'แฟลช', 'Flash Express'],
+  'แฟลช': ['Flash', 'แฟลช เอ็กซ์เพรส', 'Flash Express'],
+  'kerry': ['เคอรี่ เอ็กซ์เพรส', 'เคอรี่', 'Kerry Express', 'KEX'],
+  'เคอรี่': ['Kerry', 'เคอรี่ เอ็กซ์เพรส', 'Kerry Express', 'KEX'],
+  'kex': ['เคอรี่ เอ็กซ์เพรส', 'เคอรี่', 'Kerry Express'],
+  'j&t': ['เจแอนด์ที', 'โกลบอล เจท เอ็กซ์เพรส', 'J&T Express', 'JNT'],
+  'เจแอนด์ที': ['J&T', 'โกลบอล เจท เอ็กซ์เพรส', 'J&T Express', 'JNT'],
+  'linfox': ['ลินฟอกซ์ ทรานสปอร์ต', 'ลินฟอกซ์', 'Linfox Transport'],
+  'ลินฟอกซ์': ['Linfox', 'ลินฟอกซ์ ทรานสปอร์ต', 'Linfox Transport'],
+  'jwd': ['เอสซีจี เจดับเบิ้ลยูดี', 'เจดับเบิ้ลยูดี', 'SCGJWD'],
+  'เจดับเบิ้ลยูดี': ['JWD', 'เอสซีจี เจดับเบิ้ลยูดี', 'SCGJWD'],
+  'scgjwd': ['เอสซีจี เจดับเบิ้ลยูดี', 'JWD'],
+  'big box': ['บิ๊กบ็อกซ์ ลอจิสติกส์', 'บิ๊กบ็อกซ์', 'Bigbox', 'Big Box'],
+  'บิ๊กบ็อกซ์': ['Big Box', 'Bigbox', 'บิ๊กบ็อกซ์ ลอจิสติกส์'],
+  'bigbox': ['บิ๊กบ็อกซ์ ลอจิสติกส์', 'บิ๊กบ็อกซ์', 'Big Box'],
+  'hino': ['ฮิโนะ', 'ฮิโน่', 'ฮิโนะ มอเตอร์ส', 'Hino Motors'],
+  'ฮิโน่': ['ฮิโนะ', 'Hino', 'ฮิโนะ มอเตอร์ส', 'ฮิโน่ มอเตอร์ส'],
+  'ฮิโนะ': ['ฮิโน่', 'Hino', 'ฮิโนะ มอเตอร์ส', 'ฮิโน่ มอเตอร์ส'],
+  'toyota': ['โตโยต้า มอเตอร์', 'โตโยต้า ทูโช', 'โตโยต้า', 'TMT'],
+  'โตโยต้า': ['Toyota', 'โตโยต้า มอเตอร์', 'โตโยต้า ทูโช'],
+  'isuzu': ['อีซูซุมอเตอร์', 'ตรีเพชรอีซูซุเซลส์', 'อีซูซุ', 'Isuzu'],
+  'อีซูซุ': ['Isuzu', 'อีซูซุมอเตอร์', 'ตรีเพชรอีซูซุเซลส์'],
+  'wha': ['ดับบลิวเอชเอ คอร์ปอเรชั่น', 'ดับบลิวเอชเอ', 'WHA Corporation'],
+  'ดับบลิวเอชเอ': ['WHA', 'ดับบลิวเอชเอ คอร์ปอเรชั่น'],
+
+  // IT, Telecom & Electronics
+  'active5': ['แอคทีฟ 5', 'แอคทีฟ5', 'ACTIVE 5', 'บจก. แอคทีฟ 5', 'บริษัท แอคทีฟ 5 จำกัด'],
+  'active 5': ['แอคทีฟ 5', 'แอคทีฟ5', 'ACTIVE 5', 'บจก. แอคทีฟ 5', 'บริษัท แอคทีฟ 5 จำกัด'],
+  'a5': ['แอคทีฟ 5', 'แอคทีฟ5', 'ACTIVE 5', 'A5', 'บริษัท แอคทีฟ 5 จำกัด'],
+  'แอคทีฟ 5': ['ACTIVE 5', 'แอคทีฟ5', 'A5', 'บริษัท แอคทีฟ 5 จำกัด'],
+  'ais': ['แอดวานซ์ อินโฟร์ เซอร์วิส', 'เอไอเอส', 'ADVANC'],
+  'เอไอเอส': ['AIS', 'แอดวานซ์ อินโฟร์ เซอร์วิส', 'ADVANC'],
+  'true': ['ทรู คอร์ปอเรชั่น', 'ทรู', 'TRUE Corporation'],
+  'ทรู': ['TRUE', 'ทรู คอร์ปอเรชั่น'],
+  'dtac': ['โทเทิ่ล แอ็คเซ็ส คอมมูนิเคชั่น', 'ดีแทค', 'DTAC'],
+  'ดีแทค': ['DTAC', 'โทเทิ่ล แอ็คเซ็ส'],
+  'com7': ['คอมเซเว่น', 'COM7', 'บานาน่า', 'BaNANA'],
+  'คอมเซเว่น': ['COM7', 'คอมเซเว่น'],
+  'synnex': ['ซินเน็ค (ประเทศไทย)', 'ซินเน็ค', 'SYNEX'],
+  'ซินเน็ค': ['SYNEX', 'ซินเน็ค (ประเทศไทย)'],
+  'sis': ['เอสไอเอส ดิสทริบิวชั่น', 'เอสไอเอส', 'SIS Distribution'],
+  'เอสไอเอส': ['SIS', 'เอสไอเอส ดิสทริบิวชั่น'],
+  'advice': ['แอดไวซ์ ไอที อินฟินิท', 'แอดไวซ์', 'ADVICE'],
+  'แอดไวซ์': ['ADVICE', 'แอดไวซ์'],
+  'jib': ['เจ.ไอ.บี. คอมพิวเตอร์ กรุ๊ป', 'เจไอบี', 'JIB Computer'],
+  'เจไอบี': ['JIB', 'เจ.ไอ.บี. คอมพิวเตอร์'],
+  'jaymart': ['เจมาร์ท กรุ๊ป โฮลดิ้งส์', 'เจมาร์ท', 'JMART'],
+  'เจมาร์ท': ['JMART', 'เจมาร์ท'],
+
+  // Conglomerate, Industry & Energy
+  'scg': ['ปูนซิเมนต์ไทย', 'เอสซีจี', 'ปูนใหญ่', 'SCC', 'THE SIAM CEMENT'],
+  'เอสซีจี': ['SCG', 'ปูนซิเมนต์ไทย', 'ปูนใหญ่', 'SCC'],
+  'ปูนซิเมนต์ไทย': ['SCG', 'เอสซีจี', 'SCC'],
+  'ptt': ['ปตท.', 'ปตท', 'PTT', 'ปตท. น้ำมันและการค้าปลีก', 'OR'],
+  'ปตท': ['PTT', 'ปตท.', 'ปตท. น้ำมันและการค้าปลีก', 'OR'],
+  'or': ['ปตท. น้ำมันและการค้าปลีก', 'โออาร์', 'PTTOR', 'PTT OR'],
+  'โออาร์': ['OR', 'ปตท. น้ำมันและการค้าปลีก'],
+  'bcp': ['บางจาก คอร์ปอเรชั่น', 'บางจาก', 'BANGCHAK'],
+  'บางจาก': ['BCP', 'บางจาก คอร์ปอเรชั่น'],
+  'bjc': ['เบอร์ลี่ ยุคเกอร์', 'บีเจซี', 'BERLI JUCKER'],
+  'เบอร์ลี่ ยุคเกอร์': ['BJC', 'บีเจซี', 'BERLI JUCKER'],
+  'บีเจซี': ['BJC', 'เบอร์ลี่ ยุคเกอร์'],
+  'thaibev': ['ไทยเบฟเวอเรจ', 'ไทยเบฟ', 'THBEV', 'ช้าง'],
+  'ไทยเบฟ': ['ThaiBev', 'ไทยเบฟเวอเรจ', 'ช้าง'],
+  'singha': ['บุญรอดบริวเวอรี่', 'สิงห์', 'บุญรอด', 'Boon Rawd'],
+  'บุญรอด': ['Singha', 'บุญรอดบริวเวอรี่', 'สิงห์'],
+  'สิงห์': ['Singha', 'บุญรอดบริวเวอรี่', 'บุญรอด'],
+  'minor': ['เดอะ ไมเนอร์ ฟู้ด กรุ๊ป', 'ไมเนอร์ อินเตอร์เนชั่นแนล', 'MINT', 'ไมเนอร์'],
+  'ไมเนอร์': ['Minor', 'เดอะ ไมเนอร์ ฟู้ด กรุ๊ป', 'MINT'],
+  'cbg': ['คาราบาวกรุ๊ป', 'คาราบาว', 'CARABAO'],
+  'คาราบาว': ['CBG', 'คาราบาวกรุ๊ป'],
+  'osp': ['โอสถสภา', 'OSOTSPA'],
+  'โอสถสภา': ['OSP', 'โอสถสภา'],
+
+  // Hospitals & Healthcare
+  'bdms': ['กรุงเทพดุสิตเวชการ', 'โรงพยาบาลกรุงเทพ', 'BDMS'],
+  'กรุงเทพดุสิต': ['BDMS', 'กรุงเทพดุสิตเวชการ', 'โรงพยาบาลกรุงเทพ'],
+  'bh': ['โรงพยาบาลบำรุงราษฎร์', 'บำรุงราษฎร์', 'Bumrungrad'],
+  'บำรุงราษฎร์': ['BH', 'โรงพยาบาลบำรุงราษฎร์', 'Bumrungrad']
+};
+
 const BILINGUAL_MAP = {
   // Automotive
   'hino': ['ฮิโนะ', 'HINO'],
@@ -599,19 +718,39 @@ function getSearchSynonyms(query) {
   const qLower = qClean.toLowerCase();
   const synonyms = new Set([qClean]);
 
+  // Stripped core name (without "บริษัท", "บจก.", "จำกัด", etc.)
+  const core = stripCorporateAffixes(qClean);
+  const coreLower = core.toLowerCase();
+  if (core && core.length >= 2) {
+    synonyms.add(core);
+  }
+
   // Space-collapsed & space-normalized variants (e.g. "แอคทีฟ 5" <-> "แอคทีฟ5")
   const noSpace = qClean.replace(/\s+/g, '');
-  if (noSpace && noSpace !== qClean) synonyms.add(noSpace);
+  if (noSpace && noSpace.length >= 2) synonyms.add(noSpace);
+  if (core) {
+    const coreNoSpace = core.replace(/\s+/g, '');
+    if (coreNoSpace && coreNoSpace.length >= 2) synonyms.add(coreNoSpace);
+  }
 
+  // Check CORPORATE_ALIASES
+  for (const [k, list] of Object.entries(CORPORATE_ALIASES)) {
+    if (qLower === k || coreLower === k || qLower.includes(k) || (k.length >= 3 && k.includes(qLower))) {
+      list.forEach(t => synonyms.add(t));
+      synonyms.add(k);
+    }
+  }
+
+  // Check BILINGUAL_MAP
   for (const [enKey, thList] of Object.entries(BILINGUAL_MAP)) {
     // English query match
-    if (qLower === enKey || (enKey.length >= 3 && (qLower.includes(enKey) || enKey.includes(qLower)))) {
+    if (qLower === enKey || coreLower === enKey || (enKey.length >= 3 && (qLower.includes(enKey) || enKey.includes(qLower)))) {
       thList.forEach(t => synonyms.add(t));
       synonyms.add(enKey);
     }
     // Thai query match
     for (const th of thList) {
-      if (qClean === th || (th.length >= 3 && (qClean.includes(th) || th.includes(qClean)))) {
+      if (qClean === th || core === th || (th.length >= 3 && (qClean.includes(th) || th.includes(qClean) || core.includes(th)))) {
         synonyms.add(enKey);
         synonyms.add(th);
       }
@@ -674,20 +813,48 @@ function initCustomersTable() {
     { name: 'ธนาคารกรุงไทย จำกัด (มหาชน)', name_en: 'KRUNG THAI BANK PUBLIC COMPANY LIMITED', tax_id: '0107537000882', source: 'dbd' },
     { name: 'ธนาคารทหารไทยธนชาต จำกัด (มหาชน)', name_en: 'TMBTHANACHART BANK PUBLIC COMPANY LIMITED (TTB)', tax_id: '0107537000011', source: 'dbd' },
     { name: 'บริษัท บุญรอดบริวเวอรี่ จำกัด', name_en: 'BOON RAWD BREWERY COMPANY LIMITED', tax_id: '0105501000109', source: 'dbd' },
-    { name: 'บริษัท แอคทีฟ 5 จำกัด', name_en: 'ACTIVE 5 CO., LTD.', tax_id: '0105564085492', source: 'history' }
+    { name: 'บริษัท แอคทีฟ 5 จำกัด', name_en: 'ACTIVE 5 CO., LTD.', tax_id: '0105564085492', source: 'history' },
+    { name: 'บมจ. เซ็นทรัล รีเทล คอร์ปอเรชั่น (CRC)', name_en: 'CENTRAL RETAIL CORPORATION PUBLIC COMPANY LIMITED', tax_id: '0107562000386', source: 'history' },
+    { name: 'บริษัท เซ็นทรัล รีเทล คอร์ปอเรชั่น จำกัด (มหาชน)', name_en: 'CENTRAL RETAIL CORPORATION PUBLIC COMPANY LIMITED', tax_id: '0107562000386', source: 'dbd' },
+    { name: 'บริษัท บิ๊กบ็อกซ์ ลอจิสติกส์ จำกัด', name_en: 'BIGBOX LOGISTICS COMPANY LIMITED', tax_id: '0105561175659', source: 'history' },
+    { name: 'บริษัท Bigbox จำกัด', name_en: 'BIGBOX LOGISTICS COMPANY LIMITED', tax_id: '0105561175659', source: 'history' },
+    { name: 'บริษัท ไทยเบฟเวอเรจ จำกัด (มหาชน)', name_en: 'THAI BEVERAGE PUBLIC COMPANY LIMITED', tax_id: '0107546000343', source: 'dbd' },
+    { name: 'บริษัท เดอะ ไมเนอร์ ฟู้ด กรุ๊ป จำกัด (มหาชน)', name_en: 'THE MINOR FOOD GROUP PUBLIC COMPANY LIMITED', tax_id: '0107535000031', source: 'history' },
+    { name: 'บริษัท กรุงเทพดุสิตเวชการ จำกัด (มหาชน)', name_en: 'BANGKOK DUSIT MEDICAL SERVICES PUBLIC COMPANY LIMITED (BDMS)', tax_id: '0107537000059', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลบำรุงราษฎร์ จำกัด (มหาชน)', name_en: 'BUMRUNGRAD HOSPITAL PUBLIC COMPANY LIMITED', tax_id: '0107536000940', source: 'dbd' },
+    { name: 'บริษัท ดับบลิวเอชเอ คอร์ปอเรชั่น จำกัด (มหาชน)', name_en: 'WHA CORPORATION PUBLIC COMPANY LIMITED', tax_id: '0107555000082', source: 'dbd' },
+    { name: 'บริษัท ลินฟอกซ์ ทรานสปอร์ต (ประเทศไทย) จำกัด', name_en: 'LINFOX TRANSPORT (THAILAND) LIMITED', tax_id: '0105536098029', source: 'history' },
+    { name: 'บริษัท สยามแม็คโคร จำกัด (มหาชน)', name_en: 'SIAM MAKRO PUBLIC COMPANY LIMITED', tax_id: '0107536000271', source: 'history' },
+    { name: 'บริษัท เบอร์ลี่ ยุคเกอร์ จำกัด (มหาชน)', name_en: 'BERLI JUCKER PUBLIC COMPANY LIMITED (BJC)', tax_id: '0107536000220', source: 'history' },
+    { name: 'บริษัท คอมเซเว่น จำกัด (มหาชน)', name_en: 'COM7 PUBLIC COMPANY LIMITED', tax_id: '0107557000404', source: 'dbd' },
+    { name: 'บริษัท แอดไวซ์ ไอที อินฟินิท จำกัด (มหาชน)', name_en: 'ADVICE IT INFINITE PUBLIC COMPANY LIMITED', tax_id: '0107565000450', source: 'dbd' },
+    { name: 'บริษัท เจ.ไอ.บี. คอมพิวเตอร์ กรุ๊ป จำกัด', name_en: 'J.I.B. COMPUTER GROUP COMPANY LIMITED', tax_id: '0105544078498', source: 'dbd' },
+    { name: 'บริษัท เอมิโปร โซลูชั่น จำกัด', name_en: 'EMIPRO SOLUTION COMPANY LIMITED', tax_id: '0105561089221', source: 'history' },
+    { name: 'บจก. เอมิโปร โซลูชั่น', name_en: 'EMIPRO SOLUTION COMPANY LIMITED', tax_id: '0105561089221', source: 'history' },
+    { name: 'ห้างหุ้นส่วนจำกัด กิตติการ์เมนต์', name_en: 'KITTI GARMENT LIMITED PARTNERSHIP', tax_id: '0103541015694', source: 'history' },
+    { name: 'บริษัท นภา ลอจิสติกส์ จำกัด', name_en: 'NAPA LOGISTICS COMPANY LIMITED', tax_id: '0105556133919', source: 'history' },
+    { name: 'บจก. ไทยแมนูแฟกเจอริ่ง', name_en: 'THAI MANUFACTURING COMPANY LIMITED', tax_id: '0105553018248', source: 'history' }
   ];
 
   const upsertDbd = db.prepare(`
     INSERT INTO customers (name, name_en, tax_id, source)
     VALUES (?, ?, ?, ?)
     ON CONFLICT(name) DO UPDATE SET
-      name_en = excluded.name_en,
+      name_en = CASE WHEN excluded.name_en != '' THEN excluded.name_en ELSE customers.name_en END,
       tax_id = CASE WHEN customers.tax_id = '' THEN excluded.tax_id ELSE customers.tax_id END,
       source = excluded.source
   `);
 
+  const updateTax = db.prepare(`
+    UPDATE customers
+    SET tax_id = CASE WHEN tax_id = '' THEN ? ELSE tax_id END,
+        name_en = CASE WHEN name_en = '' THEN ? ELSE name_en END
+    WHERE name = ?
+  `);
+
   for (const c of defaultCompanies) {
     upsertDbd.run(c.name, c.name_en || '', c.tax_id || '', c.source);
+    updateTax.run(c.tax_id || '', c.name_en || '', c.name);
   }
 
   // Ensure current company profile is always in customers
@@ -2047,97 +2214,118 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
-    // 3-Tier Customer Search (Local -> Online DBD -> Fallback) with Bilingual (TH/EN) Support
+    // Smart Customer Search (Tax ID 13 digits, Aliases, Acronyms, Stripped Core Name & Fuzzy Matching)
     if (pathname === '/api/customers/search' && req.method === 'GET') {
       const q = (urlObj.searchParams.get('q') || '').trim();
-      const doOnline = urlObj.searchParams.get('online') === '1';
 
       if (!q) {
         const recent = db.prepare(`
-          SELECT name, name_en, tax_id, source FROM customers
+          SELECT id, name, name_en, tax_id, branch, address, contact_name, phone, email, source FROM customers
           ORDER BY CASE WHEN source = 'history' THEN 0 WHEN source = 'custom' THEN 1 ELSE 2 END, id DESC
-          LIMIT 8
+          LIMIT 10
         `).all();
         return sendJson(res, 200, { success: true, results: recent, fromOnline: false });
       }
 
-      // Step 1: Local Bilingual Search (supports both Thai and English keywords)
+      // Step 1: Detect digits (13-digit Juristic ID or numeric sequence)
+      const digitsOnly = q.replace(/\D/g, '');
+      const core = stripCorporateAffixes(q);
+      const coreLower = core.toLowerCase();
       const terms = getSearchSynonyms(q);
       const conds = [];
       const params = [];
+
+      // 1.1 Match by Tax ID if numbers are typed
+      if (digitsOnly.length >= 3) {
+        conds.push("REPLACE(REPLACE(tax_id, '-', ''), ' ', '') LIKE ?");
+        params.push('%' + digitsOnly + '%');
+      }
+
+      // 1.2 Match by all synonym and alias terms
       for (const t of terms) {
         conds.push('name LIKE ?', 'LOWER(name_en) LIKE ?');
         params.push('%' + t + '%', '%' + t.toLowerCase() + '%');
-      }
 
-      // Space-normalized matching so "แอคทีฟ 5" matches "บริษัท แอคทีฟ 5 จำกัด" or "แอคทีฟ5"
-      const qNoSpace = q.replace(/\s+/g, '');
-      if (qNoSpace.length >= 2) {
-        conds.push("REPLACE(name, ' ', '') LIKE ?", "LOWER(REPLACE(name_en, ' ', '')) LIKE ?");
-        params.push('%' + qNoSpace + '%', '%' + qNoSpace.toLowerCase() + '%');
+        const tNoSpace = t.replace(/\s+/g, '');
+        if (tNoSpace.length >= 2) {
+          conds.push("REPLACE(name, ' ', '') LIKE ?", "LOWER(REPLACE(name_en, ' ', '')) LIKE ?");
+          params.push('%' + tNoSpace + '%', '%' + tNoSpace.toLowerCase() + '%');
+        }
       }
 
       const qLower = q.toLowerCase();
       const searchSql = `
-        SELECT name, name_en, tax_id, source FROM customers
+        SELECT id, name, name_en, tax_id, branch, address, contact_name, phone, email, source FROM customers
         WHERE ${conds.join(' OR ')}
         ORDER BY
           CASE 
-            WHEN name = ? OR LOWER(name_en) = ? THEN 0
-            WHEN name LIKE ? OR LOWER(name_en) LIKE ? THEN 1
-            WHEN LOWER(name_en) LIKE ? OR name LIKE ? THEN 2
-            ELSE 3 
+            WHEN tax_id = ? OR REPLACE(tax_id, '-', '') = ? THEN 0
+            WHEN name = ? OR LOWER(name_en) = ? THEN 1
+            WHEN name LIKE ? OR LOWER(name_en) LIKE ? THEN 2
+            WHEN ? != '' AND (name LIKE ? OR LOWER(name_en) LIKE ?) THEN 3
+            ELSE 4
           END,
           CASE WHEN source = 'history' THEN 0 WHEN source = 'custom' THEN 1 ELSE 2 END,
           LENGTH(name) ASC
-        LIMIT 12
+        LIMIT 15
       `;
 
-      const searchParams = [...params, q, qLower, q + '%', qLower + '%', '%' + qLower + '%', '%' + q + '%'];
-      const localMatches = db.prepare(searchSql).all(...searchParams);
+      const searchParams = [
+        ...params,
+        digitsOnly, digitsOnly,
+        q, qLower,
+        q + '%', qLower + '%',
+        core, '%' + core + '%', '%' + coreLower + '%'
+      ];
 
-      if (!doOnline) {
-        return sendJson(res, 200, {
-          success: true,
-          results: localMatches,
-          fromOnline: false,
-          hasExactMatch: localMatches.some(m => m.name.toLowerCase() === qLower || (m.name_en && m.name_en.toLowerCase() === qLower))
-        });
-      }
+      const matches = db.prepare(searchSql).all(...searchParams);
 
-      // Step 2: Online Search Fallback (uses Thai synonym if query is English to maximize DBD hits)
-      const onlineQuery = terms.find(t => /[ก-๙]/.test(t)) || q;
-      searchOnlineDBD(onlineQuery).then(onlineResults => {
-        if (onlineResults.length > 0) {
-          const insertStmt = db.prepare(`
-            INSERT OR IGNORE INTO customers (name, tax_id, source)
-            VALUES (?, ?, 'dbd')
-          `);
-          for (const r of onlineResults) {
-            if (r.name && r.name.trim()) {
-              insertStmt.run(r.name.trim(), r.tax_id || '');
-            }
-          }
-        }
-
-        const combined = db.prepare(searchSql).all(...searchParams);
-
-        sendJson(res, 200, {
-          success: true,
-          results: combined,
-          fromOnline: true,
-          onlineCount: onlineResults.length,
-          hasExactMatch: combined.some(m => m.name.toLowerCase() === qLower || (m.name_en && m.name_en.toLowerCase() === qLower))
-        });
-      }).catch(() => {
-        sendJson(res, 200, {
-          success: true,
-          results: localMatches,
-          fromOnline: false,
-          hasExactMatch: localMatches.some(m => m.name.toLowerCase() === qLower || (m.name_en && m.name_en.toLowerCase() === qLower))
-        });
+      return sendJson(res, 200, {
+        success: true,
+        results: matches,
+        hasExactMatch: matches.some(m => m.name.toLowerCase() === qLower || (m.name_en && m.name_en.toLowerCase() === qLower))
       });
-      return;
+    }
+
+    // Auto-Learn / Auto-Save Customer to Master Data
+    if (pathname === '/api/customers/learn' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      const name = String(body.name || '').trim();
+      if (!name) return sendJson(res, 400, { error: 'กรุณาระบุชื่อลูกค้า/บริษัท' });
+
+      const nameEn = String(body.name_en || '').trim();
+      const taxId = String(body.tax_id || '').trim();
+      const branch = String(body.branch || 'สำนักงานใหญ่').trim();
+      const address = String(body.address || '').trim();
+      const contactName = String(body.contact_name || '').trim();
+      const phone = String(body.phone || '').trim();
+      const email = String(body.email || '').trim();
+
+      try {
+        const existing = db.prepare('SELECT * FROM customers WHERE name = ?').get(name);
+        if (existing) {
+          db.prepare(`
+            UPDATE customers
+            SET tax_id = CASE WHEN tax_id = '' THEN ? ELSE tax_id END,
+                name_en = CASE WHEN name_en = '' THEN ? ELSE name_en END,
+                contact_name = CASE WHEN contact_name = '' THEN ? ELSE contact_name END,
+                phone = CASE WHEN phone = '' THEN ? ELSE phone END,
+                email = CASE WHEN email = '' THEN ? ELSE email END
+            WHERE id = ?
+          `).run(taxId, nameEn, contactName, phone, email, existing.id);
+          const updated = db.prepare('SELECT * FROM customers WHERE id = ?').get(existing.id);
+          return sendJson(res, 200, { success: true, customer: updated, isNew: false, message: `อัปเดตข้อมูล "${name}" เรียบร้อยแล้ว` });
+        } else {
+          const info = db.prepare(`
+            INSERT INTO customers (name, name_en, tax_id, branch, address, contact_name, phone, email, source)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'custom')
+          `).run(name, nameEn, taxId, branch, address, contactName, phone, email);
+          const created = db.prepare('SELECT * FROM customers WHERE id = ?').get(info.lastInsertRowid);
+          return sendJson(res, 201, { success: true, customer: created, isNew: true, message: `บันทึก "${name}" เข้าสู่ข้อมูลหลักอัตโนมัติแล้ว` });
+        }
+      } catch (err) {
+        return sendJson(res, 500, { error: err.message });
+      }
     }
 
     // File upload endpoint for note attachments (images, PDF, documents)
@@ -2252,9 +2440,12 @@ const server = http.createServer(async (req, res) => {
         if (customerCompany && customerCompany.trim()) {
           try {
             db.prepare(`
-              INSERT INTO customers (name, source) VALUES (?, 'custom')
-              ON CONFLICT(name) DO UPDATE SET created_at = datetime('now', 'localtime')
-            `).run(customerCompany.trim());
+              INSERT INTO customers (name, contact_name, phone, source) VALUES (?, ?, ?, 'custom')
+              ON CONFLICT(name) DO UPDATE SET 
+                contact_name = CASE WHEN customers.contact_name = '' AND excluded.contact_name != '' THEN excluded.contact_name ELSE customers.contact_name END,
+                phone = CASE WHEN customers.phone = '' AND excluded.phone != '' THEN excluded.phone ELSE customers.phone END,
+                created_at = datetime('now', 'localtime')
+            `).run(customerCompany.trim(), customerName || '', customerPhone || '');
           } catch (_) {}
         }
 
@@ -2667,9 +2858,12 @@ const server = http.createServer(async (req, res) => {
         if (body.customer_company && body.customer_company.trim()) {
           try {
             db.prepare(`
-              INSERT INTO customers (name, source) VALUES (?, 'custom')
-              ON CONFLICT(name) DO UPDATE SET created_at = datetime('now', 'localtime')
-            `).run(body.customer_company.trim());
+              INSERT INTO customers (name, contact_name, phone, source) VALUES (?, ?, ?, 'custom')
+              ON CONFLICT(name) DO UPDATE SET 
+                contact_name = CASE WHEN customers.contact_name = '' AND excluded.contact_name != '' THEN excluded.contact_name ELSE customers.contact_name END,
+                phone = CASE WHEN customers.phone = '' AND excluded.phone != '' THEN excluded.phone ELSE customers.phone END,
+                created_at = datetime('now', 'localtime')
+            `).run(body.customer_company.trim(), body.customer_name || '', body.customer_phone || '');
           } catch (_) {}
         }
 
@@ -3000,9 +3194,12 @@ const server = http.createServer(async (req, res) => {
         if (body.customer_company && body.customer_company.trim()) {
           try {
             db.prepare(`
-              INSERT INTO customers (name, source) VALUES (?, 'custom')
-              ON CONFLICT(name) DO UPDATE SET created_at = datetime('now', 'localtime')
-            `).run(body.customer_company.trim());
+              INSERT INTO customers (name, contact_name, phone, source) VALUES (?, ?, ?, 'custom')
+              ON CONFLICT(name) DO UPDATE SET 
+                contact_name = CASE WHEN customers.contact_name = '' AND excluded.contact_name != '' THEN excluded.contact_name ELSE customers.contact_name END,
+                phone = CASE WHEN customers.phone = '' AND excluded.phone != '' THEN excluded.phone ELSE customers.phone END,
+                created_at = datetime('now', 'localtime')
+            `).run(body.customer_company.trim(), body.customer_name || '', body.customer_phone || '');
           } catch (_) {}
         }
 

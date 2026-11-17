@@ -354,9 +354,12 @@
 
                     <div class="field-group company-field-group fg-company">
                       <label for="loanCompany">บริษัทลูกค้า <span class="req">*</span></label>
-                      <div class="company-input-wrap input-clearable-wrap">
-                        <input type="text" id="loanCompany" placeholder="ค้นหาบริษัท..." autocomplete="off" />
-                        <button type="button" class="btn-input-clear hidden" data-clear-target="loanCompany" title="ล้างค่า">✕</button>
+                      <div class="company-input-wrap input-clearable-wrap has-dropdown">
+                        <input type="text" id="loanCompany" placeholder="ค้นหาบริษัท, เลขภาษี 13 หลัก, ชื่อย่อ..." autocomplete="off" />
+                        <div class="input-actions-end">
+                          <button type="button" class="btn-input-clear hidden" data-clear-target="loanCompany" title="ล้างค่า">✕</button>
+                          <button type="button" class="btn-input-dropdown-arrow" id="btnToggleCompanyDropdown" title="แสดงรายการลูกค้า">▾</button>
+                        </div>
                         <span class="company-search-spinner hidden" id="companySearchSpinner">⏳</span>
                       </div>
                       <div class="company-dropdown-menu hidden" id="companyDropdownMenu" role="listbox"></div>
