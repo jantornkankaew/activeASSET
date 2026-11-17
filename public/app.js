@@ -5766,52 +5766,7 @@ function openDispatchMismatchDialog(asset) {
 // MODAL 2: RETURN & QC INSPECTION (ตรวจตามรายการยืม & อุปกรณ์เสริม + ถ่ายรูป + คืนที่เดิม)
 // ============================================================================
 function openReturnModal(loanId, updateHash = true) {
-  const loan = state.loans.find(l => l.id === loanId);
-  if (!loan) return;
-
-  if (updateHash) updateUrlHash('modal', `return-${loan.id}`);
-  state.activeReturnLoan = loan;
-  state.returnAfterPhotos = [];
-
-  const pendingItems = loan.items.filter(i => !i.returned);
-  const itemsToInspect = pendingItems.length > 0 ? pendingItems : loan.items;
-
-  state.returnDraftItems = itemsToInspect.map(it => ({
-    tag_id: it.tag_id,
-    model: it.model,
-    brand: it.brand,
-    serial_no: it.serial_no,
-    source_snapshot: it.source_snapshot || 'Demo',
-    location_snapshot: it.location_snapshot || 'Mobile Computer ตู้ A1',
-    selectedForReturn: true,
-    allAccessories: [...(it.loan_accessories || [])],
-    missingSet: new Set(it.missing_accessories || []),
-    qcStatus: it.qc_status === 'Fail' ? 'Fail' : 'Pass',
-    qcNote: it.qc_note || '',
-    confirmedLocation: true
-  }));
-
-  const docLinkSvg = `<svg class="doc-link-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
-  document.getElementById('returnDialogSubtitle').innerHTML =
-    `เลขที่ <button type="button" class="doc-link-pill" data-open-print="${escapeHtml(loan.id)}" title="คลิกเพื่อเปิดใบยืมจริง ${escapeHtml(loan.id)}"><span>${escapeHtml(loan.id)}</span>${docLinkSvg}</button> · ลูกค้า: <strong>${escapeHtml(loan.customer_name)}</strong> (${escapeHtml(loan.customer_company || '-')}) · ผู้ยืม: ${escapeHtml(loan.borrower_name)}`;
-
-  const beforeContainer = document.getElementById('returnBeforePhotosView');
-  if (!loan.before_photos || loan.before_photos.length === 0) {
-    beforeContainer.innerHTML = `<span class="muted-hint">ไม่มีรูปถ่ายตอนส่งออก</span>`;
-  } else {
-    beforeContainer.innerHTML = loan.before_photos
-      .map(u => `<div class="photo-thumb"><a href="${u}" target="_blank"><img src="${u}" alt="Before" /></a></div>`)
-      .join('');
-  }
-
-  const retReceiverInput = document.getElementById('returnReceiverName');
-  if (retReceiverInput) {
-    retReceiverInput.value = state.currentUser?.name || loan.return_receiver || 'เจ้าหน้าที่คลัง (QC)';
-  }
-
-  renderReturnAfterPhotosPreview();
-  renderReturnChecklistItems();
-  document.getElementById('returnDialog').showModal();
+  openDispatchModal(loanId, updateHash);
 }
 
 function renderReturnAfterPhotosPreview() {
@@ -11478,10 +11433,10 @@ function setupEventListeners() {
       return;
     }
 
-    // 4. Open Return / QC Modal
+    // 4. Open Return / QC Modal (uses unified Dispatch/Return modal)
     const retBtn = e.target.closest('[data-open-return]');
     if (retBtn) {
-      openReturnModal(retBtn.getAttribute('data-open-return'));
+      openDispatchModal(retBtn.getAttribute('data-open-return'));
       return;
     }
 
@@ -11510,8 +11465,8 @@ function setupEventListeners() {
 
     const retFromPrintBtn = e.target.closest('[data-return-from-print]');
     if (retFromPrintBtn) {
-      document.getElementById('printDialog').close();
-      openReturnModal(retFromPrintBtn.getAttribute('data-return-from-print'));
+      document.getElementById('printDialog')?.close();
+      openDispatchModal(retFromPrintBtn.getAttribute('data-return-from-print'));
       return;
     }
 
