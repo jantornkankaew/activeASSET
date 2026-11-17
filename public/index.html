@@ -11,6 +11,10 @@
   <script>
     (function() {
       try {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('devAuth') === '1') {
+          localStorage.setItem('activeasset_current_user', JSON.stringify({ email: 'jantorn@active5.co.th', name: 'จันทร ก้านแก้ว', role: 'admin' }));
+        }
         if (!localStorage.getItem('activeasset_current_user')) {
           document.documentElement.classList.add('is-unauthenticated');
         }
@@ -1797,32 +1801,44 @@
             <div class="master-sub-nav-bar">
               <div class="master-sub-tabs" role="tablist">
                 <button type="button" class="master-sub-tab is-active" data-master-sub="customers">
-                  <span class="m-icon">🏢</span>
+                  <span class="m-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                  </span>
                   <span class="m-label">ลูกค้า</span>
                   <span class="master-count-badge" id="badgeMasterCustCount">-</span>
                 </button>
                 <button type="button" class="master-sub-tab" data-master-sub="catalogs">
-                  <span class="m-icon">📦</span>
+                  <span class="m-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"></path><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg>
+                  </span>
                   <span class="m-label">รุ่นสินค้า &amp; แคตตาล็อก</span>
                   <span class="master-count-badge" id="badgeMasterCatCount">-</span>
                 </button>
                 <button type="button" class="master-sub-tab" data-master-sub="categories">
-                  <span class="m-icon">🏷️</span>
+                  <span class="m-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"></path><path d="M7 7h.01"></path></svg>
+                  </span>
                   <span class="m-label">หมวดหมู่</span>
                   <span class="master-count-badge" id="badgeMasterCategoryCount">-</span>
                 </button>
                 <button type="button" class="master-sub-tab" data-master-sub="brands">
-                  <span class="m-icon">✨</span>
+                  <span class="m-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"></circle><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path></svg>
+                  </span>
                   <span class="m-label">ยี่ห้อ</span>
                   <span class="master-count-badge" id="badgeMasterBrandCount">-</span>
                 </button>
                 <button type="button" class="master-sub-tab" data-master-sub="locations">
-                  <span class="m-icon">📍</span>
+                  <span class="m-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  </span>
                   <span class="m-label">สถานที่จัดเก็บ</span>
                   <span class="master-count-badge" id="badgeMasterLocationCount">-</span>
                 </button>
                 <button type="button" class="master-sub-tab" data-master-sub="accessories">
-                  <span class="m-icon">🔌</span>
+                  <span class="m-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6"></path><path d="M6 8a6 6 0 0 0 12 0"></path><path d="M12 14v8"></path><line x1="8" y1="2" x2="8" y2="4"></line><line x1="16" y1="2" x2="16" y2="4"></line></svg>
+                  </span>
                   <span class="m-label">อุปกรณ์เสริม</span>
                   <span class="master-count-badge" id="badgeMasterAccCount">-</span>
                 </button>

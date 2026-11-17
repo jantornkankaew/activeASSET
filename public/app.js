@@ -387,6 +387,18 @@ function applyServerState(data) {
         window.openDigitalSigModalForRole?.(openSigRole);
       }, 300);
     }
+    const openSettingsTab = urlParams.get('openSettings');
+    if (openSettingsTab) {
+      setTimeout(() => {
+        window.openCompanySettingsModal?.(openSettingsTab);
+        const sub = urlParams.get('masterSub');
+        if (sub) {
+          setTimeout(() => {
+            document.querySelector(`.master-sub-tab[data-master-sub="${sub}"]`)?.click();
+          }, 180);
+        }
+      }, 200);
+    }
 
     // Auto-focus search input on initial page load if no modal is requested
     if (!openDetailTag && !openSigRole && !document.querySelector('dialog[open]')) {
@@ -8879,10 +8891,10 @@ async function fetchAndRenderCustomers(container, opts = {}) {
               <td style="text-align:center;">
                 <div class="master-action-btn-group">
                   <button type="button" class="btn-master-action" data-edit-master-cust="${c.id}" title="แก้ไขข้อมูลลูกค้า">
-                    ✏️
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>
                   </button>
                   <button type="button" class="btn-master-action btn-master-delete" data-delete-master-cust="${c.id}" data-cust-name="${escapeHtml(c.name)}" title="ลบข้อมูลลูกค้า">
-                    🗑️
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                   </button>
                 </div>
               </td>
@@ -9133,10 +9145,10 @@ async function fetchAndRenderCatalogs(container, opts = {}) {
                 <td style="text-align:center;">
                   <div class="master-action-btn-group">
                     <button type="button" class="btn-master-action" data-edit-master-cat="${c.id}" title="แก้ไขแคตตาล็อก">
-                      ✏️
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>
                     </button>
                     <button type="button" class="btn-master-action btn-master-delete" data-delete-master-cat="${c.id}" data-cat-model="${escapeHtml(c.model)}" title="ลบรุ่นสินค้า">
-                      🗑️
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                     </button>
                   </div>
                 </td>
@@ -9232,43 +9244,126 @@ function openCatalogEditor(cat = null) {
 }
 
 // --------------------------------------------------------------------------
-// 3. Master Options Tab (Categories / Brands / Locations / Accessories)
+// 3. Master Options Tab (Categories / Brands / Locations / Accessories) - Clean Minimal List & Inline Editing
 // --------------------------------------------------------------------------
 async function renderMasterOptionsTab(container, type) {
-  const typeTitles = {
-    category: { title: '🏷️ หมวดหมู่สินค้า (Categories)', addBtn: '➕ เพิ่มหมวดหมู่', label: 'หมวดหมู่' },
-    brand: { title: '✨ ยี่ห้อสินค้า (Brands)', addBtn: '➕ เพิ่มยี่ห้อ', label: 'ยี่ห้อ' },
-    location: { title: '📍 สถานที่จัดเก็บ / ตู้เก็บเครื่อง (Locations)', addBtn: '➕ เพิ่มสถานที่เก็บ', label: 'สถานที่จัดเก็บ' },
-    accessory: { title: '🔌 อุปกรณ์เสริมมาตรฐาน (Preset Accessories)', addBtn: '➕ เพิ่มอุปกรณ์เสริม', label: 'อุปกรณ์เสริม' }
+  const typeMetas = {
+    category: {
+      title: 'หมวดหมู่สินค้า',
+      sub: 'Categories',
+      label: 'หมวดหมู่',
+      iconSvg: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"></path><path d="M7 7h.01"></path></svg>'
+    },
+    brand: {
+      title: 'ยี่ห้อสินค้า',
+      sub: 'Brands',
+      label: 'ยี่ห้อ',
+      iconSvg: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"></circle><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path></svg>'
+    },
+    location: {
+      title: 'สถานที่จัดเก็บ / ตู้เก็บเครื่อง',
+      sub: 'Storage Locations',
+      label: 'สถานที่จัดเก็บ',
+      iconSvg: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>'
+    },
+    accessory: {
+      title: 'อุปกรณ์เสริมมาตรฐาน',
+      sub: 'Preset Accessories',
+      label: 'อุปกรณ์เสริม',
+      iconSvg: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6"></path><path d="M6 8a6 6 0 0 0 12 0"></path><path d="M12 14v8"></path><line x1="8" y1="2" x2="8" y2="4"></line><line x1="16" y1="2" x2="16" y2="4"></line></svg>'
+    }
   };
-  const meta = typeTitles[type] || { title: 'ตัวเลือก', addBtn: '➕ เพิ่ม', label: 'รายการ' };
+
+  const meta = typeMetas[type] || {
+    title: 'ตัวเลือก',
+    sub: type,
+    label: 'รายการ',
+    iconSvg: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle></svg>'
+  };
 
   container.innerHTML = `
     <div class="master-toolbar">
-      <div class="master-toolbar-title-group">
+      <div class="master-toolbar-title-group" style="display:flex; align-items:center; gap:8px;">
+        <span style="color:#2563eb; display:inline-flex; align-items:center;">${meta.iconSvg}</span>
         <span class="master-toolbar-title">${meta.title}</span>
-      </div>
-      <div class="master-toolbar-actions">
-        <button type="button" class="btn btn-primary btn-sm" id="btnAddNewMasterOption">
-          <span>${meta.addBtn}</span>
-        </button>
+        <span style="font-size:12px; color:#94a3b8; font-weight:normal;">(${meta.sub})</span>
       </div>
     </div>
-    <div id="masterOptionCardsContainer" style="padding:4px 0;">
+
+    <!-- Minimal Inline Quick Add Bar -->
+    <div class="master-inline-add-bar">
+      <input 
+        type="text" 
+        id="masterOptQuickInput" 
+        class="master-opt-quick-input" 
+        placeholder="➕ พิมพ์ชื่อ${meta.label}ใหม่... (แล้วกด Enter เพื่อเพิ่มทันที)" 
+        autocomplete="off" 
+      />
+      <button type="button" class="btn btn-primary btn-sm" id="btnMasterQuickAdd" style="white-space:nowrap; display:inline-flex; align-items:center; gap:5px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>เพิ่ม${meta.label}</span>
+      </button>
+    </div>
+
+    <!-- Minimal List Container -->
+    <div id="masterOptionListContainer">
       <div style="padding:32px; text-align:center; color:#64748b;"><span class="status-spinner"></span> กำลังโหลด...</div>
     </div>
   `;
 
-  document.getElementById('btnAddNewMasterOption')?.addEventListener('click', () => {
-    openOptionEditor(type, null);
+  const quickInput = document.getElementById('masterOptQuickInput');
+  const btnQuickAdd = document.getElementById('btnMasterQuickAdd');
+  const listContainer = document.getElementById('masterOptionListContainer');
+
+  const handleQuickAdd = async () => {
+    const val = (quickInput?.value || '').trim();
+    if (!val) {
+      showToast(`⚠️ กรุณากรอกชื่อ${meta.label}`);
+      quickInput?.focus();
+      return;
+    }
+
+    try {
+      if (btnQuickAdd) btnQuickAdd.disabled = true;
+      const res = await fetch('/api/master/options', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, name: val })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'เพิ่มไม่สำเร็จ');
+
+      quickInput.value = '';
+      showToast(`✅ เพิ่ม "${val}" เรียบร้อยแล้ว`);
+      await updateMasterBadgeCounts();
+      await fetchAndRenderOptions(listContainer, type, { silent: true });
+      quickInput.focus();
+    } catch (err) {
+      showToast(`❌ ${err.message}`);
+    } finally {
+      if (btnQuickAdd) btnQuickAdd.disabled = false;
+    }
+  };
+
+  quickInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleQuickAdd();
+    }
   });
 
-  const cardsContainer = document.getElementById('masterOptionCardsContainer');
-  await fetchAndRenderOptions(cardsContainer, type);
+  btnQuickAdd?.addEventListener('click', handleQuickAdd);
+
+  await fetchAndRenderOptions(listContainer, type);
 }
 
-async function fetchAndRenderOptions(container, type) {
+async function fetchAndRenderOptions(container, type, opts = {}) {
   if (!container) return;
+  const isSilent = opts && opts.silent === true;
+  if (!isSilent && !container.querySelector('.master-opt-list')) {
+    container.innerHTML = `<div style="padding:32px; text-align:center; color:#64748b;"><span class="status-spinner"></span> กำลังโหลด...</div>`;
+  }
+
   try {
     const res = await fetch(`/api/master/options?type=${encodeURIComponent(type)}`);
     const data = await res.json();
@@ -9277,52 +9372,198 @@ async function fetchAndRenderOptions(container, type) {
     const list = data.options || [];
     if (list.length === 0) {
       container.innerHTML = `
-        <div style="padding:40px 20px; text-align:center; color:#64748b;">
-          <div style="font-size:32px; margin-bottom:8px;">🏷️</div>
-          <div style="font-size:14px; font-weight:600; color:#334155;">ยังไม่มีรายการ</div>
-          <div style="font-size:12px; margin-top:4px;">กดปุ่มเพิ่มรายการด้านบนเพื่อสร้างรายการแรก</div>
+        <div style="padding:40px 20px; text-align:center; color:#64748b; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px;">
+          <div style="font-size:24px; margin-bottom:6px; opacity:0.6;">📋</div>
+          <div style="font-size:13.5px; font-weight:600; color:#334155;">ยังไม่มีรายการในหมวดนี้</div>
+          <div style="font-size:12px; margin-top:4px; color:#94a3b8;">พิมพ์ชื่อในกล่องด้านบนแล้วกด Enter เพื่อเพิ่มรายการแรก</div>
         </div>
       `;
       return;
     }
 
     container.innerHTML = `
-      <div class="master-simple-grid">
+      <div class="master-opt-list">
         ${list.map(opt => `
-          <div class="master-simple-card">
-            <div class="master-simple-card-info">
-              <span class="master-simple-card-name">${escapeHtml(opt.name)}</span>
-              ${type !== 'accessory' ? `
-                <span class="master-simple-card-meta">
-                  ${opt.asset_count > 0 ? `<strong>${opt.asset_count}</strong> เครื่องในคลัง` : 'ไม่มีเครื่องที่ใช้'}
-                </span>
-              ` : ''}
+          <div class="master-opt-row" data-opt-id="${opt.id}" data-opt-name="${escapeHtml(opt.name)}">
+            <!-- Normal Display Mode -->
+            <div class="master-opt-display">
+              <div class="master-opt-name-wrap">
+                <span class="master-opt-bullet"></span>
+                <span class="master-opt-name" data-trigger-edit="${opt.id}" title="ดับเบิลคลิกเพื่อแก้ไขชื่อ">${escapeHtml(opt.name)}</span>
+                ${type !== 'accessory' ? `
+                  <span class="master-opt-meta ${opt.asset_count > 0 ? 'has-assets' : ''}">
+                    ${opt.asset_count > 0 ? `${opt.asset_count} เครื่องในคลัง` : '0 เครื่อง'}
+                  </span>
+                ` : ''}
+              </div>
+              <div class="master-opt-actions">
+                <button type="button" class="btn-opt-action btn-opt-edit" data-edit-opt="${opt.id}" title="แก้ไขชื่อ">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>
+                </button>
+                <button type="button" class="btn-opt-action btn-opt-delete" data-delete-opt="${opt.id}" data-opt-name="${escapeHtml(opt.name)}" title="ลบ">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                </button>
+              </div>
             </div>
-            <div class="master-action-btn-group">
-              <button type="button" class="btn-master-action" data-edit-master-opt="${opt.id}" data-opt-name="${escapeHtml(opt.name)}" title="แก้ไข">
-                ✏️
-              </button>
-              <button type="button" class="btn-master-action btn-master-delete" data-delete-master-opt="${opt.id}" data-opt-name="${escapeHtml(opt.name)}" title="ลบ">
-                🗑️
-              </button>
+
+            <!-- In-place Inline Edit Mode -->
+            <div class="master-opt-edit hidden">
+              <input type="text" class="form-control master-opt-inline-input" value="${escapeHtml(opt.name)}" autocomplete="off" />
+              <div class="master-opt-edit-btns">
+                <button type="button" class="btn btn-primary btn-sm btn-opt-save-inline" data-save-opt="${opt.id}" title="บันทึก (Enter)" style="display:inline-flex; align-items:center; gap:4px; height:32px; padding:0 10px;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>บันทึก</span>
+                </button>
+                <button type="button" class="btn btn-outline btn-sm btn-opt-cancel-inline" data-cancel-opt="${opt.id}" title="ยกเลิก (Esc)" style="display:inline-flex; align-items:center; gap:4px; height:32px; padding:0 10px;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  <span>ยกเลิก</span>
+                </button>
+              </div>
             </div>
           </div>
         `).join('')}
       </div>
     `;
 
-    // Wire Edit & Delete
-    container.querySelectorAll('[data-edit-master-opt]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = parseInt(btn.dataset.editMasterOpt, 10);
-        const opt = list.find(o => o.id === id);
-        if (opt) openOptionEditor(type, opt);
+    // Wire Inline Edit Triggers
+    const startInlineEdit = (optId) => {
+      const row = container.querySelector(`.master-opt-row[data-opt-id="${optId}"]`);
+      if (!row) return;
+
+      // Close any other row currently in edit mode first
+      container.querySelectorAll('.master-opt-row').forEach(r => {
+        if (r !== row) {
+          r.querySelector('.master-opt-display')?.classList.remove('hidden');
+          r.querySelector('.master-opt-edit')?.classList.add('hidden');
+        }
+      });
+
+      const displayArea = row.querySelector('.master-opt-display');
+      const editArea = row.querySelector('.master-opt-edit');
+      const input = row.querySelector('.master-opt-inline-input');
+
+      if (displayArea) displayArea.classList.add('hidden');
+      if (editArea) editArea.classList.remove('hidden');
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    };
+
+    const cancelInlineEdit = (optId) => {
+      const row = container.querySelector(`.master-opt-row[data-opt-id="${optId}"]`);
+      if (!row) return;
+
+      const displayArea = row.querySelector('.master-opt-display');
+      const editArea = row.querySelector('.master-opt-edit');
+      const input = row.querySelector('.master-opt-inline-input');
+      const originalName = row.dataset.optName;
+
+      if (input) input.value = originalName;
+      if (editArea) editArea.classList.add('hidden');
+      if (displayArea) displayArea.classList.remove('hidden');
+    };
+
+    const saveInlineEdit = async (optId) => {
+      const row = container.querySelector(`.master-opt-row[data-opt-id="${optId}"]`);
+      if (!row) return;
+
+      const input = row.querySelector('.master-opt-inline-input');
+      const saveBtn = row.querySelector('.btn-opt-save-inline');
+      const newName = (input?.value || '').trim();
+      const originalName = row.dataset.optName;
+
+      if (!newName) {
+        showToast('⚠️ กรุณาระบุชื่อ');
+        input?.focus();
+        return;
+      }
+
+      if (newName === originalName) {
+        cancelInlineEdit(optId);
+        return;
+      }
+
+      try {
+        if (saveBtn) saveBtn.disabled = true;
+        const putRes = await fetch(`/api/master/options/${optId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newName })
+        });
+        const putData = await putRes.json();
+        if (!putRes.ok) throw new Error(putData.error || 'บันทึกไม่สำเร็จ');
+
+        // Update row DOM in place smoothly
+        row.dataset.optName = newName;
+        const nameEl = row.querySelector('.master-opt-name');
+        if (nameEl) nameEl.textContent = newName;
+
+        const deleteBtn = row.querySelector('.btn-opt-delete');
+        if (deleteBtn) deleteBtn.dataset.optName = newName;
+
+        const displayArea = row.querySelector('.master-opt-display');
+        const editArea = row.querySelector('.master-opt-edit');
+        if (editArea) editArea.classList.add('hidden');
+        if (displayArea) displayArea.classList.remove('hidden');
+
+        showToast(`✅ แก้ไขเป็น "${newName}" เรียบร้อยแล้ว`);
+      } catch (err) {
+        showToast(`❌ ${err.message}`);
+        input?.focus();
+      } finally {
+        if (saveBtn) saveBtn.disabled = false;
+      }
+    };
+
+    // Attach Event Listeners for Edit, Save, Cancel, and Delete
+    container.querySelectorAll('.btn-opt-edit').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        startInlineEdit(btn.dataset.editOpt);
       });
     });
 
-    container.querySelectorAll('[data-delete-master-opt]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const id = parseInt(btn.dataset.deleteMasterOpt, 10);
+    container.querySelectorAll('[data-trigger-edit]').forEach(el => {
+      el.addEventListener('dblclick', () => {
+        startInlineEdit(el.dataset.triggerEdit);
+      });
+    });
+
+    container.querySelectorAll('.btn-opt-cancel-inline').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        cancelInlineEdit(btn.dataset.cancelOpt);
+      });
+    });
+
+    container.querySelectorAll('.btn-opt-save-inline').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        saveInlineEdit(btn.dataset.saveOpt);
+      });
+    });
+
+    container.querySelectorAll('.master-opt-inline-input').forEach(inp => {
+      inp.addEventListener('keydown', (e) => {
+        const row = inp.closest('.master-opt-row');
+        const optId = row?.dataset?.optId;
+        if (!optId) return;
+
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          saveInlineEdit(optId);
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          cancelInlineEdit(optId);
+        }
+      });
+    });
+
+    container.querySelectorAll('.btn-opt-delete').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = parseInt(btn.dataset.deleteOpt, 10);
         const name = btn.dataset.optName;
         const confirmed = await showConfirmDialog({
           title: 'ลบรายการ',
@@ -9335,11 +9576,11 @@ async function fetchAndRenderOptions(container, type) {
         });
         if (!confirmed) return;
 
-        const card = btn.closest('.master-simple-card');
-        if (card) {
-          card.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
-          card.style.opacity = '0';
-          card.style.transform = 'scale(0.95)';
+        const row = btn.closest('.master-opt-row');
+        if (row) {
+          row.style.transition = 'opacity 0.22s ease, transform 0.22s ease';
+          row.style.opacity = '0';
+          row.style.transform = 'translateX(16px)';
         }
 
         try {
@@ -9348,9 +9589,15 @@ async function fetchAndRenderOptions(container, type) {
           if (!delRes.ok) throw new Error(delData.error || 'ลบไม่สำเร็จ');
           showToast(`✅ ${delData.message || 'ลบเรียบร้อยแล้ว'}`);
           await updateMasterBadgeCounts();
-          fetchAndRenderOptions(container, type);
+          
+          if (row) {
+            row.style.transition = 'max-height 0.22s ease-out, padding 0.22s ease-out, margin 0.22s ease-out';
+            row.style.maxHeight = '0px';
+            row.style.overflow = 'hidden';
+            setTimeout(() => row.remove(), 240);
+          }
         } catch (err) {
-          if (card) { card.style.opacity = '1'; card.style.transform = 'none'; }
+          if (row) { row.style.opacity = '1'; row.style.transform = 'none'; }
           showToast(`❌ ${err.message}`);
         }
       });
