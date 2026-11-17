@@ -9959,21 +9959,19 @@ function setupSendEmailModal() {
     const body = (document.getElementById('emailBodyTextarea')?.value || '').trim();
 
     if (!to) {
-      showAlert('กรุณาระบุอีเมลลูกค้าผู้รับ');
+      if (emailStatusBox) {
+        emailStatusBox.className = 'email-status-banner error';
+        emailStatusBox.innerHTML = '⚠️ กรุณาระบุอีเมลลูกค้าผู้รับ (To)';
+        emailStatusBox.classList.remove('hidden');
+        emailStatusBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+      showToast('⚠️ กรุณาระบุอีเมลลูกค้าผู้รับ');
       document.getElementById('emailToInput')?.focus();
       return;
     }
 
     const c = state.companySettings || {};
-    const hasApiKey = Boolean((c.email_api_key || '').trim());
-    const hasSmtp = Boolean((c.smtp_user || '').trim() && (c.smtp_pass || '').trim());
-
-    if (!hasApiKey && !hasSmtp) {
-      showAlert('ยังไม่ได้ตั้งค่าบริการส่งอีเมล (Resend / SendGrid / Gmail)\n\nกรุณากดปุ่ม "⚙️ ตั้งค่าส่งอีเมล" เพื่อนำ API Key (เช่น จาก resend.com) มาใส่ก่อนส่ง');
-      return;
-    }
-
-    const activeProvider = c.email_provider || (hasApiKey ? (c.email_api_key.startsWith('SG.') ? 'sendgrid' : 'resend') : 'smtp');
+    const activeProvider = c.email_provider || ((c.email_api_key || '').startsWith('SG.') ? 'sendgrid' : 'resend');
     const pLabel = activeProvider === 'resend' ? 'Resend API' : activeProvider === 'sendgrid' ? 'SendGrid API' : 'Gmail SMTP';
 
     try {
@@ -9983,6 +9981,7 @@ function setupSendEmailModal() {
         emailStatusBox.className = 'email-status-banner loading';
         emailStatusBox.innerHTML = `<span class="status-spinner"></span> กำลังสร้างเอกสาร PDF และส่งออกผ่าน ${pLabel}...`;
         emailStatusBox.classList.remove('hidden');
+        emailStatusBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
 
       const res = await fetch(`/api/loans/${encodeURIComponent(loanId)}/send-email-direct`, {
@@ -10000,6 +9999,7 @@ function setupSendEmailModal() {
         if (emailStatusBox) {
           emailStatusBox.className = 'email-status-banner success';
           emailStatusBox.innerHTML = `✅ ${data.message || 'ส่งอีเมลพร้อมแนบ PDF สำเร็จเรียบร้อย'}`;
+          emailStatusBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
         showToast(`✉️ ส่งอีเมลพร้อมแนบ PDF ให้ ${to} เรียบร้อยแล้ว`);
         setTimeout(() => {
@@ -10012,7 +10012,9 @@ function setupSendEmailModal() {
     } catch (err) {
       if (emailStatusBox) {
         emailStatusBox.className = 'email-status-banner error';
-        emailStatusBox.innerHTML = `❌ ${err.message}`;
+        const isConfigErr = err.message.includes('ตั้งค่า') || err.message.includes('API Key') || err.message.includes('SMTP');
+        emailStatusBox.innerHTML = `❌ ${err.message}${isConfigErr ? ' <button type="button" class="btn btn-xs btn-outline" style="margin-left:6px;padding:2px 8px;font-size:11px;background:#fff;" onclick="document.getElementById(\'btnOpenSmtpSettingsFromModal\')?.click()">⚙️ ไปตั้งค่า</button>' : ''}`;
+        emailStatusBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
       showToast(`❌ ${err.message}`);
     } finally {

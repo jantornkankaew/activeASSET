@@ -6363,25 +6363,44 @@ dialog:not([open]) * {
 dialog.modal-send-email {
   width: 500px;
   max-width: 95vw;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid rgba(226, 232, 240, 0.9);
   background: #ffffff;
   box-shadow: 0 25px 60px -12px rgba(15, 23, 42, 0.28), 0 0 0 1px rgba(15, 23, 42, 0.04);
+  margin: auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .send-email-card {
-  padding: 18px 20px 16px;
+  padding: 16px 20px 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  box-sizing: border-box;
+  overflow: hidden;
+  width: 100%;
+}
+
+.send-email-card .modal-header {
+  flex-shrink: 0;
+  padding-bottom: 8px;
+  margin-bottom: 2px;
 }
 
 .send-email-body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 0;
+  padding: 2px 2px 8px 0;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .send-email-body .form-group {
@@ -6605,6 +6624,10 @@ dialog.modal-send-email {
   gap: 8px;
   width: 100%;
   box-sizing: border-box;
+  flex-shrink: 0;
+  background: #ffffff;
+  z-index: 2;
+  margin-top: auto;
 }
 
 .email-footer-left {
