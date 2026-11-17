@@ -720,7 +720,14 @@ const BILINGUAL_MAP = {
   'active': ['แอคทีฟ', 'ACTIVE', 'บริษัท แอคทีฟ 5 จำกัด', 'แอคทีฟ 5'],
   'active5': ['แอคทีฟ 5', 'แอคทีฟ5', 'ACTIVE 5', 'ACTIVE5', 'บริษัท แอคทีฟ 5 จำกัด', 'บจก. แอคทีฟ 5'],
   'active 5': ['แอคทีฟ 5', 'แอคทีฟ5', 'ACTIVE 5', 'ACTIVE5', 'บริษัท แอคทีฟ 5 จำกัด', 'บจก. แอคทีฟ 5'],
-  'a5': ['แอคทีฟ 5', 'แอคทีฟ5', 'ACTIVE 5', 'ACTIVE5', 'A5', 'บริษัท แอคทีฟ 5 จำกัด']
+  'a5': ['แอคทีฟ 5', 'แอคทีฟ5', 'ACTIVE 5', 'ACTIVE5', 'A5', 'บริษัท แอคทีฟ 5 จำกัด'],
+
+  // Planet T & S
+  'planet': ['แพลนเนท', 'แพลนเนทที', 'แพลนเนท ที แอนด์ เอส', 'PLANET T & S', 'PLANET T AND S', 'บริษัท แพลนเนท ที แอนด์ เอส จำกัด'],
+  'planet t & s': ['แพลนเนท ที แอนด์ เอส', 'แพลนเนทที แอนด์ เอส', 'แพลนเนทที', 'PLANET T & S', 'PLANET T AND S'],
+  'planet t and s': ['แพลนเนท ที แอนด์ เอส', 'แพลนเนทที แอนด์ เอส', 'PLANET T AND S'],
+  'แพลนเนท': ['PLANET', 'แพลนเนท ที แอนด์ เอส', 'แพลนเนทที', 'แพลนเนทที แอนด์ เอส', 'บริษัท แพลนเนท ที แอนด์ เอส จำกัด'],
+  'แพลนเนทที': ['PLANET T & S', 'แพลนเนท ที แอนด์ เอส', 'แพลนเนทที แอนด์ เอส', 'บริษัท แพลนเนท ที แอนด์ เอส จำกัด']
 };
 
 function getSearchSynonyms(query) {
@@ -844,7 +851,8 @@ function initCustomersTable() {
     { name: 'บจก. เอมิโปร โซลูชั่น', name_en: 'EMIPRO SOLUTION COMPANY LIMITED', tax_id: '0105561089221', source: 'history' },
     { name: 'ห้างหุ้นส่วนจำกัด กิตติการ์เมนต์', name_en: 'KITTI GARMENT LIMITED PARTNERSHIP', tax_id: '0103541015694', source: 'history' },
     { name: 'บริษัท นภา ลอจิสติกส์ จำกัด', name_en: 'NAPA LOGISTICS COMPANY LIMITED', tax_id: '0105556133919', source: 'history' },
-    { name: 'บจก. ไทยแมนูแฟกเจอริ่ง', name_en: 'THAI MANUFACTURING COMPANY LIMITED', tax_id: '0105553018248', source: 'history' }
+    { name: 'บจก. ไทยแมนูแฟกเจอริ่ง', name_en: 'THAI MANUFACTURING COMPANY LIMITED', tax_id: '0105553018248', source: 'history' },
+    { name: 'บริษัท แพลนเนท ที แอนด์ เอส จำกัด', name_en: 'PLANET T AND S COMPANY LIMITED', tax_id: '0105540006321', branch: 'สำนักงานใหญ่', address: '28 ซอยกรุงเทพกรีฑา 20 แยก 3 แขวงทับช้าง เขตสะพานสูง กรุงเทพมหานคร 10250', source: 'dbd' }
   ];
 
   const upsertDbd = db.prepare(`
@@ -1782,9 +1790,41 @@ const server = http.createServer(async (req, res) => {
       const params = [];
 
       if (q) {
-        const like = `%${q}%`;
-        whereSql = ' WHERE name LIKE ? OR name_en LIKE ? OR tax_id LIKE ? OR contact_name LIKE ? OR phone LIKE ? OR email LIKE ?';
+        const qClean = q.trim();
+        const qNoSpace = qClean.replace(/\s+/g, '');
+        const qDigits = qClean.replace(/\D/g, '');
+        const like = `%${qClean}%`;
+
+        const conds = [
+          'name LIKE ?',
+          'name_en LIKE ?',
+          'tax_id LIKE ?',
+          'contact_name LIKE ?',
+          'phone LIKE ?',
+          'email LIKE ?'
+        ];
         params.push(like, like, like, like, like, like);
+
+        if (qNoSpace && qNoSpace.length >= 2) {
+          conds.push("REPLACE(name, ' ', '') LIKE ?", "REPLACE(name_en, ' ', '') LIKE ?");
+          params.push(`%${qNoSpace}%`, `%${qNoSpace}%`);
+        }
+
+        if (qDigits && qDigits.length >= 3) {
+          conds.push("REPLACE(REPLACE(tax_id, '-', ''), ' ', '') LIKE ?");
+          params.push(`%${qDigits}%`);
+        }
+
+        // Add search synonyms (e.g. planet <-> แพลนเนท)
+        const synonyms = getSearchSynonyms(qClean);
+        for (const s of synonyms) {
+          if (s !== qClean && s !== qNoSpace) {
+            conds.push('name LIKE ?', 'name_en LIKE ?');
+            params.push(`%${s}%`, `%${s}%`);
+          }
+        }
+
+        whereSql = ' WHERE ' + conds.join(' OR ');
       }
 
       const total = db.prepare(countSql + whereSql).get(...params)?.c || 0;
