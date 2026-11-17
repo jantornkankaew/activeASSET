@@ -17359,13 +17359,17 @@ function setupAuthSystem() {
         }
       }
       if (loginOverlay) loginOverlay.classList.add('hidden');
+      document.documentElement.classList.remove('is-unauthenticated');
       focusSearchInputIfIdle(150);
       applyPermissionsToUI();
     } else {
       if (navName) navName.textContent = 'เข้าสู่ระบบ';
       if (navAvatar) navAvatar.textContent = '👤';
       if (state.authConfig.require_login) {
+        document.documentElement.classList.add('is-unauthenticated');
         if (loginOverlay) loginOverlay.classList.remove('hidden');
+      } else {
+        document.documentElement.classList.remove('is-unauthenticated');
       }
       applyPermissionsToUI();
     }
@@ -17596,6 +17600,7 @@ function setupAuthSystem() {
       userDropdown?.classList.add('hidden');
       localStorage.removeItem('activeasset_current_user');
       state.currentUser = null;
+      document.documentElement.classList.add('is-unauthenticated');
       updateUserProfileUI();
       applyPermissionsToUI();
       renderActiveView();

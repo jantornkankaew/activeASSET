@@ -8,6 +8,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css?v=20261117_1" />
+  <script>
+    (function() {
+      try {
+        if (!localStorage.getItem('activeasset_current_user')) {
+          document.documentElement.classList.add('is-unauthenticated');
+        }
+      } catch (_) {}
+    })();
+  </script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
