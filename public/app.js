@@ -7086,9 +7086,23 @@ function setupCompanySettingsModal() {
     // Email provider & API key
     const initProvider = c.email_provider || (c.email_api_key ? (c.email_api_key.startsWith('SG.') ? 'sendgrid' : 'resend') : (c.smtp_user ? 'smtp' : 'resend'));
     setVal('settingEmailProvider', initProvider);
-    setVal('settingEmailApiKey', c.email_api_key);
+
+    const cachedKey = localStorage.getItem('activeasset_cached_email_api_key') || '';
+    const resolvedKey = c.email_api_key || cachedKey;
+    setVal('settingEmailApiKey', resolvedKey);
     setVal('settingEmailFromAddress', c.email_from_address || 'a5@active5.co.th');
     setVal('settingEmailFromName', c.email_from_name || c.company_name || 'บริษัท แอคทีฟ 5 จำกัด');
+
+    // Auto-sync cached key to server if server database was re-seeded on cloud deploy
+    if (!c.email_api_key && cachedKey) {
+      fetch('/api/company-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email_api_key: cachedKey, email_provider: initProvider })
+      }).then(r => r.json()).then(res => {
+        if (res.success && res.settings) state.companySettings = res.settings;
+      }).catch(() => {});
+    }
 
     // Gmail SMTP fallback fields
     setVal('settingSmtpUser', c.smtp_user);
@@ -7269,11 +7283,23 @@ function setupCompanySettingsModal() {
         });
         const data = await res.json();
         if (data.success) {
+          // Immediately cache and persist the verified key
+          localStorage.setItem('activeasset_cached_email_api_key', apiKey);
+          localStorage.setItem('activeasset_cached_email_provider', provider);
+
+          fetch('/api/company-settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email_api_key: apiKey, email_provider: provider })
+          }).then(r => r.json()).then(saved => {
+            if (saved.success && saved.settings) state.companySettings = saved.settings;
+          }).catch(() => {});
+
           if (apiStatusBox) {
             apiStatusBox.className = 'smtp-status-box success';
-            apiStatusBox.textContent = `✅ ${data.message || 'API Key ถูกต้อง พร้อมใช้งาน!'}`;
+            apiStatusBox.textContent = `✅ ${data.message || 'API Key ถูกต้อง พร้อมใช้งาน (บันทึกเข้าระบบเรียบร้อยแล้ว)!'}`;
           }
-          showToast(`✅ ${data.message || 'API Key ถูกต้อง'}`);
+          showToast(`✅ ${data.message || 'API Key ถูกต้อง (บันทึกเรียบร้อย)'}`);
         } else {
           if (apiStatusBox) {
             apiStatusBox.className = 'smtp-status-box error';
@@ -7455,6 +7481,9 @@ function setupCompanySettingsModal() {
         const data = await res.json();
         if (data.success && data.settings) {
           state.companySettings = data.settings;
+          if (payload.email_api_key) {
+            localStorage.setItem('activeasset_cached_email_api_key', payload.email_api_key);
+          }
           modal.close();
           renderGatePassHtml();
           showToast('บันทึกข้อมูลเรียบร้อยแล้ว');

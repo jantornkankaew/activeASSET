@@ -1602,7 +1602,18 @@
               <div class="form-group">
                 <label for="settingEmailApiKey" class="form-label" id="lblEmailApiKey">API Key *</label>
                 <div class="input-password-wrap">
-                  <input type="password" id="settingEmailApiKey" class="form-control font-mono" placeholder="re_xxxxxxxxxxxxxx" autocomplete="off" />
+                  <input 
+                    type="password" 
+                    id="settingEmailApiKey" 
+                    name="resend_api_secret_key"
+                    class="form-control font-mono" 
+                    placeholder="re_xxxxxxxxxxxxxx" 
+                    autocomplete="new-password"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-form-type="other"
+                    spellcheck="false" 
+                  />
                   <button type="button" class="btn-toggle-pwd" id="btnToggleApiKey" title="แสดง/ซ่อน API Key">👁️</button>
                 </div>
               </div>

@@ -432,6 +432,16 @@ function getCompanySettings() {
       settings[r.key] = r.value;
     }
   }
+  // Fallback to environment variables if not set in DB
+  if (!settings.email_api_key && (process.env.RESEND_API_KEY || process.env.EMAIL_API_KEY)) {
+    settings.email_api_key = (process.env.RESEND_API_KEY || process.env.EMAIL_API_KEY).trim();
+  }
+  if (!settings.smtp_pass && process.env.SMTP_PASS) {
+    settings.smtp_pass = process.env.SMTP_PASS.trim();
+  }
+  if (!settings.smtp_user && process.env.SMTP_USER) {
+    settings.smtp_user = process.env.SMTP_USER.trim();
+  }
   return settings;
 }
 
