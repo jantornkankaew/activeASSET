@@ -195,10 +195,14 @@ db.exec(`
     role TEXT DEFAULT 'user',
     picture TEXT DEFAULT '',
     domain TEXT DEFAULT '',
+    status TEXT DEFAULT 'active',
     created_at TEXT DEFAULT (datetime('now', 'localtime')),
     last_login TEXT DEFAULT (datetime('now', 'localtime'))
   );
 `);
+try {
+  db.exec(`ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active'`);
+} catch (e) {}
 
 // Roles & Permissions Table
 db.exec(`
@@ -318,6 +322,7 @@ function getUserWithRole(email) {
     name: user.name,
     role_id: role.id,
     role_name: role.name,
+    status: user.status || 'active',
     picture: user.picture || '',
     domain: user.domain || '',
     permissions: role.permissions,
@@ -1355,6 +1360,55 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
+    if (pathname.match(/^\/api\/users\/[^/]+\/status$/) && req.method === 'PATCH') {
+      const email = decodeURIComponent(pathname.split('/')[3]);
+      const body = await parseJsonBody(req);
+      const newStatus = body.status === 'disabled' ? 'disabled' : 'active';
+
+      const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+      if (!user) return sendJson(res, 404, { error: 'ไม่พบผู้ใช้นี้ในระบบ' });
+
+      // Protect last active admin from being disabled
+      if (user.role === 'admin' && newStatus === 'disabled') {
+        const adminCount = db.prepare("SELECT COUNT(*) as cnt FROM users WHERE role = 'admin' AND (status IS NULL OR status != 'disabled')").get();
+        if (adminCount.cnt <= 1) {
+          return sendJson(res, 400, { error: 'ไม่สามารถระงับการใช้งานผู้ดูแลระบบ (Admin) ที่เปิดใช้งานอยู่คนสุดท้ายได้' });
+        }
+      }
+
+      db.prepare('UPDATE users SET status = ? WHERE email = ?').run(newStatus, email);
+      return sendJson(res, 200, {
+        success: true,
+        message: newStatus === 'disabled'
+          ? `ระงับการใช้งานของ ${user.name} เรียบร้อยแล้ว`
+          : `เปิดใช้งานบัญชีของ ${user.name} เรียบร้อยแล้ว`,
+        user: getUserWithRole(email),
+        users: db.prepare('SELECT * FROM users ORDER BY name ASC').all().map(u => getUserWithRole(u.email))
+      });
+    }
+
+    if (pathname.match(/^\/api\/users\/[^/]+$/) && req.method === 'DELETE') {
+      const email = decodeURIComponent(pathname.split('/')[3]);
+
+      const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+      if (!user) return sendJson(res, 404, { error: 'ไม่พบผู้ใช้นี้ในระบบ' });
+
+      // Protect last admin from being deleted
+      if (user.role === 'admin') {
+        const adminCount = db.prepare("SELECT COUNT(*) as cnt FROM users WHERE role = 'admin'").get();
+        if (adminCount.cnt <= 1) {
+          return sendJson(res, 400, { error: 'ไม่สามารถลบผู้ดูแลระบบ (Admin) คนสุดท้ายของระบบได้' });
+        }
+      }
+
+      db.prepare('DELETE FROM users WHERE email = ?').run(email);
+      return sendJson(res, 200, {
+        success: true,
+        message: `ลบผู้ใช้งาน ${user.name} (${email}) ออกจากระบบเรียบร้อยแล้ว`,
+        users: db.prepare('SELECT * FROM users ORDER BY name ASC').all().map(u => getUserWithRole(u.email))
+      });
+    }
+
     // Login with Google Workspace / Corporate Email
     if (pathname === '/api/auth/login' && req.method === 'POST') {
       const body = await parseJsonBody(req);
@@ -1426,6 +1480,11 @@ const server = http.createServer(async (req, res) => {
       let userRole = 'user';
       const existingUser = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
       if (existingUser) {
+        if (existingUser.status === 'disabled') {
+          return sendJson(res, 403, {
+            error: 'บัญชีผู้ใช้นี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ (Admin)'
+          });
+        }
         userRole = existingUser.role || 'user';
       } else {
         if (email === 'admin@active5.co.th' || email === 'jantorn@active5.co.th' || email.startsWith('admin@')) {

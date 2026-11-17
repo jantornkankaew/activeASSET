@@ -8094,26 +8094,64 @@ function setupCompanySettingsModal() {
       const initial = (u.name || u.email || 'U').charAt(0);
       const currentRole = roles.find(r => r.id === u.role_id) || roles.find(r => r.id === 'user') || { id: u.role_id || 'user', name: u.role_id || 'ผู้ใช้งาน' };
       const roleIcon = currentRole.id === 'admin' ? '👑' : (currentRole.id === 'user' ? '👤' : '🛠️');
+      const isDisabled = u.status === 'disabled';
+      const isSelf = state.currentUser && state.currentUser.email === u.email;
 
       return `
-        <div class="user-role-row" data-user-email="${escapeHtml(u.email)}">
+        <div class="user-role-row ${isDisabled ? 'is-disabled' : ''}" data-user-email="${escapeHtml(u.email)}">
           <div class="user-role-info">
-            <div class="user-row-avatar">${escapeHtml(initial)}</div>
+            <div class="user-row-avatar ${isDisabled ? 'is-disabled' : ''}">${escapeHtml(initial)}</div>
             <div class="user-row-names">
-              <div class="user-row-fullname">${escapeHtml(u.name || '-')}</div>
+              <div class="user-row-fullname">
+                ${escapeHtml(u.name || '-')}
+                ${isDisabled ? '<span class="user-status-pill is-disabled">ระงับการใช้งาน</span>' : ''}
+                ${isSelf ? '<span class="user-self-pill">คุณ</span>' : ''}
+              </div>
               <div class="user-row-email">${escapeHtml(u.email)}</div>
             </div>
           </div>
 
-          <div class="user-role-selector-wrap">
-            <button type="button" 
-              class="btn-user-role-dropdown-trigger ${currentRole.id === 'admin' ? 'is-admin' : ''}" 
-              data-user-role-trigger="${escapeHtml(u.email)}"
-              title="คลิกเพื่อสลับบทบาท (${escapeHtml(currentRole.name)})"
+          <div class="user-row-actions">
+            <div class="user-role-selector-wrap">
+              <button type="button" 
+                class="btn-user-role-dropdown-trigger ${currentRole.id === 'admin' ? 'is-admin' : ''}" 
+                data-user-role-trigger="${escapeHtml(u.email)}"
+                title="คลิกเพื่อสลับบทบาท (${escapeHtml(currentRole.name)})"
+                ${isDisabled ? 'disabled' : ''}
+              >
+                <span class="role-badge-icon">${roleIcon}</span>
+                <span class="role-badge-name">${escapeHtml(currentRole.name)}</span>
+                <span class="role-badge-arrow">▾</span>
+              </button>
+            </div>
+
+            <!-- Toggle Disable / Active -->
+            <button type="button"
+              class="btn-user-status-toggle ${isDisabled ? 'is-disabled' : 'is-active'}"
+              data-user-status-toggle="${escapeHtml(u.email)}"
+              data-current-status="${isDisabled ? 'disabled' : 'active'}"
+              title="${isSelf ? 'ไม่สามารถระงับบัญชีตนเองได้' : (isDisabled ? 'คลิกเพื่อเปิดใช้งานบัญชี' : 'คลิกเพื่อระงับการใช้งานบัญชี')}"
+              ${isSelf ? 'disabled' : ''}
             >
-              <span class="role-badge-icon">${roleIcon}</span>
-              <span class="role-badge-name">${escapeHtml(currentRole.name)}</span>
-              <span class="role-badge-arrow">▾</span>
+              ${isDisabled 
+                ? '<span class="status-dot dot-red"></span> ระงับ' 
+                : '<span class="status-dot dot-green"></span> ใช้งาน'}
+            </button>
+
+            <!-- Delete User Button -->
+            <button type="button"
+              class="btn-user-delete"
+              data-user-delete="${escapeHtml(u.email)}"
+              title="${isSelf ? 'ไม่สามารถลบบัญชีตนเองได้' : 'ลบผู้ใช้นี้ออกจากระบบ'}"
+              ${isSelf ? 'disabled' : ''}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18"></path>
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
             </button>
           </div>
         </div>
@@ -8140,6 +8178,25 @@ function setupCompanySettingsModal() {
           return;
         }
         openUserRoleSelectDropdown(email, btn);
+      });
+    });
+
+    // Wire status toggle buttons
+    container.querySelectorAll('[data-user-status-toggle]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const email = btn.dataset.userStatusToggle;
+        const currentStatus = btn.dataset.currentStatus;
+        if (email) toggleUserStatus(email, currentStatus);
+      });
+    });
+
+    // Wire delete buttons
+    container.querySelectorAll('[data-user-delete]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const email = btn.dataset.userDelete;
+        if (email) deleteUser(email);
       });
     });
   }
@@ -8304,12 +8361,13 @@ function setupCompanySettingsModal() {
   async function deleteCustomRole(roleId) {
     const role = cachedRoles.find(r => r.id === roleId);
     const name = role ? role.name : roleId;
-    const ok = await showAgodaConfirmModal({
+    const ok = await showConfirmDialog({
       title: `ลบบทบาท "${name}" หรือไม่?`,
       message: `ผู้ใช้งานที่เคยมีบทบาทนี้ทั้งหมด (${role?.user_count || 0} คน) จะถูกปรับเป็นบทบาท User ตามค่าเริ่มต้น`,
-      confirmText: 'ลบบทบาท',
+      confirmText: '🗑️ ยืนยันลบบทบาท',
       cancelText: 'ยกเลิก',
-      danger: true
+      icon: '🗑️',
+      confirmBtnClass: 'btn-danger'
     });
     if (!ok) return;
 
@@ -8325,6 +8383,72 @@ function setupCompanySettingsModal() {
       showToast(data.message || 'ลบบทบาทเรียบร้อยแล้ว');
     } catch (err) {
       showToast(`❌ ${err.message}`);
+    }
+  }
+
+  async function toggleUserStatus(email, currentStatus) {
+    const isCurrentlyDisabled = currentStatus === 'disabled';
+    const newStatus = isCurrentlyDisabled ? 'active' : 'disabled';
+    const targetUser = cachedUsers.find(u => u.email === email);
+    const userName = targetUser?.name || email;
+
+    if (!isCurrentlyDisabled) {
+      const confirmed = await showConfirmDialog({
+        title: 'ระงับการใช้งานบัญชีผู้ใช้',
+        message: `ต้องการระงับการใช้งานของ "${userName}" (${email}) ใช่หรือไม่?`,
+        itemHtml: `<div style="font-size:12.5px; color:#64748b; line-height:1.5;">เมื่อระงับแล้ว บัญชีนี้จะไม่สามารถเข้าสู่ระบบ activeASSET ได้จนกว่าจะได้รับการเปิดใช้งานอีกครั้ง</div>`,
+        confirmText: '🚫 ระงับการใช้งาน',
+        cancelText: 'ยกเลิก',
+        icon: '🚫',
+        confirmBtnClass: 'btn-danger'
+      });
+      if (!confirmed) return;
+    }
+
+    try {
+      const res = await fetch(`/api/users/${encodeURIComponent(email)}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'เปลี่ยนสถานะไม่สำเร็จ');
+
+      showToast(data.message || 'อัปเดตสถานะผู้ใช้เรียบร้อยแล้ว');
+      await loadRolesAndUsersUI();
+    } catch (err) {
+      showToast(`❌ ${err.message}`);
+      await loadRolesAndUsersUI();
+    }
+  }
+
+  async function deleteUser(email) {
+    const targetUser = cachedUsers.find(u => u.email === email);
+    const userName = targetUser?.name || email;
+
+    const confirmed = await showConfirmDialog({
+      title: 'ลบผู้ใช้งานออกจากระบบ',
+      message: `ยืนยันการลบ "${userName}" (${email}) ใช่หรือไม่?`,
+      itemHtml: `<div style="font-size:12.5px; color:#ef4444; line-height:1.5;">⚠️ ข้อมูลบัญชีผู้ใช้นี้จะถูกลบออกจากระบบทันที (ประวัติและเอกสารใบยืมเดิมจะยังคงอยู่เพื่อการตรวจสอบ)</div>`,
+      confirmText: '🗑️ ยืนยันลบผู้ใช้',
+      cancelText: 'ยกเลิก',
+      icon: '🗑️',
+      confirmBtnClass: 'btn-danger'
+    });
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/users/${encodeURIComponent(email)}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'ลบผู้ใช้ไม่สำเร็จ');
+
+      showToast(data.message || 'ลบผู้ใช้เรียบร้อยแล้ว');
+      await loadRolesAndUsersUI();
+    } catch (err) {
+      showToast(`❌ ${err.message}`);
+      await loadRolesAndUsersUI();
     }
   }
 
