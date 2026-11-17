@@ -11143,6 +11143,13 @@ dialog.modal-send-email {
   border: 1px solid rgba(22, 163, 74, 0.2);
 }
 
+.company-item-badge.badge-online {
+  background: #f5f3ff;
+  color: #7c3aed;
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  font-weight: 600;
+}
+
 .company-item-badge.badge-custom {
   background: #f8fafc;
   color: #64748b;

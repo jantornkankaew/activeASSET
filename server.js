@@ -2292,6 +2292,76 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
+    async function fetchExternalCompanySuggestions(query, existingMatches = []) {
+      if (!query || query.trim().length < 2) return [];
+      const q = query.trim();
+      const existingNames = new Set(existingMatches.map(m => m.name.replace(/\s+/g, '').toLowerCase()));
+
+      const queries = [];
+      if (!q.startsWith('บริษัท') && !q.startsWith('ห้างหุ้นส่วน') && !q.startsWith('บจก') && !q.startsWith('หจก')) {
+        queries.push(`บริษัท ${q}`);
+      }
+      queries.push(q);
+
+      const results = [];
+      const added = new Set();
+
+      for (const item of queries) {
+        try {
+          const url = `https://suggestqueries.google.com/complete/search?client=chrome&hl=th&q=${encodeURIComponent(item)}`;
+          const res = await fetch(url, { signal: AbortSignal.timeout(1800) });
+          if (!res.ok) continue;
+          const data = await res.json();
+          const list = Array.isArray(data[1]) ? data[1] : [];
+
+          for (let s of list) {
+            if (typeof s !== 'string') continue;
+            s = s.trim();
+
+            const sNoSpace = s.replace(/\s+/g, '').toLowerCase();
+            if (sNoSpace.includes('สมัครงาน') || sNoSpace.includes('pantip') || sNoSpace.includes('รีวิว') || sNoSpace.includes('ผู้ถือหุ้น') || sNoSpace.includes('เบอร์โทร') || sNoSpace.includes('ราคาหุ้น') || sNoSpace.includes('งบการเงิน') || sNoSpace.includes('สวัสดิการ') || sNoSpace.includes('ฝึกงาน') || sNoSpace.includes('โบนัส')) {
+              continue;
+            }
+
+            s = s.replace(/จํากัด/g, 'จำกัด').replace(/สํานักงาน/g, 'สำนักงาน').replace(/\s+/g, ' ').trim();
+            // If Thai letters are artificially spaced out by search engine (e.g. "จ ำ ก ั ด" or "พิ วรรธ น์")
+            if (/[\u0E00-\u0E7F]\s+[\u0E00-\u0E7F]/.test(s)) {
+              // Collapse spaces between Thai characters, but keep spaces before/after English or numbers
+              s = s.replace(/([\u0E00-\u0E7F])\s+([\u0E00-\u0E7F])/g, '$1$2')
+                   .replace(/([\u0E00-\u0E7F])\s+([\u0E00-\u0E7F])/g, '$1$2');
+            }
+            // Strip trailing search noise (e.g. "โทร", "ที่อยู่", "สาขา", "pantip", English search noise)
+            s = s.replace(/\s+(?:โทร|เบอร์โทร|เบอร์โทรศัพท์|ที่อยู่|ที่\s*อยู่|ติดต่อ|แผนที่|สาขา|สำนักงานใหญ่|pantip|job|career).*$/gi, '').trim();
+            s = cleanCompanyName(s);
+
+            const isCorp = s.includes('บริษัท') || s.includes('ห้างหุ้นส่วน') || s.includes('จำกัด') || s.includes('มหาชน') || s.toLowerCase().includes('co., ltd') || s.toLowerCase().includes('ltd');
+            if (!isCorp) continue;
+
+            const normKey = s.replace(/\s+/g, '').toLowerCase();
+            if (existingNames.has(normKey) || added.has(normKey)) continue;
+
+            added.add(normKey);
+            results.push({
+              id: `online_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+              name: s,
+              name_en: '',
+              tax_id: '',
+              branch: 'สำนักงานใหญ่',
+              address: '',
+              contact_name: '',
+              phone: '',
+              email: '',
+              source: 'online'
+            });
+
+            if (results.length >= 6) break;
+          }
+        } catch (_) {}
+        if (results.length >= 6) break;
+      }
+      return results;
+    }
+
     // Smart Customer Search (Tax ID 13 digits, Aliases, Acronyms, Stripped Core Name & Fuzzy Matching)
     if (pathname === '/api/customers/search' && req.method === 'GET') {
       const q = (urlObj.searchParams.get('q') || '').trim();
@@ -2360,10 +2430,20 @@ const server = http.createServer(async (req, res) => {
       const matches = db.prepare(searchSql).all(...searchParams);
       matches.forEach(m => { if (m.name) m.name = cleanCompanyName(m.name); });
 
+      // If local matches are few (or none) and query length >= 2, search free external corporate data!
+      let onlineResults = [];
+      const hasGoodMatches = matches.length >= 4 && matches.some(m => m.name.toLowerCase().includes(qLower));
+      if (!hasGoodMatches && q.length >= 2 && !digitsOnly) {
+        onlineResults = await fetchExternalCompanySuggestions(q, matches);
+      }
+
+      const combined = [...matches, ...onlineResults];
+
       return sendJson(res, 200, {
         success: true,
-        results: matches,
-        hasExactMatch: matches.some(m => m.name.toLowerCase() === qLower || (m.name_en && m.name_en.toLowerCase() === qLower))
+        results: combined,
+        fromOnline: onlineResults.length > 0,
+        hasExactMatch: combined.some(m => m.name.toLowerCase() === qLower || (m.name_en && m.name_en.toLowerCase() === qLower))
       });
     }
 

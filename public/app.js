@@ -1551,9 +1551,16 @@ function initCompanyAutocomplete() {
         badgeClass = 'badge-dbd';
         badgeText = 'DBD นิติบุคคล';
         icon = '🌐';
+      } else if (item.source === 'online') {
+        badgeClass = 'badge-online';
+        badgeText = '🌐 ภายนอก (Auto-Save)';
+        icon = '🌐';
       }
 
       const subParts = [];
+      if (item.source === 'online') {
+        subParts.push('<span style="color:#7c3aed; font-weight:500;">ดึงจากฐานข้อมูลธุรกิจภายนอก • บันทึกอัตโนมัติเมื่อเลือก</span>');
+      }
       if (item.name_en) {
         subParts.push(`<span class="company-item-en">${escapeHtml(item.name_en)}</span>`);
       }
@@ -1590,6 +1597,22 @@ function initCompanyAutocomplete() {
         if (phoneInput && !phoneInput.value.trim() && item.phone) {
           phoneInput.value = item.phone;
           phoneInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+
+        // If from external online lookup, automatically learn & save into Master Data!
+        if (item.source === 'online') {
+          fetch('/api/customers/learn', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: item.name,
+              name_en: item.name_en || '',
+              tax_id: item.tax_id || '',
+              branch: item.branch || 'สำนักงานใหญ่',
+              address: item.address || ''
+            })
+          }).catch(() => {});
+          showToast(`💾 บันทึก "${item.name}" เข้าสู่ระบบเรียบร้อย`);
         }
 
         companyInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -8895,6 +8918,112 @@ async function fetchAndRenderCustomers(container, opts = {}) {
 
     const list = data.customers || [];
     if (list.length === 0) {
+      if (masterCustomerQuery && masterCustomerQuery.length >= 2) {
+        container.innerHTML = `
+          <div style="padding:40px 20px; text-align:center; color:#64748b;">
+            <div style="font-size:32px; margin-bottom:8px;">🏢</div>
+            <div style="font-size:14px; font-weight:600; color:#334155;">ไม่พบลูกค้า "${escapeHtml(masterCustomerQuery)}" ในระบบ</div>
+            <div style="font-size:12px; margin-top:4px; color:#64748b;">คุณสามารถค้นหาดึงข้อมูลจากภายนอกมาบันทึกเข้าระบบได้ฟรีทันที</div>
+            <div style="margin-top:14px;">
+              <button type="button" class="btn btn-outline btn-sm" id="btnSearchMasterCustomerOnline" style="background:#f5f3ff; color:#7c3aed; border-color:#c4b5fd; padding:7px 16px; font-size:13px; font-weight:600;">
+                🌐 ค้นหา "${escapeHtml(masterCustomerQuery)}" จากฐานข้อมูลภายนอก (ฟรี)
+              </button>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('btnSearchMasterCustomerOnline')?.addEventListener('click', async () => {
+          container.innerHTML = `<div style="padding:40px 20px; text-align:center; color:#64748b;"><span class="status-spinner"></span> กำลังค้นหาข้อมูลจากฐานข้อมูลภายนอก...</div>`;
+          try {
+            const resOnline = await fetch(`/api/customers/search?q=${encodeURIComponent(masterCustomerQuery)}`);
+            const dOnline = await resOnline.json();
+            const onlineItems = (dOnline.results || []).filter(r => r.source === 'online' || !list.some(l => l.name === r.name));
+            if (!onlineItems || onlineItems.length === 0) {
+              container.innerHTML = `
+                <div style="padding:40px 20px; text-align:center; color:#64748b;">
+                  <div style="font-size:32px; margin-bottom:8px;">🔍</div>
+                  <div style="font-size:14px; font-weight:600; color:#334155;">ไม่พบบริษัทที่ตรงกับ "${escapeHtml(masterCustomerQuery)}" จากภายนอก</div>
+                  <div style="margin-top:12px;">
+                    <button type="button" class="btn btn-primary btn-sm" id="btnManualAddCustPrompt">
+                      ➕ เพิ่มบริษัทนี้ด้วยตนเอง
+                    </button>
+                  </div>
+                </div>
+              `;
+              document.getElementById('btnManualAddCustPrompt')?.addEventListener('click', () => {
+                openCustomerEditor({ name: masterCustomerQuery });
+              });
+              return;
+            }
+
+            container.innerHTML = `
+              <div style="padding:10px 16px; background:#f5f3ff; border-bottom:1px solid #ddd6fe; color:#6b21a8; font-size:12.5px; font-weight:600; display:flex; justify-content:space-between; align-items:center;">
+                <span>🌐 พบบริษัทจากฐานข้อมูลธุรกิจภายนอก (${onlineItems.length} รายการ)</span>
+                <span style="font-size:11px; font-weight:normal; color:#7c3aed;">คลิก "เพิ่มเข้าระบบ" เพื่อบันทึกเข้าสู่ Master Data ทันที</span>
+              </div>
+              <table class="master-table">
+                <thead>
+                  <tr>
+                    <th style="width:40px; text-align:center;">#</th>
+                    <th>ชื่อบริษัท (ภายนอก)</th>
+                    <th style="width:140px; text-align:center;">แหล่งที่มา</th>
+                    <th style="width:130px; text-align:center;">การดำเนินการ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${onlineItems.map((item, idx) => `
+                    <tr>
+                      <td style="text-align:center; color:#94a3b8; font-size:12px;">${idx + 1}</td>
+                      <td>
+                        <div style="font-weight:600; color:#1e293b;">${escapeHtml(item.name)}</div>
+                      </td>
+                      <td style="text-align:center;">
+                        <span class="company-item-badge badge-online">🌐 ภายนอก</span>
+                      </td>
+                      <td style="text-align:center;">
+                        <button type="button" class="btn btn-primary btn-xs btn-add-online-to-master" data-online-name="${escapeHtml(item.name)}">
+                          ➕ เพิ่มเข้าระบบ
+                        </button>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            `;
+
+            container.querySelectorAll('.btn-add-online-to-master').forEach(btn => {
+              btn.addEventListener('click', async e => {
+                const bName = e.currentTarget.dataset.onlineName;
+                try {
+                  btn.disabled = true;
+                  btn.textContent = 'กำลังบันทึก...';
+                  const lRes = await fetch('/api/customers/learn', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: bName })
+                  });
+                  const lData = await lRes.json();
+                  if (!lRes.ok) throw new Error(lData.error || 'บันทึกไม่สำเร็จ');
+                  showToast(`✅ เพิ่ม "${bName}" เข้าสู่ระบบเรียบร้อย`);
+                  await updateMasterBadgeCounts();
+                  masterCustomerQuery = bName;
+                  const sInp = document.getElementById('masterCustomerSearchInput');
+                  if (sInp) sInp.value = bName;
+                  fetchAndRenderCustomers(container);
+                } catch (err) {
+                  showToast(`❌ ${err.message}`);
+                  btn.disabled = false;
+                  btn.textContent = '➕ เพิ่มเข้าระบบ';
+                }
+              });
+            });
+          } catch (err) {
+            container.innerHTML = `<div style="padding:30px; text-align:center; color:#ef4444;">❌ ค้นหาภายนอกไม่สำเร็จ: ${escapeHtml(err.message)}</div>`;
+          }
+        });
+        return;
+      }
+
       container.innerHTML = `
         <div style="padding:40px 20px; text-align:center; color:#64748b;">
           <div style="font-size:32px; margin-bottom:8px;">🏢</div>
