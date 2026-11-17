@@ -22140,8 +22140,7 @@ html.is-unauthenticated .app-shell {
   min-height: 0;
   height: 100%;
   max-height: none !important;
-  display: flex;
-  flex-direction: column;
+  background: #ffffff;
 }
 
 .master-table {
@@ -22149,7 +22148,6 @@ html.is-unauthenticated .app-shell {
   border-collapse: collapse;
   text-align: left;
   font-size: 13px;
-  flex: 1 0 auto;
 }
 
 .master-table thead {
