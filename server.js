@@ -453,6 +453,17 @@ function stripCorporateAffixes(str) {
   return str.trim().replace(PREFIX_REGEX, '').replace(SUFFIX_REGEX, '').trim();
 }
 
+function cleanCompanyName(raw) {
+  if (!raw) return '';
+  let s = String(raw).trim();
+  s = s.replace(/\s+/g, ' ');
+  s = s.replace(/(จำกัด\s*)+$/i, 'จำกัด');
+  s = s.replace(/\s*จำกัด\s+จำกัด(\s*\(มหาชน\))?/g, (m, pub) => pub ? ' จำกัด (มหาชน)' : ' จำกัด');
+  s = s.replace(/\s*\(มหาชน\)\s*\(มหาชน\)/g, ' (มหาชน)');
+  s = s.replace(/\s+/g, ' ');
+  return s.trim();
+}
+
 const CORPORATE_ALIASES = {
   // Retail & Wholesale
   'crc': ['เซ็นทรัล', 'เซ็นทรัลรีเทล', 'เซ็นทรัล รีเทล', 'Central Retail', 'Central', 'บมจ. เซ็นทรัล รีเทล คอร์ปอเรชั่น'],
@@ -863,9 +874,34 @@ function initCustomersTable() {
     const compTax = db.prepare("SELECT value FROM company_settings WHERE key = 'company_tax_id'").get();
     const compEn = db.prepare("SELECT value FROM company_settings WHERE key = 'company_name_en'").get();
     if (compSetting?.value) {
-      upsertDbd.run(compSetting.value.trim(), compEn?.value || '', compTax?.value || '', 'history');
+      upsertDbd.run(cleanCompanyName(compSetting.value), compEn?.value || '', compTax?.value || '', 'history');
     }
   } catch (_) {}
+
+  // Automatic migration: clean duplicated "จำกัด จำกัด" and collapse multiple spaces
+  try {
+    const dirty = db.prepare(`
+      SELECT id, name FROM customers 
+      WHERE name LIKE '%จำกัด%จำกัด%' OR name LIKE '%  %' OR name LIKE '%(มหาชน)%(มหาชน)%'
+    `).all();
+    if (dirty && dirty.length > 0) {
+      const updateStmt = db.prepare('UPDATE customers SET name = ? WHERE id = ?');
+      db.exec('BEGIN TRANSACTION');
+      for (const r of dirty) {
+        const cleaned = cleanCompanyName(r.name);
+        if (cleaned && cleaned !== r.name) {
+          try {
+            updateStmt.run(cleaned, r.id);
+          } catch (_) {
+            db.prepare('DELETE FROM customers WHERE id = ?').run(r.id);
+          }
+        }
+      }
+      db.exec('COMMIT');
+    }
+  } catch (err) {
+    try { db.exec('ROLLBACK'); } catch (_) {}
+  }
 }
 initCustomersTable();
 
@@ -1754,6 +1790,7 @@ const server = http.createServer(async (req, res) => {
       const total = db.prepare(countSql + whereSql).get(...params)?.c || 0;
       const orderSql = ` ORDER BY CASE WHEN source = 'custom' THEN 0 WHEN source = 'history' THEN 1 ELSE 2 END, id DESC LIMIT ? OFFSET ?`;
       const customers = db.prepare(dataSql + whereSql + orderSql).all(...params, limit, offset);
+      customers.forEach(c => { if (c.name) c.name = cleanCompanyName(c.name); });
 
       return sendJson(res, 200, {
         success: true,
@@ -1768,7 +1805,7 @@ const server = http.createServer(async (req, res) => {
     // 3. Create Customer
     if (pathname === '/api/master/customers' && req.method === 'POST') {
       const body = await parseJsonBody(req);
-      const name = (body.name || '').trim();
+      const name = cleanCompanyName((body.name || '').trim());
       if (!name) return sendJson(res, 400, { error: 'กรุณาระบุชื่อลูกค้าหรือชื่อบริษัท' });
 
       const name_en = (body.name_en || '').trim();
@@ -1800,7 +1837,7 @@ const server = http.createServer(async (req, res) => {
       if (!existing) return sendJson(res, 404, { error: 'ไม่พบข้อมูลลูกค้ารายนี้' });
 
       const body = await parseJsonBody(req);
-      const name = (body.name || '').trim() || existing.name;
+      const name = cleanCompanyName((body.name || '').trim()) || cleanCompanyName(existing.name);
       const name_en = body.name_en !== undefined ? String(body.name_en).trim() : existing.name_en;
       const tax_id = body.tax_id !== undefined ? String(body.tax_id).trim() : existing.tax_id;
       const branch = body.branch !== undefined ? String(body.branch).trim() : existing.branch;
@@ -2224,6 +2261,7 @@ const server = http.createServer(async (req, res) => {
           ORDER BY CASE WHEN source = 'history' THEN 0 WHEN source = 'custom' THEN 1 ELSE 2 END, id DESC
           LIMIT 10
         `).all();
+        recent.forEach(r => { if (r.name) r.name = cleanCompanyName(r.name); });
         return sendJson(res, 200, { success: true, results: recent, fromOnline: false });
       }
 
@@ -2279,6 +2317,7 @@ const server = http.createServer(async (req, res) => {
       ];
 
       const matches = db.prepare(searchSql).all(...searchParams);
+      matches.forEach(m => { if (m.name) m.name = cleanCompanyName(m.name); });
 
       return sendJson(res, 200, {
         success: true,
@@ -2290,7 +2329,7 @@ const server = http.createServer(async (req, res) => {
     // Auto-Learn / Auto-Save Customer to Master Data
     if (pathname === '/api/customers/learn' && req.method === 'POST') {
       const body = await parseJsonBody(req);
-      const name = String(body.name || '').trim();
+      const name = cleanCompanyName(String(body.name || '').trim());
       if (!name) return sendJson(res, 400, { error: 'กรุณาระบุชื่อลูกค้า/บริษัท' });
 
       const nameEn = String(body.name_en || '').trim();
@@ -2383,7 +2422,7 @@ const server = http.createServer(async (req, res) => {
       const body = await parseJsonBody(req);
       const borrowerName = String(body.borrower_name || '').trim();
       const customerName = String(body.customer_name || '').trim();
-      const customerCompany = String(body.customer_company || '').trim();
+      const customerCompany = cleanCompanyName(String(body.customer_company || '').trim());
       const borrowerPhone = String(body.customer_phone || body.borrower_phone || '').trim();
       const customerPhone = borrowerPhone;
       const purpose = String(body.purpose || 'Demo').trim();
@@ -2828,6 +2867,8 @@ const server = http.createServer(async (req, res) => {
         ? saveBase64Image(body.borrower_signature, `sig-${loanId}`)
         : loan.borrower_signature;
 
+      const cleanedCompany = body.customer_company !== undefined ? cleanCompanyName(body.customer_company) : null;
+
       db.exec('BEGIN TRANSACTION');
       try {
         db.prepare(`
@@ -2845,7 +2886,7 @@ const server = http.createServer(async (req, res) => {
         `).run(
           nextStatus,
           body.customer_name !== undefined ? body.customer_name : null,
-          body.customer_company !== undefined ? body.customer_company : null,
+          cleanedCompany,
           body.customer_phone !== undefined ? body.customer_phone : null,
           body.customer_phone !== undefined ? body.customer_phone : (body.borrower_phone !== undefined ? body.borrower_phone : null),
           body.borrower_name !== undefined ? body.borrower_name : null,
@@ -2855,7 +2896,7 @@ const server = http.createServer(async (req, res) => {
           loanId
         );
 
-        if (body.customer_company && body.customer_company.trim()) {
+        if (cleanedCompany && cleanedCompany.trim()) {
           try {
             db.prepare(`
               INSERT INTO customers (name, contact_name, phone, source) VALUES (?, ?, ?, 'custom')
@@ -2863,7 +2904,7 @@ const server = http.createServer(async (req, res) => {
                 contact_name = CASE WHEN customers.contact_name = '' AND excluded.contact_name != '' THEN excluded.contact_name ELSE customers.contact_name END,
                 phone = CASE WHEN customers.phone = '' AND excluded.phone != '' THEN excluded.phone ELSE customers.phone END,
                 created_at = datetime('now', 'localtime')
-            `).run(body.customer_company.trim(), body.customer_name || '', body.customer_phone || '');
+            `).run(cleanedCompany.trim(), body.customer_name || '', body.customer_phone || '');
           } catch (_) {}
         }
 
