@@ -1,0 +1,12 @@
+{
+  "name": "activeasset",
+  "version": "2.0.0",
+  "description": "Minimal, fast, zero-dependency Asset Loan & QC Tracking System (Node.js + Built-in SQLite)",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}

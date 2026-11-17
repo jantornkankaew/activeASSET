@@ -1,0 +1,14 @@
+node_modules/
+.DS_Store
+*.log
+scratch/
+browser_capture*.png
+screen.png
+data/*.bak*
+data/*-wal
+data/*-shm
+data/activeasset.db*
+data/database.sqlite
+activeasset.db
+database.sqlite
+v1_reference.db

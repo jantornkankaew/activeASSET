@@ -1,0 +1,3903 @@
+[
+  {
+    "tagId": "Free-001",
+    "name": "Mobile Computer Honeywell EDA51-Sim , 2GB/16GB",
+    "model": "EDA51-1",
+    "serialNo": "19084B6D4F",
+    "brand": "Honeywell",
+    "category": "Mobile Computer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord / USB-C Cable (สายชาร์จ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แบตเตอรี่แท้ประจำตัวเครื่อง",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายคล้องมือ (Handstrap)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "กล่องบรรจุภัณฑ์เดิม",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-002",
+    "name": "Mobile Computer Zebra TC27-Sim , 6GB/64GB",
+    "model": "TC27",
+    "serialNo": "24035524700197",
+    "brand": "Zebra",
+    "category": "Mobile Computer",
+    "status": "On-Loan",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "พี่กี้",
+    "customer": "Yamato Unyu",
+    "checkoutDate": "2026-10-08",
+    "expectedReturnDate": "2026-10-22",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "พี่่กี้ Yamato Unyu",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord / USB-C Cable (สายชาร์จ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แบตเตอรี่แท้ประจำตัวเครื่อง",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายคล้องมือ (Handstrap)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "กล่องบรรจุภัณฑ์เดิม",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-003",
+    "name": "2D Handheld Barcode Scanner-USB Zebra DS2208",
+    "model": "DS2208-SR",
+    "serialNo": "24209010554796",
+    "brand": "Zebra",
+    "category": "Barcode Scanner",
+    "status": "Lost",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "พี่นก",
+    "customer": "รพ.อินซ์",
+    "checkoutDate": "2025-10-28",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "28/10/2025 พี่นกยืมให้รพ.อินซ์_หาย",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-003",
+    "name": "Desktop Barcode Printer TSC_TH240T-203 dpi, 4 inch, USB+Serial+Ethernet",
+    "model": "TH240T",
+    "serialNo": "TH2425450064",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "On-Loan",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "พี่ต้น",
+    "customer": "P&P",
+    "checkoutDate": "2026-10-10",
+    "expectedReturnDate": "2026-10-24",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "พี่ต้น P&P ยืม",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-004",
+    "name": "Mobile Computer Bluebird S20-Wifi",
+    "model": "S20",
+    "serialNo": "S2045LAWBB622",
+    "brand": "Bluebird",
+    "category": "Mobile Computer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord / USB-C Cable (สายชาร์จ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แบตเตอรี่แท้ประจำตัวเครื่อง",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายคล้องมือ (Handstrap)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "กล่องบรรจุภัณฑ์เดิม",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-005",
+    "name": "Tablet Urovo P8100P-Sim , 4GB/64GB",
+    "model": "P8100P",
+    "serialNo": "1222325005883",
+    "brand": "Urovo",
+    "category": "Tablet",
+    "status": "On-Loan",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "น้องปูม",
+    "customer": "ทดสอบภายใน",
+    "checkoutDate": "2026-10-14",
+    "expectedReturnDate": "2026-10-20",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "น้องปูมยืม",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord / สายชาร์จ Type-C",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายคล้องมือ / เคสยาง",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-006",
+    "name": "2D Handheld Barcode Scanner + Bluetooth Cradle-USB Honeywell HH492",
+    "model": "HH492",
+    "serialNo": "23044B6DF2",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Barcode Scanner ลังที่ 1",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "Barcode Scanner ลังที่1",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "แท่นชาร์จ & รับส่งสัญญาณ (Cradle)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Adapter สำหรับ Cradle",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-007",
+    "name": "2D Desktop Barcode Scanner-USB Honeywell HF680",
+    "model": "HF680",
+    "serialNo": "20248B4709",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-008",
+    "name": "1D Handheld Barcode Scanner-USB Honeywell 1250G",
+    "model": "1250g",
+    "serialNo": "3K16112665",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Barcode Scanner ลังที่ 1",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "Barcode Scanner ลังที่1",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-009",
+    "name": "2D Handheld Barcode Scanner-USB Honeywell HH660",
+    "model": "HH660",
+    "serialNo": "170428227D",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-010",
+    "name": "2D Handheld Barcode Scanner + Bluetooth Cradle-USB Honeywell_1472G-2D",
+    "model": "1472G-2D",
+    "serialNo": "20345B47F1",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "แท่นชาร์จ & รับส่งสัญญาณ (Cradle)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Adapter สำหรับ Cradle",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-011",
+    "name": "2D Handheld Barcode Scanner + Bluetooth Cradle-USB Honeywell_1952g",
+    "model": "1952G",
+    "serialNo": "202294B031D",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "แท่นชาร์จ & รับส่งสัญญาณ (Cradle)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Adapter สำหรับ Cradle",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-013",
+    "name": "Mobile Computer Honeywell EDA52-Sim , Android 13 , 4GB/64GB",
+    "model": "EDA52-1",
+    "serialNo": "25059B039D",
+    "brand": "Honeywell",
+    "category": "Mobile Computer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord / USB-C Cable (สายชาร์จ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แบตเตอรี่แท้ประจำตัวเครื่อง",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายคล้องมือ (Handstrap)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "กล่องบรรจุภัณฑ์เดิม",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-014",
+    "name": "Mobile Computer Honeywell EDA52-Sim , Android 13 , 4GB/64GB",
+    "model": "EDA52-1",
+    "serialNo": "25059B000D",
+    "brand": "Honeywell",
+    "category": "Mobile Computer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord / USB-C Cable (สายชาร์จ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แบตเตอรี่แท้ประจำตัวเครื่อง",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายคล้องมือ (Handstrap)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "กล่องบรรจุภัณฑ์เดิม",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-014",
+    "name": "Desktop Barcode Printer Zebra_ZD421T-300 dpi, 4 inch, USB",
+    "model": "ZD421T",
+    "serialNo": "D6J231215908",
+    "brand": "Zebra",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-015",
+    "name": "2D Handheld Barcode Scanner-USB Honeywell 1960LI",
+    "model": "1960LI",
+    "serialNo": "24247B37C4",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-016",
+    "name": "2D Handheld Barcode Scanner-USB Honeywell 1960LI",
+    "model": "1960LI",
+    "serialNo": "24247B3852",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-017",
+    "name": "2D Handheld Barcode Scanner-USB Honeywell 1950GSR",
+    "model": "1950GSR",
+    "serialNo": "23361B12D6",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Barcode Scanner ลังที่ 1",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "Barcode Scanner ลังที่1",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-018",
+    "name": "2D Handheld Barcode Scanner-USB Honeywell 1950GHD",
+    "model": "1950GHD",
+    "serialNo": "22343B2814",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Barcode Scanner ลังที่ 1",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "Barcode Scanner ลังที่1",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-019",
+    "name": "2D Handheld Barcode Scanner-USB Honeywell 1470G-2D",
+    "model": "1470G-2D",
+    "serialNo": "23172B3CCC",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-020",
+    "name": "2D Handheld Barcode Scanner-USB Idata J16",
+    "model": "J16",
+    "serialNo": "387F764",
+    "brand": "Idata",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-021",
+    "name": "2D Handheld Barcode Scanner-USB Idata J16",
+    "model": "J16",
+    "serialNo": "WJ622274800",
+    "brand": "Idata",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-022",
+    "name": "2D Handheld Barcode Scanner-USB Idata J16",
+    "model": "J16",
+    "serialNo": "W4622314B1C",
+    "brand": "Idata",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Barcode Scanner ลังที่ 1",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "Barcode Scanner ลังที่1",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-023",
+    "name": "2D Handheld Barcode Scanner-USB Idata J16",
+    "model": "J16",
+    "serialNo": "WJ622334F99",
+    "brand": "Idata",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-024",
+    "name": "2D Handheld Barcode Scanner + Bluetooth Cradle-USB IdataJ16-BT",
+    "model": "J16-BT",
+    "serialNo": "3994032",
+    "brand": "Idata",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Barcode Scanner ลังที่ 1",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "Barcode Scanner ลังที่1",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "แท่นชาร์จ & รับส่งสัญญาณ (Cradle)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Adapter สำหรับ Cradle",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-025",
+    "name": "2D Handheld Barcode Scanner + Bluetooth Cradle-USB IdataJ15-BT",
+    "model": "J15-BT",
+    "serialNo": "3939178",
+    "brand": "Idata",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Barcode Scanner ลังที่ 1",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "Barcode Scanner ลังที่1",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "แท่นชาร์จ & รับส่งสัญญาณ (Cradle)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Adapter สำหรับ Cradle",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-026",
+    "name": "2D Handheld Barcode Scanner-USB Idata J20",
+    "model": "J20",
+    "serialNo": "4375770",
+    "brand": "Idata",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-027",
+    "name": "1D Handheld Barcode Scanner-USB Zebra LS2208-SR",
+    "model": "LS2208",
+    "serialNo": "Z53A1Z",
+    "brand": "Zebra",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Barcode Scanner ลังที่ 1",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "Barcode Scanner ลังที่1",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-028",
+    "name": "Mobile Receipt Printer Bixolon_SPP-R 203 dpi, 2\"",
+    "model": "R200",
+    "serialNo": "11070012",
+    "brand": "Bixolon",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-029",
+    "name": "2D Handheld Barcode Scanner + Bluetooth Cradle-USB Honeywell_1472G-2D",
+    "model": "1472G-2D",
+    "serialNo": "20345B47F1",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "On-Loan",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "พี่ต้น",
+    "customer": "P&P",
+    "checkoutDate": "2026-10-10",
+    "expectedReturnDate": "2026-10-24",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "พี่น้องออย ให้พี่ต้น P&P ยืม",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "แท่นชาร์จ & รับส่งสัญญาณ (Cradle)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Adapter สำหรับ Cradle",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-030",
+    "name": "2D Handheld Barcode Scanner-USB Zebra DS2208",
+    "model": "DS2208-SR",
+    "serialNo": "24209010554924",
+    "brand": "Zebra",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-031",
+    "name": "2D Handheld Barcode Scanner + Bluetooth Cradle-USB Nex-T_S22",
+    "model": "Nex-T S22",
+    "serialNo": "S3000B22160961",
+    "brand": "Nex-T",
+    "category": "Barcode Scanner",
+    "status": "On-Loan",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "พี่น้องออย",
+    "customer": "บ.3W",
+    "checkoutDate": "2026-10-07",
+    "expectedReturnDate": "2026-10-21",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "พี่น้องออย ให้บ.3W",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "แท่นชาร์จ & รับส่งสัญญาณ (Cradle)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Adapter สำหรับ Cradle",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-032",
+    "name": "2D Handheld Barcode Scanner-USB Nex-T_S11",
+    "model": "Nex-T S11",
+    "serialNo": "Hl1416800039",
+    "brand": "Nex-T",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Barcode Scanner ลังที่ 1",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "Barcode Scanner ลังที่1",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-033",
+    "name": "Mobile Receipt Printer Gprinter_GP-M324F 203 dpi, 3\"",
+    "model": "GP-M324F",
+    "serialNo": "6970362036402",
+    "brand": "Gprinter",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-034",
+    "name": "Mobile Receipt Printer Gprinter_GP-M323 203 dpi, 3\"",
+    "model": "GP-M323",
+    "serialNo": "6970362033913",
+    "brand": "Gprinter",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-035",
+    "name": "Industrial Barcode Printer TSC_MB241T-203 dpi, 4 inch, USB+Serial+Ethernet",
+    "model": "MB241T",
+    "serialNo": "MB224290563",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "On-Loan",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "พี่น้องออย",
+    "customer": "บ.Hino_โรง3",
+    "checkoutDate": "2026-10-01",
+    "expectedReturnDate": "2026-10-31",
+    "purpose": "เครื่องสำรองระหว่างซ่อม (Standby Loan)",
+    "remark": "พี่น้องออย ให้บ.Hino_โรง3 ทดแทนงานซ่อม",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-036",
+    "name": "Desktop Barcode Printer TSC_TE210-203 dpi, 4 inch, USB+Ethernet",
+    "model": "TE210",
+    "serialNo": "TEA24362029",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-037",
+    "name": "Desktop Barcode Printer TSC_TH240T-203 dpi, 4 inch, USB+Serial+Ethernet",
+    "model": "TH240T",
+    "serialNo": "TH2425450063",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-038",
+    "name": "Desktop Barcode Printer Godex_DT200i+-203 dpi, 2 inch, USB+Serial+Ethernet",
+    "model": "DT200i+",
+    "serialNo": "PC23A00019",
+    "brand": "Godex",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-039",
+    "name": "Desktop Barcode Printer TSC_TH340-300 dpi, 4 inch, USB+Serial+Ethernet",
+    "model": "TH340",
+    "serialNo": "TH3424410103",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-040",
+    "name": "Tablet Unknow M7EN0BA , 8GB , Windows 10 Pro",
+    "model": "Unknow",
+    "serialNo": "Unknow",
+    "brand": "Unknow",
+    "category": "Tablet",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord / สายชาร์จ Type-C",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายคล้องมือ / เคสยาง",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-041",
+    "name": "Desktop Barcode Printer TSC_TE310-300 dpi, 4 inch, USB+Serial+Ethernet",
+    "model": "TE310",
+    "serialNo": "TEB24170398",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-042",
+    "name": "Mobile Computer Urovo CT58S-Sim , 4GB/64GB",
+    "model": "CT85S",
+    "serialNo": "1962502016192",
+    "brand": "Urovo",
+    "category": "Mobile Computer",
+    "status": "On-Loan",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "พี่ก้าว",
+    "customer": "บ.บิ๊กบ็อกซ์",
+    "checkoutDate": "2026-10-05",
+    "expectedReturnDate": "2026-10-25",
+    "purpose": "สำรองระหว่างรออะไหล่เคลม",
+    "remark": "พี่ก้าว บ.บิ๊กบ็อกซ์ ใช้ระหว่างรออะไหล่เคลม",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord / USB-C Cable (สายชาร์จ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แบตเตอรี่แท้ประจำตัวเครื่อง",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายคล้องมือ (Handstrap)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "กล่องบรรจุภัณฑ์เดิม",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-043",
+    "name": "2D Desktop Barcode Scanner-USB Nex-T DP8210",
+    "model": "DP8210",
+    "serialNo": "DP821025F16422",
+    "brand": "Nex-T",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Barcode Scanner ลังที่ 1",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "Barcode Scanner ลังที่1",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-044",
+    "name": "Mobile Computer Cipherlap RS36-WiFi , 4GB/64GB",
+    "model": "RS36",
+    "serialNo": "FZ12390001877",
+    "brand": "Cipherlap",
+    "category": "Mobile Computer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord / USB-C Cable (สายชาร์จ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แบตเตอรี่แท้ประจำตัวเครื่อง",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายคล้องมือ (Handstrap)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "กล่องบรรจุภัณฑ์เดิม",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-045",
+    "name": "2D Handheld Barcode Scanner-USB Honeywell 1950GUD",
+    "model": "1950GUD",
+    "serialNo": "24323B5658",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Barcode Scanner ลังที่ 1",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "Barcode Scanner ลังที่1",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-046",
+    "name": "2D Handheld Barcode Scanner-USB Nex-T_S2000",
+    "model": "Nex-T S2000",
+    "serialNo": "S2000023290030",
+    "brand": "Nex-T",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-047",
+    "name": "2D Handheld Barcode Scanner-USB Nex-T_S2000",
+    "model": "Nex-T S2000",
+    "serialNo": "S2000023290015",
+    "brand": "Nex-T",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Barcode Scanner ลังที่ 1",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "Barcode Scanner ลังที่1",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-048",
+    "name": "Mobile Barcode Printer HRPT_E3PLUS 203 dpi, 3\"",
+    "model": "E3PLUS",
+    "serialNo": "E3PLUS25110002",
+    "brand": "HRPT",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-049",
+    "name": "Mobile Barcode Printer HRPT_E3PLUS 203 dpi, 3\"",
+    "model": "E3PLUS",
+    "serialNo": "E3PLUS25110725",
+    "brand": "HRPT",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-050",
+    "name": "Mobile Barcode Printer HRPT_HM-A400 203 dpi, 4\"",
+    "model": "HM-A400",
+    "serialNo": "MA400025130880",
+    "brand": "HRPT",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-051",
+    "name": "Desktop Barcode Printer IDPRT_iF4-203 dpi, 4 inch, USB+Ethernet",
+    "model": "iF4",
+    "serialNo": "iF400025150709",
+    "brand": "iDPRT",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-052",
+    "name": "Industrial Barcode Printer TSC_MB341T-203 dpi, 4 inch, USB+Serial+Ethernet",
+    "model": "MB341T",
+    "serialNo": "MB325120010",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-053",
+    "name": "Industrial Barcode Printer TSC_MB241T-203 dpi, 4 inch, USB+Serial+Ethernet",
+    "model": "MB241T",
+    "serialNo": "MB224390294",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-054",
+    "name": "Desktop Barcode Printer Honeywell_PC42ET-203 dpi, 4 inch, USB+Ethernet",
+    "model": "PC42E-T",
+    "serialNo": "24361W01F6",
+    "brand": "Honeywell",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-055",
+    "name": "Desktop Barcode Printer TSC_TH240-203 dpi, 4 inch, USB+Serial+Ethernet+Cutter",
+    "model": "TH240",
+    "serialNo": "TH2424100356",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-056",
+    "name": "Desktop Barcode Printer TSC_TE200-203 dpi, 4 inch, USB",
+    "model": "TE200",
+    "serialNo": "TEA24250546",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-057",
+    "name": "Desktop Barcode Printer TSC_TH240-203 dpi, 4 inch, USB+Serial+Ethernet",
+    "model": "TH240",
+    "serialNo": "TH2424100385",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "On-Loan",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "พี่น้องออย",
+    "customer": "บ.โยโกกาว่า",
+    "checkoutDate": "2026-10-09",
+    "expectedReturnDate": "2026-10-23",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "พี่น้องออย ให้บ.โยโกกาว่า",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-058",
+    "name": "2D Handheld Barcode Scanner-USB Honeywell 1470G-2D",
+    "model": "1470G2D",
+    "serialNo": "24299B2A6E",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Barcode Scanner ลังที่ 1",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "Barcode Scanner ลังที่1",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-059",
+    "name": "2D Industrial Handheld Barcode Scanner-USB Honeywell 1991ISR",
+    "model": "1991ISR",
+    "serialNo": "23033B5E3D",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Barcode Scanner ลังที่ 1",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "Barcode Scanner ลังที่1",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-060",
+    "name": "Mobile Barcode Printer TSC_RE310W 203 dpi, 3\", USB Type C+Bluetooth+Wi-Fi",
+    "model": "RE310W",
+    "serialNo": "RE31024360313",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-061",
+    "name": "2D Handheld Barcode Scanner-USB Honeywell 1950GUD",
+    "model": "1950GUD",
+    "serialNo": "25087B0319",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "Free-062",
+    "name": "2D Handheld Barcode Scanner-USB Honeywell 1950GHD",
+    "model": "1950GHD",
+    "serialNo": "25177B5058",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Barcode Scanner ลังที่ 1",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "Barcode Scanner ลังที่1",
+    "type": "Vendor Demo (Free)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-063",
+    "name": "Mobile Computer RK26-Sim , 4GB/64GB",
+    "model": "RK26",
+    "serialNo": "GA12410019019",
+    "brand": "Cipherlap",
+    "category": "Mobile Computer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord / USB-C Cable (สายชาร์จ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แบตเตอรี่แท้ประจำตัวเครื่อง",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายคล้องมือ (Handstrap)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "กล่องบรรจุภัณฑ์เดิม",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-064",
+    "name": "Desktop Barcode Printer TSC_TH240-203 dpi, 4 inch, USB+Serial+Ethernet",
+    "model": "TH240",
+    "serialNo": "TH2424020003",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-065",
+    "name": "Desktop Barcode Printer TSC_TE210-203 dpi, 4 inch, USB+Ethernet",
+    "model": "TE210",
+    "serialNo": "TEA25060022",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-066",
+    "name": "2D Desktop Barcode Scanner-USB Honeywell 7680-GSR",
+    "model": "7680GSR",
+    "serialNo": "25070B68E5",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-067",
+    "name": "Desktop Barcode Printer TSC_TH220-203 dpi, 2 inch, USB+Serial+Ethernet",
+    "model": "TH220",
+    "serialNo": "TH2225320002",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-068",
+    "name": "Receipt Printer RONGTA_RP326-203 dpi, 80 mm, USB+Serial+Ethernet",
+    "model": "RP326",
+    "serialNo": "A326080000481118",
+    "brand": "Rongta",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-069",
+    "name": "Mobile Computer Honeywell EDA52-Sim , Android 13 , 4GB/64GB",
+    "model": "EDA52-1",
+    "serialNo": "25059B01AC",
+    "brand": "Honeywell",
+    "category": "Mobile Computer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord / USB-C Cable (สายชาร์จ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แบตเตอรี่แท้ประจำตัวเครื่อง",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายคล้องมือ (Handstrap)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "กล่องบรรจุภัณฑ์เดิม",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-070",
+    "name": "Mobile Computer Honeywell EDA52-Sim , Android 13 , 4GB/64GB",
+    "model": "EDA52-1",
+    "serialNo": "25056B27AE",
+    "brand": "Honeywell",
+    "category": "Mobile Computer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord / USB-C Cable (สายชาร์จ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แบตเตอรี่แท้ประจำตัวเครื่อง",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายคล้องมือ (Handstrap)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "กล่องบรรจุภัณฑ์เดิม",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-071",
+    "name": "Mobile Computer Honeywell EDA52-Sim , Android 13 , 4GB/64GB",
+    "model": "EDA52-1",
+    "serialNo": "25059B01D2",
+    "brand": "Honeywell",
+    "category": "Mobile Computer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord / USB-C Cable (สายชาร์จ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แบตเตอรี่แท้ประจำตัวเครื่อง",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายคล้องมือ (Handstrap)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "กล่องบรรจุภัณฑ์เดิม",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-072",
+    "name": "Mobile Computer Honeywell EDA52-Sim , Android 13 , 4GB/64GB",
+    "model": "EDA52-1",
+    "serialNo": "24066B1019",
+    "brand": "Honeywell",
+    "category": "Mobile Computer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord / USB-C Cable (สายชาร์จ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แบตเตอรี่แท้ประจำตัวเครื่อง",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายคล้องมือ (Handstrap)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "กล่องบรรจุภัณฑ์เดิม",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-073",
+    "name": "Desktop Barcode Printer TSC_TL240-203 dpi, 4 inch, USB",
+    "model": "TL240",
+    "serialNo": "TL24T24210109",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-074",
+    "name": "Mobile Computer Honeywell CT45P-Sim , 6GB/64GB",
+    "model": "CT45P-1",
+    "serialNo": "23290B2BA1",
+    "brand": "Honeywell",
+    "category": "Mobile Computer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord / USB-C Cable (สายชาร์จ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แบตเตอรี่แท้ประจำตัวเครื่อง",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายคล้องมือ (Handstrap)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "กล่องบรรจุภัณฑ์เดิม",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-075",
+    "name": "Mobile Computer Honeywell CT45P-Sim , 6GB/64GB",
+    "model": "CT45P-1",
+    "serialNo": "24117B311B",
+    "brand": "Honeywell",
+    "category": "Mobile Computer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord / USB-C Cable (สายชาร์จ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แบตเตอรี่แท้ประจำตัวเครื่อง",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายคล้องมือ (Handstrap)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "กล่องบรรจุภัณฑ์เดิม",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-076",
+    "name": "Mobile Computer Honeywell CT45P-Sim , 6GB/64GB",
+    "model": "CT45P-1",
+    "serialNo": "23325B3DE4",
+    "brand": "Honeywell",
+    "category": "Mobile Computer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord / USB-C Cable (สายชาร์จ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แบตเตอรี่แท้ประจำตัวเครื่อง",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายคล้องมือ (Handstrap)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "กล่องบรรจุภัณฑ์เดิม",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-077",
+    "name": "2D Handheld Barcode Scanner-USB Honeywell 1950GSR",
+    "model": "1950GSR",
+    "serialNo": "25216B5C48",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-078",
+    "name": "2D Handheld Barcode Scanner-USB Honeywell 1960GHD",
+    "model": "1960GHD",
+    "serialNo": "25157B48A3",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "On-Loan",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "พี่นก",
+    "customer": "บ.คิมบอล",
+    "checkoutDate": "2026-10-11",
+    "expectedReturnDate": "2026-10-25",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "พี่นก บ.คิมบอล",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-079-A",
+    "name": "Desktop Barcode Printer TSC_ZD230t-203 dpi, 4 inch, USB",
+    "model": "ZD230t",
+    "serialNo": "D5J252803526",
+    "brand": "Zebra",
+    "category": "Barcode Printer",
+    "status": "Disposed",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "พี่น้องออย",
+    "customer": "บ.เอมิโปร",
+    "checkoutDate": "2026-05-18",
+    "expectedReturnDate": "",
+    "purpose": "ตัดจำหน่าย / มอบให้ลูกค้า",
+    "remark": "18/05/2026 พี่น้องออยตัดให้บ.เอมิโปร",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-079-B",
+    "name": "2D Handheld Barcode Scanner-USB Honeywell 1960GSR",
+    "model": "1960GSR",
+    "serialNo": "25216B5C48",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-080",
+    "name": "2D Handheld Barcode Scanner-USB Nex-T_H3308",
+    "model": "Nex-T H3308",
+    "serialNo": "330826040001",
+    "brand": "Nex-T",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-081",
+    "name": "2D Handheld Barcode Scanner-USB Nex-T_H3308",
+    "model": "Nex-T H3308",
+    "serialNo": "330826040002",
+    "brand": "Nex-T",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-082",
+    "name": "2D Handheld Barcode Scanner-Wireless USB Dongle Nex-T_H3308R",
+    "model": "Nex-T H3308R",
+    "serialNo": "3308R26040001",
+    "brand": "Nex-T",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "USB Dongle Receiver (ตัวรับสัญญาณไร้สาย)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายชาร์จ USB Cable",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-083",
+    "name": "2D Handheld Barcode Scanner-Wireless USB Dongle Nex-T_H3308R",
+    "model": "Nex-T H3308R",
+    "serialNo": "3308R26040002",
+    "brand": "Nex-T",
+    "category": "Barcode Scanner",
+    "status": "On-Loan",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "พี่ต้น",
+    "customer": "P&P",
+    "checkoutDate": "2026-10-10",
+    "expectedReturnDate": "2026-10-24",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "พี่น้องออย ให้พี่ต้น P&P ยืม",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "USB Dongle Receiver (ตัวรับสัญญาณไร้สาย)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายชาร์จ USB Cable",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-084",
+    "name": "2D Handheld Barcode Scanner + Bluetooth Cradle-USB Nex-T_H3308RC",
+    "model": "Nex-T H3308RC",
+    "serialNo": "3308RC26040001",
+    "brand": "Nex-T",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "แท่นชาร์จ & รับส่งสัญญาณ (Cradle)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Adapter สำหรับ Cradle",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-085",
+    "name": "2D Handheld Barcode Scanner + Bluetooth Cradle-USB Nex-T_H3308RC",
+    "model": "Nex-T H3308RC",
+    "serialNo": "3308RC26040002",
+    "brand": "Nex-T",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "แท่นชาร์จ & รับส่งสัญญาณ (Cradle)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Adapter สำหรับ Cradle",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-086",
+    "name": "Desktop Barcode Printer TSC_DH220T-203 dpi, 4 inch, USB+Serial+Ethernet",
+    "model": "DH220T",
+    "serialNo": "DH2224410006",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-087",
+    "name": "Mobile Printer TSC_Alpha-40L-203 dpi, 4 inch, USB Type C+BLuetooth",
+    "model": "Alpha-40L",
+    "serialNo": "A40L25010049",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "On-Loan",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "พี่จอย",
+    "customer": "บ.เพนต้า",
+    "checkoutDate": "2026-10-12",
+    "expectedReturnDate": "2026-10-26",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "พี่จอย บ.เพนต้า",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-088",
+    "name": "Desktop Barcode Printer Rongta_RP400A-203 dpi, 4 inch, USB+Serial+Ethernet",
+    "model": "RP400A",
+    "serialNo": "A4000800570062",
+    "brand": "Rongta",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-089",
+    "name": "2D Handheld Barcode Scanner-USB Zebra DS2208",
+    "model": "DS2208-SR",
+    "serialNo": "S26028010553868",
+    "brand": "Zebra",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-090",
+    "name": "FXR90 Fixed Reader RFID, USB+Ethernet+Bluetooth+Wi-Fi+Sim",
+    "model": "FXR90111-400000-TH",
+    "serialNo": "26131523070759",
+    "brand": "Zebra",
+    "category": "RFID Reader",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อสัญญาณ",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-091",
+    "name": "Mobile Computer iData T3Pro-Sim , Android 13, 4GB/64GB",
+    "model": "T3Pro",
+    "serialNo": "5038613",
+    "brand": "iData",
+    "category": "Mobile Computer",
+    "status": "Available",
+    "location": "Barcode Scanner ลังที่ 1",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "Barcode Scanner ลังที่1",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord / USB-C Cable (สายชาร์จ)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แบตเตอรี่แท้ประจำตัวเครื่อง",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายคล้องมือ (Handstrap)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "กล่องบรรจุภัณฑ์เดิม",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-092",
+    "name": "2D Handheld Barcode Scanner-USB Honeywell 1960GSR + Stand",
+    "model": "1960GSR",
+    "serialNo": "26007B0696",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "ขาตั้งสแกนเนอร์ (Scanner Stand / Gooseneck)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-093",
+    "name": "2D Handheld Barcode Scanner + Bluetooth Cradle-USB Nex-T_S22",
+    "model": "Nex-T S22",
+    "serialNo": "S3000B23480044",
+    "brand": "Nex-T",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "แท่นชาร์จ & รับส่งสัญญาณ (Cradle)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Adapter สำหรับ Cradle",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-094",
+    "name": "Desktop Barcode Printer TSC_DA210-203 dpi, 4 inch, USB Only",
+    "model": "DA210",
+    "serialNo": "DA225030193",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-TBC",
+    "name": "TBC RT10A",
+    "model": "RT10A",
+    "serialNo": "TBC0001",
+    "brand": "Honeywell",
+    "category": "Barcode Scanner",
+    "status": "Available",
+    "location": "Barcode Scanner ลังที่ 1",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "Barcode Scanner ลังที่1",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Cable)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "ACT-095",
+    "name": "Desktop Barcode Printer TSC_DH240T-203 dpi, 4 inch, USB+Serial+Ethernet",
+    "model": "DH240T",
+    "serialNo": "DH2426100101",
+    "brand": "TSC",
+    "category": "Barcode Printer",
+    "status": "Available",
+    "location": "Main Stock (ตู้โชว์/คลังกลาง)",
+    "borrower": "",
+    "customer": "",
+    "checkoutDate": "",
+    "expectedReturnDate": "",
+    "purpose": "Demo ให้ลูกค้า",
+    "remark": "",
+    "type": "Company Asset (ACT)",
+    "accessories": [
+      {
+        "name": "Power Adapter (อะแดปเตอร์แปลงไฟ 24V)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "Power Cord (สายไฟ AC เสียบปลั๊ก)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "สายเชื่อมต่อคอมพิวเตอร์ (USB Interface Cable)",
+        "qty": 1,
+        "status": "Good"
+      },
+      {
+        "name": "แกนใส่ริบบอน (Ribbon Spindle / Cores)",
+        "qty": 2,
+        "status": "Good"
+      },
+      {
+        "name": "แกน/ขาล็อคม้วนสติกเกอร์ (Label Roll Spindle / Fixer)",
+        "qty": 1,
+        "status": "Good"
+      }
+    ],
+    "missingAccessories": [],
+    "condition": "A (สมบูรณ์พร้อมใช้)",
+    "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    "tagId": "SUP-001",
+    "name": "ม้วนหมึกพิมพ์ริบบอนบาร์โค้ด Wax Ribbon (110mm x 300m)",
+    "model": "Wax Ribbon 110x300",
+    "serialNo": "SUPPLY-WAX-01",
+    "brand": "Active-Supply",
+    "category": "Consumables & Supplies",
+    "status": "Available",
+    "location": "Main Stock (ตู้เก็บหมึกพิมพ์)",
+    "accessories": [
+      {
+        "name": "แกนริบบอนเปล่า 1 นิ้ว",
+        "qty": 1
+      }
+    ],
+    "condition": "A (ของใหม่แกะกล่อง)",
+    "specs": "หมึกพิมพ์ริบบอนชนิด Wax สีดำ คมชัด ประหยัดความร้อนหัวพิมพ์",
+    "suitability": "เหมาะสำหรับ: งานพิมพ์ฉลากสินค้าทั่วไป, สติ๊กเกอร์ราคา, บาร์โค้ดกล่องพัสดุ",
+    "isSupply": true
+  },
+  {
+    "tagId": "SUP-002",
+    "name": "ม้วนหมึกพิมพ์ริบบอนทนสารเคมี Resin Ribbon (110mm x 300m)",
+    "model": "Resin Ribbon 110x300",
+    "serialNo": "SUPPLY-RESIN-01",
+    "brand": "Active-Supply",
+    "category": "Consumables & Supplies",
+    "status": "Available",
+    "location": "Main Stock (ตู้เก็บหมึกพิมพ์)",
+    "accessories": [
+      {
+        "name": "แกนริบบอนเปล่า 1 นิ้ว",
+        "qty": 1
+      }
+    ],
+    "condition": "A (ของใหม่แกะกล่อง)",
+    "specs": "หมึกเรซิ่น 100% ทนทานการขูดขีด สารเคมี น้ำ และความร้อนสูง",
+    "suitability": "เหมาะสำหรับ: งานพิมพ์สติ๊กเกอร์ในห้องเย็น, อุตสาหกรรมเคมี, ฉลากทรัพย์สินถาวร",
+    "isSupply": true
+  },
+  {
+    "tagId": "SUP-003",
+    "name": "ม้วนสติ๊กเกอร์ความร้อนตรง Direct Thermal (ขนาด 4 x 6 นิ้ว, 500 ดวง)",
+    "model": "Sticker DT 4x6",
+    "serialNo": "SUPPLY-STK-01",
+    "brand": "Active-Supply",
+    "category": "Consumables & Supplies",
+    "status": "Available",
+    "location": "Main Stock (ชั้นวางสติ๊กเกอร์)",
+    "accessories": [
+      {
+        "name": "แกนสติ๊กเกอร์ 1.5 นิ้ว",
+        "qty": 1
+      }
+    ],
+    "condition": "A (ของใหม่แกะกล่อง)",
+    "specs": "สติ๊กเกอร์ความร้อนตรง (ไม่ต้องใช้ริบบอน) ขนาด 4 x 6 นิ้ว กาวเหนียวพิเศษ",
+    "suitability": "เหมาะสำหรับ: งานพิมพ์ใบปะหน้าขนส่ง Flash, Kerry, Shopee, Lazada, TikTok Shop",
+    "isSupply": true
+  },
+  {
+    "tagId": "SUP-004",
+    "name": "ม้วนสติ๊กเกอร์กึ่งมันกึ่งด้าน Thermal Transfer (ขนาด 3.2 x 2.5 ซม. 3 ดวงชิด)",
+    "model": "Sticker TT 3.2x2.5",
+    "serialNo": "SUPPLY-STK-02",
+    "brand": "Active-Supply",
+    "category": "Consumables & Supplies",
+    "status": "Available",
+    "location": "Main Stock (ชั้นวางสติ๊กเกอร์)",
+    "accessories": [
+      {
+        "name": "แกนสติ๊กเกอร์ 1.5 นิ้ว",
+        "qty": 1
+      }
+    ],
+    "condition": "A (ของใหม่แกะกล่อง)",
+    "specs": "สติ๊กเกอร์บาร์โค้ดขนาดมาตรฐานสำหรับติดบนตัวสินค้าปลีก ฉลากคมชัด",
+    "suitability": "เหมาะสำหรับ: ติดบาร์โค้ดสินค้าหน้าร้าน, ป้ายราคาสินค้า, งานสต็อกชิ้นส่วนอะไหล่",
+    "isSupply": true
+  }
+]

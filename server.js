@@ -1,0 +1,2696 @@
+const http = require('node:http');
+const fs = require('node:fs');
+const path = require('node:path');
+const { DatabaseSync } = require('node:sqlite');
+const { verifySmtpCredentials, sendSmtpEmail } = require('./lib/smtp.js');
+const { dispatchEmail, verifyApiKey } = require('./lib/email_service.js');
+const { generateLoanPdf } = require('./lib/pdf.js');
+
+const PORT = process.env.PORT || 3020;
+const DATA_DIR = path.join(__dirname, 'data');
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+const PUBLIC_DIR = path.join(__dirname, 'public');
+
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+if (!fs.existsSync(PUBLIC_DIR)) fs.mkdirSync(PUBLIC_DIR, { recursive: true });
+
+const dbPath = path.join(DATA_DIR, 'activeasset_v2.db');
+const db = new DatabaseSync(dbPath);
+
+db.exec(`
+  PRAGMA journal_mode = WAL;
+  PRAGMA synchronous = NORMAL;
+  PRAGMA foreign_keys = ON;
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS assets (
+    tag_id TEXT PRIMARY KEY,
+    name TEXT DEFAULT '',
+    model TEXT DEFAULT '',
+    brand TEXT DEFAULT '',
+    category TEXT DEFAULT '',
+    serial_no TEXT DEFAULT '',
+    source TEXT DEFAULT 'Demo', -- 'Demo' | 'Supplier' | 'คลังขาย'
+    location TEXT DEFAULT 'Main Stock (ตู้โชว์/คลังกลาง)',
+    accessories_json TEXT DEFAULT '[]',
+    free_note TEXT DEFAULT '',
+    status TEXT DEFAULT 'Available', -- 'Available' | 'On_Loan' | 'Issue'
+    issue_note TEXT DEFAULT '',
+    missing_tags_json TEXT DEFAULT '[]',
+    current_loan_id TEXT DEFAULT NULL,
+    updated_at TEXT DEFAULT (datetime('now', 'localtime'))
+  );
+
+  CREATE TABLE IF NOT EXISTS loans (
+    id TEXT PRIMARY KEY, -- e.g. LOAN-202610-001
+    customer_name TEXT DEFAULT '',
+    customer_company TEXT DEFAULT '',
+    borrower_name TEXT NOT NULL, -- salesRepName
+    borrower_phone TEXT DEFAULT '',
+    purpose TEXT DEFAULT 'Demo',
+    checkout_date TEXT NOT NULL,
+    due_date TEXT NOT NULL,
+    return_date TEXT DEFAULT NULL,
+    status TEXT DEFAULT 'Delivered', -- 'Requested' | 'Dispatching' | 'Dispatched' | 'Delivered' | 'Partially_Returned' | 'Returned'
+    before_photos_json TEXT DEFAULT '[]',
+    after_photos_json TEXT DEFAULT '[]',
+    borrower_signature TEXT DEFAULT '',
+    return_receiver TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now', 'localtime'))
+  );
+
+  CREATE TABLE IF NOT EXISTS loan_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    loan_id TEXT NOT NULL,
+    tag_id TEXT NOT NULL,
+    model TEXT DEFAULT '',
+    brand TEXT DEFAULT '',
+    serial_no TEXT DEFAULT '',
+    source_snapshot TEXT DEFAULT 'Demo',
+    location_snapshot TEXT DEFAULT '',
+    loan_accessories_json TEXT DEFAULT '[]',
+    loan_free_note TEXT DEFAULT '',
+    attachments_json TEXT DEFAULT '[]',
+    returned INTEGER DEFAULT 0,
+    returned_at TEXT DEFAULT NULL,
+    returned_accessories_json TEXT DEFAULT '[]',
+    missing_accessories_json TEXT DEFAULT '[]',
+    qc_status TEXT DEFAULT NULL, -- NULL | 'Pass' | 'Fail'
+    qc_note TEXT DEFAULT '',
+    returned_to_location INTEGER DEFAULT 0,
+    FOREIGN KEY (loan_id) REFERENCES loans(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS customers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    name_en TEXT DEFAULT '',
+    tax_id TEXT DEFAULT '',
+    source TEXT DEFAULT 'history', -- 'history' | 'dbd' | 'custom'
+    created_at TEXT DEFAULT (datetime('now', 'localtime'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_customers_name ON customers(name);
+  CREATE INDEX IF NOT EXISTS idx_customers_name_en ON customers(name_en);
+`);
+
+try {
+  db.exec(`ALTER TABLE customers ADD COLUMN name_en TEXT DEFAULT ''`);
+} catch (e) {
+  // column already exists
+}
+try {
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_customers_name_en ON customers(name_en)`);
+} catch (e) {}
+
+try {
+  db.exec(`ALTER TABLE assets ADD COLUMN image_url TEXT DEFAULT ''`);
+} catch (e) {
+  // column already exists
+}
+try {
+  db.exec(`ALTER TABLE assets ADD COLUMN images_json TEXT DEFAULT '[]'`);
+} catch (e) {
+  // column already exists
+}
+
+// Asset Disposition Fields & Audit Logs
+try {
+  db.exec(`ALTER TABLE assets ADD COLUMN disposed_at TEXT DEFAULT NULL`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE assets ADD COLUMN disposed_reason TEXT DEFAULT NULL`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE assets ADD COLUMN disposed_note TEXT DEFAULT NULL`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE assets ADD COLUMN disposed_by TEXT DEFAULT NULL`);
+} catch (e) {}
+
+try {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS asset_disposition_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      tag_id TEXT NOT NULL,
+      action TEXT NOT NULL, -- 'dispose' | 'reactivate'
+      action_date TEXT NOT NULL,
+      reason TEXT DEFAULT '',
+      note TEXT DEFAULT '',
+      user_name TEXT DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now', 'localtime'))
+    )
+  `);
+} catch (e) {}
+
+// Digital Signature & Timestamps for Loans
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN borrower_signed_at TEXT DEFAULT ''`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN dispatcher_signature TEXT DEFAULT ''`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN dispatcher_signed_at TEXT DEFAULT ''`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN receiver_signature TEXT DEFAULT ''`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN receiver_signed_at TEXT DEFAULT ''`);
+} catch (e) {}
+
+// Delivery / Handover Proof Fields (ผู้ส่ง, ผู้รับ, ถ่ายรูปส่งงาน, GPS, Timestamp)
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN delivery_sender TEXT DEFAULT ''`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN delivery_receiver TEXT DEFAULT ''`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN delivery_photos_json TEXT DEFAULT '[]'`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN delivery_gps TEXT DEFAULT ''`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN delivery_timestamp TEXT DEFAULT ''`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN delivery_note TEXT DEFAULT ''`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN created_by TEXT DEFAULT ''`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN dispatcher_name TEXT DEFAULT ''`);
+} catch (e) {}
+
+// Users & Corporate Authentication Table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    email TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    role TEXT DEFAULT 'user',
+    picture TEXT DEFAULT '',
+    domain TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now', 'localtime')),
+    last_login TEXT DEFAULT (datetime('now', 'localtime'))
+  );
+`);
+
+// Roles & Permissions Table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS roles (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT DEFAULT '',
+    is_system INTEGER DEFAULT 0,
+    permissions_json TEXT DEFAULT '{}',
+    created_at TEXT DEFAULT (datetime('now', 'localtime')),
+    updated_at TEXT DEFAULT (datetime('now', 'localtime'))
+  );
+`);
+
+const PERMISSION_KEYS = [
+  { key: 'manage_settings', label: 'ตั้งค่าระบบ & ข้อมูลบริษัท', group: 'การตั้งค่าระบบ', desc: 'แก้ไขข้อมูลบริษัท, อีเมล, โดเมนองค์กร' },
+  { key: 'manage_roles', label: 'จัดการบทบาท & กำหนดสิทธิ์', group: 'การตั้งค่าระบบ', desc: 'สร้าง/แก้ไข Role, ปรับสิทธิ์ on/off, เปลี่ยน Role ผู้ใช้' },
+  { key: 'create_loan', label: 'ออกใบยืมสินค้า', group: 'งานเอกสารใบยืม', desc: 'สร้างเอกสารใบยืมสินค้าใหม่' },
+  { key: 'edit_loan', label: 'แก้ไขใบยืมสินค้า', group: 'งานเอกสารใบยืม', desc: 'แก้ไขข้อมูลใบยืมที่ยังไม่ปิดรายการ' },
+  { key: 'cancel_loan', label: 'ยกเลิกใบยืมสินค้า', group: 'งานเอกสารใบยืม', desc: 'ยกเลิกใบยืมก่อนเริ่มจัดของ' },
+  { key: 'dispatch_loan', label: 'จัดของ & Match S/N', group: 'งานคลังสินค้า & ส่งมอบ', desc: 'สแกน/เลือก S/N และอุปกรณ์เสริมเพื่อจัดของ' },
+  { key: 'deliver_loan', label: 'บันทึกส่งมอบสินค้า', group: 'งานคลังสินค้า & ส่งมอบ', desc: 'ส่งมอบ ถ่ายรูปหน้างาน บันทึก GPS' },
+  { key: 'return_loan', label: 'ตรวจ QC & รับคืนสินค้า', group: 'งานคลังสินค้า & ส่งมอบ', desc: 'ตรวจสภาพเครื่องและอุปกรณ์เสริม นำเข้าคลัง' },
+  { key: 'manage_assets', label: 'จัดการคลังเครื่อง (Add/Edit Demo)', group: 'งานคลังสินค้า & ส่งมอบ', desc: 'เพิ่มรุ่น Demo ใหม่, แก้ไขสถานที่เก็บ' },
+  { key: 'delete_data', label: 'ลบข้อมูลสำคัญ', group: 'ความปลอดภัย', desc: 'ลบเครื่องออกจากคลัง หรือลบข้อมูลสำคัญ' }
+];
+
+const DEFAULT_ROLES = [
+  {
+    id: 'admin',
+    name: 'ผู้ดูแลระบบ (Admin)',
+    description: 'สามารถกำหนดค่าข้อมูล แก้ไข ลบข้อมูล และจัดการสิทธิ์ผู้ใช้งานได้เต็มรูปแบบ',
+    is_system: 1,
+    permissions: Object.fromEntries(PERMISSION_KEYS.map(p => [p.key, true]))
+  },
+  {
+    id: 'user',
+    name: 'ผู้ใช้งานทั่วไป (User)',
+    description: 'มีหน้าที่ใช้งานระบบตามปกติ ออกใบยืม จัดของ ส่งมอบ และรับคืนได้ (ไม่สามารถแก้ไขตั้งค่าระบบหรือลบข้อมูลได้)',
+    is_system: 1,
+    permissions: {
+      manage_settings: false,
+      manage_roles: false,
+      create_loan: true,
+      edit_loan: true,
+      cancel_loan: false,
+      dispatch_loan: true,
+      deliver_loan: true,
+      return_loan: true,
+      manage_assets: false,
+      delete_data: false
+    }
+  }
+];
+
+const roleCount = db.prepare('SELECT COUNT(*) as cnt FROM roles').get();
+if (roleCount.cnt === 0) {
+  const insertRole = db.prepare(`
+    INSERT INTO roles (id, name, description, is_system, permissions_json)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+  for (const r of DEFAULT_ROLES) {
+    insertRole.run(r.id, r.name, r.description, r.is_system, JSON.stringify(r.permissions));
+  }
+}
+
+// Migrate existing user roles to valid role IDs
+try {
+  db.prepare("UPDATE users SET role = 'admin' WHERE role IN ('Administrator', 'Sales Admin', 'admin')").run();
+  db.prepare("UPDATE users SET role = 'user' WHERE role NOT IN ('admin')").run();
+} catch (_) {}
+
+function getAllRoles() {
+  const roles = db.prepare('SELECT * FROM roles ORDER BY is_system DESC, name ASC').all();
+  const userCounts = db.prepare('SELECT role, COUNT(*) as cnt FROM users GROUP BY role').all();
+  const countMap = new Map(userCounts.map(u => [u.role, u.cnt]));
+
+  return roles.map(r => ({
+    id: r.id,
+    name: r.name,
+    description: r.description || '',
+    is_system: r.is_system === 1,
+    permissions: JSON.parse(r.permissions_json || '{}'),
+    user_count: countMap.get(r.id) || 0,
+    created_at: r.created_at,
+    updated_at: r.updated_at
+  }));
+}
+
+function getRoleById(roleId) {
+  const r = db.prepare('SELECT * FROM roles WHERE id = ?').get(roleId);
+  if (!r) return null;
+  return {
+    id: r.id,
+    name: r.name,
+    description: r.description || '',
+    is_system: r.is_system === 1,
+    permissions: JSON.parse(r.permissions_json || '{}'),
+    created_at: r.created_at,
+    updated_at: r.updated_at
+  };
+}
+
+function getUserWithRole(email) {
+  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+  if (!user) return null;
+  let role = getRoleById(user.role);
+  if (!role) {
+    role = getRoleById('user') || {
+      id: 'user',
+      name: 'ผู้ใช้งานทั่วไป (User)',
+      permissions: {}
+    };
+  }
+  return {
+    email: user.email,
+    name: user.name,
+    role_id: role.id,
+    role_name: role.name,
+    picture: user.picture || '',
+    domain: user.domain || '',
+    permissions: role.permissions,
+    last_login: user.last_login
+  };
+}
+
+const userCount = db.prepare('SELECT COUNT(*) as cnt FROM users').get();
+if (userCount.cnt === 0) {
+  const insertUser = db.prepare('INSERT OR REPLACE INTO users (email, name, role, domain) VALUES (?, ?, ?, ?)');
+  insertUser.run('admin@active5.co.th', 'ผู้ดูแลระบบ (Admin)', 'admin', 'active5.co.th');
+  insertUser.run('jantorn@active5.co.th', 'จันทร ก้านแก้ว', 'admin', 'active5.co.th');
+  insertUser.run('sirikanya@active5.co.th', 'สิริกัลยา ก้านแก้ว', 'user', 'active5.co.th');
+  insertUser.run('nanthida@active5.co.th', 'นันทิดา โชคชัย', 'user', 'active5.co.th');
+  insertUser.run('somying@active5.co.th', 'สมหญิง มั่นคง', 'user', 'active5.co.th');
+  insertUser.run('warehouse@active5.co.th', 'พนักงานคลังสินค้า & QC', 'user', 'active5.co.th');
+  insertUser.run('logistics@active5.co.th', 'พนักงานส่งมอบสินค้า', 'user', 'active5.co.th');
+}
+
+// Company / Issuer Settings
+db.exec(`
+  CREATE TABLE IF NOT EXISTS company_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT DEFAULT ''
+  );
+`);
+
+const DEFAULT_COMPANY_SETTINGS = {
+  company_name: 'บริษัท ไอคอนเน็กท์ จำกัด',
+  company_name_en: 'ICONNECT CO., LTD.',
+  company_tax_id: '0105553012345',
+  company_branch: 'สำนักงานใหญ่',
+  company_address: '88/19 ถนนพัฒนาการ แขวงสวนหลวง เขตสวนหลวง กรุงเทพมหานคร 10250',
+  company_phone: '02-722-8888, 081-999-8888',
+  company_email: 'sales@iconnect.co.th',
+  company_website: 'www.iconnect.co.th',
+  company_logo: '',
+  gatepass_terms: '* ผู้ยืมตกลงดูแลรักษาเครื่องและอุปกรณ์เสริมทั้งหมดให้อยู่ในสภาพสมบูรณ์ และนำส่งคืนภายในวันที่กำหนด',
+  email_provider: 'resend',
+  email_api_key: '',
+  email_from_address: 'a5@active5.co.th',
+  email_from_name: 'บริษัท แอคทีฟ 5 จำกัด',
+  smtp_host: 'smtp.gmail.com',
+  smtp_port: '465',
+  smtp_user: '',
+  smtp_pass: '',
+  smtp_from_name: 'บริษัท แอคทีฟ 5 จำกัด',
+  smtp_from_email: '',
+  auth_require_login: '1',
+  auth_allowed_domains: 'active5.co.th',
+  auth_google_client_id: ''
+};
+
+const countSettings = db.prepare('SELECT COUNT(*) as cnt FROM company_settings').get();
+if (countSettings.cnt === 0) {
+  const insertSetting = db.prepare('INSERT OR REPLACE INTO company_settings (key, value) VALUES (?, ?)');
+  for (const [k, v] of Object.entries(DEFAULT_COMPANY_SETTINGS)) {
+    insertSetting.run(k, v);
+  }
+}
+
+// Ensure email_from_address defaults to a5@active5.co.th
+const currentEmailFrom = db.prepare("SELECT value FROM company_settings WHERE key = 'email_from_address'").get();
+if (!currentEmailFrom || currentEmailFrom.value === 'onboarding@resend.dev') {
+  db.prepare("INSERT OR REPLACE INTO company_settings (key, value) VALUES ('email_from_address', 'a5@active5.co.th')").run();
+}
+
+function getCompanySettings() {
+  const rows = db.prepare('SELECT key, value FROM company_settings').all();
+  const settings = { ...DEFAULT_COMPANY_SETTINGS };
+  for (const r of rows) {
+    if (r.value !== undefined && r.value !== null) {
+      settings[r.key] = r.value;
+    }
+  }
+  return settings;
+}
+
+const BILINGUAL_MAP = {
+  // Automotive
+  'hino': ['ฮิโนะ', 'HINO'],
+  'toyota': ['โตโยต้า', 'TOYOTA'],
+  'honda': ['ฮอนด้า', 'HONDA'],
+  'isuzu': ['อีซูซุ', 'ISUZU'],
+  'mitsubishi': ['มิตซูบิชิ', 'MITSUBISHI'],
+  'nissan': ['นิสสัน', 'NISSAN'],
+  'mazda': ['มาสด้า', 'MAZDA'],
+  'ford': ['ฟอร์ด', 'FORD'],
+  'yamaha': ['ยามาฮ่า', 'YAMAHA'],
+  'suzuki': ['ซูซูกิ', 'SUZUKI'],
+  'mercedes': ['เมอร์เซเดส', 'เบนซ์', 'MERCEDES'],
+  'bmw': ['บีเอ็มดับเบิลยู', 'บีเอ็ม', 'BMW'],
+  'byd': ['บีวายดี', 'BYD'],
+  'mg': ['เอ็มจี', 'MG'],
+
+  // Logistics & Express
+  'kerry': ['เคอรี่', 'KERRY'],
+  'flash': ['แฟลช', 'FLASH'],
+  'j&t': ['เจแอนด์ที', 'เจ แอนด์ ที', 'J&T'],
+  'jnt': ['เจแอนด์ที', 'เจ แอนด์ ที', 'J&T'],
+  'dhl': ['ดีเอชแอล', 'DHL'],
+  'fedex': ['เฟดเอ็กซ์', 'FEDEX'],
+  'lineman': ['ไลน์แมน', 'LINEMAN'],
+  'grab': ['แกร็บ', 'GRAB'],
+  'thailand post': ['ไปรษณีย์ไทย', 'THAILAND POST'],
+  'post': ['ไปรษณีย์ไทย', 'ไปรษณีย์', 'POST'],
+
+  // Conglomerates & Retail
+  'scg': ['ปูนซิเมนต์ไทย', 'สยามซีเมนต์', 'เอสซีจี', 'SCG'],
+  'cp': ['ซีพี', 'เจริญโภคภัณฑ์', 'CP'],
+  'cp all': ['ซีพี ออลล์', 'CP ALL'],
+  'cpall': ['ซีพี ออลล์', 'CP ALL'],
+  'cp axtra': ['ซีพี แอ็กซ์ตร้า', 'CP AXTRA'],
+  'cpaxtra': ['ซีพี แอ็กซ์ตร้า', 'CP AXTRA'],
+  'makro': ['สยามแม็คโคร', 'แม็คโคร', 'MAKRO'],
+  'lotus': ['โลตัส', 'เอก-ชัย', 'LOTUS'],
+  'big c': ['บิ๊กซี', 'BIG C'],
+  'bigc': ['บิ๊กซี', 'BIG C'],
+  'central': ['เซ็นทรัล', 'CENTRAL'],
+  'the mall': ['เดอะมอลล์', 'THE MALL'],
+  'themall': ['เดอะมอลล์', 'THE MALL'],
+  'homepro': ['โฮม โปร', 'โฮมโปร', 'HOME PRODUCT', 'HOMEPRO'],
+  'home pro': ['โฮม โปร', 'โฮมโปร', 'HOME PRODUCT', 'HOMEPRO'],
+
+  // Energy & Utilities
+  'ptt': ['ปตท', 'PTT'],
+  'pttor': ['ปตท. น้ำมัน', 'พีทีที โออาร์', 'PTTOR'],
+  'or': ['น้ำมันและการค้าปลีก', 'โออาร์'],
+  'bangchak': ['บางจาก', 'BANGCHAK'],
+  'bcp': ['บางจาก', 'BANGCHAK', 'BCP'],
+  'gulf': ['กัลฟ์', 'GULF'],
+
+  // IT, Telecom & Electronics
+  'brother': ['บราเดอร์', 'BROTHER'],
+  'epson': ['เอปสัน', 'EPSON'],
+  'canon': ['แคนนอน', 'CANON'],
+  'apple': ['แอปเปิ้ล', 'APPLE'],
+  'samsung': ['ซัมซุง', 'SAMSUNG'],
+  'huawei': ['หัวเว่ย', 'HUAWEI'],
+  'ricoh': ['ริโก้', 'RICOH'],
+  'fujifilm': ['ฟูจิฟิล์ม', 'FUJIFILM'],
+  'sony': ['โซนี่', 'SONY'],
+  'panasonic': ['พานาโซนิค', 'PANASONIC'],
+  'delta': ['เดลต้า', 'DELTA'],
+  'ais': ['แอดวานซ์ อินโฟร์', 'เอไอเอส', 'ADVANCED INFO', 'AIS'],
+  'true': ['ทรู คอร์ปอเรชั่น', 'ทรู', 'TRUE'],
+  'dtac': ['โทเทิ่ล แอ็คเซ็ส', 'ดีแทค', 'DTAC'],
+  'synnex': ['ซินเน็ค', 'SYNNEX'],
+  'sis': ['เอสไอเอส', 'SIS DISTRIBUTION', 'SIS'],
+
+  // Food, Beverage & Agribusiness
+  'thaibev': ['ไทยเบฟ', 'ไทยเบฟเวอเรจ', 'THAIBEV'],
+  'singha': ['บุญรอด', 'สิงห์', 'SINGHA', 'BOON RAWD'],
+  'boonrawd': ['บุญรอดบริวเวอรี่', 'บุญรอด', 'BOON RAWD'],
+  'betagro': ['เบทาโกร', 'BETAGRO'],
+  'thai union': ['ไทยยูเนี่ยน', 'THAI UNION'],
+  'thaiunion': ['ไทยยูเนี่ยน', 'THAI UNION'],
+
+  // Banking & Financial
+  'bbl': ['ธนาคารกรุงเทพ', 'BANGKOK BANK', 'BBL'],
+  'bangkok bank': ['ธนาคารกรุงเทพ', 'BANGKOK BANK'],
+  'kbank': ['กสิกรไทย', 'KASIKORNBANK', 'KBANK'],
+  'kasikorn': ['กสิกรไทย', 'KASIKORNBANK'],
+  'scb': ['ไทยพาณิชย์', 'SIAM COMMERCIAL BANK', 'SCB'],
+  'ktb': ['กรุงไทย', 'KRUNG THAI BANK', 'KTB'],
+  'krungthai': ['กรุงไทย', 'KRUNG THAI BANK'],
+  'ttb': ['ทหารไทยธนชาต', 'TMBTHANACHART', 'TTB'],
+
+  // Aviation
+  'airasia': ['ไทยแอร์เอเชีย', 'แอร์เอเชีย', 'AIRASIA'],
+  'thai airways': ['การบินไทย', 'THAI AIRWAYS'],
+  'thaiairways': ['การบินไทย', 'THAI AIRWAYS'],
+  'bangkok airways': ['บางกอกแอร์เวย์ส', 'BANGKOK AIRWAYS'],
+
+  // Common Business Keywords (transliterations & industry words)
+  'logistics': ['โลจิสติกส์', 'ลอจิสติกส์', 'โลจิส', 'LOGISTICS'],
+  'express': ['เอ็กซ์เพรส', 'EXPRESS'],
+  'transport': ['ทรานสปอร์ต', 'ขนส่ง', 'TRANSPORT'],
+  'supply': ['ซัพพลาย', 'SUPPLY'],
+  'technology': ['เทคโนโลยี', 'TECHNOLOGY'],
+  'tech': ['เทค', 'เทคโนโลยี', 'TECH'],
+  'solutions': ['โซลูชั่นส์', 'โซลูชั่น', 'SOLUTIONS'],
+  'solution': ['โซลูชั่นส์', 'โซลูชั่น', 'SOLUTION'],
+  'services': ['เซอร์วิสเซส', 'เซอร์วิส', 'บริการ', 'SERVICES'],
+  'service': ['เซอร์วิส', 'บริการ', 'SERVICE'],
+  'trading': ['เทรดดิ้ง', 'การค้า', 'TRADING'],
+  'engineering': ['เอ็นจิเนียริ่ง', 'วิศวกรรม', 'ENGINEERING'],
+  'construction': ['คอนสตรัคชั่น', 'ก่อสร้าง', 'CONSTRUCTION'],
+  'property': ['พร็อพเพอร์ตี้', 'อสังหาริมทรัพย์', 'PROPERTY'],
+  'group': ['กรุ๊ป', 'GROUP'],
+  'holding': ['โฮลดิ้ง', 'HOLDING'],
+  'holdings': ['โฮลดิ้งส์', 'โฮลดิ้ง', 'HOLDINGS'],
+  'industry': ['อุตสาหกรรม', 'อินดัสทรี', 'INDUSTRY'],
+  'manufacturing': ['แมนูแฟคเจอริ่ง', 'การผลิต', 'MANUFACTURING'],
+  'distribution': ['ดิสทริบิวชั่น', 'DISTRIBUTION'],
+  'consulting': ['คอนซัลติ้ง', 'คันซัลทิง', 'ที่ปรึกษา', 'CONSULTING'],
+  'medical': ['เมดิคอล', 'การแพทย์', 'MEDICAL'],
+  'hospital': ['โรงพยาบาล', 'HOSPITAL'],
+  'packaging': ['แพคเกจจิ้ง', 'บรรจุภัณฑ์', 'PACKAGING'],
+  'food': ['ฟู้ด', 'อาหาร', 'FOOD'],
+  'foods': ['ฟู้ดส์', 'อาหาร', 'FOODS'],
+  'energy': ['เอนเนอร์ยี่', 'พลังงาน', 'ENERGY'],
+  'power': ['เพาเวอร์', 'พาวเวอร์', 'POWER'],
+  'inter': ['อินเตอร์', 'INTER'],
+  'international': ['อินเตอร์เนชั่นแนล', 'สากล', 'INTERNATIONAL'],
+  'global': ['โกลบอล', 'GLOBAL'],
+  'media': ['มีเดีย', 'MEDIA'],
+  'digital': ['ดิจิทัล', 'ดิจิตอล', 'DIGITAL'],
+  'center': ['เซ็นเตอร์', 'ศูนย์', 'CENTER'],
+  'marketing': ['มาร์เก็ตติ้ง', 'การตลาด', 'MARKETING'],
+  'management': ['แมนเนจเม้นท์', 'การจัดการ', 'MANAGEMENT'],
+  'system': ['ซิสเต็ม', 'ระบบ', 'SYSTEM'],
+  'systems': ['ซิสเต็มส์', 'SYSTEMS'],
+  'green': ['กรีน', 'GREEN'],
+  'star': ['สตาร์', 'STAR'],
+  'nova': ['โนว่า', 'NOVA'],
+  'prime': ['ไพรม์', 'PRIME'],
+  'enterprise': ['เอ็นเตอร์ไพรส์', 'ENTERPRISE'],
+
+  // Active 5 & Tech Solutions
+  'active': ['แอคทีฟ', 'ACTIVE', 'บริษัท แอคทีฟ 5 จำกัด', 'แอคทีฟ 5'],
+  'active5': ['แอคทีฟ 5', 'แอคทีฟ5', 'ACTIVE 5', 'ACTIVE5', 'บริษัท แอคทีฟ 5 จำกัด', 'บจก. แอคทีฟ 5'],
+  'active 5': ['แอคทีฟ 5', 'แอคทีฟ5', 'ACTIVE 5', 'ACTIVE5', 'บริษัท แอคทีฟ 5 จำกัด', 'บจก. แอคทีฟ 5'],
+  'a5': ['แอคทีฟ 5', 'แอคทีฟ5', 'ACTIVE 5', 'ACTIVE5', 'A5', 'บริษัท แอคทีฟ 5 จำกัด']
+};
+
+function getSearchSynonyms(query) {
+  if (!query) return [];
+  const qClean = query.trim();
+  const qLower = qClean.toLowerCase();
+  const synonyms = new Set([qClean]);
+
+  // Space-collapsed & space-normalized variants (e.g. "แอคทีฟ 5" <-> "แอคทีฟ5")
+  const noSpace = qClean.replace(/\s+/g, '');
+  if (noSpace && noSpace !== qClean) synonyms.add(noSpace);
+
+  for (const [enKey, thList] of Object.entries(BILINGUAL_MAP)) {
+    // English query match
+    if (qLower === enKey || (enKey.length >= 3 && (qLower.includes(enKey) || enKey.includes(qLower)))) {
+      thList.forEach(t => synonyms.add(t));
+      synonyms.add(enKey);
+    }
+    // Thai query match
+    for (const th of thList) {
+      if (qClean === th || (th.length >= 3 && (qClean.includes(th) || th.includes(qClean)))) {
+        synonyms.add(enKey);
+        synonyms.add(th);
+      }
+    }
+  }
+  return Array.from(synonyms);
+}
+
+function initCustomersTable() {
+  try {
+    const historical = db.prepare(`SELECT DISTINCT customer_company FROM loans WHERE customer_company != ''`).all();
+    const insertHistory = db.prepare(`INSERT OR IGNORE INTO customers (name, source) VALUES (?, 'history')`);
+    for (const h of historical) {
+      if (h.customer_company && h.customer_company.trim()) {
+        insertHistory.run(h.customer_company.trim());
+      }
+    }
+  } catch (err) {}
+
+  const defaultCompanies = [
+    { name: 'บริษัท ฮิโนะ มอเตอร์ส แมนูแฟคเจอริ่ง (ประเทศไทย) จำกัด', name_en: 'HINO MOTORS MANUFACTURING (THAILAND) COMPANY LIMITED', tax_id: '0105507000216', source: 'dbd' },
+    { name: 'บริษัท ฮิโนะ มอเตอร์ส เซลส์ (ประเทศไทย) จำกัด', name_en: 'HINO MOTORS SALES (THAILAND) COMPANY LIMITED', tax_id: '0105505001347', source: 'dbd' },
+    { name: 'บริษัท โตโยต้า มอเตอร์ ประเทศไทย จำกัด', name_en: 'TOYOTA MOTOR THAILAND COMPANY LIMITED', tax_id: '0105505001649', source: 'dbd' },
+    { name: 'บริษัท อีซูซุมอเตอร์ (ประเทศไทย) จำกัด', name_en: 'ISUZU MOTORS (THAILAND) COMPANY LIMITED', tax_id: '0105509000108', source: 'dbd' },
+    { name: 'บริษัท ตรีเพชรอีซูซุเซลส์ จำกัด', name_en: 'TRI PETCH ISUZU SALES COMPANY LIMITED', tax_id: '0105517000551', source: 'dbd' },
+    { name: 'บริษัท ฮอนด้า ออโตโมบิล (ประเทศไทย) จำกัด', name_en: 'HONDA AUTOMOBILE (THAILAND) COMPANY LIMITED', tax_id: '0105527008709', source: 'dbd' },
+    { name: 'บริษัท มิตซูบิชิ มอเตอร์ส (ประเทศไทย) จำกัด', name_en: 'MITSUBISHI MOTORS (THAILAND) COMPANY LIMITED', tax_id: '0105530046849', source: 'dbd' },
+    { name: 'บริษัท เคอรี่ เอ็กซ์เพรส (ประเทศไทย) จำกัด (มหาชน)', name_en: 'KERRY EXPRESS (THAILAND) PUBLIC COMPANY LIMITED', tax_id: '0107563000037', source: 'dbd' },
+    { name: 'บริษัท แฟลช เอ็กซ์เพรส จำกัด', name_en: 'FLASH EXPRESS COMPANY LIMITED', tax_id: '0105560086202', source: 'dbd' },
+    { name: 'บริษัท ซีพี ออลล์ จำกัด (มหาชน)', name_en: 'CP ALL PUBLIC COMPANY LIMITED', tax_id: '0107542000011', source: 'dbd' },
+    { name: 'บริษัท ซีพี แอ็กซ์ตร้า จำกัด (มหาชน)', name_en: 'CP AXTRA PUBLIC COMPANY LIMITED', tax_id: '0107536000271', source: 'dbd' },
+    { name: 'บริษัท บิ๊กซี ซูเปอร์เซ็นเตอร์ จำกัด (มหาชน)', name_en: 'BIG C SUPERCENTER PUBLIC COMPANY LIMITED', tax_id: '0107536000637', source: 'dbd' },
+    { name: 'บริษัท ปูนซิเมนต์ไทย จำกัด (มหาชน)', name_en: 'THE SIAM CEMENT PUBLIC COMPANY LIMITED (SCG)', tax_id: '0107537000193', source: 'dbd' },
+    { name: 'บริษัท ปตท. จำกัด (มหาชน)', name_en: 'PTT PUBLIC COMPANY LIMITED', tax_id: '0107544000108', source: 'dbd' },
+    { name: 'บริษัท ปตท. น้ำมันและการค้าปลีก จำกัด (มหาชน)', name_en: 'PTT OIL AND RETAIL BUSINESS PUBLIC COMPANY LIMITED', tax_id: '0107561000242', source: 'dbd' },
+    { name: 'บริษัท ไทยเบฟเวอเรจ แคน จำกัด', name_en: 'THAIBEV CAN COMPANY LIMITED', tax_id: '0105542017351', source: 'dbd' },
+    { name: 'บริษัท ไทยยูเนี่ยน กรุ๊ป จำกัด (มหาชน)', name_en: 'THAI UNION GROUP PUBLIC COMPANY LIMITED', tax_id: '0107537000894', source: 'dbd' },
+    { name: 'บริษัท เบทาโกร จำกัด (มหาชน)', name_en: 'BETAGRO PUBLIC COMPANY LIMITED', tax_id: '0107564000324', source: 'dbd' },
+    { name: 'บริษัท ซินเน็ค (ประเทศไทย) จำกัด (มหาชน)', name_en: 'SYNNEX (THAILAND) PUBLIC COMPANY LIMITED', tax_id: '0107550000140', source: 'dbd' },
+    { name: 'บริษัท เอสไอเอส ดิสทริบิวชั่น (ประเทศไทย) จำกัด (มหาชน)', name_en: 'SIS DISTRIBUTION (THAILAND) PUBLIC COMPANY LIMITED', tax_id: '0107547000388', source: 'dbd' },
+    { name: 'บริษัท ทรู คอร์ปอเรชั่น จำกัด (มหาชน)', name_en: 'TRUE CORPORATION PUBLIC COMPANY LIMITED', tax_id: '0107535000049', source: 'dbd' },
+    { name: 'บริษัท แอดวานซ์ อินโฟร์ เซอร์วิส จำกัด (มหาชน)', name_en: 'ADVANCED INFO SERVICE PUBLIC COMPANY LIMITED (AIS)', tax_id: '0107535000260', source: 'dbd' },
+    { name: 'บริษัท บราเดอร์ คอมเมอร์เชียล (ประเทศไทย) จำกัด', name_en: 'BROTHER COMMERCIAL (THAILAND) COMPANY LIMITED', tax_id: '0105540051152', source: 'dbd' },
+    { name: 'บริษัท เอปสัน (ประเทศไทย) จำกัด', name_en: 'EPSON (THAILAND) COMPANY LIMITED', tax_id: '0105533107011', source: 'dbd' },
+    { name: 'บริษัท แคนนอน มาร์เก็ตติ้ง (ไทยแลนด์) จำกัด', name_en: 'CANON MARKETING (THAILAND) COMPANY LIMITED', tax_id: '0105537039091', source: 'dbd' },
+    { name: 'บริษัท โฮม โปรดักส์ เซ็นเตอร์ จำกัด (มหาชน)', name_en: 'HOME PRODUCT CENTER PUBLIC COMPANY LIMITED (HOMEPRO)', tax_id: '0107544000094', source: 'dbd' },
+    { name: 'บริษัท เซ็นทรัลพัฒนา จำกัด (มหาชน)', name_en: 'CENTRAL PATTANA PUBLIC COMPANY LIMITED (CPN)', tax_id: '0107536000262', source: 'dbd' },
+    { name: 'บริษัท เดอะมอลล์ กรุ๊ป จำกัด', name_en: 'THE MALL GROUP COMPANY LIMITED', tax_id: '0105524003293', source: 'dbd' },
+    { name: 'บริษัท ไปรษณีย์ไทย จำกัด', name_en: 'THAILAND POST COMPANY LIMITED', tax_id: '0105546095691', source: 'dbd' },
+    { name: 'บริษัท ไทยแอร์เอเชีย จำกัด', name_en: 'THAI AIRASIA COMPANY LIMITED', tax_id: '0105546113941', source: 'dbd' },
+    { name: 'บริษัท เดลต้า อีเลคโทรนิคส์ (ประเทศไทย) จำกัด (มหาชน)', name_en: 'DELTA ELECTRONICS (THAILAND) PUBLIC COMPANY LIMITED', tax_id: '0107538000085', source: 'dbd' },
+    { name: 'บริษัท ซัมซุง อิเลคโทรนิคส์ (ประเทศไทย) จำกัด', name_en: 'SAMSUNG ELECTRONICS (THAILAND) COMPANY LIMITED', tax_id: '0105531086089', source: 'dbd' },
+    { name: 'บริษัท แอปเปิ้ล เซาท์ เอเชีย (ประเทศไทย) จำกัด', name_en: 'APPLE SOUTH ASIA (THAILAND) LIMITED', tax_id: '0105542037742', source: 'dbd' },
+    { name: 'บริษัท ดีเอชแอล ซัพพลายเชน (ประเทศไทย) จำกัด', name_en: 'DHL SUPPLY CHAIN (THAILAND) LIMITED', tax_id: '0105538029580', source: 'dbd' },
+    { name: 'บริษัท เจแอนด์ที เอ็กซ์เพรส (ไทยแลนด์) จำกัด', name_en: 'J&T EXPRESS (THAILAND) COMPANY LIMITED', tax_id: '0105561141444', source: 'dbd' },
+    { name: 'บริษัท การบินไทย จำกัด (มหาชน)', name_en: 'THAI AIRWAYS INTERNATIONAL PUBLIC COMPANY LIMITED', tax_id: '0107537001757', source: 'dbd' },
+    { name: 'ธนาคารกรุงเทพ จำกัด (มหาชน)', name_en: 'BANGKOK BANK PUBLIC COMPANY LIMITED', tax_id: '0107536000378', source: 'dbd' },
+    { name: 'ธนาคารกสิกรไทย จำกัด (มหาชน)', name_en: 'KASIKORNBANK PUBLIC COMPANY LIMITED', tax_id: '0107535000189', source: 'dbd' },
+    { name: 'ธนาคารไทยพาณิชย์ จำกัด (มหาชน)', name_en: 'THE SIAM COMMERCIAL BANK PUBLIC COMPANY LIMITED', tax_id: '0107536000102', source: 'dbd' },
+    { name: 'ธนาคารกรุงไทย จำกัด (มหาชน)', name_en: 'KRUNG THAI BANK PUBLIC COMPANY LIMITED', tax_id: '0107537000882', source: 'dbd' },
+    { name: 'ธนาคารทหารไทยธนชาต จำกัด (มหาชน)', name_en: 'TMBTHANACHART BANK PUBLIC COMPANY LIMITED (TTB)', tax_id: '0107537000011', source: 'dbd' },
+    { name: 'บริษัท บุญรอดบริวเวอรี่ จำกัด', name_en: 'BOON RAWD BREWERY COMPANY LIMITED', tax_id: '0105501000109', source: 'dbd' },
+    { name: 'บริษัท แอคทีฟ 5 จำกัด', name_en: 'ACTIVE 5 CO., LTD.', tax_id: '0105564085492', source: 'history' }
+  ];
+
+  const upsertDbd = db.prepare(`
+    INSERT INTO customers (name, name_en, tax_id, source)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(name) DO UPDATE SET
+      name_en = excluded.name_en,
+      tax_id = CASE WHEN customers.tax_id = '' THEN excluded.tax_id ELSE customers.tax_id END,
+      source = excluded.source
+  `);
+
+  for (const c of defaultCompanies) {
+    upsertDbd.run(c.name, c.name_en || '', c.tax_id || '', c.source);
+  }
+
+  // Ensure current company profile is always in customers
+  try {
+    const compSetting = db.prepare("SELECT value FROM company_settings WHERE key = 'company_name'").get();
+    const compTax = db.prepare("SELECT value FROM company_settings WHERE key = 'company_tax_id'").get();
+    const compEn = db.prepare("SELECT value FROM company_settings WHERE key = 'company_name_en'").get();
+    if (compSetting?.value) {
+      upsertDbd.run(compSetting.value.trim(), compEn?.value || '', compTax?.value || '', 'history');
+    }
+  } catch (_) {}
+}
+initCustomersTable();
+
+function searchOnlineDBD(query) {
+  return new Promise((resolve) => {
+    if (!query || query.trim().length < 2) return resolve([]);
+    const https = require('node:https');
+    const url = `https://data.go.th/api/3/action/package_search?q=${encodeURIComponent(query)}&rows=10`;
+    const req = https.get(url, { headers: { 'User-Agent': 'activeASSET/2.0' }, timeout: 3500 }, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          const results = [];
+          if (json.success && json.result?.results) {
+            for (const item of json.result.results) {
+              const name = String(item.title || item.name || '').trim();
+              if (name && (name.includes('บริษัท') || name.includes('บจก') || name.includes('ห้าง') || name.includes('จำกัด'))) {
+                results.push({ name, tax_id: '', source: 'dbd' });
+              }
+            }
+          }
+          resolve(results);
+        } catch {
+          resolve([]);
+        }
+      });
+    });
+    req.on('error', () => resolve([]));
+    req.on('timeout', () => {
+      try { req.destroy(); } catch (_) {}
+      resolve([]);
+    });
+  });
+}
+
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN customer_phone TEXT DEFAULT ''`);
+} catch (e) {
+  // column already exists
+}
+
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN customer_email TEXT DEFAULT ''`);
+} catch (e) {
+  // column already exists
+}
+
+try {
+  db.exec(`ALTER TABLE loan_items ADD COLUMN attachments_json TEXT DEFAULT '[]'`);
+} catch (e) {
+  // column already exists
+}
+
+function mapV1Source(src) {
+  if (src === 'Supplier') return 'Supplier';
+  if (src === 'Sales_Stock' || src === 'คลังขาย') return 'คลังขาย';
+  if (src === 'ทดแทนระหว่างซ่อม' || src === 'Replacement') return 'ทดแทนระหว่างซ่อม';
+  return 'Demo';
+}
+
+function getTodayStr() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function toDateStr(val, fallback = null) {
+  if (!val) return fallback;
+  if (typeof val === 'number') {
+    const dt = new Date(val);
+    if (!isNaN(dt.getTime())) return dt.toISOString().slice(0, 10);
+  }
+  const s = String(val);
+  if (s.length >= 10 && s.includes('-')) return s.slice(0, 10);
+  const dt = new Date(val);
+  if (!isNaN(dt.getTime())) return dt.toISOString().slice(0, 10);
+  return fallback;
+}
+
+function seedFromV1IfNeeded() {
+  const countRow = db.prepare('SELECT COUNT(*) as c FROM assets').get();
+  if (countRow && countRow.c > 0) return;
+
+  const v1DbFile = path.join(__dirname, 'v1_reference.db');
+  if (fs.existsSync(v1DbFile)) {
+    const v1 = new DatabaseSync(v1DbFile, { readOnly: true });
+    db.exec('BEGIN TRANSACTION');
+    try {
+      // 1. Migrate all 158 AssetUnits from v1
+      const v1Assets = v1.prepare(`
+        SELECT a.tagId, a.serialNo, a.source, a.status, a.registeredAccessories, a.notes,
+               c.model, c.brand, c.category, c.defaultSpecs, c.defaultAccessories,
+               l.name as locName
+        FROM AssetUnit a
+        LEFT JOIN ProductCatalog c ON a.catalogId = c.id
+        LEFT JOIN Location l ON a.locationId = l.id
+        ORDER BY a.tagId ASC
+      `).all();
+
+      const insertAsset = db.prepare(`
+        INSERT OR IGNORE INTO assets (
+          tag_id, name, model, brand, category, serial_no,
+          source, location, accessories_json, free_note, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Available')
+      `);
+
+      for (const a of v1Assets) {
+        let acc = [];
+        try {
+          acc = JSON.parse(a.registeredAccessories || a.defaultAccessories || '[]');
+        } catch {
+          acc = [];
+        }
+        // Filter out redundant self-model name tag if present, or keep clean tags
+        acc = acc.filter(Boolean);
+        const source = mapV1Source(a.source);
+        const location = a.locName || (source === 'คลังขาย' ? 'คลังขาย (Sales Stock)' : source === 'Supplier' ? 'คลัง Supplier' : source === 'ทดแทนระหว่างซ่อม' ? 'เครื่องสำรองระหว่างซ่อม (Repair Swap)' : 'Mobile Computer ตู้ A1');
+
+        insertAsset.run(
+          a.tagId,
+          `${a.brand || ''} ${a.model || ''}`.trim(),
+          a.model || '',
+          a.brand || '',
+          a.category || 'Mobile Computer',
+          a.serialNo || '-',
+          source,
+          location,
+          JSON.stringify(acc),
+          a.notes || ''
+        );
+      }
+
+      // 2. Migrate LoanTransactions from v1 so the Kanban columns match activeASSET v1 immediately
+      const v1Loans = v1.prepare(`
+        SELECT * FROM LoanTransaction
+        WHERE status IN ('Requested', 'Dispatching', 'Dispatched', 'Delivered', 'Partially_Returned', 'Returned')
+        ORDER BY docNo ASC
+      `).all();
+
+      const insertLoan = db.prepare(`
+        INSERT OR IGNORE INTO loans (
+          id, customer_name, customer_company, borrower_name, borrower_phone,
+          purpose, checkout_date, due_date, return_date, status, created_at
+        ) VALUES (?, ?, ?, ?, '', ?, ?, ?, ?, ?, ?)
+      `);
+
+      const insertLoanItem = db.prepare(`
+        INSERT INTO loan_items (
+          loan_id, tag_id, model, brand, serial_no,
+          source_snapshot, location_snapshot, loan_accessories_json, loan_free_note,
+          returned, returned_at, returned_accessories_json, missing_accessories_json, qc_status, qc_note, returned_to_location
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '[]', ?, '', ?)
+      `);
+
+      for (const l of v1Loans) {
+        const checkoutDate = toDateStr(l.checkoutDate || l.requestedAt, getTodayStr());
+        const dueDate = toDateStr(l.expectedReturnDate, getTodayStr());
+        const returnDate = toDateStr(l.closedAt, null);
+
+        insertLoan.run(
+          l.docNo,
+          l.customerName || '',
+          l.customerCompany || '',
+          l.salesRepName || 'พนักงานขาย',
+          l.purpose || 'Demo',
+          checkoutDate,
+          dueDate,
+          returnDate,
+          l.status,
+          checkoutDate
+        );
+
+        // Get actual LoanLineItems
+        const v1Lines = v1.prepare(`
+          SELECT li.*, a.serialNo, a.source as assetSource, c.model, c.brand, loc.name as locName
+          FROM LoanLineItem li
+          LEFT JOIN AssetUnit a ON li.assetTagId = a.tagId
+          LEFT JOIN ProductCatalog c ON a.catalogId = c.id
+          LEFT JOIN Location loc ON a.locationId = loc.id
+          WHERE li.loanDocNo = ?
+        `).all(l.docNo);
+
+        if (v1Lines.length > 0) {
+          for (const li of v1Lines) {
+            if (!li.assetTagId) continue;
+            let acc = [];
+            try {
+              acc = JSON.parse(li.accessoriesHandedOver || '[]');
+            } catch {
+              acc = [];
+            }
+            const isReturned = li.status === 'Returned' || Boolean(li.returnedAt);
+            const src = mapV1Source(li.source || li.assetSource);
+            const loc = li.locName || 'Mobile Computer ตู้ A1';
+
+            insertLoanItem.run(
+              l.docNo,
+              li.assetTagId,
+              li.model || '',
+              li.brand || '',
+              li.serialNo || '',
+              src,
+              loc,
+              JSON.stringify(acc),
+              li.notes || '',
+              isReturned ? 1 : 0,
+              toDateStr(li.returnedAt, null),
+              isReturned ? JSON.stringify(acc) : '[]',
+              isReturned ? 'Pass' : null,
+              isReturned ? 1 : 0
+            );
+
+            if (!isReturned && l.status !== 'Returned') {
+              db.prepare(`UPDATE assets SET status = 'On_Loan', current_loan_id = ? WHERE tag_id = ?`).run(l.docNo, li.assetTagId);
+            }
+          }
+        } else {
+          // For Requested loans that only had LoanRequestLine in v1, pick available assets of that catalog so every card has concrete rows
+          const reqLines = v1.prepare(`
+            SELECT rl.*, c.model, c.brand
+            FROM LoanRequestLine rl
+            LEFT JOIN ProductCatalog c ON rl.catalogId = c.id
+            WHERE rl.loanDocNo = ?
+          `).all(l.docNo);
+
+          for (const rl of reqLines) {
+            const avail = db.prepare(`
+              SELECT * FROM assets WHERE model = ? AND status = 'Available' LIMIT ?
+            `).all(rl.model, rl.quantity || 1);
+
+            for (const asset of avail) {
+              insertLoanItem.run(
+                l.docNo,
+                asset.tag_id,
+                asset.model,
+                asset.brand,
+                asset.serial_no,
+                asset.source,
+                asset.location,
+                asset.accessories_json,
+                rl.notes || '',
+                0,
+                null,
+                '[]',
+                null,
+                0
+              );
+              db.prepare(`UPDATE assets SET status = 'On_Loan', current_loan_id = ? WHERE tag_id = ?`).run(l.docNo, asset.tag_id);
+            }
+          }
+        }
+      }
+
+      db.exec('COMMIT');
+      console.log(`Seeded ${v1Assets.length} assets and ${v1Loans.length} loans from activeASSET v1.`);
+    } catch (err) {
+      db.exec('ROLLBACK');
+      console.error('Seed from v1 error:', err);
+    } finally {
+      v1.close();
+    }
+  }
+}
+
+seedFromV1IfNeeded();
+
+function saveBase64Image(dataUrl, prefix = 'photo') {
+  if (!dataUrl || typeof dataUrl !== 'string') return '';
+  if (dataUrl.startsWith('/uploads/')) return dataUrl;
+  const match = dataUrl.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
+  if (!match) return '';
+  const ext = match[1] === 'png' ? 'png' : match[1] === 'webp' ? 'webp' : 'jpg';
+  const buffer = Buffer.from(match[2], 'base64');
+  const filename = `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const filepath = path.join(UPLOADS_DIR, filename);
+  fs.writeFileSync(filepath, buffer);
+  return `/uploads/${filename}`;
+}
+
+function daysUntil(dueDateStr, todayStr) {
+  const due = new Date(dueDateStr.slice(0, 10) + 'T00:00:00');
+  const today = new Date(todayStr.slice(0, 10) + 'T00:00:00');
+  return Math.round((due - today) / (1000 * 60 * 60 * 24));
+}
+
+function getFullState() {
+  const today = getTodayStr();
+  const rawAssets = db.prepare('SELECT * FROM assets ORDER BY tag_id ASC').all();
+  const rawLoans = db.prepare('SELECT * FROM loans ORDER BY id ASC').all();
+  const rawLoanItems = db.prepare('SELECT * FROM loan_items ORDER BY id ASC').all();
+
+  const itemsByLoan = new Map();
+  for (const li of rawLoanItems) {
+    const parsed = {
+      ...li,
+      loan_accessories: JSON.parse(li.loan_accessories_json || '[]'),
+      returned_accessories: JSON.parse(li.returned_accessories_json || '[]'),
+      missing_accessories: JSON.parse(li.missing_accessories_json || '[]'),
+      attachments: JSON.parse(li.attachments_json || '[]'),
+      returned: Boolean(li.returned),
+      returned_to_location: Boolean(li.returned_to_location)
+    };
+    if (!itemsByLoan.has(li.loan_id)) itemsByLoan.set(li.loan_id, []);
+    itemsByLoan.get(li.loan_id).push(parsed);
+  }
+
+  const loansMap = new Map();
+  const loans = rawLoans.map(l => {
+    const items = itemsByLoan.get(l.id) || [];
+    const days = daysUntil(l.due_date, today);
+    const isOverdue = ['Delivered', 'Partially_Returned'].includes(l.status) && days < 0;
+    const isDueSoon = ['Delivered', 'Partially_Returned'].includes(l.status) && days >= 0 && days <= 3;
+
+    // Match activeASSET v1 exact columns & sub-groups:
+    // Column 1: requesting ('รอจัดของ') -> subGroup 'Requested' ('รอจัด') | 'Dispatching' ('กำลังจัด')
+    // Column 2: dispatched ('รอส่งมอบ') -> subGroup 'Dispatched' ('รอส่งมอบ')
+    // Column 3: in-use ('กำลังยืม') -> subGroup 'Delivered' ('กำลังยืม', days >= 0)
+    // Column 4: overdue-and-partial ('เกินกำหนด / คืนไม่ครบ') -> subGroup 'Overdue' ('เกินกำหนด') | 'Partially_Returned' ('คืนไม่ครบ')
+    // Column 5 (optional/history): returned ('คืนครบแล้ว')
+    let mainColumn = 'in-use';
+    let subGroup = 'Delivered';
+
+    if (l.status === 'Requested') {
+      mainColumn = 'requesting';
+      subGroup = 'Requested';
+    } else if (l.status === 'Dispatching') {
+      mainColumn = 'requesting';
+      subGroup = 'Dispatching';
+    } else if (l.status === 'Dispatched') {
+      mainColumn = 'dispatched';
+      subGroup = 'Dispatched';
+    } else if (l.status === 'Delivered') {
+      if (days < 0) {
+        mainColumn = 'overdue-and-partial';
+        subGroup = 'Overdue';
+      } else {
+        mainColumn = 'in-use';
+        subGroup = 'Delivered';
+      }
+    } else if (l.status === 'Partially_Returned') {
+      mainColumn = 'overdue-and-partial';
+      subGroup = days < 0 ? 'Overdue' : 'Partially_Returned';
+    } else if (l.status === 'Returned') {
+      mainColumn = 'returned';
+      subGroup = 'Returned';
+    }
+
+    const totalItems = items.length;
+    const returnedCount = items.filter(i => i.returned).length;
+
+    const loanObj = {
+      ...l,
+      before_photos: JSON.parse(l.before_photos_json || '[]'),
+      after_photos: JSON.parse(l.after_photos_json || '[]'),
+      delivery_photos: JSON.parse(l.delivery_photos_json || '[]'),
+      items,
+      days_until: days,
+      is_overdue: isOverdue,
+      overdue_days: isOverdue ? Math.abs(days) : 0,
+      is_due_soon: isDueSoon,
+      main_column: mainColumn,
+      sub_group: subGroup,
+      total_items: totalItems,
+      returned_items: returnedCount
+    };
+    loansMap.set(l.id, loanObj);
+    return loanObj;
+  });
+
+  const allTagSuggestions = new Set([
+    'แบตเตอรี่',
+    'Power Adapter',
+    'Power Cord',
+    'USB Cable',
+    'USB-C Cable',
+    'Cradle',
+    'Stand',
+    'สายคล้องมือ',
+    'กล่อง',
+    'Ribbon Core 1"',
+    'Adapter 24V'
+  ]);
+  const allLocations = new Set();
+
+  function isMainUnitTag(t) {
+    if (!t) return false;
+    const str = String(t).trim();
+    return str.startsWith('เครื่อง') || str.startsWith('สแกนเนอร์') || str === 'iPad 10th' || str === 'Galaxy Tab A9';
+  }
+
+  const assets = rawAssets.map(a => {
+    const rawAccessories = JSON.parse(a.accessories_json || '[]');
+    const accessories = rawAccessories.filter(t => !isMainUnitTag(t));
+    const missingTags = JSON.parse(a.missing_tags_json || '[]');
+    accessories.forEach(t => allTagSuggestions.add(t));
+    if (a.location) allLocations.add(a.location);
+
+    let activeLoan = null;
+    if (a.current_loan_id && loansMap.has(a.current_loan_id)) {
+      const loan = loansMap.get(a.current_loan_id);
+      activeLoan = {
+        id: loan.id,
+        borrower_name: loan.borrower_name,
+        customer_name: loan.customer_name,
+        customer_company: loan.customer_company,
+        due_date: loan.due_date,
+        status: loan.status
+      };
+    }
+
+    let images = [];
+    try {
+      images = a.images_json ? JSON.parse(a.images_json) : [];
+    } catch (e) {
+      images = [];
+    }
+    if (images.length === 0 && a.image_url) {
+      images = [a.image_url];
+    }
+
+    return {
+      ...a,
+      image_url: images[0] || a.image_url || '',
+      images,
+      accessories,
+      missing_tags: missingTags,
+      active_loan: activeLoan
+    };
+  });
+
+  // Build Model Catalog summary from assets for model-only selection when creating a loan
+  const catalogMap = new Map();
+  for (const a of assets) {
+    if (a.status === 'Disposed') continue; // Disposed assets cannot be requested for loan
+    const key = `${a.brand}||${a.model}`;
+    if (!catalogMap.has(key)) {
+      catalogMap.set(key, {
+        brand: a.brand,
+        model: a.model,
+        category: a.category,
+        default_accessories: a.accessories || [],
+        total_count: 0,
+        available_count: 0
+      });
+    }
+    const entry = catalogMap.get(key);
+    entry.total_count++;
+    if (a.status === 'Available') entry.available_count++;
+    if (entry.default_accessories.length === 0 && a.accessories && a.accessories.length > 0) {
+      entry.default_accessories = a.accessories;
+    }
+  }
+
+  return {
+    today,
+    assets,
+    catalogs: [...catalogMap.values()],
+    loans,
+    accessorySuggestions: [...allTagSuggestions],
+    locations: [...allLocations],
+    companySettings: getCompanySettings(),
+    roles: getAllRoles(),
+    permissionKeys: PERMISSION_KEYS
+  };
+}
+
+function generateNextLoanId() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const prefix = `LOAN-${y}${m}-`;
+  const rows = db.prepare(`SELECT id FROM loans WHERE id LIKE ?`).all(`${prefix}%`);
+  let maxSeq = 0;
+  for (const r of rows) {
+    const parts = r.id.split('-');
+    const seq = parseInt(parts[parts.length - 1], 10);
+    if (!isNaN(seq) && seq > maxSeq) maxSeq = seq;
+  }
+  return `${prefix}${String(maxSeq + 1).padStart(3, '0')}`;
+}
+
+function parseJsonBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk;
+      if (body.length > 25 * 1024 * 1024) reject(new Error('Payload too large'));
+    });
+    req.on('end', () => {
+      if (!body) return resolve({});
+      try {
+        resolve(JSON.parse(body));
+      } catch (e) {
+        reject(e);
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
+function sendJson(res, status, data) {
+  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify(data));
+}
+
+const MIME_TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'application/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.svg': 'image/svg+xml',
+  '.pdf': 'application/pdf',
+  '.doc': 'application/msword',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.xls': 'application/vnd.ms-excel',
+  '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  '.txt': 'text/plain; charset=utf-8'
+};
+
+const server = http.createServer(async (req, res) => {
+  try {
+    const urlObj = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const pathname = decodeURIComponent(urlObj.pathname);
+
+    if (pathname === '/api/state' && req.method === 'GET') {
+      return sendJson(res, 200, getFullState());
+    }
+
+    // Company / Issuer Settings
+    if (pathname === '/api/company-settings' && req.method === 'GET') {
+      return sendJson(res, 200, { success: true, settings: getCompanySettings() });
+    }
+
+    if (pathname === '/api/company-settings' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      const upsert = db.prepare(`
+        INSERT INTO company_settings (key, value)
+        VALUES (?, ?)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value
+      `);
+      db.exec('BEGIN TRANSACTION');
+      try {
+        for (const [k, v] of Object.entries(body)) {
+          if (typeof v === 'string') {
+            upsert.run(k, v);
+          }
+        }
+        db.exec('COMMIT');
+      } catch (err) {
+        db.exec('ROLLBACK');
+        return sendJson(res, 500, { error: err.message });
+      }
+      return sendJson(res, 200, { success: true, settings: getCompanySettings() });
+    }
+
+    // Auth & Google Workspace Config
+    if (pathname === '/api/auth/config' && req.method === 'GET') {
+      const settings = getCompanySettings();
+      return sendJson(res, 200, {
+        require_login: settings.auth_require_login !== '0',
+        allowed_domains: settings.auth_allowed_domains || 'active5.co.th',
+        google_client_id: settings.auth_google_client_id || ''
+      });
+    }
+
+    // Auth Users List (Directory)
+    if (pathname === '/api/auth/users' && req.method === 'GET') {
+      const users = db.prepare('SELECT * FROM users ORDER BY name ASC').all();
+      const enriched = users.map(u => getUserWithRole(u.email));
+      return sendJson(res, 200, { success: true, users: enriched });
+    }
+
+    // -------------------------------------------------------------
+    // Roles & Permissions API
+    // -------------------------------------------------------------
+    if (pathname === '/api/roles' && req.method === 'GET') {
+      return sendJson(res, 200, {
+        success: true,
+        roles: getAllRoles(),
+        permissionKeys: PERMISSION_KEYS
+      });
+    }
+
+    if (pathname === '/api/roles' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      let roleId = String(body.id || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]/g, '-');
+      const name = String(body.name || '').trim();
+      const description = String(body.description || '').trim();
+      const permissions = typeof body.permissions === 'object' && body.permissions !== null ? body.permissions : {};
+
+      if (!name) {
+        return sendJson(res, 400, { error: 'กรุณาระบุชื่อบทบาท (Role Name)' });
+      }
+
+      if (!roleId) {
+        roleId = 'role-' + Date.now();
+      }
+
+      // If updating system admin, protect critical permissions
+      if (roleId === 'admin') {
+        permissions.manage_settings = true;
+        permissions.manage_roles = true;
+      }
+
+      const existing = db.prepare('SELECT * FROM roles WHERE id = ?').get(roleId);
+      if (existing) {
+        db.prepare(`
+          UPDATE roles
+          SET name = ?,
+              description = ?,
+              permissions_json = ?,
+              updated_at = datetime('now', 'localtime')
+          WHERE id = ?
+        `).run(name, description, JSON.stringify(permissions), roleId);
+      } else {
+        db.prepare(`
+          INSERT INTO roles (id, name, description, is_system, permissions_json)
+          VALUES (?, ?, ?, 0, ?)
+        `).run(roleId, name, description, JSON.stringify(permissions));
+      }
+
+      return sendJson(res, 200, {
+        success: true,
+        message: existing ? `บันทึกการแก้ไขบทบาท "${name}" เรียบร้อยแล้ว` : `สร้างบทบาท "${name}" เรียบร้อยแล้ว`,
+        roles: getAllRoles(),
+        role: getRoleById(roleId)
+      });
+    }
+
+    if (pathname.match(/^\/api\/roles\/[^/]+$/) && req.method === 'DELETE') {
+      const roleId = pathname.split('/')[3];
+      const role = db.prepare('SELECT * FROM roles WHERE id = ?').get(roleId);
+      if (!role) {
+        return sendJson(res, 404, { error: 'ไม่พบบทบาทนี้' });
+      }
+      if (role.is_system === 1 || roleId === 'admin' || roleId === 'user') {
+        return sendJson(res, 400, { error: 'ไม่สามารถลบบทบาทมาตรฐานของระบบ (admin หรือ user) ได้' });
+      }
+
+      db.exec('BEGIN TRANSACTION');
+      try {
+        // Reassign all users with this role to 'user'
+        db.prepare("UPDATE users SET role = 'user' WHERE role = ?").run(roleId);
+        db.prepare('DELETE FROM roles WHERE id = ?').run(roleId);
+        db.exec('COMMIT');
+      } catch (err) {
+        db.exec('ROLLBACK');
+        return sendJson(res, 500, { error: 'ลบบทบาทไม่สำเร็จ: ' + err.message });
+      }
+
+      return sendJson(res, 200, {
+        success: true,
+        message: `ลบบทบาท ${role.name} เรียบร้อยแล้ว (ผู้ใช้ที่เคยมีบทบาทนี้ถูกปรับเป็น User)`,
+        roles: getAllRoles()
+      });
+    }
+
+    // -------------------------------------------------------------
+    // Users Role Assignment API
+    // -------------------------------------------------------------
+    if (pathname === '/api/users' && req.method === 'GET') {
+      const users = db.prepare('SELECT * FROM users ORDER BY name ASC').all();
+      const enriched = users.map(u => getUserWithRole(u.email));
+      return sendJson(res, 200, { success: true, users: enriched });
+    }
+
+    if (pathname.match(/^\/api\/users\/[^/]+\/role$/) && req.method === 'PATCH') {
+      const email = decodeURIComponent(pathname.split('/')[3]);
+      const body = await parseJsonBody(req);
+      const newRoleId = String(body.role || '').trim();
+
+      const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+      if (!user) return sendJson(res, 404, { error: 'ไม่พบผู้ใช้นี้ในระบบ' });
+
+      const roleObj = db.prepare('SELECT * FROM roles WHERE id = ?').get(newRoleId);
+      if (!roleObj) return sendJson(res, 400, { error: `ไม่พบบทบาท "${newRoleId}" ในระบบ` });
+
+      // Protect at least one admin existing
+      if (user.role === 'admin' && newRoleId !== 'admin') {
+        const adminCount = db.prepare("SELECT COUNT(*) as cnt FROM users WHERE role = 'admin'").get();
+        if (adminCount.cnt <= 1) {
+          return sendJson(res, 400, { error: 'ต้องมีผู้ดูแลระบบ (Admin) อย่างน้อย 1 คนในระบบ' });
+        }
+      }
+
+      db.prepare('UPDATE users SET role = ? WHERE email = ?').run(newRoleId, email);
+      return sendJson(res, 200, {
+        success: true,
+        message: `เปลี่ยนบทบาทของ ${user.name} เป็น ${roleObj.name} เรียบร้อยแล้ว`,
+        user: getUserWithRole(email),
+        users: db.prepare('SELECT * FROM users ORDER BY name ASC').all().map(u => getUserWithRole(u.email))
+      });
+    }
+
+    // Login with Google Workspace / Corporate Email
+    if (pathname === '/api/auth/login' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      let email = (body.email || '').trim().toLowerCase();
+      let name = (body.name || '').trim();
+      let picture = (body.picture || '').trim();
+
+      // If Google Credential JWT from Google One Tap / Sign In button
+      if (body.credential) {
+        try {
+          const parts = body.credential.split('.');
+          if (parts.length === 3) {
+            const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+            if (payload.email) email = payload.email.trim().toLowerCase();
+            if (payload.name) name = payload.name.trim();
+            if (payload.picture) picture = payload.picture.trim();
+          }
+        } catch (e) {
+          return sendJson(res, 400, { error: 'รหัสรับรอง Google ID Token ไม่ถูกต้อง' });
+        }
+      }
+
+      if (!email) {
+        return sendJson(res, 400, { error: 'กรุณาระบุอีเมลองค์กรที่ถูกต้อง' });
+      }
+
+      // Auto-append @active5.co.th if local username was provided without domain
+      if (!email.includes('@')) {
+        email = email + '@active5.co.th';
+      }
+
+      const emailDomain = email.split('@')[1]?.toLowerCase() || '';
+      const settings = getCompanySettings();
+      const allowedDomains = (settings.auth_allowed_domains || '')
+        .split(',')
+        .map(d => d.trim().toLowerCase().replace(/^@/, ''))
+        .filter(Boolean);
+
+      // Ensure active5.co.th is always recognized as valid corporate domain
+      if (!allowedDomains.includes('active5.co.th')) {
+        allowedDomains.push('active5.co.th');
+      }
+
+      // Check Domain Whitelist
+      if (allowedDomains.length > 0 && !allowedDomains.includes(emailDomain)) {
+        return sendJson(res, 403, {
+          error: `ไม่อนุญาตให้อีเมลจากโดเมน @${emailDomain} เข้าใช้งาน (ระบบจำกัดสิทธิ์เฉพาะบุคลากรภายใน: ${allowedDomains.map(d => '@' + d).join(', ')})`,
+          domain: emailDomain,
+          allowed_domains: allowedDomains
+        });
+      }
+
+      // If name not provided, lookup from existing or derive
+      if (!name) {
+        const existing = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+        if (existing && existing.name) {
+          name = existing.name;
+        } else {
+          const localPart = email.split('@')[0];
+          name = localPart.charAt(0).toUpperCase() + localPart.slice(1);
+        }
+      }
+
+      // Resolve user role:
+      // 1. If existing user in database, preserve their current role
+      // 2. If new user:
+      //    - If pre-designated bootstrap admin (admin@active5.co.th or jantorn@active5.co.th), assign admin
+      //    - For ANY other new user from active5.co.th, automatically assign 'user' role
+      let userRole = 'user';
+      const existingUser = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+      if (existingUser) {
+        userRole = existingUser.role || 'user';
+      } else {
+        if (email === 'admin@active5.co.th' || email === 'jantorn@active5.co.th' || email.startsWith('admin@')) {
+          userRole = 'admin';
+        } else {
+          // Automatic assignment of 'user' role for all new users from active5.co.th
+          userRole = 'user';
+        }
+      }
+
+      db.prepare(`
+        INSERT INTO users (email, name, role, picture, domain, last_login)
+        VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'))
+        ON CONFLICT(email) DO UPDATE SET
+          name = CASE WHEN excluded.name != '' THEN excluded.name ELSE users.name END,
+          picture = CASE WHEN excluded.picture != '' THEN excluded.picture ELSE users.picture END,
+          domain = excluded.domain,
+          last_login = datetime('now', 'localtime')
+      `).run(email, name, userRole, picture, emailDomain);
+
+      const userObj = getUserWithRole(email);
+      return sendJson(res, 200, {
+        success: true,
+        message: existingUser ? `เข้าสู่ระบบสำเร็จ` : `ยินดีต้อนรับพนักงานใหม่! ระบบกำหนดสิทธิ์ผู้ใช้งาน (User) ให้คุณโดยอัตโนมัติเรียบร้อยแล้ว`,
+        is_new_user: !existingUser,
+        user: userObj
+      });
+    }
+
+    // Test SMTP Connection
+    if (pathname === '/api/smtp/test' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      const settings = getCompanySettings();
+      const host = body.host || settings.smtp_host || 'smtp.gmail.com';
+      const port = parseInt(body.port || settings.smtp_port || 465, 10);
+      const user = (body.user !== undefined ? body.user : settings.smtp_user) || '';
+      const pass = (body.pass !== undefined ? body.pass : settings.smtp_pass) || '';
+
+      if (!user || !pass) {
+        return sendJson(res, 400, { error: 'กรุณากรอกอีเมล Gmail และ Google App Password ให้ครบถ้วน' });
+      }
+
+      const testRes = await verifySmtpCredentials({ host, port, user, pass });
+      if (!testRes.success) {
+        return sendJson(res, 400, { error: testRes.error });
+      }
+      return sendJson(res, 200, { success: true, message: 'การเชื่อมต่อและยืนยันตัวตนกับ Gmail สำเร็จเรียบร้อย' });
+    }
+
+    // Test Email API Key (Resend / SendGrid)
+    if (pathname === '/api/email/test-api-key' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      const provider = body.provider || 'resend';
+      const apiKey = String(body.apiKey || '').trim();
+
+      if (!apiKey) {
+        return sendJson(res, 400, { error: 'กรุณากรอก API Key ที่ต้องการทดสอบ' });
+      }
+
+      try {
+        const testRes = await verifyApiKey({ provider, apiKey });
+        return sendJson(res, 200, testRes);
+      } catch (err) {
+        return sendJson(res, 400, { error: err.message });
+      }
+    }
+
+    // 3-Tier Customer Search (Local -> Online DBD -> Fallback) with Bilingual (TH/EN) Support
+    if (pathname === '/api/customers/search' && req.method === 'GET') {
+      const q = (urlObj.searchParams.get('q') || '').trim();
+      const doOnline = urlObj.searchParams.get('online') === '1';
+
+      if (!q) {
+        const recent = db.prepare(`
+          SELECT name, name_en, tax_id, source FROM customers
+          ORDER BY CASE WHEN source = 'history' THEN 0 WHEN source = 'custom' THEN 1 ELSE 2 END, id DESC
+          LIMIT 8
+        `).all();
+        return sendJson(res, 200, { success: true, results: recent, fromOnline: false });
+      }
+
+      // Step 1: Local Bilingual Search (supports both Thai and English keywords)
+      const terms = getSearchSynonyms(q);
+      const conds = [];
+      const params = [];
+      for (const t of terms) {
+        conds.push('name LIKE ?', 'LOWER(name_en) LIKE ?');
+        params.push('%' + t + '%', '%' + t.toLowerCase() + '%');
+      }
+
+      // Space-normalized matching so "แอคทีฟ 5" matches "บริษัท แอคทีฟ 5 จำกัด" or "แอคทีฟ5"
+      const qNoSpace = q.replace(/\s+/g, '');
+      if (qNoSpace.length >= 2) {
+        conds.push("REPLACE(name, ' ', '') LIKE ?", "LOWER(REPLACE(name_en, ' ', '')) LIKE ?");
+        params.push('%' + qNoSpace + '%', '%' + qNoSpace.toLowerCase() + '%');
+      }
+
+      const qLower = q.toLowerCase();
+      const searchSql = `
+        SELECT name, name_en, tax_id, source FROM customers
+        WHERE ${conds.join(' OR ')}
+        ORDER BY
+          CASE 
+            WHEN name = ? OR LOWER(name_en) = ? THEN 0
+            WHEN name LIKE ? OR LOWER(name_en) LIKE ? THEN 1
+            WHEN LOWER(name_en) LIKE ? OR name LIKE ? THEN 2
+            ELSE 3 
+          END,
+          CASE WHEN source = 'history' THEN 0 WHEN source = 'custom' THEN 1 ELSE 2 END,
+          LENGTH(name) ASC
+        LIMIT 12
+      `;
+
+      const searchParams = [...params, q, qLower, q + '%', qLower + '%', '%' + qLower + '%', '%' + q + '%'];
+      const localMatches = db.prepare(searchSql).all(...searchParams);
+
+      if (!doOnline) {
+        return sendJson(res, 200, {
+          success: true,
+          results: localMatches,
+          fromOnline: false,
+          hasExactMatch: localMatches.some(m => m.name.toLowerCase() === qLower || (m.name_en && m.name_en.toLowerCase() === qLower))
+        });
+      }
+
+      // Step 2: Online Search Fallback (uses Thai synonym if query is English to maximize DBD hits)
+      const onlineQuery = terms.find(t => /[ก-๙]/.test(t)) || q;
+      searchOnlineDBD(onlineQuery).then(onlineResults => {
+        if (onlineResults.length > 0) {
+          const insertStmt = db.prepare(`
+            INSERT OR IGNORE INTO customers (name, tax_id, source)
+            VALUES (?, ?, 'dbd')
+          `);
+          for (const r of onlineResults) {
+            if (r.name && r.name.trim()) {
+              insertStmt.run(r.name.trim(), r.tax_id || '');
+            }
+          }
+        }
+
+        const combined = db.prepare(searchSql).all(...searchParams);
+
+        sendJson(res, 200, {
+          success: true,
+          results: combined,
+          fromOnline: true,
+          onlineCount: onlineResults.length,
+          hasExactMatch: combined.some(m => m.name.toLowerCase() === qLower || (m.name_en && m.name_en.toLowerCase() === qLower))
+        });
+      }).catch(() => {
+        sendJson(res, 200, {
+          success: true,
+          results: localMatches,
+          fromOnline: false,
+          hasExactMatch: localMatches.some(m => m.name.toLowerCase() === qLower || (m.name_en && m.name_en.toLowerCase() === qLower))
+        });
+      });
+      return;
+    }
+
+    // File upload endpoint for note attachments (images, PDF, documents)
+    if (pathname === '/api/upload' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      const fileName = String(body.name || 'file').trim();
+      const fileData = body.data; // Base64 data URL
+      const fileSize = Number(body.size || 0);
+      const fileType = String(body.type || '');
+
+      if (!fileData) {
+        return sendJson(res, 400, { error: 'No file data provided' });
+      }
+
+      const match = fileData.match(/^data:([^;]+);base64,(.+)$/);
+      if (!match) {
+        return sendJson(res, 400, { error: 'Invalid data URL format' });
+      }
+
+      const mime = match[1];
+      const buffer = Buffer.from(match[2], 'base64');
+
+      if (buffer.length > 25 * 1024 * 1024) {
+        return sendJson(res, 400, { error: 'ไฟล์มีขนาดใหญ่เกิน 25MB' });
+      }
+
+      let ext = 'bin';
+      if (fileName && fileName.includes('.')) {
+        ext = fileName.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '');
+      } else if (mime.includes('pdf')) ext = 'pdf';
+      else if (mime.includes('png')) ext = 'png';
+      else if (mime.includes('jpeg') || mime.includes('jpg')) ext = 'jpg';
+      else if (mime.includes('webp')) ext = 'webp';
+      else if (mime.includes('word') || mime.includes('docx')) ext = 'docx';
+      else if (mime.includes('sheet') || mime.includes('xlsx')) ext = 'xlsx';
+      else if (mime.includes('text')) ext = 'txt';
+
+      const safeBase = fileName.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_\u0E00-\u0E7F-]/g, '_').slice(0, 30);
+      const storedName = `att-${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${safeBase}.${ext}`;
+      const filePath = path.join(UPLOADS_DIR, storedName);
+      fs.writeFileSync(filePath, buffer);
+
+      const fileUrl = `/uploads/${storedName}`;
+      return sendJson(res, 200, {
+        success: true,
+        name: fileName,
+        url: fileUrl,
+        size: fileSize || buffer.length,
+        type: fileType || mime
+      });
+    }
+
+    // Create a new Loan (+ ออกใบยืม from Kanban page: Model-only, no Tag ID or S/N required!)
+    if (pathname === '/api/loans' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      const borrowerName = String(body.borrower_name || '').trim();
+      const customerName = String(body.customer_name || '').trim();
+      const customerCompany = String(body.customer_company || '').trim();
+      const borrowerPhone = String(body.customer_phone || body.borrower_phone || '').trim();
+      const customerPhone = borrowerPhone;
+      const purpose = String(body.purpose || 'Demo').trim();
+      const checkoutDate = body.checkout_date || getTodayStr();
+      const dueDate = body.due_date;
+      const initialStatus = body.status || 'Requested';
+      const items = Array.isArray(body.items) ? body.items : [];
+
+      if (!borrowerName) {
+        return sendJson(res, 400, { error: 'กรุณาระบุชื่อผู้ยืม' });
+      }
+      if (!customerCompany) {
+        return sendJson(res, 400, { error: 'กรุณาระบุบริษัทลูกค้า' });
+      }
+      if (!customerName) {
+        return sendJson(res, 400, { error: 'กรุณาระบุชื่อผู้ติดต่อ' });
+      }
+      if (!dueDate) return sendJson(res, 400, { error: 'กรุณาระบุวันกำหนดคืน' });
+      if (items.length === 0) return sendJson(res, 400, { error: 'กรุณาเลือกรุ่นสินค้าอย่างน้อย 1 รายการ' });
+
+      const loanId = generateNextLoanId();
+      const beforePhotos = (Array.isArray(body.before_photos) ? body.before_photos : [])
+        .map(p => saveBase64Image(p, `out-${loanId}`))
+        .filter(Boolean);
+      const signatureUrl = body.borrower_signature
+        ? saveBase64Image(body.borrower_signature, `sig-${loanId}`)
+        : '';
+
+      const createdBy = (body.created_by || borrowerName || '').trim();
+
+      db.exec('BEGIN TRANSACTION');
+      try {
+        db.prepare(`
+          INSERT INTO loans (
+            id, customer_name, customer_company, borrower_name, borrower_phone, customer_phone,
+            purpose, checkout_date, due_date, status, before_photos_json, borrower_signature, created_by
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          loanId,
+          customerName || borrowerName,
+          customerCompany,
+          borrowerName || customerName,
+          customerPhone,
+          customerPhone,
+          purpose,
+          checkoutDate,
+          dueDate,
+          initialStatus,
+          JSON.stringify(beforePhotos),
+          signatureUrl,
+          createdBy
+        );
+
+        if (customerCompany && customerCompany.trim()) {
+          try {
+            db.prepare(`
+              INSERT INTO customers (name, source) VALUES (?, 'custom')
+              ON CONFLICT(name) DO UPDATE SET created_at = datetime('now', 'localtime')
+            `).run(customerCompany.trim());
+          } catch (_) {}
+        }
+
+        const insertItem = db.prepare(`
+          INSERT INTO loan_items (
+            loan_id, tag_id, model, brand, serial_no,
+            source_snapshot, location_snapshot, loan_accessories_json, loan_free_note, attachments_json
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        let totalUnits = 0;
+        let unitsWithSn = 0;
+
+        for (const it of items) {
+          const modelName = String(it.model || '').trim();
+          const brandName = String(it.brand || '').trim();
+          if (!modelName) throw new Error('กรุณาเลือกรุ่นสินค้าให้ครบทุกแถว');
+
+          const qty = Math.max(1, parseInt(it.qty || 1, 10) || 1);
+          const itemAcc = Array.isArray(it.accessories) ? it.accessories : [];
+          const itemNote = String(it.free_note || '').trim();
+          const itemSource = it.source || 'Demo';
+          const itemSerials = Array.isArray(it.serials) ? it.serials.map(s => String(s || '').trim()).filter(Boolean) : [];
+          const itemAttachments = Array.isArray(it.attachments) ? it.attachments : [];
+
+          // ตรวจสอบตามเงื่อนไข: "ถ้าจะมีการใส่ s/n ต้องใส่ให้ครบตามจำนวนที่กำหนด"
+          if (itemSerials.length > 0 && itemSerials.length !== qty) {
+            throw new Error(`รุ่น ${brandName} ${modelName} ระบุจำนวน ${qty} เครื่อง แต่ใส่ S/N มา ${itemSerials.length} เครื่อง (หากจะใส่ S/N ต้องใส่ให้ครบตามจำนวนที่กำหนด หรือเว้นว่างทั้งหมด)`);
+          }
+
+          totalUnits += qty;
+
+          for (let q = 0; q < qty; q++) {
+            const sn = itemSerials[q] || '';
+            let matchedTagId = '';
+            let matchedLocation = '';
+
+            if (sn) {
+              unitsWithSn++;
+              const asset = db.prepare(`
+                SELECT * FROM assets 
+                WHERE (serial_no = ? OR tag_id = ?) 
+                AND status = 'Available'
+              `).get(sn, sn);
+
+              if (asset) {
+                matchedTagId = asset.tag_id;
+                matchedLocation = asset.location || '';
+                db.prepare(`
+                  UPDATE assets 
+                  SET status = 'On_Loan', current_loan_id = ?, updated_at = datetime('now', 'localtime')
+                  WHERE tag_id = ?
+                `).run(loanId, asset.tag_id);
+              }
+            }
+
+            insertItem.run(
+              loanId,
+              matchedTagId,
+              modelName,
+              brandName,
+              sn,
+              itemSource,
+              matchedLocation,
+              JSON.stringify(itemAcc),
+              itemNote,
+              JSON.stringify(itemAttachments)
+            );
+          }
+        }
+
+        // สถานะ: "รายการที่มี s/n ถือว่า complete จัดของเสร็จแล้วพร้อมส่ง"
+        if (totalUnits > 0 && unitsWithSn === totalUnits) {
+          db.prepare(`UPDATE loans SET status = 'Dispatched' WHERE id = ?`).run(loanId);
+        } else if (unitsWithSn > 0) {
+          db.prepare(`UPDATE loans SET status = 'Dispatching' WHERE id = ?`).run(loanId);
+        }
+
+        db.exec('COMMIT');
+        return sendJson(res, 201, { loanId, state: getFullState() });
+      } catch (err) {
+        db.exec('ROLLBACK');
+        return sendJson(res, 400, { error: err.message });
+      }
+    }
+
+    // Cancel Loan (เฉพาะใบที่ยังไม่ได้จัดของ: Requested หรือ Dispatching)
+    if (((pathname.match(/^\/api\/loans\/[^/]+\/cancel$/) && req.method === 'POST') ||
+         (pathname.match(/^\/api\/loans\/[^/]+$/) && req.method === 'DELETE'))) {
+      const loanId = pathname.split('/')[3];
+      const loan = db.prepare('SELECT * FROM loans WHERE id = ?').get(loanId);
+      if (!loan) return sendJson(res, 404, { error: 'ไม่พบใบยืมนี้' });
+
+      // อนุญาตให้ยกเลิกได้เฉพาะก่อนจัดของ (Requested หรือ Dispatching)
+      if (loan.status !== 'Requested' && loan.status !== 'Dispatching') {
+        return sendJson(res, 400, { error: `ไม่สามารถยกเลิกใบยืมสถานะ "${loan.status}" ได้ (ยกเลิกได้เฉพาะใบที่ยังไม่ได้จัดของ)` });
+      }
+
+      db.exec('BEGIN TRANSACTION');
+      try {
+        // ปลดเครื่องที่ถูกจองหรือผูกไว้กับใบยืมนี้ให้กลับเป็น Available
+        const items = db.prepare('SELECT tag_id FROM loan_items WHERE loan_id = ?').all(loanId);
+        for (const it of items) {
+          if (it.tag_id) {
+            db.prepare(`UPDATE assets SET status = 'Available', current_loan_id = NULL WHERE tag_id = ?`).run(it.tag_id);
+          }
+        }
+        db.prepare(`UPDATE assets SET status = 'Available', current_loan_id = NULL WHERE current_loan_id = ?`).run(loanId);
+
+        // ลบรายการสินค้าและใบยืม
+        db.prepare('DELETE FROM loan_items WHERE loan_id = ?').run(loanId);
+        db.prepare('DELETE FROM loans WHERE id = ?').run(loanId);
+
+        db.exec('COMMIT');
+        return sendJson(res, 200, { success: true, message: `ยกเลิกใบยืม ${loanId} เรียบร้อยแล้ว`, state: getFullState() });
+      } catch (err) {
+        db.exec('ROLLBACK');
+        return sendJson(res, 500, { error: 'เกิดข้อผิดพลาดในการยกเลิกใบยืม: ' + err.message });
+      }
+    }
+
+    // Dispatch & Match S/N (คนจัดของหยิบ S/N มา Match กับรุ่นที่ขอ แล้วเปลี่ยนสถานะเป็น Dispatched "รอส่งมอบ")
+    if (pathname.match(/^\/api\/loans\/[^/]+\/dispatch$/) && req.method === 'POST') {
+      const loanId = pathname.split('/')[3];
+      const loan = db.prepare('SELECT * FROM loans WHERE id = ?').get(loanId);
+      if (!loan) return sendJson(res, 404, { error: 'ไม่พบใบยืมนี้' });
+      if (loan.status !== 'Requested' && loan.status !== 'Dispatching' && loan.status !== 'Dispatched') {
+        return sendJson(res, 400, { error: 'ใบยืมนี้ส่งมอบหรือปิดรายการไปแล้ว ไม่สามารถแก้ไขได้' });
+      }
+
+      const body = await parseJsonBody(req);
+      const matchedItems = Array.isArray(body.items) ? body.items : [];
+      if (matchedItems.length === 0) {
+        return sendJson(res, 400, { error: 'ไม่มีรายการเครื่องที่จะจัดของ' });
+      }
+
+      const newBeforePhotos = (Array.isArray(body.before_photos) ? body.before_photos : [])
+        .map(p => saveBase64Image(p, `out-${loanId}`))
+        .filter(Boolean);
+      const existingBefore = JSON.parse(loan.before_photos_json || '[]');
+      const finalBefore = body.before_photos !== undefined ? newBeforePhotos : existingBefore;
+
+      db.exec('BEGIN TRANSACTION');
+      try {
+        // Release any previously linked assets for this loan first
+        const prevItems = db.prepare('SELECT tag_id FROM loan_items WHERE loan_id = ?').all(loanId);
+        for (const p of prevItems) {
+          if (p.tag_id) {
+            db.prepare(`UPDATE assets SET status = 'Available', current_loan_id = NULL WHERE tag_id = ?`).run(p.tag_id);
+          }
+        }
+
+        const usedTags = new Set();
+        for (const mi of matchedItems) {
+          const tagId = String(mi.tag_id || '').trim();
+          if (!tagId) {
+            throw new Error(`กรุณาเลือก S/N (รหัสเครื่อง) สำหรับรุ่น ${mi.brand || ''} ${mi.model || ''} ให้ครบทุกเครื่อง`);
+          }
+          if (usedTags.has(tagId)) {
+            throw new Error(`เลือกเครื่องซ้ำกัน (${tagId}) กรุณาเลือกคนละ S/N`);
+          }
+          usedTags.add(tagId);
+
+          const asset = db.prepare('SELECT * FROM assets WHERE tag_id = ?').get(tagId);
+          if (!asset) throw new Error(`ไม่พบเครื่องรหัส ${tagId} ในคลัง`);
+          if (asset.status !== 'Available') {
+            if (asset.status === 'Disposed') {
+              throw new Error(`เครื่อง ${tagId} (S/N: ${asset.serial_no}) ถูกจำหน่ายออกจากระบบแล้ว ไม่สามารถนำมาจ่ายยืมได้`);
+            }
+            throw new Error(`เครื่อง ${tagId} (S/N: ${asset.serial_no}) ถูกยืมอยู่ในใบอื่นแล้ว`);
+          }
+
+          const itemAcc = Array.isArray(mi.accessories)
+            ? mi.accessories
+            : JSON.parse(asset.accessories_json || '[]');
+          const itemNote = mi.free_note !== undefined ? mi.free_note : '';
+          const itemSource = mi.source || asset.source || 'Demo';
+          const itemAttachments = Array.isArray(mi.attachments) ? mi.attachments : [];
+
+          db.prepare(`
+            UPDATE loan_items
+            SET tag_id = ?,
+                serial_no = ?,
+                model = ?,
+                brand = ?,
+                source_snapshot = ?,
+                location_snapshot = ?,
+                loan_accessories_json = ?,
+                loan_free_note = ?,
+                attachments_json = ?
+            WHERE id = ? AND loan_id = ?
+          `).run(
+            asset.tag_id,
+            asset.serial_no,
+            asset.model,
+            asset.brand,
+            itemSource,
+            asset.location || 'Mobile Computer ตู้ A1',
+            JSON.stringify(itemAcc),
+            itemNote,
+            JSON.stringify(itemAttachments),
+            mi.id,
+            loanId
+          );
+
+          db.prepare(`
+            UPDATE assets
+            SET status = 'On_Loan',
+                current_loan_id = ?,
+                source = ?,
+                accessories_json = ?,
+                updated_at = datetime('now', 'localtime')
+            WHERE tag_id = ?
+          `).run(loanId, itemSource, JSON.stringify(itemAcc), asset.tag_id);
+        }
+
+        const sigUrl = body.borrower_signature
+          ? saveBase64Image(body.borrower_signature, `sig-${loanId}`)
+          : loan.borrower_signature;
+        const dispatcherName = (body.dispatcher_name || '').trim();
+
+        db.prepare(`
+          UPDATE loans
+          SET status = 'Dispatched',
+              before_photos_json = ?,
+              borrower_signature = COALESCE(NULLIF(?, ''), borrower_signature),
+              dispatcher_name = COALESCE(NULLIF(?, ''), dispatcher_name)
+          WHERE id = ?
+        `).run(JSON.stringify(finalBefore), sigUrl, dispatcherName, loanId);
+
+        db.exec('COMMIT');
+        return sendJson(res, 200, getFullState());
+      } catch (err) {
+        db.exec('ROLLBACK');
+        return sendJson(res, 400, { error: err.message });
+      }
+    }
+
+    // Deliver Loan (บันทึกส่งมอบสินค้า: ผู้ส่ง, ผู้รับ, ถ่ายรูปส่งงาน, GPS, Timestamp)
+    if (pathname.match(/^\/api\/loans\/[^/]+\/deliver$/) && req.method === 'POST') {
+      const loanId = pathname.split('/')[3];
+      const loan = db.prepare('SELECT * FROM loans WHERE id = ?').get(loanId);
+      if (!loan) return sendJson(res, 404, { error: 'ไม่พบใบยืมนี้' });
+      if (loan.status !== 'Dispatched') {
+        return sendJson(res, 400, { error: 'ใบยืมต้องอยู่ในสถานะ "รอส่งมอบ" เท่านั้นจึงจะทำการส่งมอบได้' });
+      }
+
+      const body = await parseJsonBody(req);
+      const sender = String(body.sender || loan.borrower_name || '').trim();
+      const receiver = String(body.receiver || loan.customer_name || '').trim();
+      const gps = String(body.gps || '').trim();
+      const timestamp = String(body.timestamp || new Date().toISOString()).trim();
+      const note = String(body.note || '').trim();
+
+      const newDeliveryPhotos = (Array.isArray(body.photos) ? body.photos : [])
+        .map(p => saveBase64Image(p, `deliv-${loanId}`))
+        .filter(Boolean);
+      const existingPhotos = JSON.parse(loan.delivery_photos_json || '[]');
+      const finalPhotos = body.photos !== undefined ? newDeliveryPhotos : existingPhotos;
+
+      db.prepare(`
+        UPDATE loans
+        SET status = 'Delivered',
+            delivery_sender = ?,
+            delivery_receiver = ?,
+            delivery_photos_json = ?,
+            delivery_gps = ?,
+            delivery_timestamp = ?,
+            delivery_note = ?
+        WHERE id = ?
+      `).run(
+        sender,
+        receiver,
+        JSON.stringify(finalPhotos),
+        gps,
+        timestamp,
+        note,
+        loanId
+      );
+
+      return sendJson(res, 200, getFullState());
+    }
+
+    // Update existing Loan (Before Dispatch ONLY: model-based editing)
+    if (pathname.match(/^\/api\/loans\/[^/]+\/update$/) && req.method === 'POST') {
+      const loanId = pathname.split('/')[3];
+      const loan = db.prepare('SELECT * FROM loans WHERE id = ?').get(loanId);
+      if (!loan) return sendJson(res, 404, { error: 'ไม่พบใบยืมนี้' });
+
+      const body = await parseJsonBody(req);
+      const isEditableStage = loan.status === 'Requested' || loan.status === 'Dispatching';
+
+      // If already dispatched, only allow transitioning status from Dispatched -> Delivered
+      if (!isEditableStage) {
+        if (body.status === 'Delivered' && loan.status === 'Dispatched') {
+          db.prepare('UPDATE loans SET status = ? WHERE id = ?').run('Delivered', loanId);
+          return sendJson(res, 200, getFullState());
+        }
+        return sendJson(res, 400, { error: 'ใบยืมที่จัดของไปแล้ว ไม่สามารถแก้ไขข้อมูลได้' });
+      }
+
+      if (body.borrower_name !== undefined && !String(body.borrower_name).trim()) {
+        return sendJson(res, 400, { error: 'กรุณาระบุชื่อผู้ยืม' });
+      }
+      if (body.customer_company !== undefined && !String(body.customer_company).trim()) {
+        return sendJson(res, 400, { error: 'กรุณาระบุบริษัทลูกค้า' });
+      }
+      if (body.customer_name !== undefined && !String(body.customer_name).trim()) {
+        return sendJson(res, 400, { error: 'กรุณาระบุชื่อผู้ติดต่อ' });
+      }
+
+      const nextStatus = body.status || loan.status;
+      const newBeforePhotos = (Array.isArray(body.before_photos) ? body.before_photos : [])
+        .map(p => saveBase64Image(p, `out-${loanId}`))
+        .filter(Boolean);
+      const existingBefore = JSON.parse(loan.before_photos_json || '[]');
+      const finalBefore = body.before_photos !== undefined ? newBeforePhotos : existingBefore;
+      const sigUrl = body.borrower_signature
+        ? saveBase64Image(body.borrower_signature, `sig-${loanId}`)
+        : loan.borrower_signature;
+
+      db.exec('BEGIN TRANSACTION');
+      try {
+        db.prepare(`
+          UPDATE loans
+          SET status = ?,
+              customer_name = COALESCE(?, customer_name),
+              customer_company = COALESCE(?, customer_company),
+              customer_phone = COALESCE(?, customer_phone),
+              borrower_phone = COALESCE(?, borrower_phone),
+              borrower_name = COALESCE(?, borrower_name),
+              due_date = COALESCE(?, due_date),
+              before_photos_json = ?,
+              borrower_signature = ?
+          WHERE id = ?
+        `).run(
+          nextStatus,
+          body.customer_name !== undefined ? body.customer_name : null,
+          body.customer_company !== undefined ? body.customer_company : null,
+          body.customer_phone !== undefined ? body.customer_phone : null,
+          body.customer_phone !== undefined ? body.customer_phone : (body.borrower_phone !== undefined ? body.borrower_phone : null),
+          body.borrower_name !== undefined ? body.borrower_name : null,
+          body.due_date !== undefined ? body.due_date : null,
+          JSON.stringify(finalBefore),
+          sigUrl,
+          loanId
+        );
+
+        if (body.customer_company && body.customer_company.trim()) {
+          try {
+            db.prepare(`
+              INSERT INTO customers (name, source) VALUES (?, 'custom')
+              ON CONFLICT(name) DO UPDATE SET created_at = datetime('now', 'localtime')
+            `).run(body.customer_company.trim());
+          } catch (_) {}
+        }
+
+        if (Array.isArray(body.items)) {
+          const oldItems = db.prepare('SELECT tag_id FROM loan_items WHERE loan_id = ?').all(loanId);
+          for (const old of oldItems) {
+            if (old.tag_id) {
+              db.prepare(`UPDATE assets SET status = 'Available', current_loan_id = NULL WHERE tag_id = ?`).run(old.tag_id);
+            }
+          }
+          db.prepare('DELETE FROM loan_items WHERE loan_id = ?').run(loanId);
+
+          const insertItem = db.prepare(`
+            INSERT INTO loan_items (
+              loan_id, tag_id, model, brand, serial_no,
+              source_snapshot, location_snapshot, loan_accessories_json, loan_free_note, attachments_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+
+          let totalUnits = 0;
+          let unitsWithSn = 0;
+
+          for (const it of body.items) {
+            const modelName = String(it.model || '').trim();
+            const brandName = String(it.brand || '').trim();
+            if (!modelName) throw new Error('กรุณาเลือกรุ่นสินค้าให้ครบทุกแถว');
+            const qty = Math.max(1, parseInt(it.qty || 1, 10) || 1);
+            const itemAcc = Array.isArray(it.accessories) ? it.accessories : [];
+            const itemNote = String(it.free_note || '').trim();
+            const itemSource = it.source || 'Demo';
+            const itemSerials = Array.isArray(it.serials) ? it.serials.map(s => String(s || '').trim()).filter(Boolean) : [];
+            const itemAttachments = Array.isArray(it.attachments) ? it.attachments : [];
+
+            // ตรวจสอบ: "ถ้าจะมีการใส่ s/n ต้องใส่ให้ครบตามจำนวนที่กำหนด"
+            if (itemSerials.length > 0 && itemSerials.length !== qty) {
+              throw new Error(`รุ่น ${brandName} ${modelName} ระบุจำนวน ${qty} เครื่อง แต่ใส่ S/N มา ${itemSerials.length} เครื่อง (หากจะใส่ S/N ต้องใส่ให้ครบตามจำนวนที่กำหนด หรือเว้นว่างทั้งหมด)`);
+            }
+
+            totalUnits += qty;
+
+            for (let q = 0; q < qty; q++) {
+              const sn = itemSerials[q] || '';
+              let matchedTagId = '';
+              let matchedLocation = '';
+
+              if (sn) {
+                unitsWithSn++;
+                const asset = db.prepare(`
+                  SELECT * FROM assets 
+                  WHERE (serial_no = ? OR tag_id = ?) 
+                  AND status = 'Available'
+                `).get(sn, sn);
+
+                if (asset) {
+                  matchedTagId = asset.tag_id;
+                  matchedLocation = asset.location || '';
+                  db.prepare(`
+                    UPDATE assets 
+                    SET status = 'On_Loan', current_loan_id = ?, updated_at = datetime('now', 'localtime')
+                    WHERE tag_id = ?
+                  `).run(loanId, asset.tag_id);
+                }
+              }
+
+              insertItem.run(
+                loanId,
+                matchedTagId,
+                modelName,
+                brandName,
+                sn,
+                itemSource,
+                matchedLocation,
+                JSON.stringify(itemAcc),
+                itemNote,
+                JSON.stringify(itemAttachments)
+              );
+            }
+          }
+
+          // สถานะ: "รายการที่มี s/n ถือว่า complete จัดของเสร็จแล้วพร้อมส่ง"
+          if (totalUnits > 0 && unitsWithSn === totalUnits) {
+            db.prepare(`UPDATE loans SET status = 'Dispatched' WHERE id = ?`).run(loanId);
+          } else if (unitsWithSn > 0) {
+            db.prepare(`UPDATE loans SET status = 'Dispatching' WHERE id = ?`).run(loanId);
+          }
+        }
+
+        db.exec('COMMIT');
+        return sendJson(res, 200, getFullState());
+      } catch (err) {
+        db.exec('ROLLBACK');
+        return sendJson(res, 400, { error: err.message });
+      }
+    }
+
+    // Digital Signature Endpoint (Borrower, Dispatcher, QC Receiver)
+    if (pathname.match(/^\/api\/loans\/[^/]+\/signature$/) && req.method === 'POST') {
+      const loanId = pathname.split('/')[3];
+      const loan = db.prepare('SELECT * FROM loans WHERE id = ?').get(loanId);
+      if (!loan) return sendJson(res, 404, { error: 'ไม่พบใบยืมนี้' });
+
+      const body = await parseJsonBody(req);
+      const role = String(body.role || 'borrower').trim(); // 'borrower' | 'dispatcher' | 'receiver'
+      const isClear = Boolean(body.clear);
+
+      const isDelivered = ['Delivered', 'Partially_Returned', 'Returned'].includes(loan.status);
+      if (isDelivered && role !== 'receiver') {
+        return sendJson(res, 403, { error: 'ใบยืมนี้ส่งมอบแล้ว ไม่สามารถแก้ไขหรือลบลายเซ็นต์ผู้ยืมและผู้จ่ายเครื่องได้' });
+      }
+
+      let sigCol = 'borrower_signature';
+      let dateCol = 'borrower_signed_at';
+      if (role === 'dispatcher') {
+        sigCol = 'dispatcher_signature';
+        dateCol = 'dispatcher_signed_at';
+      } else if (role === 'receiver') {
+        sigCol = 'receiver_signature';
+        dateCol = 'receiver_signed_at';
+      }
+
+      if (isClear) {
+        db.prepare(`UPDATE loans SET ${sigCol} = '', ${dateCol} = '' WHERE id = ?`).run(loanId);
+      } else {
+        if (!body.signature) {
+          return sendJson(res, 400, { error: 'กรุณาแนบหรือวาดลายเซ็น' });
+        }
+        const sigUrl = saveBase64Image(body.signature, `sig-${role}-${loanId}`);
+        const nowStr = body.signed_at || new Date().toISOString();
+        db.prepare(`UPDATE loans SET ${sigCol} = ?, ${dateCol} = ? WHERE id = ?`).run(sigUrl, nowStr, loanId);
+      }
+
+      return sendJson(res, 200, getFullState());
+    }
+
+    // Update Customer Email for Loan
+    if (pathname.match(/^\/api\/loans\/[^/]+\/customer-email$/) && req.method === 'POST') {
+      const loanId = pathname.split('/')[3];
+      const loan = db.prepare('SELECT * FROM loans WHERE id = ?').get(loanId);
+      if (!loan) return sendJson(res, 404, { error: 'ไม่พบใบยืมนี้' });
+      const body = await parseJsonBody(req);
+      const email = String(body.email || '').trim();
+      db.prepare('UPDATE loans SET customer_email = ? WHERE id = ?').run(email, loanId);
+      return sendJson(res, 200, getFullState());
+    }
+
+    // Direct PDF Download of Loan Gate Pass
+    if (pathname.match(/^\/api\/loans\/[^/]+\/pdf$/) && req.method === 'GET') {
+      const loanId = pathname.split('/')[3];
+      const loan = db.prepare('SELECT * FROM loans WHERE id = ?').get(loanId);
+      if (!loan) return sendJson(res, 404, { error: 'ไม่พบใบยืมนี้' });
+
+      try {
+        const pdfBuffer = await generateLoanPdf(loanId, { serverPort: PORT });
+        res.writeHead(200, {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="${loanId}.pdf"`,
+          'Content-Length': pdfBuffer.length
+        });
+        return res.end(pdfBuffer);
+      } catch (err) {
+        return sendJson(res, 500, { error: `สร้างไฟล์ PDF ไม่สำเร็จ: ${err.message}` });
+      }
+    }
+
+    // Direct Email Dispatch with PDF Attachment (supports Resend, SendGrid, and Gmail SMTP)
+    if (pathname.match(/^\/api\/loans\/[^/]+\/send-email-direct$/) && req.method === 'POST') {
+      const loanId = pathname.split('/')[3];
+      const loan = db.prepare('SELECT * FROM loans WHERE id = ?').get(loanId);
+      if (!loan) return sendJson(res, 404, { error: 'ไม่พบใบยืมนี้' });
+
+      const settings = getCompanySettings();
+      const body = await parseJsonBody(req);
+      const to = String(body.to || '').trim();
+      const cc = String(body.cc || '').trim();
+      const subject = String(body.subject || `ใบยืมอุปกรณ์ / Gate Pass ${loanId}`).trim();
+      const bodyText = String(body.body || '').trim();
+
+      if (!to) {
+        return sendJson(res, 400, { error: 'กรุณากรอกอีเมลผู้รับ (To)' });
+      }
+
+      // Check if credentials are present
+      const hasApiKey = Boolean((settings.email_api_key || '').trim());
+      const hasSmtp = Boolean((settings.smtp_user || '').trim() && (settings.smtp_pass || '').trim());
+      if (!hasApiKey && !hasSmtp) {
+        return sendJson(res, 400, {
+          error: 'ยังไม่ได้ตั้งค่า Email API Key หรือ SMTP สำหรับส่งอีเมล กรุณากดปุ่ม "ข้อมูลบริษัท > ตั้งค่าการส่ง Email" เพื่อกรอก API Key (เช่น Resend หรือ SendGrid) ก่อนส่ง'
+        });
+      }
+
+      // 1. Generate PDF of loan document
+      let pdfBuffer;
+      try {
+        pdfBuffer = await generateLoanPdf(loanId, { serverPort: PORT });
+      } catch (pdfErr) {
+        return sendJson(res, 500, { error: `สร้างไฟล์ PDF ไม่สำเร็จ: ${pdfErr.message}` });
+      }
+
+      // 2. Dispatch via Email Service (Resend / SendGrid / SMTP)
+      try {
+        const mailRes = await dispatchEmail(settings, {
+          to,
+          cc,
+          subject,
+          bodyText,
+          attachments: [
+            {
+              filename: `${loanId}.pdf`,
+              contentType: 'application/pdf',
+              content: pdfBuffer
+            }
+          ]
+        });
+
+        // 3. Update customer_email on loan
+        try {
+          db.prepare('UPDATE loans SET customer_email = ? WHERE id = ?').run(to, loanId);
+        } catch (_) {}
+
+        const providerLabel = mailRes.provider === 'resend' ? 'Resend API' : mailRes.provider === 'sendgrid' ? 'SendGrid API' : 'Gmail SMTP';
+        return sendJson(res, 200, {
+          success: true,
+          provider: mailRes.provider,
+          message: `ส่งอีเมลผ่าน ${providerLabel} พร้อมแนบเอกสาร PDF (${loanId}.pdf) ให้ ${to} เรียบร้อยแล้ว`,
+          state: getFullState()
+        });
+      } catch (mailErr) {
+        return sendJson(res, 500, { error: `ส่งอีเมลไม่สำเร็จ: ${mailErr.message}` });
+      }
+    }
+
+    // Return & QC Inspection
+    if (pathname.match(/^\/api\/loans\/[^/]+\/return$/) && req.method === 'POST') {
+      const loanId = pathname.split('/')[3];
+      const loan = db.prepare('SELECT * FROM loans WHERE id = ?').get(loanId);
+      if (!loan) return sendJson(res, 404, { error: 'ไม่พบใบยืมนี้' });
+
+      const body = await parseJsonBody(req);
+      const returnItems = Array.isArray(body.items) ? body.items : [];
+      if (returnItems.length === 0) return sendJson(res, 400, { error: 'กรุณาเลือกรายการเครื่องที่รับคืน' });
+
+      const newAfterPhotos = (Array.isArray(body.after_photos) ? body.after_photos : [])
+        .map(p => saveBase64Image(p, `in-${loanId}`))
+        .filter(Boolean);
+      const existingAfterPhotos = JSON.parse(loan.after_photos_json || '[]');
+      const combinedAfterPhotos = [...existingAfterPhotos, ...newAfterPhotos];
+      const returnReceiver = String(body.return_receiver || '').trim();
+
+      db.exec('BEGIN TRANSACTION');
+      try {
+        for (const ri of returnItems) {
+          const loanItem = db.prepare('SELECT * FROM loan_items WHERE loan_id = ? AND tag_id = ?').get(loanId, ri.tag_id);
+          if (!loanItem) continue;
+
+          const returnedAcc = Array.isArray(ri.returned_accessories) ? ri.returned_accessories : [];
+          const missingAcc = Array.isArray(ri.missing_accessories) ? ri.missing_accessories : [];
+          const qcStatus = ri.qc_status === 'Fail' || missingAcc.length > 0 ? 'Fail' : 'Pass';
+          const qcNote = String(ri.qc_note || '').trim();
+          const returnedToLoc = qcStatus === 'Pass' && ri.returned_to_location ? 1 : 0;
+
+          db.prepare(`
+            UPDATE loan_items
+            SET returned = 1,
+                returned_at = datetime('now', 'localtime'),
+                returned_accessories_json = ?,
+                missing_accessories_json = ?,
+                qc_status = ?,
+                qc_note = ?,
+                returned_to_location = ?
+            WHERE id = ?
+          `).run(
+            JSON.stringify(returnedAcc),
+            JSON.stringify(missingAcc),
+            qcStatus,
+            qcNote,
+            returnedToLoc,
+            loanItem.id
+          );
+
+          if (qcStatus === 'Pass') {
+            db.prepare(`
+              UPDATE assets
+              SET status = 'Available',
+                  current_loan_id = NULL,
+                  issue_note = '',
+                  missing_tags_json = '[]',
+                  updated_at = datetime('now', 'localtime')
+              WHERE tag_id = ?
+            `).run(ri.tag_id);
+          } else {
+            const issueParts = [];
+            if (missingAcc.length > 0) issueParts.push(`ขาด: ${missingAcc.join(', ')}`);
+            if (qcNote) issueParts.push(qcNote);
+            const issueText = issueParts.join(' | ') || 'มีตำหนิ/อุปกรณ์ไม่ครบ';
+
+            db.prepare(`
+              UPDATE assets
+              SET status = 'Available',
+                  current_loan_id = NULL,
+                  issue_note = ?,
+                  missing_tags_json = ?,
+                  updated_at = datetime('now', 'localtime')
+              WHERE tag_id = ?
+            `).run(issueText, JSON.stringify(missingAcc), ri.tag_id);
+          }
+        }
+
+        // Check if all items in the loan are returned
+        const allLoanItems = db.prepare('SELECT * FROM loan_items WHERE loan_id = ?').all(loanId);
+        const allComplete = allLoanItems.every(i => i.returned === 1);
+        const nextLoanStatus = allComplete ? 'Returned' : 'Partially_Returned';
+
+        db.prepare(`
+          UPDATE loans
+          SET after_photos_json = ?,
+              return_receiver = COALESCE(NULLIF(?, ''), return_receiver),
+              status = ?,
+              return_date = CASE WHEN ? = 'Returned' THEN datetime('now', 'localtime') ELSE return_date END
+          WHERE id = ?
+        `).run(
+          JSON.stringify(combinedAfterPhotos),
+          returnReceiver,
+          nextLoanStatus,
+          nextLoanStatus,
+          loanId
+        );
+
+        if (body.customer_company && body.customer_company.trim()) {
+          try {
+            db.prepare(`
+              INSERT INTO customers (name, source) VALUES (?, 'custom')
+              ON CONFLICT(name) DO UPDATE SET created_at = datetime('now', 'localtime')
+            `).run(body.customer_company.trim());
+          } catch (_) {}
+        }
+
+        db.exec('COMMIT');
+        return sendJson(res, 200, getFullState());
+      } catch (err) {
+        db.exec('ROLLBACK');
+        return sendJson(res, 400, { error: err.message });
+      }
+    }
+
+    // ========================================================================
+    // ASSET MASTER DATABASE APIS
+    // ========================================================================
+    function getNextActTagId() {
+      const rows = db.prepare("SELECT tag_id FROM assets WHERE tag_id LIKE 'ACT-%'").all();
+      let maxNum = 0;
+      for (const r of rows) {
+        const match = r.tag_id.match(/^ACT-(\d+)$/i);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (num > maxNum) maxNum = num;
+        }
+      }
+      return `ACT-${String(maxNum + 1).padStart(3, '0')}`;
+    }
+
+    if (pathname === '/api/assets/next-tag' && req.method === 'GET') {
+      return sendJson(res, 200, { nextTagId: getNextActTagId() });
+    }
+
+    if (pathname === '/api/assets' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      let tagId = (body.tag_id || '').trim();
+      const model = (body.model || '').trim();
+      const serialNo = (body.serial_no || '').trim();
+      const brand = (body.brand || '').trim();
+      const category = (body.category || 'Mobile Computer').trim();
+      const source = (body.source || 'Demo').trim();
+      const location = (body.location || 'Main Stock (ตู้โชว์/คลังกลาง)').trim();
+      const freeNote = (body.free_note || '').trim();
+      let rawImages = [];
+      if (Array.isArray(body.images)) {
+        rawImages = body.images.filter(Boolean);
+      } else if (body.image_url) {
+        rawImages = [String(body.image_url).trim()];
+      }
+      const imageUrl = rawImages[0] || (body.image_url || '').trim();
+      const imagesJson = JSON.stringify(rawImages);
+      const accessories = Array.isArray(body.accessories) ? body.accessories : [];
+
+      if (!model) {
+        return sendJson(res, 400, { error: 'กรุณาระบุรุ่นสินค้า (Model)' });
+      }
+      if (!serialNo) {
+        return sendJson(res, 400, { error: 'กรุณาระบุ Serial Number (S/N)' });
+      }
+
+      if (!tagId) {
+        tagId = getNextActTagId();
+      }
+
+      // Check if tagId already exists
+      const existingTag = db.prepare('SELECT tag_id FROM assets WHERE tag_id = ?').get(tagId);
+      if (existingTag) {
+        return sendJson(res, 400, { error: `รหัสทรัพย์สิน "${tagId}" มีอยู่ในระบบแล้ว` });
+      }
+
+      // Check if serialNo already exists
+      const existingSn = db.prepare('SELECT tag_id, brand, model FROM assets WHERE LOWER(serial_no) = LOWER(?)').get(serialNo);
+      if (existingSn) {
+        return sendJson(res, 400, { error: `Serial Number "${serialNo}" มีอยู่ในระบบแล้ว (${existingSn.tag_id}: ${existingSn.brand} ${existingSn.model})` });
+      }
+
+      const fullName = brand ? `${brand} ${model}` : model;
+
+      db.prepare(`
+        INSERT INTO assets (
+          tag_id, name, model, brand, category, serial_no,
+          source, location, accessories_json, free_note, image_url, images_json, status, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Available', datetime('now', 'localtime'))
+      `).run(
+        tagId,
+        fullName,
+        model,
+        brand,
+        category,
+        serialNo,
+        source,
+        location,
+        JSON.stringify(accessories),
+        freeNote,
+        imageUrl,
+        imagesJson
+      );
+
+      return sendJson(res, 201, {
+        success: true,
+        createdTagId: tagId,
+        state: getFullState()
+      });
+    }
+
+    // Asset Loan History API
+    if (pathname.startsWith('/api/assets/') && pathname.endsWith('/history') && req.method === 'GET') {
+      const tagId = pathname.replace('/api/assets/', '').replace('/history', '');
+      const asset = db.prepare('SELECT * FROM assets WHERE tag_id = ?').get(tagId);
+      if (!asset) return sendJson(res, 404, { error: 'ไม่พบเครื่องนี้' });
+
+      const historyRows = db.prepare(`
+        SELECT 
+          li.id AS item_id,
+          li.tag_id,
+          li.serial_no,
+          li.returned,
+          li.returned_at,
+          li.loan_accessories_json,
+          li.loan_free_note,
+          l.id AS loan_id,
+          l.borrower_name,
+          l.borrower_phone,
+          l.customer_company,
+          l.customer_name,
+          l.purpose,
+          l.checkout_date,
+          l.due_date,
+          l.return_date,
+          l.status AS loan_status,
+          l.created_at
+        FROM loan_items li
+        JOIN loans l ON li.loan_id = l.id
+        WHERE li.tag_id = ? OR (li.serial_no = ? AND ? != '')
+        ORDER BY l.checkout_date DESC, l.created_at DESC
+      `).all(tagId, asset.serial_no || '', asset.serial_no || '');
+
+      const history = historyRows.map(r => ({
+        ...r,
+        returned: Boolean(r.returned),
+        loan_accessories: JSON.parse(r.loan_accessories_json || '[]')
+      }));
+
+      const dispositionLogs = db.prepare(`
+        SELECT * FROM asset_disposition_logs
+        WHERE tag_id = ?
+        ORDER BY action_date DESC, created_at DESC
+      `).all(tagId);
+
+      return sendJson(res, 200, {
+        tag_id: tagId,
+        serial_no: asset.serial_no,
+        total_loans: history.length,
+        history,
+        disposition_logs: dispositionLogs
+      });
+    }
+
+    // Dispose Asset from system (จำหน่ายเครื่องออกจากระบบ)
+    if (pathname.startsWith('/api/assets/') && pathname.endsWith('/dispose') && req.method === 'POST') {
+      const tagId = pathname.replace('/api/assets/', '').replace('/dispose', '');
+      const asset = db.prepare('SELECT * FROM assets WHERE tag_id = ?').get(tagId);
+      if (!asset) return sendJson(res, 404, { error: 'ไม่พบเครื่องนี้' });
+
+      if (asset.status === 'On_Loan') {
+        return sendJson(res, 400, { error: 'ไม่สามารถจำหน่ายได้เนื่องจากเครื่องกำลังถูกยืมอยู่ กรุณารับคืนก่อน' });
+      }
+
+      const body = await parseJsonBody(req);
+      const actionDate = (body.action_date || new Date().toISOString().split('T')[0]).trim();
+      const reason = (body.reason || 'จำหน่ายออก').trim();
+      const note = (body.note || '').trim();
+      const userName = (body.user_name || '').trim();
+
+      db.prepare(`
+        UPDATE assets
+        SET status = 'Disposed',
+            disposed_at = ?,
+            disposed_reason = ?,
+            disposed_note = ?,
+            disposed_by = ?,
+            updated_at = datetime('now', 'localtime')
+        WHERE tag_id = ?
+      `).run(actionDate, reason, note, userName, tagId);
+
+      db.prepare(`
+        INSERT INTO asset_disposition_logs (tag_id, action, action_date, reason, note, user_name)
+        VALUES (?, 'dispose', ?, ?, ?, ?)
+      `).run(tagId, actionDate, reason, note, userName);
+
+      return sendJson(res, 200, {
+        success: true,
+        message: 'บันทึกจำหน่ายเครื่องออกจากระบบเรียบร้อยแล้ว',
+        state: getFullState()
+      });
+    }
+
+    // Reactivate Asset back into system (นำเครื่องกลับเข้าคลัง / ใช้งานต่อ)
+    if (pathname.startsWith('/api/assets/') && pathname.endsWith('/reactivate') && req.method === 'POST') {
+      const tagId = pathname.replace('/api/assets/', '').replace('/reactivate', '');
+      const asset = db.prepare('SELECT * FROM assets WHERE tag_id = ?').get(tagId);
+      if (!asset) return sendJson(res, 404, { error: 'ไม่พบเครื่องนี้' });
+
+      const body = await parseJsonBody(req);
+      const actionDate = (body.action_date || new Date().toISOString().split('T')[0]).trim();
+      const location = (body.location || asset.location || 'คลังกลาง').trim();
+      const note = (body.note || 'นำเครื่องกลับมาใช้งานต่อ').trim();
+      const userName = (body.user_name || '').trim();
+
+      db.prepare(`
+        UPDATE assets
+        SET status = 'Available',
+            location = ?,
+            disposed_at = NULL,
+            disposed_reason = NULL,
+            disposed_note = NULL,
+            disposed_by = NULL,
+            updated_at = datetime('now', 'localtime')
+        WHERE tag_id = ?
+      `).run(location, tagId);
+
+      db.prepare(`
+        INSERT INTO asset_disposition_logs (tag_id, action, action_date, reason, note, user_name)
+        VALUES (?, 'reactivate', ?, 'นำกลับเข้าคลัง', ?, ?)
+      `).run(tagId, actionDate, note, userName);
+
+      return sendJson(res, 200, {
+        success: true,
+        message: 'นำเครื่องกลับเข้าคลังและเปิดใช้งานเรียบร้อยแล้ว',
+        state: getFullState()
+      });
+    }
+
+    // Update Asset inline in Master Database view
+    if (pathname.startsWith('/api/assets/') && req.method === 'PATCH') {
+      const tagId = pathname.replace('/api/assets/', '');
+      const asset = db.prepare('SELECT * FROM assets WHERE tag_id = ?').get(tagId);
+      if (!asset) return sendJson(res, 404, { error: 'ไม่พบเครื่องนี้' });
+
+      const body = await parseJsonBody(req);
+      let imagesVal = null;
+      let primaryImgVal = null;
+      if (Array.isArray(body.images)) {
+        imagesVal = JSON.stringify(body.images.filter(Boolean));
+        primaryImgVal = body.images[0] || '';
+      } else if (body.image_url !== undefined) {
+        primaryImgVal = String(body.image_url).trim();
+        imagesVal = primaryImgVal ? JSON.stringify([primaryImgVal]) : '[]';
+      }
+
+      db.prepare(`
+        UPDATE assets
+        SET source = COALESCE(?, source),
+            location = COALESCE(?, location),
+            free_note = COALESCE(?, free_note),
+            accessories_json = COALESCE(?, accessories_json),
+            image_url = CASE WHEN ? IS NOT NULL THEN ? ELSE image_url END,
+            images_json = CASE WHEN ? IS NOT NULL THEN ? ELSE images_json END,
+            updated_at = datetime('now', 'localtime')
+        WHERE tag_id = ?
+      `).run(
+        body.source !== undefined ? body.source : null,
+        body.location !== undefined ? body.location : null,
+        body.free_note !== undefined ? body.free_note : null,
+        body.accessories !== undefined ? JSON.stringify(body.accessories) : null,
+        primaryImgVal !== null ? 1 : null,
+        primaryImgVal,
+        imagesVal !== null ? 1 : null,
+        imagesVal,
+        tagId
+      );
+      return sendJson(res, 200, getFullState());
+    }
+
+    if (pathname.startsWith('/uploads/')) {
+      const safeName = path.basename(pathname);
+      const filePath = path.join(UPLOADS_DIR, safeName);
+      if (fs.existsSync(filePath)) {
+        const ext = path.extname(filePath).toLowerCase();
+        res.writeHead(200, { 'Content-Type': MIME_TYPES[ext] || 'application/octet-stream' });
+        return fs.createReadStream(filePath).pipe(res);
+      }
+      res.writeHead(404);
+      return res.end('Not found');
+    }
+
+    let staticPath = pathname === '/' ? '/index.html' : pathname;
+    const fullPath = path.join(PUBLIC_DIR, path.normalize(staticPath).replace(/^(\.\.(\/|\\|$))+/, ''));
+    if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
+      const ext = path.extname(fullPath).toLowerCase();
+      res.writeHead(200, {
+        'Content-Type': MIME_TYPES[ext] || 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      });
+      return fs.createReadStream(fullPath).pipe(res);
+    }
+
+    res.writeHead(404);
+    res.end('Not Found');
+  } catch (err) {
+    console.error('Server error:', err);
+    sendJson(res, 500, { error: err.message || 'Internal Server Error' });
+  }
+});
+
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`activeASSET v2 Kanban running at http://0.0.0.0:${PORT}`);
+});
