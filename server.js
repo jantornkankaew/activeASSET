@@ -104,6 +104,40 @@ try {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_customers_name_en ON customers(name_en)`);
 } catch (e) {}
 
+// Customer enrichment columns
+try { db.exec(`ALTER TABLE customers ADD COLUMN branch TEXT DEFAULT 'สำนักงานใหญ่'`); } catch (e) {}
+try { db.exec(`ALTER TABLE customers ADD COLUMN address TEXT DEFAULT ''`); } catch (e) {}
+try { db.exec(`ALTER TABLE customers ADD COLUMN contact_name TEXT DEFAULT ''`); } catch (e) {}
+try { db.exec(`ALTER TABLE customers ADD COLUMN phone TEXT DEFAULT ''`); } catch (e) {}
+try { db.exec(`ALTER TABLE customers ADD COLUMN email TEXT DEFAULT ''`); } catch (e) {}
+
+// Product Catalog & Master Options Tables
+db.exec(`
+  CREATE TABLE IF NOT EXISTS product_catalogs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    brand TEXT NOT NULL,
+    model TEXT NOT NULL UNIQUE,
+    category TEXT NOT NULL,
+    default_specs TEXT DEFAULT '',
+    default_accessories TEXT DEFAULT '[]',
+    created_at TEXT DEFAULT (datetime('now', 'localtime'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_catalogs_model ON product_catalogs(model);
+  CREATE INDEX IF NOT EXISTS idx_catalogs_brand ON product_catalogs(brand);
+  CREATE INDEX IF NOT EXISTS idx_catalogs_category ON product_catalogs(category);
+
+  CREATE TABLE IF NOT EXISTS master_options (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL, -- 'category' | 'brand' | 'location' | 'accessory'
+    name TEXT NOT NULL,
+    code TEXT DEFAULT '',
+    sort_order INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now', 'localtime')),
+    UNIQUE(type, name)
+  );
+  CREATE INDEX IF NOT EXISTS idx_master_options_type ON master_options(type);
+`);
+
 try {
   db.exec(`ALTER TABLE assets ADD COLUMN image_url TEXT DEFAULT ''`);
 } catch (e) {
@@ -925,6 +959,93 @@ function seedFromV1IfNeeded() {
 
 seedFromV1IfNeeded();
 
+function seedMasterDataIfNeeded() {
+  try {
+    // 1. Seed product_catalogs if empty
+    const catCount = db.prepare('SELECT COUNT(*) as c FROM product_catalogs').get()?.c || 0;
+    if (catCount === 0) {
+      const insertCat = db.prepare(`
+        INSERT OR IGNORE INTO product_catalogs (brand, model, category, default_specs, default_accessories)
+        VALUES (?, ?, ?, ?, ?)
+      `);
+
+      const v1DbFile = path.join(__dirname, 'v1_reference.db');
+      if (fs.existsSync(v1DbFile)) {
+        try {
+          const v1 = new DatabaseSync(v1DbFile, { readOnly: true });
+          const v1Cats = v1.prepare('SELECT * FROM ProductCatalog').all();
+          for (const c of v1Cats) {
+            insertCat.run(c.brand || 'Unknow', c.model, c.category || 'Mobile Computer', c.defaultSpecs || '', c.defaultAccessories || '[]');
+          }
+          v1.close();
+        } catch (_) {}
+      }
+
+      // Also ensure all distinct models currently in assets are in product_catalogs
+      const assetModels = db.prepare("SELECT DISTINCT brand, model, category FROM assets WHERE model != ''").all();
+      for (const m of assetModels) {
+        insertCat.run(m.brand || 'Unknow', m.model, m.category || 'Mobile Computer', '', '[]');
+      }
+    }
+
+    // 2. Seed master_options if empty
+    const optCount = db.prepare('SELECT COUNT(*) as c FROM master_options').get()?.c || 0;
+    if (optCount === 0) {
+      const insertOpt = db.prepare(`
+        INSERT OR IGNORE INTO master_options (type, name, sort_order)
+        VALUES (?, ?, ?)
+      `);
+
+      // Categories
+      const categories = db.prepare("SELECT DISTINCT category FROM assets WHERE category != ''").all();
+      categories.forEach((c, idx) => insertOpt.run('category', c.category, idx));
+
+      // Brands
+      const brands = db.prepare("SELECT DISTINCT brand FROM assets WHERE brand != ''").all();
+      brands.forEach((b, idx) => insertOpt.run('brand', b.brand, idx));
+
+      // Locations
+      const locations = db.prepare("SELECT DISTINCT location FROM assets WHERE location != ''").all();
+      locations.forEach((l, idx) => insertOpt.run('location', l.location, idx));
+
+      // Preset Accessories
+      const PRESET_ACCS = ['สาย USB', 'Power Adapter', 'Power Cord', 'แบตเตอรี่', 'Cradle / แท่นชาร์จ', 'ขาตั้ง Stand', 'สายสะพาย', 'เคสกันกระแทก', 'ปากกา Stylus'];
+      PRESET_ACCS.forEach((a, idx) => insertOpt.run('accessory', a, idx));
+    }
+
+    // 3. Enrich customer contact info from v1 if present
+    const v1DbFile = path.join(__dirname, 'v1_reference.db');
+    if (fs.existsSync(v1DbFile)) {
+      try {
+        const v1 = new DatabaseSync(v1DbFile, { readOnly: true });
+        const v1Custs = v1.prepare('SELECT * FROM Customer').all();
+        for (const c of v1Custs) {
+          const custName = c.company || c.name;
+          const existing = db.prepare('SELECT * FROM customers WHERE name = ?').get(custName);
+          if (existing) {
+            db.prepare(`
+              UPDATE customers 
+              SET contact_name = COALESCE(NULLIF(contact_name, ''), ?),
+                  phone = COALESCE(NULLIF(phone, ''), '')
+              WHERE id = ?
+            `).run(c.name || '', c.phone || '', existing.id);
+          } else {
+            db.prepare(`
+              INSERT OR IGNORE INTO customers (name, contact_name, phone, source)
+              VALUES (?, ?, ?, 'custom')
+            `).run(custName, c.name || '', c.phone || '');
+          }
+        }
+        v1.close();
+      } catch (_) {}
+    }
+  } catch (err) {
+    console.error('seedMasterDataIfNeeded error:', err);
+  }
+}
+
+seedMasterDataIfNeeded();
+
 function saveBase64Image(dataUrl, prefix = 'photo') {
   if (!dataUrl || typeof dataUrl !== 'string') return '';
   if (dataUrl.startsWith('/uploads/')) return dataUrl;
@@ -1407,6 +1528,370 @@ const server = http.createServer(async (req, res) => {
         message: `ลบผู้ใช้งาน ${user.name} (${email}) ออกจากระบบเรียบร้อยแล้ว`,
         users: db.prepare('SELECT * FROM users ORDER BY name ASC').all().map(u => getUserWithRole(u.email))
       });
+    }
+
+    // =============================================================
+    // MASTER DATA (ข้อมูลหลัก) APIs
+    // =============================================================
+
+    // 1. Master Data Summary Counts
+    if (pathname === '/api/master/summary' && req.method === 'GET') {
+      const custCount = db.prepare('SELECT COUNT(*) as c FROM customers').get()?.c || 0;
+      const catCount = db.prepare('SELECT COUNT(*) as c FROM product_catalogs').get()?.c || 0;
+      const catOptCount = db.prepare("SELECT COUNT(*) as c FROM master_options WHERE type = 'category'").get()?.c || 0;
+      const brandOptCount = db.prepare("SELECT COUNT(*) as c FROM master_options WHERE type = 'brand'").get()?.c || 0;
+      const locOptCount = db.prepare("SELECT COUNT(*) as c FROM master_options WHERE type = 'location'").get()?.c || 0;
+      const accOptCount = db.prepare("SELECT COUNT(*) as c FROM master_options WHERE type = 'accessory'").get()?.c || 0;
+
+      return sendJson(res, 200, {
+        success: true,
+        counts: {
+          customers: custCount,
+          catalogs: catCount,
+          categories: catOptCount,
+          brands: brandOptCount,
+          locations: locOptCount,
+          accessories: accOptCount
+        }
+      });
+    }
+
+    // 2. Customers List & Search (Paginated)
+    if (pathname === '/api/master/customers' && req.method === 'GET') {
+      const q = (urlObj.searchParams.get('q') || '').trim();
+      const page = Math.max(1, parseInt(urlObj.searchParams.get('page') || '1', 10));
+      const limit = Math.min(100, Math.max(5, parseInt(urlObj.searchParams.get('limit') || '25', 10)));
+      const offset = (page - 1) * limit;
+
+      let whereSql = '';
+      let countSql = 'SELECT COUNT(*) as c FROM customers';
+      let dataSql = 'SELECT * FROM customers';
+      const params = [];
+
+      if (q) {
+        const like = `%${q}%`;
+        whereSql = ' WHERE name LIKE ? OR name_en LIKE ? OR tax_id LIKE ? OR contact_name LIKE ? OR phone LIKE ? OR email LIKE ?';
+        params.push(like, like, like, like, like, like);
+      }
+
+      const total = db.prepare(countSql + whereSql).get(...params)?.c || 0;
+      const orderSql = ` ORDER BY CASE WHEN source = 'custom' THEN 0 WHEN source = 'history' THEN 1 ELSE 2 END, id DESC LIMIT ? OFFSET ?`;
+      const customers = db.prepare(dataSql + whereSql + orderSql).all(...params, limit, offset);
+
+      return sendJson(res, 200, {
+        success: true,
+        customers,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      });
+    }
+
+    // 3. Create Customer
+    if (pathname === '/api/master/customers' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      const name = (body.name || '').trim();
+      if (!name) return sendJson(res, 400, { error: 'กรุณาระบุชื่อลูกค้าหรือชื่อบริษัท' });
+
+      const name_en = (body.name_en || '').trim();
+      const tax_id = (body.tax_id || '').trim();
+      const branch = (body.branch || 'สำนักงานใหญ่').trim();
+      const address = (body.address || '').trim();
+      const contact_name = (body.contact_name || '').trim();
+      const phone = (body.phone || '').trim();
+      const email = (body.email || '').trim().toLowerCase();
+
+      const existing = db.prepare('SELECT id FROM customers WHERE name = ?').get(name);
+      if (existing) {
+        return sendJson(res, 400, { error: `มีลูกค้ารายชื่อ "${name}" อยู่ในระบบแล้ว` });
+      }
+
+      const info = db.prepare(`
+        INSERT INTO customers (name, name_en, tax_id, branch, address, contact_name, phone, email, source)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'custom')
+      `).run(name, name_en, tax_id, branch, address, contact_name, phone, email);
+
+      const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(info.lastInsertRowid);
+      return sendJson(res, 201, { success: true, customer, message: 'เพิ่มข้อมูลลูกค้าเรียบร้อยแล้ว' });
+    }
+
+    // 4. Update Customer
+    if (pathname.match(/^\/api\/master\/customers\/\d+$/) && req.method === 'PUT') {
+      const id = parseInt(pathname.split('/')[4], 10);
+      const existing = db.prepare('SELECT * FROM customers WHERE id = ?').get(id);
+      if (!existing) return sendJson(res, 404, { error: 'ไม่พบข้อมูลลูกค้ารายนี้' });
+
+      const body = await parseJsonBody(req);
+      const name = (body.name || '').trim() || existing.name;
+      const name_en = body.name_en !== undefined ? String(body.name_en).trim() : existing.name_en;
+      const tax_id = body.tax_id !== undefined ? String(body.tax_id).trim() : existing.tax_id;
+      const branch = body.branch !== undefined ? String(body.branch).trim() : existing.branch;
+      const address = body.address !== undefined ? String(body.address).trim() : existing.address;
+      const contact_name = body.contact_name !== undefined ? String(body.contact_name).trim() : existing.contact_name;
+      const phone = body.phone !== undefined ? String(body.phone).trim() : existing.phone;
+      const email = body.email !== undefined ? String(body.email).trim().toLowerCase() : existing.email;
+
+      db.prepare(`
+        UPDATE customers
+        SET name = ?, name_en = ?, tax_id = ?, branch = ?, address = ?, contact_name = ?, phone = ?, email = ?
+        WHERE id = ?
+      `).run(name, name_en, tax_id, branch, address, contact_name, phone, email, id);
+
+      const updated = db.prepare('SELECT * FROM customers WHERE id = ?').get(id);
+      return sendJson(res, 200, { success: true, customer: updated, message: 'บันทึกข้อมูลลูกค้าเรียบร้อยแล้ว' });
+    }
+
+    // 5. Delete Customer
+    if (pathname.match(/^\/api\/master\/customers\/\d+$/) && req.method === 'DELETE') {
+      const id = parseInt(pathname.split('/')[4], 10);
+      const existing = db.prepare('SELECT * FROM customers WHERE id = ?').get(id);
+      if (!existing) return sendJson(res, 404, { error: 'ไม่พบข้อมูลลูกค้ารายนี้' });
+
+      // Check if used in any loans
+      const loanCount = db.prepare('SELECT COUNT(*) as c FROM loans WHERE customer_name = ? OR customer_company = ?').get(existing.name, existing.name)?.c || 0;
+      if (loanCount > 0) {
+        return sendJson(res, 400, { error: `ไม่สามารถลบลูกค้ารายนี้ได้ เนื่องจากมีประวัติการยืมในระบบ (พบ ${loanCount} ใบยืม)` });
+      }
+
+      db.prepare('DELETE FROM customers WHERE id = ?').run(id);
+      return sendJson(res, 200, { success: true, message: `ลบข้อมูลลูกค้า "${existing.name}" เรียบร้อยแล้ว` });
+    }
+
+    // 6. Product Catalogs List
+    if (pathname === '/api/master/catalogs' && req.method === 'GET') {
+      const q = (urlObj.searchParams.get('q') || '').trim().toLowerCase();
+      const category = (urlObj.searchParams.get('category') || '').trim();
+      const brand = (urlObj.searchParams.get('brand') || '').trim();
+
+      const conds = [];
+      const params = [];
+      if (q) {
+        conds.push('(LOWER(c.model) LIKE ? OR LOWER(c.brand) LIKE ? OR LOWER(c.category) LIKE ? OR LOWER(c.default_specs) LIKE ?)');
+        const like = `%${q}%`;
+        params.push(like, like, like, like);
+      }
+      if (category) {
+        conds.push('c.category = ?');
+        params.push(category);
+      }
+      if (brand) {
+        conds.push('c.brand = ?');
+        params.push(brand);
+      }
+
+      const whereSql = conds.length > 0 ? ` WHERE ${conds.join(' AND ')}` : '';
+      const sql = `
+        SELECT c.*, 
+               (SELECT COUNT(*) FROM assets a WHERE a.model = c.model AND a.status != 'Disposed') as asset_count
+        FROM product_catalogs c
+        ${whereSql}
+        ORDER BY c.brand ASC, c.model ASC
+      `;
+      const catalogs = db.prepare(sql).all(...params);
+
+      return sendJson(res, 200, { success: true, catalogs });
+    }
+
+    // 7. Create Product Catalog
+    if (pathname === '/api/master/catalogs' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      const model = (body.model || '').trim();
+      const brand = (body.brand || '').trim();
+      const category = (body.category || 'Mobile Computer').trim();
+      const default_specs = (body.default_specs || '').trim();
+      let default_accessories = '[]';
+      if (Array.isArray(body.default_accessories)) {
+        default_accessories = JSON.stringify(body.default_accessories);
+      } else if (typeof body.default_accessories === 'string') {
+        default_accessories = body.default_accessories.trim() || '[]';
+      }
+
+      if (!model) return sendJson(res, 400, { error: 'กรุณาระบุชื่อรุ่นสินค้า (Model)' });
+      if (!brand) return sendJson(res, 400, { error: 'กรุณาระบุยี่ห้อสินค้า (Brand)' });
+
+      const existing = db.prepare('SELECT id FROM product_catalogs WHERE model = ?').get(model);
+      if (existing) {
+        return sendJson(res, 400, { error: `มีรุ่นสินค้า "${model}" อยู่ในแคตตาล็อกแล้ว` });
+      }
+
+      const info = db.prepare(`
+        INSERT INTO product_catalogs (brand, model, category, default_specs, default_accessories)
+        VALUES (?, ?, ?, ?, ?)
+      `).run(brand, model, category, default_specs, default_accessories);
+
+      // Auto ensure brand and category exist in master_options
+      db.prepare("INSERT OR IGNORE INTO master_options (type, name) VALUES ('brand', ?)").run(brand);
+      db.prepare("INSERT OR IGNORE INTO master_options (type, name) VALUES ('category', ?)").run(category);
+
+      const catalog = db.prepare('SELECT * FROM product_catalogs WHERE id = ?').get(info.lastInsertRowid);
+      return sendJson(res, 201, { success: true, catalog, message: 'เพิ่มรุ่นสินค้าใหม่เข้าแคตตาล็อกเรียบร้อยแล้ว' });
+    }
+
+    // 8. Update Product Catalog
+    if (pathname.match(/^\/api\/master\/catalogs\/\d+$/) && req.method === 'PUT') {
+      const id = parseInt(pathname.split('/')[4], 10);
+      const existing = db.prepare('SELECT * FROM product_catalogs WHERE id = ?').get(id);
+      if (!existing) return sendJson(res, 404, { error: 'ไม่พบแคตตาล็อกรุ่นนี้' });
+
+      const body = await parseJsonBody(req);
+      const model = (body.model || '').trim() || existing.model;
+      const brand = (body.brand || '').trim() || existing.brand;
+      const category = (body.category || '').trim() || existing.category;
+      const default_specs = body.default_specs !== undefined ? String(body.default_specs).trim() : existing.default_specs;
+      let default_accessories = existing.default_accessories;
+      if (Array.isArray(body.default_accessories)) {
+        default_accessories = JSON.stringify(body.default_accessories);
+      } else if (typeof body.default_accessories === 'string') {
+        default_accessories = body.default_accessories.trim() || '[]';
+      }
+
+      // Check unique model
+      if (model !== existing.model) {
+        const dup = db.prepare('SELECT id FROM product_catalogs WHERE model = ? AND id != ?').get(model, id);
+        if (dup) return sendJson(res, 400, { error: `ชื่อรุ่น "${model}" ซ้ำกับรายการอื่นในแคตตาล็อก` });
+      }
+
+      db.prepare(`
+        UPDATE product_catalogs
+        SET brand = ?, model = ?, category = ?, default_specs = ?, default_accessories = ?
+        WHERE id = ?
+      `).run(brand, model, category, default_specs, default_accessories, id);
+
+      // If model name changed, cascade update to assets if needed
+      if (model !== existing.model) {
+        try {
+          db.prepare('UPDATE assets SET model = ?, brand = ?, category = ? WHERE model = ?').run(model, brand, category, existing.model);
+        } catch (_) {}
+      }
+
+      const updated = db.prepare('SELECT * FROM product_catalogs WHERE id = ?').get(id);
+      return sendJson(res, 200, { success: true, catalog: updated, message: 'บันทึกข้อมูลแคตตาล็อกเรียบร้อยแล้ว' });
+    }
+
+    // 9. Delete Product Catalog
+    if (pathname.match(/^\/api\/master\/catalogs\/\d+$/) && req.method === 'DELETE') {
+      const id = parseInt(pathname.split('/')[4], 10);
+      const existing = db.prepare('SELECT * FROM product_catalogs WHERE id = ?').get(id);
+      if (!existing) return sendJson(res, 404, { error: 'ไม่พบแคตตาล็อกรุ่นนี้' });
+
+      const assetCount = db.prepare('SELECT COUNT(*) as c FROM assets WHERE model = ?').get(existing.model)?.c || 0;
+      if (assetCount > 0) {
+        return sendJson(res, 400, { error: `ไม่สามารถลบรุ่นนี้ได้ เนื่องจากมีเครื่องในคลังที่ใช้รุ่นนี้อยู่ (${assetCount} เครื่อง)` });
+      }
+
+      db.prepare('DELETE FROM product_catalogs WHERE id = ?').run(id);
+      return sendJson(res, 200, { success: true, message: `ลบรุ่น "${existing.model}" ออกจากแคตตาล็อกเรียบร้อยแล้ว` });
+    }
+
+    // 10. Master Options (Categories, Brands, Locations, Accessories)
+    if (pathname === '/api/master/options' && req.method === 'GET') {
+      const type = (urlObj.searchParams.get('type') || '').trim();
+      let sql = 'SELECT * FROM master_options';
+      const params = [];
+      if (type) {
+        sql += ' WHERE type = ?';
+        params.push(type);
+      }
+      sql += ' ORDER BY type ASC, sort_order ASC, name ASC';
+      const options = db.prepare(sql).all(...params);
+
+      // Add asset count for each option
+      const enriched = options.map(opt => {
+        let count = 0;
+        if (opt.type === 'category') {
+          count = db.prepare("SELECT COUNT(*) as c FROM assets WHERE category = ? AND status != 'Disposed'").get(opt.name)?.c || 0;
+        } else if (opt.type === 'brand') {
+          count = db.prepare("SELECT COUNT(*) as c FROM assets WHERE brand = ? AND status != 'Disposed'").get(opt.name)?.c || 0;
+        } else if (opt.type === 'location') {
+          count = db.prepare("SELECT COUNT(*) as c FROM assets WHERE location = ? AND status != 'Disposed'").get(opt.name)?.c || 0;
+        }
+        return { ...opt, asset_count: count };
+      });
+
+      return sendJson(res, 200, { success: true, options: enriched });
+    }
+
+    // 11. Create Master Option
+    if (pathname === '/api/master/options' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      const type = (body.type || '').trim();
+      const name = (body.name || '').trim();
+      const code = (body.code || '').trim();
+
+      if (!type || !name) return sendJson(res, 400, { error: 'กรุณาระบุประเภท (type) และชื่อรายการ (name)' });
+
+      const existing = db.prepare('SELECT id FROM master_options WHERE type = ? AND name = ?').get(type, name);
+      if (existing) {
+        return sendJson(res, 400, { error: `มีรายการ "${name}" อยู่ในประเภทนี้แล้ว` });
+      }
+
+      const maxSort = db.prepare('SELECT MAX(sort_order) as m FROM master_options WHERE type = ?').get(type)?.m || 0;
+      const info = db.prepare('INSERT INTO master_options (type, name, code, sort_order) VALUES (?, ?, ?, ?)').run(type, name, code, maxSort + 1);
+
+      const option = db.prepare('SELECT * FROM master_options WHERE id = ?').get(info.lastInsertRowid);
+      return sendJson(res, 201, { success: true, option, message: `เพิ่มรายการ ${name} เรียบร้อยแล้ว` });
+    }
+
+    // 12. Update Master Option
+    if (pathname.match(/^\/api\/master\/options\/\d+$/) && req.method === 'PUT') {
+      const id = parseInt(pathname.split('/')[4], 10);
+      const existing = db.prepare('SELECT * FROM master_options WHERE id = ?').get(id);
+      if (!existing) return sendJson(res, 404, { error: 'ไม่พบรายการนี้' });
+
+      const body = await parseJsonBody(req);
+      const name = (body.name || '').trim() || existing.name;
+      const code = body.code !== undefined ? String(body.code).trim() : existing.code;
+
+      if (name !== existing.name) {
+        const dup = db.prepare('SELECT id FROM master_options WHERE type = ? AND name = ? AND id != ?').get(existing.type, name, id);
+        if (dup) return sendJson(res, 400, { error: `มีรายการชื่อ "${name}" ในประเภทนี้อยู่แล้ว` });
+      }
+
+      db.prepare('UPDATE master_options SET name = ?, code = ? WHERE id = ?').run(name, code, id);
+
+      // Cascade update to assets if category, brand, or location was renamed
+      if (name !== existing.name) {
+        try {
+          if (existing.type === 'category') {
+            db.prepare('UPDATE assets SET category = ? WHERE category = ?').run(name, existing.name);
+            db.prepare('UPDATE product_catalogs SET category = ? WHERE category = ?').run(name, existing.name);
+          } else if (existing.type === 'brand') {
+            db.prepare('UPDATE assets SET brand = ? WHERE brand = ?').run(name, existing.name);
+            db.prepare('UPDATE product_catalogs SET brand = ? WHERE brand = ?').run(name, existing.name);
+          } else if (existing.type === 'location') {
+            db.prepare('UPDATE assets SET location = ? WHERE location = ?').run(name, existing.name);
+          }
+        } catch (_) {}
+      }
+
+      const updated = db.prepare('SELECT * FROM master_options WHERE id = ?').get(id);
+      return sendJson(res, 200, { success: true, option: updated, message: 'บันทึกเรียบร้อยแล้ว' });
+    }
+
+    // 13. Delete Master Option
+    if (pathname.match(/^\/api\/master\/options\/\d+$/) && req.method === 'DELETE') {
+      const id = parseInt(pathname.split('/')[4], 10);
+      const existing = db.prepare('SELECT * FROM master_options WHERE id = ?').get(id);
+      if (!existing) return sendJson(res, 404, { error: 'ไม่พบรายการนี้' });
+
+      // Check if used in assets
+      let count = 0;
+      if (existing.type === 'category') {
+        count = db.prepare('SELECT COUNT(*) as c FROM assets WHERE category = ?').get(existing.name)?.c || 0;
+      } else if (existing.type === 'brand') {
+        count = db.prepare('SELECT COUNT(*) as c FROM assets WHERE brand = ?').get(existing.name)?.c || 0;
+      } else if (existing.type === 'location') {
+        count = db.prepare('SELECT COUNT(*) as c FROM assets WHERE location = ?').get(existing.name)?.c || 0;
+      }
+
+      if (count > 0) {
+        const typeLabel = existing.type === 'category' ? 'หมวดหมู่นี้' : existing.type === 'brand' ? 'ยี่ห้อนี้' : 'สถานที่เก็บนี้';
+        return sendJson(res, 400, { error: `ไม่สามารถลบได้ เนื่องจากมีเครื่องในคลังที่ใช้${typeLabel}อยู่ (${count} เครื่อง)` });
+      }
+
+      db.prepare('DELETE FROM master_options WHERE id = ?').run(id);
+      return sendJson(res, 200, { success: true, message: `ลบรายการ "${existing.name}" เรียบร้อยแล้ว` });
     }
 
     // Login with Google Workspace / Corporate Email

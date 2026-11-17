@@ -7168,15 +7168,19 @@ function setupCompanySettingsModal() {
     const panelAuth = document.getElementById('tabPanelCompanyAuth');
     const panelRoles = document.getElementById('tabPanelCompanyRoles');
     const panelUsers = document.getElementById('tabPanelCompanyUsers');
+    const panelMaster = document.getElementById('tabPanelCompanyMaster');
 
     if (panelInfo) panelInfo.classList.toggle('hidden', tabKey !== 'info');
     if (panelEmail) panelEmail.classList.toggle('hidden', tabKey !== 'email');
     if (panelAuth) panelAuth.classList.toggle('hidden', tabKey !== 'auth');
     if (panelRoles) panelRoles.classList.toggle('hidden', tabKey !== 'roles');
     if (panelUsers) panelUsers.classList.toggle('hidden', tabKey !== 'users');
+    if (panelMaster) panelMaster.classList.toggle('hidden', tabKey !== 'master');
 
     if (tabKey === 'roles' || tabKey === 'users') {
       loadRolesAndUsersUI();
+    } else if (tabKey === 'master') {
+      if (typeof loadMasterDataUI === 'function') loadMasterDataUI();
     }
   }
 
@@ -8625,6 +8629,832 @@ ${[phone, website].filter(Boolean).join(' • ')}
 
 ขอแสดงความนับถือ,
 ${companyName}`;
+}
+
+// ==========================================================================
+// MASTER DATA (ข้อมูลหลัก) FRONTEND LOGIC
+// ==========================================================================
+let currentMasterSubTab = 'customers';
+let masterCustomerPage = 1;
+let masterCustomerQuery = '';
+let masterCatalogQuery = '';
+
+window.loadMasterDataUI = async function() {
+  await updateMasterBadgeCounts();
+  switchMasterSubTab(currentMasterSubTab);
+};
+
+async function updateMasterBadgeCounts() {
+  try {
+    const res = await fetch('/api/master/summary');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.counts) {
+      const c = data.counts;
+      const bCust = document.getElementById('badgeMasterCustCount');
+      const bCat = document.getElementById('badgeMasterCatCount');
+      const bCategory = document.getElementById('badgeMasterCategoryCount');
+      const bBrand = document.getElementById('badgeMasterBrandCount');
+      const bLoc = document.getElementById('badgeMasterLocationCount');
+      const bAcc = document.getElementById('badgeMasterAccCount');
+
+      if (bCust) bCust.textContent = c.customers.toLocaleString();
+      if (bCat) bCat.textContent = c.catalogs.toLocaleString();
+      if (bCategory) bCategory.textContent = c.categories.toLocaleString();
+      if (bBrand) bBrand.textContent = c.brands.toLocaleString();
+      if (bLoc) bLoc.textContent = c.locations.toLocaleString();
+      if (bAcc) bAcc.textContent = c.accessories.toLocaleString();
+    }
+  } catch (_) {}
+}
+
+function switchMasterSubTab(subKey) {
+  currentMasterSubTab = subKey;
+  const tabs = document.querySelectorAll('.master-sub-tab');
+  tabs.forEach(tab => {
+    tab.classList.toggle('is-active', tab.dataset.masterSub === subKey);
+  });
+
+  const contentArea = document.getElementById('masterDataContentArea');
+  if (!contentArea) return;
+
+  if (subKey === 'customers') {
+    renderMasterCustomersTab(contentArea);
+  } else if (subKey === 'catalogs') {
+    renderMasterCatalogsTab(contentArea);
+  } else if (subKey === 'categories') {
+    renderMasterOptionsTab(contentArea, 'category');
+  } else if (subKey === 'brands') {
+    renderMasterOptionsTab(contentArea, 'brand');
+  } else if (subKey === 'locations') {
+    renderMasterOptionsTab(contentArea, 'location');
+  } else if (subKey === 'accessories') {
+    renderMasterOptionsTab(contentArea, 'accessory');
+  }
+}
+
+// --------------------------------------------------------------------------
+// 1. Customers Master Tab
+// --------------------------------------------------------------------------
+async function renderMasterCustomersTab(container) {
+  container.innerHTML = `
+    <div class="master-toolbar">
+      <div class="master-toolbar-title-group">
+        <span class="master-toolbar-title">🏢 ข้อมูลลูกค้า &amp; บริษัทคู่ค้า</span>
+      </div>
+      <div class="master-toolbar-actions">
+        <div class="input-clearable-wrap master-search-wrap">
+          <input type="text" id="masterCustomerSearchInput" class="form-control" placeholder="🔍 ค้นหาลูกค้า, เลขภาษี, ผู้ติดต่อ..." value="${escapeHtml(masterCustomerQuery)}" autocomplete="off" />
+          <button type="button" class="btn-input-clear ${masterCustomerQuery ? '' : 'hidden'}" data-clear-target="masterCustomerSearchInput" title="ล้างค่า">✕</button>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" id="btnAddNewMasterCustomer">
+          <span>➕ เพิ่มลูกค้าใหม่</span>
+        </button>
+      </div>
+    </div>
+    <div class="master-table-card">
+      <div class="master-table-scroll" id="masterCustomerTableContainer">
+        <div style="padding:32px; text-align:center; color:#64748b;">กำลังโหลดข้อมูลลูกค้า...</div>
+      </div>
+    </div>
+  `;
+
+  const searchInp = document.getElementById('masterCustomerSearchInput');
+  const btnAdd = document.getElementById('btnAddNewMasterCustomer');
+  const tableContainer = document.getElementById('masterCustomerTableContainer');
+
+  btnAdd?.addEventListener('click', () => openCustomerEditor(null));
+
+  let debounceTimer = null;
+  searchInp?.addEventListener('input', e => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      masterCustomerQuery = e.target.value.trim();
+      masterCustomerPage = 1;
+      fetchAndRenderCustomers(tableContainer);
+    }, 250);
+  });
+
+  const clearBtn = container.querySelector('.btn-input-clear[data-clear-target="masterCustomerSearchInput"]');
+  clearBtn?.addEventListener('click', () => {
+    masterCustomerQuery = '';
+    masterCustomerPage = 1;
+    fetchAndRenderCustomers(tableContainer);
+  });
+
+  await fetchAndRenderCustomers(tableContainer);
+}
+
+async function fetchAndRenderCustomers(container) {
+  if (!container) return;
+  container.innerHTML = `<div style="padding:32px; text-align:center; color:#64748b;"><span class="status-spinner"></span> กำลังโหลด...</div>`;
+  try {
+    const res = await fetch(`/api/master/customers?q=${encodeURIComponent(masterCustomerQuery)}&page=${masterCustomerPage}&limit=25`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'โหลดข้อมูลลูกค้าไม่สำเร็จ');
+
+    const list = data.customers || [];
+    if (list.length === 0) {
+      container.innerHTML = `
+        <div style="padding:40px 20px; text-align:center; color:#64748b;">
+          <div style="font-size:32px; margin-bottom:8px;">🏢</div>
+          <div style="font-size:14px; font-weight:600; color:#334155;">ไม่พบข้อมูลลูกค้า</div>
+          <div style="font-size:12px; margin-top:4px;">ลองเปลี่ยนคำค้นหา หรือกดปุ่ม "เพิ่มลูกค้าใหม่" ด้านบน</div>
+        </div>
+      `;
+      return;
+    }
+
+    const startIndex = (data.page - 1) * data.limit + 1;
+    container.innerHTML = `
+      <table class="master-table">
+        <thead>
+          <tr>
+            <th style="width:40px; text-align:center;">#</th>
+            <th style="min-width:220px;">ชื่อลูกค้า / บริษัท</th>
+            <th style="min-width:140px;">เลขประจำตัวผู้เสียภาษี &amp; สาขา</th>
+            <th style="min-width:140px;">ผู้ติดต่อ</th>
+            <th style="min-width:150px;">เบอร์โทร &amp; อีเมล</th>
+            <th style="width:90px; text-align:center;">แหล่งที่มา</th>
+            <th style="width:70px; text-align:center;">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${list.map((c, idx) => `
+            <tr>
+              <td style="text-align:center; color:#94a3b8; font-size:12px;">${startIndex + idx}</td>
+              <td>
+                <div class="master-item-name-th">${escapeHtml(c.name)}</div>
+                ${c.name_en ? `<div class="master-item-name-en">${escapeHtml(c.name_en)}</div>` : ''}
+                ${c.address ? `<div style="font-size:11.5px; color:#64748b; margin-top:3px; max-width:320px; line-height:1.3;">📍 ${escapeHtml(c.address)}</div>` : ''}
+              </td>
+              <td>
+                <div>${escapeHtml(c.tax_id || '-')}</div>
+                ${c.branch ? `<div style="font-size:11.5px; color:#64748b;">สาขา: ${escapeHtml(c.branch)}</div>` : ''}
+              </td>
+              <td>${escapeHtml(c.contact_name || '-')}</td>
+              <td>
+                ${c.phone ? `<div>📞 ${escapeHtml(c.phone)}</div>` : ''}
+                ${c.email ? `<div style="font-size:11.5px; color:#2563eb;">✉️ ${escapeHtml(c.email)}</div>` : ''}
+                ${!c.phone && !c.email ? `<span style="color:#94a3b8;">-</span>` : ''}
+              </td>
+              <td style="text-align:center;">
+                <span class="master-badge-source source-${c.source || 'custom'}">
+                  ${c.source === 'custom' ? 'เพิ่มเอง' : c.source === 'history' ? 'ประวัติใบยืม' : 'DBD'}
+                </span>
+              </td>
+              <td style="text-align:center;">
+                <div class="master-action-btn-group">
+                  <button type="button" class="btn-master-action" data-edit-master-cust="${c.id}" title="แก้ไขข้อมูลลูกค้า">
+                    ✏️
+                  </button>
+                  <button type="button" class="btn-master-action btn-master-delete" data-delete-master-cust="${c.id}" data-cust-name="${escapeHtml(c.name)}" title="ลบข้อมูลลูกค้า">
+                    🗑️
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <div class="master-pagination-bar">
+        <div>แสดงรายการที่ <strong>${startIndex} - ${startIndex + list.length - 1}</strong> จากทั้งหมด <strong>${data.total.toLocaleString()}</strong> รายการ</div>
+        <div class="master-page-btn-group">
+          <button type="button" class="btn btn-xs btn-outline" id="btnCustPrevPage" ${data.page <= 1 ? 'disabled' : ''}>◀ หน้าก่อน</button>
+          <span>หน้า ${data.page} / ${data.totalPages || 1}</span>
+          <button type="button" class="btn btn-xs btn-outline" id="btnCustNextPage" ${data.page >= data.totalPages ? 'disabled' : ''}>หน้าถัดไป ▶</button>
+        </div>
+      </div>
+    `;
+
+    // Wire pagination
+    document.getElementById('btnCustPrevPage')?.addEventListener('click', () => {
+      if (masterCustomerPage > 1) {
+        masterCustomerPage--;
+        fetchAndRenderCustomers(container);
+      }
+    });
+    document.getElementById('btnCustNextPage')?.addEventListener('click', () => {
+      if (masterCustomerPage < data.totalPages) {
+        masterCustomerPage++;
+        fetchAndRenderCustomers(container);
+      }
+    });
+
+    // Wire Edit & Delete clicks
+    container.querySelectorAll('[data-edit-master-cust]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = parseInt(btn.dataset.editMasterCust, 10);
+        const cust = list.find(item => item.id === id);
+        if (cust) openCustomerEditor(cust);
+      });
+    });
+
+    container.querySelectorAll('[data-delete-master-cust]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = parseInt(btn.dataset.deleteMasterCust, 10);
+        const name = btn.dataset.custName;
+        const confirmed = await showConfirmDialog({
+          title: 'ลบข้อมูลลูกค้า',
+          message: `คุณต้องการลบข้อมูลลูกค้า "${name}" ใช่หรือไม่?`,
+          itemHtml: `<div style="font-size:12.5px; color:#64748b;">ระบบจะไม่อนุญาตให้ลบหากลูกค้ารายนี้มีประวัติการยืมในระบบ</div>`,
+          confirmText: '🗑️ ยืนยันลบ',
+          cancelText: 'ยกเลิก',
+          icon: '🗑️',
+          confirmBtnClass: 'btn-danger'
+        });
+        if (!confirmed) return;
+
+        try {
+          const delRes = await fetch(`/api/master/customers/${id}`, { method: 'DELETE' });
+          const delData = await delRes.json();
+          if (!delRes.ok) throw new Error(delData.error || 'ลบข้อมูลลูกค้าไม่สำเร็จ');
+          showToast(`✅ ${delData.message || 'ลบข้อมูลลูกค้าเรียบร้อยแล้ว'}`);
+          await updateMasterBadgeCounts();
+          fetchAndRenderCustomers(container);
+        } catch (err) {
+          showToast(`❌ ${err.message}`);
+        }
+      });
+    });
+  } catch (err) {
+    container.innerHTML = `<div style="padding:24px; text-align:center; color:#ef4444;">❌ ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function openCustomerEditor(cust = null) {
+  const modal = document.getElementById('customerEditorModalDialog');
+  const titleEl = document.getElementById('customerEditorTitle');
+  const idInput = document.getElementById('customerEditId');
+  const nameInput = document.getElementById('custEditName');
+  const nameEnInput = document.getElementById('custEditNameEn');
+  const taxIdInput = document.getElementById('custEditTaxId');
+  const branchInput = document.getElementById('custEditBranch');
+  const addrInput = document.getElementById('custEditAddress');
+  const contactInput = document.getElementById('custEditContact');
+  const phoneInput = document.getElementById('custEditPhone');
+  const emailInput = document.getElementById('custEditEmail');
+
+  if (!modal) return;
+
+  if (cust) {
+    if (titleEl) titleEl.textContent = '🏢 แก้ไขข้อมูลลูกค้า';
+    if (idInput) idInput.value = cust.id;
+    if (nameInput) nameInput.value = cust.name || '';
+    if (nameEnInput) nameEnInput.value = cust.name_en || '';
+    if (taxIdInput) taxIdInput.value = cust.tax_id || '';
+    if (branchInput) branchInput.value = cust.branch || 'สำนักงานใหญ่';
+    if (addrInput) addrInput.value = cust.address || '';
+    if (contactInput) contactInput.value = cust.contact_name || '';
+    if (phoneInput) phoneInput.value = cust.phone || '';
+    if (emailInput) emailInput.value = cust.email || '';
+  } else {
+    if (titleEl) titleEl.textContent = '🏢 เพิ่มข้อมูลลูกค้าใหม่';
+    if (idInput) idInput.value = '';
+    if (nameInput) nameInput.value = '';
+    if (nameEnInput) nameEnInput.value = '';
+    if (taxIdInput) taxIdInput.value = '';
+    if (branchInput) branchInput.value = 'สำนักงานใหญ่';
+    if (addrInput) addrInput.value = '';
+    if (contactInput) contactInput.value = '';
+    if (phoneInput) phoneInput.value = '';
+    if (emailInput) emailInput.value = '';
+  }
+
+  // Update clear buttons
+  [nameInput, nameEnInput, taxIdInput, branchInput, contactInput, phoneInput, emailInput].forEach(inp => {
+    if (inp) {
+      const clearBtn = inp.parentElement?.querySelector('.btn-input-clear');
+      if (clearBtn) clearBtn.classList.toggle('hidden', !inp.value);
+    }
+  });
+
+  modal.showModal();
+}
+
+// --------------------------------------------------------------------------
+// 2. Product Catalogs Master Tab
+// --------------------------------------------------------------------------
+async function renderMasterCatalogsTab(container) {
+  container.innerHTML = `
+    <div class="master-toolbar">
+      <div class="master-toolbar-title-group">
+        <span class="master-toolbar-title">📦 แคตตาล็อกสินค้า &amp; รุ่นเครื่อง</span>
+      </div>
+      <div class="master-toolbar-actions">
+        <div class="input-clearable-wrap master-search-wrap">
+          <input type="text" id="masterCatalogSearchInput" class="form-control" placeholder="🔍 ค้นหารุ่น, ยี่ห้อ, หมวดหมู่..." value="${escapeHtml(masterCatalogQuery)}" autocomplete="off" />
+          <button type="button" class="btn-input-clear ${masterCatalogQuery ? '' : 'hidden'}" data-clear-target="masterCatalogSearchInput" title="ล้างค่า">✕</button>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" id="btnAddNewMasterCatalog">
+          <span>➕ เพิ่มรุ่นใหม่</span>
+        </button>
+      </div>
+    </div>
+    <div class="master-table-card">
+      <div class="master-table-scroll" id="masterCatalogTableContainer">
+        <div style="padding:32px; text-align:center; color:#64748b;">กำลังโหลดแคตตาล็อก...</div>
+      </div>
+    </div>
+  `;
+
+  const searchInp = document.getElementById('masterCatalogSearchInput');
+  const btnAdd = document.getElementById('btnAddNewMasterCatalog');
+  const tableContainer = document.getElementById('masterCatalogTableContainer');
+
+  btnAdd?.addEventListener('click', () => openCatalogEditor(null));
+
+  let debounceTimer = null;
+  searchInp?.addEventListener('input', e => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      masterCatalogQuery = e.target.value.trim();
+      fetchAndRenderCatalogs(tableContainer);
+    }, 250);
+  });
+
+  const clearBtn = container.querySelector('.btn-input-clear[data-clear-target="masterCatalogSearchInput"]');
+  clearBtn?.addEventListener('click', () => {
+    masterCatalogQuery = '';
+    fetchAndRenderCatalogs(tableContainer);
+  });
+
+  await fetchAndRenderCatalogs(tableContainer);
+}
+
+async function fetchAndRenderCatalogs(container) {
+  if (!container) return;
+  container.innerHTML = `<div style="padding:32px; text-align:center; color:#64748b;"><span class="status-spinner"></span> กำลังโหลด...</div>`;
+  try {
+    const res = await fetch(`/api/master/catalogs?q=${encodeURIComponent(masterCatalogQuery)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'โหลดแคตตาล็อกไม่สำเร็จ');
+
+    const list = data.catalogs || [];
+    if (list.length === 0) {
+      container.innerHTML = `
+        <div style="padding:40px 20px; text-align:center; color:#64748b;">
+          <div style="font-size:32px; margin-bottom:8px;">📦</div>
+          <div style="font-size:14px; font-weight:600; color:#334155;">ไม่พบแคตตาล็อกรุ่นสินค้า</div>
+          <div style="font-size:12px; margin-top:4px;">กดปุ่ม "เพิ่มรุ่นใหม่" ด้านบนเพื่อเพิ่มรายการเข้าสู่ระบบ</div>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = `
+      <table class="master-table">
+        <thead>
+          <tr>
+            <th style="width:40px; text-align:center;">#</th>
+            <th style="min-width:180px;">ยี่ห้อ &amp; รุ่น (Brand &amp; Model)</th>
+            <th style="min-width:140px;">หมวดหมู่ (Category)</th>
+            <th style="min-width:180px;">สเปกย่อ (Specifications)</th>
+            <th style="min-width:180px;">อุปกรณ์เสริมมาตรฐาน</th>
+            <th style="width:110px; text-align:center;">จำนวนในคลัง</th>
+            <th style="width:70px; text-align:center;">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${list.map((c, idx) => {
+            let accs = [];
+            try { accs = JSON.parse(c.default_accessories || '[]'); } catch (_) { accs = []; }
+            return `
+              <tr>
+                <td style="text-align:center; color:#94a3b8; font-size:12px;">${idx + 1}</td>
+                <td>
+                  <div class="master-item-name-th">${escapeHtml(c.model)}</div>
+                  <div class="master-item-name-en">ยี่ห้อ: <strong>${escapeHtml(c.brand)}</strong></div>
+                </td>
+                <td>
+                  <span style="display:inline-block; padding:2px 8px; border-radius:6px; background:#f1f5f9; color:#334155; font-size:12px; font-weight:500;">
+                    ${escapeHtml(c.category)}
+                  </span>
+                </td>
+                <td style="font-size:12px; color:#475569;">${escapeHtml(c.default_specs || '-')}</td>
+                <td>
+                  ${accs.length > 0
+                    ? `<div style="display:flex; flex-wrap:wrap; gap:3px;">
+                        ${accs.map(a => `<span style="display:inline-block; padding:1px 6px; border-radius:4px; background:#f8fafc; border:1px solid #e2e8f0; font-size:11px; color:#475569;">${escapeHtml(a)}</span>`).join('')}
+                      </div>`
+                    : `<span style="color:#94a3b8;">-</span>`
+                  }
+                </td>
+                <td style="text-align:center;">
+                  <span style="display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:9999px; font-size:12px; font-weight:600; ${c.asset_count > 0 ? 'background:#eff6ff; color:#1d4ed8;' : 'background:#f1f5f9; color:#94a3b8;'}">
+                    <span>${c.asset_count}</span>
+                    <span style="font-weight:400; font-size:11px;">เครื่อง</span>
+                  </span>
+                </td>
+                <td style="text-align:center;">
+                  <div class="master-action-btn-group">
+                    <button type="button" class="btn-master-action" data-edit-master-cat="${c.id}" title="แก้ไขแคตตาล็อก">
+                      ✏️
+                    </button>
+                    <button type="button" class="btn-master-action btn-master-delete" data-delete-master-cat="${c.id}" data-cat-model="${escapeHtml(c.model)}" title="ลบรุ่นสินค้า">
+                      🗑️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+
+    // Wire Edit & Delete clicks
+    container.querySelectorAll('[data-edit-master-cat]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = parseInt(btn.dataset.editMasterCat, 10);
+        const cat = list.find(item => item.id === id);
+        if (cat) openCatalogEditor(cat);
+      });
+    });
+
+    container.querySelectorAll('[data-delete-master-cat]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = parseInt(btn.dataset.deleteMasterCat, 10);
+        const model = btn.dataset.catModel;
+        const confirmed = await showConfirmDialog({
+          title: 'ลบแคตตาล็อกรุ่นสินค้า',
+          message: `คุณต้องการลบรุ่น "${model}" ออกจากแคตตาล็อกใช่หรือไม่?`,
+          itemHtml: `<div style="font-size:12.5px; color:#64748b;">หากมีเครื่องในสต็อกที่ใช้รุ่นนี้อยู่ จะไม่สามารถลบได้</div>`,
+          confirmText: '🗑️ ยืนยันลบ',
+          cancelText: 'ยกเลิก',
+          icon: '🗑️',
+          confirmBtnClass: 'btn-danger'
+        });
+        if (!confirmed) return;
+
+        try {
+          const delRes = await fetch(`/api/master/catalogs/${id}`, { method: 'DELETE' });
+          const delData = await delRes.json();
+          if (!delRes.ok) throw new Error(delData.error || 'ลบแคตตาล็อกไม่สำเร็จ');
+          showToast(`✅ ${delData.message || 'ลบเรียบร้อยแล้ว'}`);
+          await updateMasterBadgeCounts();
+          fetchAndRenderCatalogs(container);
+        } catch (err) {
+          showToast(`❌ ${err.message}`);
+        }
+      });
+    });
+  } catch (err) {
+    container.innerHTML = `<div style="padding:24px; text-align:center; color:#ef4444;">❌ ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function openCatalogEditor(cat = null) {
+  const modal = document.getElementById('catalogEditorModalDialog');
+  const titleEl = document.getElementById('catalogEditorTitle');
+  const idInput = document.getElementById('catalogEditId');
+  const brandInput = document.getElementById('catalogEditBrand');
+  const modelInput = document.getElementById('catalogEditModel');
+  const categoryInput = document.getElementById('catalogEditCategory');
+  const specsInput = document.getElementById('catalogEditSpecs');
+  const accInput = document.getElementById('catalogEditAccessories');
+
+  if (!modal) return;
+
+  if (cat) {
+    if (titleEl) titleEl.textContent = '📦 แก้ไขแคตตาล็อกรุ่นสินค้า';
+    if (idInput) idInput.value = cat.id;
+    if (brandInput) brandInput.value = cat.brand || '';
+    if (modelInput) modelInput.value = cat.model || '';
+    if (categoryInput) categoryInput.value = cat.category || '';
+    if (specsInput) specsInput.value = cat.default_specs || '';
+    let accs = [];
+    try { accs = JSON.parse(cat.default_accessories || '[]'); } catch (_) { accs = []; }
+    if (accInput) accInput.value = Array.isArray(accs) ? accs.join(', ') : '';
+  } else {
+    if (titleEl) titleEl.textContent = '📦 เพิ่มรุ่นสินค้าใหม่เข้าแคตตาล็อก';
+    if (idInput) idInput.value = '';
+    if (brandInput) brandInput.value = '';
+    if (modelInput) modelInput.value = '';
+    if (categoryInput) categoryInput.value = 'Mobile Computer';
+    if (specsInput) specsInput.value = '';
+    if (accInput) accInput.value = 'สาย USB, Power Adapter, Power Cord, แบตเตอรี่';
+  }
+
+  modal.showModal();
+}
+
+// --------------------------------------------------------------------------
+// 3. Master Options Tab (Categories / Brands / Locations / Accessories)
+// --------------------------------------------------------------------------
+async function renderMasterOptionsTab(container, type) {
+  const typeTitles = {
+    category: { title: '🏷️ หมวดหมู่สินค้า (Categories)', addBtn: '➕ เพิ่มหมวดหมู่', label: 'หมวดหมู่' },
+    brand: { title: '✨ ยี่ห้อสินค้า (Brands)', addBtn: '➕ เพิ่มยี่ห้อ', label: 'ยี่ห้อ' },
+    location: { title: '📍 สถานที่จัดเก็บ / ตู้เก็บเครื่อง (Locations)', addBtn: '➕ เพิ่มสถานที่เก็บ', label: 'สถานที่จัดเก็บ' },
+    accessory: { title: '🔌 อุปกรณ์เสริมมาตรฐาน (Preset Accessories)', addBtn: '➕ เพิ่มอุปกรณ์เสริม', label: 'อุปกรณ์เสริม' }
+  };
+  const meta = typeTitles[type] || { title: 'ตัวเลือก', addBtn: '➕ เพิ่ม', label: 'รายการ' };
+
+  container.innerHTML = `
+    <div class="master-toolbar">
+      <div class="master-toolbar-title-group">
+        <span class="master-toolbar-title">${meta.title}</span>
+      </div>
+      <div class="master-toolbar-actions">
+        <button type="button" class="btn btn-primary btn-sm" id="btnAddNewMasterOption">
+          <span>${meta.addBtn}</span>
+        </button>
+      </div>
+    </div>
+    <div id="masterOptionCardsContainer" style="padding:4px 0;">
+      <div style="padding:32px; text-align:center; color:#64748b;"><span class="status-spinner"></span> กำลังโหลด...</div>
+    </div>
+  `;
+
+  document.getElementById('btnAddNewMasterOption')?.addEventListener('click', () => {
+    openOptionEditor(type, null);
+  });
+
+  const cardsContainer = document.getElementById('masterOptionCardsContainer');
+  await fetchAndRenderOptions(cardsContainer, type);
+}
+
+async function fetchAndRenderOptions(container, type) {
+  if (!container) return;
+  try {
+    const res = await fetch(`/api/master/options?type=${encodeURIComponent(type)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'โหลดข้อมูลไม่สำเร็จ');
+
+    const list = data.options || [];
+    if (list.length === 0) {
+      container.innerHTML = `
+        <div style="padding:40px 20px; text-align:center; color:#64748b;">
+          <div style="font-size:32px; margin-bottom:8px;">🏷️</div>
+          <div style="font-size:14px; font-weight:600; color:#334155;">ยังไม่มีรายการ</div>
+          <div style="font-size:12px; margin-top:4px;">กดปุ่มเพิ่มรายการด้านบนเพื่อสร้างรายการแรก</div>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="master-simple-grid">
+        ${list.map(opt => `
+          <div class="master-simple-card">
+            <div class="master-simple-card-info">
+              <span class="master-simple-card-name">${escapeHtml(opt.name)}</span>
+              ${type !== 'accessory' ? `
+                <span class="master-simple-card-meta">
+                  ${opt.asset_count > 0 ? `<strong>${opt.asset_count}</strong> เครื่องในคลัง` : 'ไม่มีเครื่องที่ใช้'}
+                </span>
+              ` : ''}
+            </div>
+            <div class="master-action-btn-group">
+              <button type="button" class="btn-master-action" data-edit-master-opt="${opt.id}" data-opt-name="${escapeHtml(opt.name)}" title="แก้ไข">
+                ✏️
+              </button>
+              <button type="button" class="btn-master-action btn-master-delete" data-delete-master-opt="${opt.id}" data-opt-name="${escapeHtml(opt.name)}" title="ลบ">
+                🗑️
+              </button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    // Wire Edit & Delete
+    container.querySelectorAll('[data-edit-master-opt]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = parseInt(btn.dataset.editMasterOpt, 10);
+        const opt = list.find(o => o.id === id);
+        if (opt) openOptionEditor(type, opt);
+      });
+    });
+
+    container.querySelectorAll('[data-delete-master-opt]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = parseInt(btn.dataset.deleteMasterOpt, 10);
+        const name = btn.dataset.optName;
+        const confirmed = await showConfirmDialog({
+          title: 'ลบรายการ',
+          message: `คุณต้องการลบ "${name}" ใช่หรือไม่?`,
+          itemHtml: type !== 'accessory' ? `<div style="font-size:12.5px; color:#64748b;">หากมีเครื่องในคลังที่ใช้รายการนี้อยู่ จะไม่สามารถลบได้</div>` : '',
+          confirmText: '🗑️ ยืนยันลบ',
+          cancelText: 'ยกเลิก',
+          icon: '🗑️',
+          confirmBtnClass: 'btn-danger'
+        });
+        if (!confirmed) return;
+
+        try {
+          const delRes = await fetch(`/api/master/options/${id}`, { method: 'DELETE' });
+          const delData = await delRes.json();
+          if (!delRes.ok) throw new Error(delData.error || 'ลบไม่สำเร็จ');
+          showToast(`✅ ${delData.message || 'ลบเรียบร้อยแล้ว'}`);
+          await updateMasterBadgeCounts();
+          fetchAndRenderOptions(container, type);
+        } catch (err) {
+          showToast(`❌ ${err.message}`);
+        }
+      });
+    });
+  } catch (err) {
+    container.innerHTML = `<div style="padding:24px; text-align:center; color:#ef4444;">❌ ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function openOptionEditor(type, opt = null) {
+  const modal = document.getElementById('optionEditorModalDialog');
+  const titleEl = document.getElementById('optionEditorTitle');
+  const idInput = document.getElementById('optionEditId');
+  const typeInput = document.getElementById('optionEditType');
+  const nameInput = document.getElementById('optionEditName');
+  const nameLabel = document.getElementById('optionEditNameLabel');
+
+  if (!modal) return;
+
+  const labels = {
+    category: 'ชื่อหมวดหมู่',
+    brand: 'ชื่อยี่ห้อ',
+    location: 'ชื่อสถานที่จัดเก็บ / ตู้เก็บ',
+    accessory: 'ชื่ออุปกรณ์เสริม'
+  };
+
+  if (typeInput) typeInput.value = type;
+  if (nameLabel) nameLabel.textContent = `${labels[type] || 'ชื่อรายการ'} *`;
+
+  if (opt) {
+    if (titleEl) titleEl.textContent = `✏️ แก้ไข${labels[type] || 'รายการ'}`;
+    if (idInput) idInput.value = opt.id;
+    if (nameInput) nameInput.value = opt.name || '';
+  } else {
+    if (titleEl) titleEl.textContent = `➕ เพิ่ม${labels[type] || 'รายการ'}ใหม่`;
+    if (idInput) idInput.value = '';
+    if (nameInput) nameInput.value = '';
+  }
+
+  modal.showModal();
+}
+
+// --------------------------------------------------------------------------
+// Wire Master Data Sub-tabs and Form Submissions
+// --------------------------------------------------------------------------
+function setupMasterDataEvents() {
+  // Sub-tabs click
+  const subTabBtns = document.querySelectorAll('.master-sub-tab');
+  subTabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      switchMasterSubTab(btn.dataset.masterSub);
+    });
+  });
+
+  // Customer Editor Form
+  const custModal = document.getElementById('customerEditorModalDialog');
+  const custForm = document.getElementById('customerEditorForm');
+  const btnCloseCust = document.getElementById('btnCloseCustomerEditor');
+  const btnCancelCust = document.getElementById('btnCancelCustomerEditor');
+
+  btnCloseCust?.addEventListener('click', () => custModal?.close());
+  btnCancelCust?.addEventListener('click', () => custModal?.close());
+
+  custForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const id = document.getElementById('customerEditId')?.value;
+    const name = (document.getElementById('custEditName')?.value || '').trim();
+    const name_en = (document.getElementById('custEditNameEn')?.value || '').trim();
+    const tax_id = (document.getElementById('custEditTaxId')?.value || '').trim();
+    const branch = (document.getElementById('custEditBranch')?.value || 'สำนักงานใหญ่').trim();
+    const address = (document.getElementById('custEditAddress')?.value || '').trim();
+    const contact_name = (document.getElementById('custEditContact')?.value || '').trim();
+    const phone = (document.getElementById('custEditPhone')?.value || '').trim();
+    const email = (document.getElementById('custEditEmail')?.value || '').trim();
+
+    if (!name) {
+      showToast('⚠️ กรุณาระบุชื่อลูกค้าหรือชื่อบริษัท');
+      return;
+    }
+
+    const payload = { name, name_en, tax_id, branch, address, contact_name, phone, email };
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `/api/master/customers/${id}` : '/api/master/customers';
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'บันทึกข้อมูลลูกค้าไม่สำเร็จ');
+
+      showToast(`✅ ${data.message || 'บันทึกเรียบร้อยแล้ว'}`);
+      custModal?.close();
+      await updateMasterBadgeCounts();
+      if (currentMasterSubTab === 'customers') {
+        fetchAndRenderCustomers(document.getElementById('masterCustomerTableContainer'));
+      }
+    } catch (err) {
+      showToast(`❌ ${err.message}`);
+    }
+  });
+
+  // Catalog Editor Form
+  const catModal = document.getElementById('catalogEditorModalDialog');
+  const catForm = document.getElementById('catalogEditorForm');
+  const btnCloseCat = document.getElementById('btnCloseCatalogEditor');
+  const btnCancelCat = document.getElementById('btnCancelCatalogEditor');
+
+  btnCloseCat?.addEventListener('click', () => catModal?.close());
+  btnCancelCat?.addEventListener('click', () => catModal?.close());
+
+  catForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const id = document.getElementById('catalogEditId')?.value;
+    const brand = (document.getElementById('catalogEditBrand')?.value || '').trim();
+    const model = (document.getElementById('catalogEditModel')?.value || '').trim();
+    const category = (document.getElementById('catalogEditCategory')?.value || 'Mobile Computer').trim();
+    const default_specs = (document.getElementById('catalogEditSpecs')?.value || '').trim();
+    const accStr = (document.getElementById('catalogEditAccessories')?.value || '').trim();
+    const default_accessories = accStr ? accStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+    if (!model) {
+      showToast('⚠️ กรุณาระบุชื่อรุ่นสินค้า (Model)');
+      return;
+    }
+    if (!brand) {
+      showToast('⚠️ กรุณาระบุยี่ห้อสินค้า (Brand)');
+      return;
+    }
+
+    const payload = { brand, model, category, default_specs, default_accessories };
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `/api/master/catalogs/${id}` : '/api/master/catalogs';
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'บันทึกแคตตาล็อกไม่สำเร็จ');
+
+      showToast(`✅ ${data.message || 'บันทึกเรียบร้อยแล้ว'}`);
+      catModal?.close();
+      await updateMasterBadgeCounts();
+      if (currentMasterSubTab === 'catalogs') {
+        fetchAndRenderCatalogs(document.getElementById('masterCatalogTableContainer'));
+      }
+    } catch (err) {
+      showToast(`❌ ${err.message}`);
+    }
+  });
+
+  // Option Editor Form
+  const optModal = document.getElementById('optionEditorModalDialog');
+  const optForm = document.getElementById('optionEditorForm');
+  const btnCloseOpt = document.getElementById('btnCloseOptionEditor');
+  const btnCancelOpt = document.getElementById('btnCancelOptionEditor');
+
+  btnCloseOpt?.addEventListener('click', () => optModal?.close());
+  btnCancelOpt?.addEventListener('click', () => optModal?.close());
+
+  optForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const id = document.getElementById('optionEditId')?.value;
+    const type = document.getElementById('optionEditType')?.value;
+    const name = (document.getElementById('optionEditName')?.value || '').trim();
+
+    if (!name) {
+      showToast('⚠️ กรุณาระบุชื่อรายการ');
+      return;
+    }
+
+    const payload = { type, name };
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `/api/master/options/${id}` : '/api/master/options';
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'บันทึกไม่สำเร็จ');
+
+      showToast(`✅ ${data.message || 'บันทึกเรียบร้อยแล้ว'}`);
+      optModal?.close();
+      await updateMasterBadgeCounts();
+      fetchAndRenderOptions(document.getElementById('masterOptionCardsContainer'), type);
+    } catch (err) {
+      showToast(`❌ ${err.message}`);
+    }
+  });
+}
+
+// Call on startup
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupMasterDataEvents);
+} else {
+  setupMasterDataEvents();
 }
 
 function setupSendEmailModal() {

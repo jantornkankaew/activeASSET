@@ -1486,6 +1486,13 @@
           </svg>
           <span>กำหนดบทบาทผู้ใช้งาน</span>
         </button>
+        <button type="button" class="company-main-tab" id="tabBtnCompanyMaster" data-company-tab="master">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <span>ข้อมูลหลัก</span>
+        </button>
       </div>
 
       <form id="companySettingsForm" class="modal-body company-settings-body">
@@ -1762,6 +1769,52 @@
             </div>
           </div>
         </div>
+
+        <!-- Tab 6: ข้อมูลหลัก (Master Data) -->
+        <div id="tabPanelCompanyMaster" class="company-tab-panel hidden">
+          <div class="roles-tab-fullscreen-container master-data-container">
+            <!-- Master Data Sub-Navigation Tabs Bar -->
+            <div class="master-sub-nav-bar">
+              <div class="master-sub-tabs" role="tablist">
+                <button type="button" class="master-sub-tab is-active" data-master-sub="customers">
+                  <span class="m-icon">🏢</span>
+                  <span class="m-label">ลูกค้า</span>
+                  <span class="master-count-badge" id="badgeMasterCustCount">-</span>
+                </button>
+                <button type="button" class="master-sub-tab" data-master-sub="catalogs">
+                  <span class="m-icon">📦</span>
+                  <span class="m-label">รุ่นสินค้า &amp; แคตตาล็อก</span>
+                  <span class="master-count-badge" id="badgeMasterCatCount">-</span>
+                </button>
+                <button type="button" class="master-sub-tab" data-master-sub="categories">
+                  <span class="m-icon">🏷️</span>
+                  <span class="m-label">หมวดหมู่</span>
+                  <span class="master-count-badge" id="badgeMasterCategoryCount">-</span>
+                </button>
+                <button type="button" class="master-sub-tab" data-master-sub="brands">
+                  <span class="m-icon">✨</span>
+                  <span class="m-label">ยี่ห้อ</span>
+                  <span class="master-count-badge" id="badgeMasterBrandCount">-</span>
+                </button>
+                <button type="button" class="master-sub-tab" data-master-sub="locations">
+                  <span class="m-icon">📍</span>
+                  <span class="m-label">สถานที่จัดเก็บ</span>
+                  <span class="master-count-badge" id="badgeMasterLocationCount">-</span>
+                </button>
+                <button type="button" class="master-sub-tab" data-master-sub="accessories">
+                  <span class="m-icon">🔌</span>
+                  <span class="m-label">อุปกรณ์เสริม</span>
+                  <span class="master-count-badge" id="badgeMasterAccCount">-</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Master Data Content Area -->
+            <div id="masterDataContentArea" class="master-data-content-area">
+              <!-- Dynamically populated by active sub-tab -->
+            </div>
+          </div>
+        </div>
       </form>
 
       <footer class="modal-footer">
@@ -1819,6 +1872,175 @@
         <footer class="modal-footer" style="padding-top:16px;">
           <button type="button" class="btn btn-outline" id="btnCancelRoleEditor">ยกเลิก</button>
           <button type="submit" class="btn btn-primary" id="btnSaveRoleEditor">💾 บันทึกบทบาท</button>
+        </footer>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Customer Editor Modal -->
+  <dialog id="customerEditorModalDialog" class="modal-dialog modal-card-sheet no-print" closedby="any" aria-labelledby="customerEditorTitle">
+    <div class="modal-card master-editor-card">
+      <header class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="customerEditorTitle" class="modal-title">🏢 เพิ่มข้อมูลลูกค้าใหม่</h3>
+          <p class="modal-subtitle">ข้อมูลบริษัท เลขผู้เสียภาษี และข้อมูลการติดต่อ</p>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseCustomerEditor" aria-label="ปิด">✕</button>
+      </header>
+
+      <form id="customerEditorForm" class="modal-body">
+        <input type="hidden" id="customerEditId" value="" />
+        <div class="form-grid-2">
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="custEditName" class="form-label">ชื่อลูกค้า / บริษัท (ไทย) *</label>
+            <div class="input-clearable-wrap">
+              <input type="text" id="custEditName" class="form-control" required placeholder="เช่น บริษัท แอคทีฟ 5 จำกัด" autocomplete="off" />
+              <button type="button" class="btn-input-clear hidden" data-clear-target="custEditName" title="ล้างค่า">✕</button>
+            </div>
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="custEditNameEn" class="form-label">ชื่อลูกค้า / บริษัท (อังกฤษ)</label>
+            <div class="input-clearable-wrap">
+              <input type="text" id="custEditNameEn" class="form-control" placeholder="เช่น Active 5 Co., Ltd." autocomplete="off" />
+              <button type="button" class="btn-input-clear hidden" data-clear-target="custEditNameEn" title="ล้างค่า">✕</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="custEditTaxId" class="form-label">เลขประจำตัวผู้เสียภาษี (Tax ID)</label>
+            <div class="input-clearable-wrap">
+              <input type="text" id="custEditTaxId" class="form-control" placeholder="13 หลัก" maxlength="20" autocomplete="off" />
+              <button type="button" class="btn-input-clear hidden" data-clear-target="custEditTaxId" title="ล้างค่า">✕</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="custEditBranch" class="form-label">สาขา</label>
+            <div class="input-clearable-wrap">
+              <input type="text" id="custEditBranch" class="form-control" placeholder="เช่น สำนักงานใหญ่ หรือ 00001" autocomplete="off" />
+              <button type="button" class="btn-input-clear hidden" data-clear-target="custEditBranch" title="ล้างค่า">✕</button>
+            </div>
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="custEditAddress" class="form-label">ที่อยู่จัดส่ง / ที่อยู่บริษัท</label>
+            <textarea id="custEditAddress" class="form-control" rows="2" placeholder="ที่อยู่ เลขที่ อาคาร ถนน แขวง/ตำบล เขต/อำเภอ จังหวัด รหัสไปรษณีย์"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="custEditContact" class="form-label">ชื่อผู้ติดต่อ</label>
+            <div class="input-clearable-wrap">
+              <input type="text" id="custEditContact" class="form-control" placeholder="เช่น คุณสมชาย ใจดี" autocomplete="off" />
+              <button type="button" class="btn-input-clear hidden" data-clear-target="custEditContact" title="ล้างค่า">✕</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="custEditPhone" class="form-label">เบอร์โทรศัพท์</label>
+            <div class="input-clearable-wrap">
+              <input type="tel" id="custEditPhone" class="form-control" placeholder="เช่น 02-xxx-xxxx, 08x-xxx-xxxx" autocomplete="off" />
+              <button type="button" class="btn-input-clear hidden" data-clear-target="custEditPhone" title="ล้างค่า">✕</button>
+            </div>
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="custEditEmail" class="form-label">อีเมล</label>
+            <div class="input-clearable-wrap">
+              <input type="email" id="custEditEmail" class="form-control" placeholder="เช่น contact@customer.com" autocomplete="off" />
+              <button type="button" class="btn-input-clear hidden" data-clear-target="custEditEmail" title="ล้างค่า">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <footer class="modal-footer" style="padding-top:16px;">
+          <button type="button" class="btn btn-outline" id="btnCancelCustomerEditor">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveCustomerEditor">💾 บันทึกข้อมูลลูกค้า</button>
+        </footer>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Product Catalog Editor Modal -->
+  <dialog id="catalogEditorModalDialog" class="modal-dialog modal-card-sheet no-print" closedby="any" aria-labelledby="catalogEditorTitle">
+    <div class="modal-card master-editor-card">
+      <header class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="catalogEditorTitle" class="modal-title">📦 เพิ่มรุ่นสินค้าใหม่</h3>
+          <p class="modal-subtitle">กำหนดรุ่น ยี่ห้อ หมวดหมู่ สเปก และอุปกรณ์เสริมมาตรฐาน</p>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseCatalogEditor" aria-label="ปิด">✕</button>
+      </header>
+
+      <form id="catalogEditorForm" class="modal-body">
+        <input type="hidden" id="catalogEditId" value="" />
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label for="catalogEditBrand" class="form-label">ยี่ห้อ (Brand) *</label>
+            <div class="input-clearable-wrap has-dropdown">
+              <input type="text" id="catalogEditBrand" class="form-control" required placeholder="เช่น Zebra, Honeywell" autocomplete="off" />
+              <div class="input-actions-end">
+                <button type="button" class="btn-input-clear hidden" data-clear-target="catalogEditBrand" title="ล้างค่า">✕</button>
+                <button type="button" class="btn-input-dropdown-arrow" data-dropdown-trigger="catalogBrand" title="เลือกยี่ห้อ">▾</button>
+              </div>
+            </div>
+            <div id="catalogBrandDropdown" class="model-dropdown-menu hidden"></div>
+          </div>
+          <div class="form-group">
+            <label for="catalogEditModel" class="form-label">รุ่นสินค้า (Model) *</label>
+            <div class="input-clearable-wrap">
+              <input type="text" id="catalogEditModel" class="form-control" required placeholder="เช่น TC53, EDA52-1" autocomplete="off" />
+              <button type="button" class="btn-input-clear hidden" data-clear-target="catalogEditModel" title="ล้างค่า">✕</button>
+            </div>
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="catalogEditCategory" class="form-label">หมวดหมู่สินค้า (Category) *</label>
+            <div class="input-clearable-wrap has-dropdown">
+              <input type="text" id="catalogEditCategory" class="form-control" required placeholder="เช่น Mobile Computer, Barcode Scanner" autocomplete="off" />
+              <div class="input-actions-end">
+                <button type="button" class="btn-input-clear hidden" data-clear-target="catalogEditCategory" title="ล้างค่า">✕</button>
+                <button type="button" class="btn-input-dropdown-arrow" data-dropdown-trigger="catalogCategory" title="เลือกหมวดหมู่">▾</button>
+              </div>
+            </div>
+            <div id="catalogCategoryDropdown" class="model-dropdown-menu hidden"></div>
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="catalogEditSpecs" class="form-label">สเปกย่อ / คุณลักษณะ (Specifications)</label>
+            <input type="text" id="catalogEditSpecs" class="form-control" placeholder="เช่น Android 13, 2D SE4750, Wi-Fi 6E, 8GB/128GB" autocomplete="off" />
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="catalogEditAccessories" class="form-label">อุปกรณ์เสริมเริ่มต้น (คั่นด้วยจุลภาค <code>,</code>)</label>
+            <input type="text" id="catalogEditAccessories" class="form-control" placeholder="เช่น สาย USB, Power Adapter, Power Cord, แบตเตอรี่, Cradle" autocomplete="off" />
+            <div class="form-hint" style="font-size:12px; color:#64748b; margin-top:4px;">ระบบจะใส่รายการเหล่านี้เป็นค่าเริ่มต้นเมื่อออกใบยืมหรือเพิ่มเครื่องรุ่นนี้</div>
+          </div>
+        </div>
+
+        <footer class="modal-footer" style="padding-top:16px;">
+          <button type="button" class="btn btn-outline" id="btnCancelCatalogEditor">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveCatalogEditor">💾 บันทึกแคตตาล็อก</button>
+        </footer>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Master Option Editor Modal (Categories / Brands / Locations / Accessories) -->
+  <dialog id="optionEditorModalDialog" class="modal-dialog modal-card-sheet no-print" closedby="any" aria-labelledby="optionEditorTitle">
+    <div class="modal-card master-editor-card" style="max-width: 480px;">
+      <header class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="optionEditorTitle" class="modal-title">🏷️ เพิ่มรายการใหม่</h3>
+          <p class="modal-subtitle" id="optionEditorSubtitle">กำหนดชื่อและรายละเอียด</p>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseOptionEditor" aria-label="ปิด">✕</button>
+      </header>
+
+      <form id="optionEditorForm" class="modal-body">
+        <input type="hidden" id="optionEditId" value="" />
+        <input type="hidden" id="optionEditType" value="" />
+        <div class="form-group">
+          <label for="optionEditName" class="form-label" id="optionEditNameLabel">ชื่อรายการ *</label>
+          <div class="input-clearable-wrap">
+            <input type="text" id="optionEditName" class="form-control" required placeholder="ระบุชื่อ..." autocomplete="off" />
+            <button type="button" class="btn-input-clear hidden" data-clear-target="optionEditName" title="ล้างค่า">✕</button>
+          </div>
+        </div>
+
+        <footer class="modal-footer" style="padding-top:16px;">
+          <button type="button" class="btn btn-outline" id="btnCancelOptionEditor">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveOptionEditor">💾 บันทึก</button>
         </footer>
       </form>
     </div>
