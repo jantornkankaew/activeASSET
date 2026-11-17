@@ -1,5 +1,10 @@
 [phases.setup]
 nixPkgs = ["nodejs_22"]
+aptPkgs = ["chromium", "fonts-thai-tlwg", "fonts-noto-color-emoji"]
+
+[variables]
+CHROME_PATH = "/usr/bin/chromium"
+PUPPETEER_EXECUTABLE_PATH = "/usr/bin/chromium"
 
 [start]
 cmd = "node server.js"
