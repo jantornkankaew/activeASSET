@@ -4966,6 +4966,8 @@ function renderDispatchTable() {
   }
 
   // Restore regular picking thead if not in return mode
+  const canDeleteItems = !state.dispatchReturnMode && (loan?.status === 'Requested' || loan?.status === 'Dispatching');
+
   if (thead) {
     thead.innerHTML = `
       <tr>
@@ -4994,7 +4996,7 @@ function renderDispatchTable() {
             <span>รูปถ่าย</span>
           </span>
         </th>
-        <th class="col-chevron" style="width:40px; min-width:40px; max-width:40px; text-align:center;"></th>
+        <th class="col-chevron" style="${canDeleteItems ? 'width:72px; min-width:72px; max-width:72px;' : 'width:40px; min-width:40px; max-width:40px;'} text-align:center;"></th>
       </tr>
     `;
   }
@@ -5147,13 +5149,34 @@ function renderDispatchTable() {
             }
           </td>
 
-          <!-- Chevron -->
-          <td style="text-align:center;">
-            <span class="inline-chevron-wrap">
-              <svg class="inline-chevron-svg ${isExpanded ? 'open' : ''}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </span>
+          <!-- Actions & Chevron -->
+          <td style="text-align:center; vertical-align:middle; white-space:nowrap;">
+            <div class="dispatch-row-action-btns" style="display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+              ${
+                canDeleteItems
+                  ? `
+                <button type="button" 
+                  class="btn-dispatch-delete-item" 
+                  data-delete-dispatch-item="${rowIdx}" 
+                  title="ลบรายการนี้ออกจากใบยืม"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18"></path>
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                </button>
+              `
+                  : ''
+              }
+              <span class="inline-chevron-wrap">
+                <svg class="inline-chevron-svg ${isExpanded ? 'open' : ''}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </div>
           </td>
         </tr>
       `;
@@ -5370,6 +5393,21 @@ function renderDispatchTable() {
                   }
                 </div>
               </div>
+
+              ${
+                canDeleteItems
+                  ? `
+              <div class="inline-delete-row-wrap" style="display:flex; justify-content:flex-end; padding-top:10px; border-top:1px dashed #e2e8f0; margin-top:10px;">
+                <button type="button" class="btn btn-outline btn-sm btn-delete-item-inline" data-delete-dispatch-item="${rowIdx}" style="color:#ef4444; border-color:#fecaca; background:#fff; font-size:12px; height:30px; display:inline-flex; align-items:center; gap:5px; cursor:pointer;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                  </svg>
+                  <span>ลบรายการนี้ออกจากใบยืม</span>
+                </button>
+              </div>
+              `
+                  : ''
+              }
             </div>
           </td>
         </tr>
@@ -11459,7 +11497,107 @@ function setupEventListeners() {
     }
   });
 
+  async function handleDeleteDispatchItem(rowIdx) {
+    const loan = state.activeDispatchLoan;
+    if (!loan) return;
+
+    if (loan.status !== 'Requested' && loan.status !== 'Dispatching') {
+      showToast('⚠️ สามารถลบรายการได้เฉพาะใบยืมที่ยังไม่ได้จัดของ หรือกำลังจัดของเท่านั้น');
+      return;
+    }
+
+    if (!state.dispatchDraftItems || state.dispatchDraftItems.length <= 1) {
+      showToast('⚠️ ไม่สามารถลบรายการสุดท้ายได้ (ใบยืมต้องมีสินค้าอย่างน้อย 1 รายการ หากต้องการยกเลิกใบยืมทั้งหมด กรุณาใช้ปุ่มยกเลิกใบยืม)');
+      return;
+    }
+
+    const row = state.dispatchDraftItems[rowIdx];
+    if (!row) return;
+
+    const itemName = `${row.brand || ''} ${row.model || ''}`.trim() || `รายการที่ ${rowIdx + 1}`;
+
+    const confirmed = await showConfirmDialog({
+      title: 'ลบรายการออกจากใบยืม',
+      message: `คุณต้องการลบ "${itemName}" ออกจากใบยืม ${loan.id} ใช่หรือไม่?`,
+      itemHtml: `<div style="font-size:12.5px; color:#64748b; line-height:1.5;">เมื่อยืนยัน รายการนี้จะถูกตัดออกจากใบยืมทันที และเครื่องจะถูกปลดคืนสู่สต็อกพร้อมยืม</div>`,
+      confirmText: '🗑️ ยืนยันลบรายการ',
+      cancelText: 'ยกเลิก',
+      icon: '🗑️',
+      confirmBtnClass: 'btn-danger'
+    });
+    if (!confirmed) return;
+
+    if (row.id) {
+      try {
+        const res = await fetch(`/api/loans/${encodeURIComponent(loan.id)}/items/${encodeURIComponent(row.id)}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'ลบรายการไม่สำเร็จ');
+
+        applyServerState(data.state);
+        const updatedLoan = state.loans.find(l => l.id === loan.id);
+        if (updatedLoan) {
+          state.activeDispatchLoan = updatedLoan;
+          state.dispatchDraftItems = (updatedLoan.items || []).map(it => {
+            const existingTag = it.tag_id || '';
+            const assetObj = existingTag ? state.assets.find(a => a.tag_id === existingTag) : null;
+            const existingPhotos = Array.isArray(it.photos)
+              ? [...it.photos]
+              : Array.isArray(it.attachments)
+              ? it.attachments.filter(a => a.url).map(a => a.url)
+              : [];
+            return {
+              id: it.id,
+              brand: it.brand || (assetObj ? assetObj.brand : ''),
+              model: it.model || (assetObj ? assetObj.model : ''),
+              tag_id: existingTag,
+              serial_no: it.serial_no || (assetObj ? assetObj.serial_no : ''),
+              source: it.source_snapshot || (assetObj ? assetObj.source : 'Demo'),
+              accessories:
+                it.loan_accessories && it.loan_accessories.length > 0
+                  ? [...it.loan_accessories]
+                  : assetObj
+                  ? [...(assetObj.accessories || [])]
+                  : [],
+              photos: existingPhotos,
+              free_note: it.loan_free_note || (assetObj ? assetObj.free_note || '' : ''),
+              attachments: [...(it.attachments || [])],
+              returned: Boolean(it.returned)
+            };
+          });
+        } else {
+          state.dispatchDraftItems.splice(rowIdx, 1);
+        }
+
+        state.activeDispatchRowIdx = null;
+        renderDispatchTable();
+        updateDispatchSummary();
+        renderActiveView();
+        renderHeaderCounters();
+        showToast(data.message || `✓ ลบ ${itemName} ออกจากใบยืมเรียบร้อยแล้ว`);
+      } catch (err) {
+        showToast(`❌ ${err.message}`);
+      }
+    } else {
+      state.dispatchDraftItems.splice(rowIdx, 1);
+      state.activeDispatchRowIdx = null;
+      renderDispatchTable();
+      updateDispatchSummary();
+      showToast(`✓ ลบ ${itemName} ออกจากรายการจัด`);
+    }
+  }
+
   dispatchTableBody?.addEventListener('click', e => {
+    // Delete item from dispatch/picking modal
+    const delItemBtn = e.target.closest('[data-delete-dispatch-item]');
+    if (delItemBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const rowIdx = Number(delItemBtn.getAttribute('data-delete-dispatch-item'));
+      handleDeleteDispatchItem(rowIdx);
+      return;
+    }
 
     // Return checklist: clear scanned S/N
     const clearScanBtn = e.target.closest('[data-clear-ret-scan]');

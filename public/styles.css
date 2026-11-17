@@ -16673,6 +16673,40 @@ dialog.modal-company-settings.modal-fullscreen {
   background: #fee2e2;
 }
 
+.dispatch-row-action-btns {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-dispatch-delete-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.btn-dispatch-delete-item:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #ef4444;
+  transform: translateY(-1px);
+}
+
+.btn-dispatch-delete-item:active {
+  transform: translateY(0);
+}
+
 .badge-sn-waiting {
   font-size: 11.5px;
   color: #94a3b8;

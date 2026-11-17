@@ -1881,6 +1881,67 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
+    // Delete individual item from loan (เฉพาะใบที่ยังไม่ได้จัดของ: Requested หรือ กำลังจัดของ: Dispatching)
+    if (pathname.match(/^\/api\/loans\/[^/]+\/items\/[^/]+$/) && req.method === 'DELETE') {
+      const parts = pathname.split('/');
+      const loanId = decodeURIComponent(parts[3]);
+      const itemIdentifier = decodeURIComponent(parts[5]);
+
+      const loan = db.prepare('SELECT * FROM loans WHERE id = ?').get(loanId);
+      if (!loan) return sendJson(res, 404, { error: 'ไม่พบใบยืมนี้' });
+
+      // อนุญาตให้ลบได้เฉพาะสถานะ Requested หรือ Dispatching
+      if (loan.status !== 'Requested' && loan.status !== 'Dispatching') {
+        return sendJson(res, 400, {
+          error: `ไม่สามารถลบรายการในใบยืมสถานะ "${loan.status}" ได้ (ลบได้เฉพาะสถานะรอจัดของ หรือกำลังจัดของ)`
+        });
+      }
+
+      const allItems = db.prepare('SELECT * FROM loan_items WHERE loan_id = ?').all(loanId);
+      if (allItems.length <= 1) {
+        return sendJson(res, 400, {
+          error: 'ไม่สามารถลบรายการสุดท้ายได้ (ใบยืมต้องมีสินค้าอย่างน้อย 1 รายการ หากต้องการยกเลิกใบยืมทั้งหมด กรุณาใช้ปุ่มยกเลิกใบยืม)'
+        });
+      }
+
+      const targetItem = allItems.find(i => String(i.id) === itemIdentifier || i.tag_id === itemIdentifier);
+      if (!targetItem) {
+        return sendJson(res, 404, { error: 'ไม่พบรายการสินค้าที่ระบุในใบยืมนี้' });
+      }
+
+      db.exec('BEGIN TRANSACTION');
+      try {
+        // If this item was linked to an asset, release it back to Available
+        if (targetItem.tag_id) {
+          db.prepare(`UPDATE assets SET status = 'Available', current_loan_id = NULL WHERE tag_id = ? AND current_loan_id = ?`).run(targetItem.tag_id, loanId);
+        }
+
+        db.prepare('DELETE FROM loan_items WHERE id = ? AND loan_id = ?').run(targetItem.id, loanId);
+
+        // Re-check remaining items and update loan status if needed
+        const remainingItems = db.prepare('SELECT * FROM loan_items WHERE loan_id = ?').all(loanId);
+        const hasPicked = remainingItems.some(i => i.tag_id && i.serial_no);
+
+        if (loan.status === 'Dispatching' && !hasPicked) {
+          db.prepare(`UPDATE loans SET status = 'Requested' WHERE id = ?`).run(loanId);
+        }
+
+        db.exec('COMMIT');
+
+        const updatedState = getFullState();
+        const updatedLoan = updatedState.loans.find(l => l.id === loanId);
+        return sendJson(res, 200, {
+          success: true,
+          message: `ลบรายการ ${targetItem.model || ''} ออกจากใบยืมเรียบร้อยแล้ว`,
+          loan: updatedLoan,
+          state: updatedState
+        });
+      } catch (err) {
+        db.exec('ROLLBACK');
+        return sendJson(res, 500, { error: 'ลบรายการไม่สำเร็จ: ' + err.message });
+      }
+    }
+
     // Dispatch & Match S/N (คนจัดของหยิบ S/N มา Match กับรุ่นที่ขอ แล้วเปลี่ยนสถานะเป็น Dispatched "รอส่งมอบ")
     if (pathname.match(/^\/api\/loans\/[^/]+\/dispatch$/) && req.method === 'POST') {
       const loanId = pathname.split('/')[3];
