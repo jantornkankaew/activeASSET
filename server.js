@@ -2324,14 +2324,12 @@ const server = http.createServer(async (req, res) => {
             }
 
             s = s.replace(/จํากัด/g, 'จำกัด').replace(/สํานักงาน/g, 'สำนักงาน').replace(/\s+/g, ' ').trim();
-            // If Thai letters are artificially spaced out by search engine (e.g. "จ ำ ก ั ด" or "พิ วรรธ น์")
-            if (/[\u0E00-\u0E7F]\s+[\u0E00-\u0E7F]/.test(s)) {
-              // Collapse spaces between Thai characters, but keep spaces before/after English or numbers
-              s = s.replace(/([\u0E00-\u0E7F])\s+([\u0E00-\u0E7F])/g, '$1$2')
-                   .replace(/([\u0E00-\u0E7F])\s+([\u0E00-\u0E7F])/g, '$1$2');
-            }
-            // Strip trailing search noise (e.g. "โทร", "ที่อยู่", "สาขา", "pantip", English search noise)
+            // Clean up common search suffixes
             s = s.replace(/\s+(?:โทร|เบอร์โทร|เบอร์โทรศัพท์|ที่อยู่|ที่\s*อยู่|ติดต่อ|แผนที่|สาขา|สำนักงานใหญ่|pantip|job|career).*$/gi, '').trim();
+
+            // Ensure proper Thai corporate spacing: "บริษัท ... จำกัด"
+            s = s.replace(/^(บริษัท|บมจ\.?|บจก\.?|ห้างหุ้นส่วนจำกัด|หจก\.?)(?!\s)/, '$1 ');
+            s = s.replace(/(?<!\s)(จำกัด)(\s*\(มหาชน\))?$/, ' $1$2');
             s = cleanCompanyName(s);
 
             const isCorp = s.includes('บริษัท') || s.includes('ห้างหุ้นส่วน') || s.includes('จำกัด') || s.includes('มหาชน') || s.toLowerCase().includes('co., ltd') || s.toLowerCase().includes('ltd');
