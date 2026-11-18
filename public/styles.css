@@ -8359,7 +8359,32 @@ dialog.modal-send-email {
   min-height: 480px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
+}
+
+.gate-pass-sheet.size-dual .gp-table-wrap {
+  margin-bottom: 2px;
+  flex: 0 0 auto;
+}
+
+.gate-pass-sheet.size-dual .gp-terms-notice {
+  margin-top: 2px;
+  margin-bottom: 0;
+  flex: 0 0 auto;
+}
+
+.gate-pass-sheet.size-dual .gp-title {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.gate-pass-sheet.size-dual .gp-header-doc {
+  max-width: 45%;
+}
+
+.gate-pass-sheet.size-dual .gp-doc-heading {
+  flex-wrap: nowrap;
 }
 
 .gate-pass-sheet.size-dual .gp-signatures {
@@ -11128,18 +11153,18 @@ dialog.modal-send-email {
     max-height: 148.5mm !important;
     display: flex !important;
     flex-direction: column !important;
-    justify-content: stretch !important;
+    justify-content: flex-start !important;
     align-items: stretch !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
   }
 
   .gp-half-slot.gp-half-top {
-    padding: 5mm 8mm 6mm 8mm !important;
+    padding: 4.5mm 8mm 4.5mm 8mm !important;
   }
 
   .gp-half-slot.gp-half-bottom {
-    padding: 6mm 8mm 5mm 8mm !important;
+    padding: 3mm 8mm 9.5mm 8mm !important;
   }
 
   .gate-pass-dual-wrapper .gp-perforation-divider {
@@ -11205,10 +11230,10 @@ dialog.modal-send-email {
 
   .gate-pass-sheet.size-dual {
     width: 100% !important;
-    height: 137.5mm !important;
-    min-height: 137.5mm !important;
-    max-height: 137.5mm !important;
-    padding: 4.5mm 7.5mm 4.5mm !important;
+    height: 136mm !important;
+    min-height: 136mm !important;
+    max-height: 136mm !important;
+    padding: 4mm 7.5mm 4mm !important;
     font-size: 12px !important;
     line-height: 1.4 !important;
     border: 1.5px solid #334155 !important;
@@ -11218,7 +11243,7 @@ dialog.modal-send-email {
     margin: 0 !important;
     display: flex !important;
     flex-direction: column !important;
-    justify-content: space-between !important;
+    justify-content: flex-start !important;
   }
 
   .gate-pass-sheet.size-dual .gp-header {
@@ -11242,7 +11267,7 @@ dialog.modal-send-email {
     gap: 1.5px !important;
     flex: 1 1 auto !important;
     width: auto !important;
-    max-width: 65% !important;
+    max-width: 60% !important;
     min-width: 0 !important;
   }
 
@@ -11262,8 +11287,8 @@ dialog.modal-send-email {
   }
 
   .gate-pass-sheet.size-dual .gp-issuer-logo {
-    max-height: 40px !important;
-    max-width: 125px !important;
+    max-height: 38px !important;
+    max-width: 120px !important;
     object-fit: contain !important;
     display: block !important;
   }
@@ -11285,19 +11310,19 @@ dialog.modal-send-email {
   }
 
   .gate-pass-sheet.size-dual .gp-issuer-name-th {
-    font-size: 15px !important;
+    font-size: 14.5px !important;
     font-weight: 800 !important;
     line-height: 1.25 !important;
     white-space: nowrap !important;
   }
 
   .gate-pass-sheet.size-dual .gp-issuer-name-en {
-    font-size: 10.5px !important;
+    font-size: 10px !important;
     white-space: nowrap !important;
   }
 
   .gate-pass-sheet.size-dual .gp-issuer-meta-tax {
-    font-size: 10px !important;
+    font-size: 9.5px !important;
     line-height: 1.25 !important;
     white-space: nowrap !important;
   }
@@ -11307,7 +11332,7 @@ dialog.modal-send-email {
     flex-direction: column !important;
     gap: 1.5px !important;
     width: 100% !important;
-    font-size: 9.5px !important;
+    font-size: 9px !important;
     line-height: 1.3 !important;
     margin-top: 1px !important;
   }
@@ -11323,7 +11348,7 @@ dialog.modal-send-email {
     align-items: center !important;
     flex-wrap: wrap !important;
     gap: 8px !important;
-    font-size: 9.5px !important;
+    font-size: 9px !important;
   }
 
   .gate-pass-sheet.size-dual .gp-contact-item {
@@ -11333,8 +11358,8 @@ dialog.modal-send-email {
   }
 
   .gate-pass-sheet.size-dual .gp-contact-icon {
-    width: 9.5px !important;
-    height: 9.5px !important;
+    width: 9px !important;
+    height: 9px !important;
     flex-shrink: 0 !important;
   }
 
@@ -11345,25 +11370,28 @@ dialog.modal-send-email {
     text-align: right !important;
     flex: 0 0 auto !important;
     width: auto !important;
-    max-width: 38% !important;
+    max-width: 45% !important;
   }
 
   .gate-pass-sheet.size-dual .gp-doc-heading {
     display: flex !important;
     align-items: center !important;
     gap: 6px !important;
+    flex-wrap: nowrap !important;
   }
 
   .gate-pass-sheet.size-dual .gp-title {
-    font-size: 17px !important;
-    font-weight: 800 !important;
-    line-height: 1.2 !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+    white-space: nowrap !important;
   }
 
   .gate-pass-sheet.size-dual .gp-sheet-badge {
-    font-size: 10px !important;
+    font-size: 9px !important;
     font-weight: 700 !important;
-    padding: 2.5px 8px !important;
+    padding: 2px 6px !important;
+    white-space: nowrap !important;
   }
 
   .gate-pass-sheet.size-dual .gp-meta-block-wrap {
@@ -11403,8 +11431,8 @@ dialog.modal-send-email {
   .gate-pass-sheet.size-dual .gp-info-grid {
     grid-template-columns: 1fr 1fr !important;
     gap: 5px 22px !important;
-    margin-bottom: 8px !important;
-    padding: 8px 14px !important;
+    margin-bottom: 6px !important;
+    padding: 7px 14px !important;
     font-size: 12.5px !important;
     line-height: 1.4 !important;
     border-radius: 6px !important;
@@ -11426,13 +11454,13 @@ dialog.modal-send-email {
   }
 
   .gate-pass-sheet.size-dual .gp-table-wrap {
-    margin-bottom: 6px !important;
-    flex: 1 1 auto !important;
+    margin-bottom: 2px !important;
+    flex: 0 0 auto !important;
   }
 
   .gate-pass-sheet.size-dual .gp-table th {
-    padding: 8px 10px !important;
-    font-size: 13px !important;
+    padding: 7px 10px !important;
+    font-size: 12.5px !important;
     font-weight: 700 !important;
     background: #f1f5f9 !important;
     border: 1px solid #64748b !important;
@@ -11441,15 +11469,15 @@ dialog.modal-send-email {
   }
 
   .gate-pass-sheet.size-dual .gp-table td {
-    padding: 10px 12px !important;
-    font-size: 13px !important;
-    line-height: 1.45 !important;
+    padding: 8px 12px !important;
+    font-size: 12.5px !important;
+    line-height: 1.4 !important;
     border: 1px solid #64748b !important;
     color: #0f172a !important;
   }
 
   .gate-pass-sheet.size-dual .gp-sn-code {
-    font-size: 13.5px !important;
+    font-size: 13px !important;
     font-weight: 700 !important;
     padding: 0 !important;
     border: none !important;
@@ -11464,7 +11492,7 @@ dialog.modal-send-email {
     border: none !important;
     border-radius: 0 !important;
     padding: 0 !important;
-    font-size: 12.5px !important;
+    font-size: 12px !important;
     line-height: 1.35 !important;
     margin: 1px 8px 1px 0 !important;
   }
@@ -11475,10 +11503,10 @@ dialog.modal-send-email {
   }
 
   .gate-pass-sheet.size-dual .gp-terms-notice {
-    font-size: 11px !important;
-    margin-top: 6px !important;
-    margin-bottom: 6px !important;
-    line-height: 1.3 !important;
+    font-size: 10px !important;
+    margin-top: 2px !important;
+    margin-bottom: 0 !important;
+    line-height: 1.25 !important;
     color: #475569 !important;
     flex-shrink: 0 !important;
   }
@@ -11499,9 +11527,9 @@ dialog.modal-send-email {
   }
 
   .gate-pass-sheet.size-dual .gp-sig-slot {
-    min-height: 42px !important;
-    height: 42px !important;
-    margin-bottom: 4px !important;
+    min-height: 38px !important;
+    height: 38px !important;
+    margin-bottom: 3px !important;
     display: flex !important;
     align-items: flex-end !important;
     justify-content: center !important;
@@ -11510,17 +11538,17 @@ dialog.modal-send-email {
   .gate-pass-sheet.size-dual .gp-sig-line {
     width: 82% !important;
     max-width: 155px !important;
-    margin: 0 auto 5px !important;
+    margin: 0 auto 4px !important;
     border-bottom: 1.5px dashed #64748b !important;
   }
 
   .gate-pass-sheet.size-dual .gp-sig-preview-wrap .gp-sig-img {
-    height: 36px !important;
-    max-width: 110px !important;
+    height: 34px !important;
+    max-width: 105px !important;
   }
 
   .gate-pass-sheet.size-dual .gp-sig-time {
-    font-size: 9px !important;
+    font-size: 8.5px !important;
     color: #047857 !important;
     background: transparent !important;
     border: none !important;
@@ -11529,16 +11557,16 @@ dialog.modal-send-email {
   }
 
   .gate-pass-sheet.size-dual .gp-sig-role {
-    font-size: 12.5px !important;
+    font-size: 12px !important;
     font-weight: 700 !important;
     color: #0f172a !important;
   }
 
   .gate-pass-sheet.size-dual .gp-sig-name,
   .gate-pass-sheet.size-dual .gp-sig-date {
-    font-size: 11px !important;
+    font-size: 10.5px !important;
     color: #475569 !important;
-    margin-top: 2px !important;
+    margin-top: 1px !important;
   }
 
   .gp-perf-line {
