@@ -133,7 +133,58 @@ document.addEventListener('DOMContentLoaded', () => {
   setupAuthSystem();
   fetchFullState();
   initRealtimeSync();
+  initMobileKanbanBar();
 });
+
+function initMobileKanbanBar() {
+  const bar = document.getElementById('kanbanMobileColBar');
+  const scrollWrap = document.getElementById('kanbanClassicWrap');
+  if (!bar || !scrollWrap) return;
+
+  bar.addEventListener('click', e => {
+    const btn = e.target.closest('.col-pill-btn');
+    if (!btn) return;
+    const targetId = btn.getAttribute('data-col-target');
+    const targetCol = document.getElementById(`kanbanCol_${targetId}`);
+    if (targetCol) {
+      bar.querySelectorAll('.col-pill-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      targetCol.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  });
+
+  // Track swipe scroll position to update active pill
+  let scrollDebounce = null;
+  scrollWrap.addEventListener('scroll', () => {
+    if (window.innerWidth > 768) return;
+    if (scrollDebounce) clearTimeout(scrollDebounce);
+    scrollDebounce = setTimeout(() => {
+      const cols = scrollWrap.querySelectorAll('.kanban-col');
+      const wrapCenter = scrollWrap.scrollLeft + (scrollWrap.clientWidth / 2);
+      let closestColId = null;
+      let minDistance = Infinity;
+
+      cols.forEach(col => {
+        const colCenter = col.offsetLeft + (col.offsetWidth / 2);
+        const dist = Math.abs(wrapCenter - colCenter);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestColId = col.getAttribute('data-col-id');
+        }
+      });
+
+      if (closestColId) {
+        bar.querySelectorAll('.col-pill-btn').forEach(btn => {
+          if (btn.getAttribute('data-col-target') === closestColId) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+      }
+    }, 60);
+  }, { passive: true });
+}
 
 function restoreNavigationState() {
   const hash = window.location.hash.replace(/^#/, '');
@@ -434,7 +485,18 @@ function applyServerState(data) {
   syncNavigationFromHash();
 }
 
+function isTouchOrMobileDevice() {
+  return (
+    window.innerWidth <= 768 ||
+    'ontouchstart' in window ||
+    navigator.maxTouchPoints > 0 ||
+    /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+  );
+}
+window.isTouchOrMobileDevice = isTouchOrMobileDevice;
+
 function focusSearchInputIfIdle(delay = 150) {
+  if (isTouchOrMobileDevice()) return; // Never auto-focus and trigger virtual keyboard on mobile
   setTimeout(() => {
     const searchInput = document.getElementById('searchInput');
     const loginOverlay = document.getElementById('loginOverlay');
@@ -683,7 +745,7 @@ function renderKanbanBoard() {
       .join('');
 
     return `
-      <div class="kanban-col ${col.theme}">
+      <div class="kanban-col ${col.theme}" id="kanbanCol_${col.id}" data-col-id="${col.id}">
         <div class="col-header">
           <div class="col-header-left">
             <div class="col-icon-box">${col.icon}</div>
@@ -703,6 +765,19 @@ function renderKanbanBoard() {
       </div>
     `;
   }).join('');
+
+  // Update mobile column selector badges
+  const mBadgeMap = {
+    waiting_dispatch: 'mCountColWaitingDispatch',
+    waiting_delivery: 'mCountColWaitingDelivery',
+    active_loan: 'mCountColActiveLoan',
+    overdue: 'mCountColOverdue'
+  };
+  MAIN_COLUMNS.forEach(col => {
+    const colLoans = filteredLoans.filter(l => l.main_column === col.id);
+    const badgeEl = document.getElementById(mBadgeMap[col.id]);
+    if (badgeEl) badgeEl.textContent = colLoans.length;
+  });
 }
 
 const THAI_SHORT_MONTHS = [
@@ -1854,7 +1929,7 @@ function openCreateLoanModal(updateHash = true) {
   document.getElementById('loanDialog').showModal();
   setTimeout(() => {
     const firstInput = document.querySelector('[data-excel-model-input="0"]');
-    if (firstInput) firstInput.focus();
+    if (firstInput && !isTouchOrMobileDevice()) firstInput.focus();
   }, 100);
 }
 
@@ -1996,7 +2071,7 @@ function openEditLoanModal(loanId, updateHash = true) {
   document.getElementById('loanDialog').showModal();
   setTimeout(() => {
     const firstInput = document.querySelector('[data-excel-model-input="0"]');
-    if (firstInput) firstInput.focus();
+    if (firstInput && !isTouchOrMobileDevice()) firstInput.focus();
   }, 100);
 }
 
@@ -2204,7 +2279,7 @@ function openSnModal(rowIdx) {
 
   setTimeout(() => {
     const firstInput = container ? container.querySelector('.sn-modal-slot-input') : null;
-    if (firstInput) {
+    if (firstInput && !isTouchOrMobileDevice()) {
       firstInput.focus();
     }
     closeSnDropdown();
@@ -10062,7 +10137,7 @@ function setupSendEmailModal() {
     }
 
     modal.showModal();
-    if (toInp && !toInp.value) {
+    if (toInp && !toInp.value && !isTouchOrMobileDevice()) {
       setTimeout(() => toInp.focus(), 80);
     }
   }

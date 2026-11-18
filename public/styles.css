@@ -829,6 +829,10 @@ input[type="search"]::-webkit-search-results-decoration {
   flex-direction: column;
 }
 
+.kanban-mobile-col-bar {
+  display: none;
+}
+
 .kanban-scroll-wrap {
   flex: 1;
   height: 100%;
@@ -8961,6 +8965,260 @@ dialog.modal-send-email {
    MOBILE RESPONSIVE STYLES (สำหรับหน้าจอสมาร์ทโฟนและแท็บเล็ต)
    ============================================================================ */
 @media screen and (max-width: 768px) {
+  /* 0. Viewport & Global Screen Fit on Mobile (Fix iPhone 12 overflow) */
+  html, body {
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    height: 100% !important;
+    height: 100dvh !important;
+    -webkit-text-size-adjust: 100% !important;
+    touch-action: manipulation;
+  }
+
+  .app-shell {
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    height: 100% !important;
+    height: 100dvh !important;
+  }
+
+  .page-body {
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow: hidden !important;
+    padding: 6px 8px 10px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Safe area inset support for notched iPhones (iPhone 12/13/14/15) */
+  .app-header {
+    height: auto !important;
+    min-height: 52px !important;
+    padding-top: max(8px, env(safe-area-inset-top)) !important;
+    padding-left: max(10px, env(safe-area-inset-left)) !important;
+    padding-right: max(10px, env(safe-area-inset-right)) !important;
+    padding-bottom: 8px !important;
+  }
+
+  .header-inner {
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    grid-template-areas:
+      "brand right"
+      "tabs tabs"
+      "center center" !important;
+    row-gap: 6px !important;
+    column-gap: 8px !important;
+    align-items: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .header-divider {
+    display: none !important;
+  }
+
+  .brand-group {
+    grid-area: brand !important;
+  }
+
+  .header-right {
+    grid-area: right !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    margin-left: 0 !important;
+  }
+
+  .header-right .btn-create-loan {
+    display: none !important;
+  }
+
+  .view-switcher {
+    grid-area: tabs !important;
+    width: 100% !important;
+    display: flex !important;
+    justify-content: stretch !important;
+  }
+
+  .view-switcher .view-btn {
+    flex: 1 !important;
+    justify-content: center !important;
+    padding: 5px 6px !important;
+    font-size: 11.5px !important;
+    text-align: center !important;
+  }
+
+  .header-center {
+    grid-area: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  /* 0.1 Strict iOS Safari Input Font-Size (Prevents auto-zoom upon cursor focus) */
+  input,
+  select,
+  textarea,
+  .form-control,
+  .search-wrap input,
+  .search-input,
+  .dispatch-barcode-input,
+  .login-input,
+  .cell-inline-edit,
+  .tag-add-input,
+  .date-field input[type="date"],
+  .field-group input,
+  .field-group select {
+    font-size: 16px !important;
+  }
+
+  /* 0.2 Mobile Kanban Segmented Navigation Bar (แถบสลับคอลัมน์บนมือถือ) */
+  .kanban-mobile-col-bar {
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 2px 8px;
+    background: transparent;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-shrink: 0;
+    scrollbar-width: none;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .kanban-mobile-col-bar::-webkit-scrollbar {
+    display: none;
+  }
+  .col-pill-btn {
+    flex: 1 1 0%;
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 6px 4px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 9999px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  .col-pill-btn:active {
+    transform: scale(0.96);
+  }
+  .col-pill-btn.active {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.16);
+  }
+  .col-pill-btn .col-pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .col-pill-btn.active .col-pill-dot {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+  }
+  .dot-blue { background: #3b82f6; }
+  .dot-purple { background: #8b5cf6; }
+  .dot-emerald { background: #10b981; }
+  .dot-rose { background: #f43f5e; }
+
+  .col-pill-badge {
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 9999px;
+    background: #f1f5f9;
+    color: #475569;
+    line-height: 1.2;
+  }
+  .col-pill-btn.active .col-pill-badge {
+    background: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+  }
+
+  /* 0.3 Responsive Mobile Kanban Board (Swipeable & Fitted to Screen) */
+  .kanban-view-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  .kanban-scroll-wrap {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: smooth !important;
+    padding: 0 0 calc(76px + env(safe-area-inset-bottom, 0px)) 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .kanban-board {
+    display: flex !important;
+    flex-direction: row !important;
+    min-width: 0 !important;
+    width: auto !important;
+    height: 100% !important;
+    gap: 12px !important;
+    padding: 0 2px !important;
+    align-items: stretch !important;
+  }
+
+  .kanban-col {
+    flex: 0 0 calc(100vw - 20px) !important;
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+    min-width: calc(100vw - 20px) !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    scroll-snap-align: center !important;
+    scroll-snap-stop: always !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 24px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Column Header Sticky */
+  .col-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 30 !important;
+    background: var(--bg-page) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  /* Speed Dial FAB position respecting safe area */
+  .fab-speed-dial-wrap {
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+    right: calc(16px + env(safe-area-inset-right, 0px)) !important;
+  }
+
   /* 1. Fullscreen Modals on Mobile */
   dialog.modal-fullscreen {
     position: fixed !important;

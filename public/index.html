@@ -2,12 +2,12 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>activeASSET v2 — กระดานติดตามการยืม-คืน (Kanban)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=20261117_1" />
+  <link rel="stylesheet" href="/styles.css?v=20261118_1" />
   <script>
     (function() {
       try {
@@ -53,7 +53,6 @@
               class="form-control search-input"
               placeholder="ค้นหา (ใบยืม, ลูกค้า, S/N)..."
               autocomplete="off"
-              autofocus
             />
             <button type="button" class="btn-input-clear clear-search hidden" id="btnClearSearch" data-clear-target="searchInput" aria-label="ล้างคำค้นหา" title="ล้างค่า">✕</button>
             <button type="button" class="btn-search-barcode-scan" id="btnSearchBarcodeScan" title="สแกนบาร์โค้ด / QR ด้วยกล้อง" aria-label="สแกนบาร์โค้ดด้วยกล้อง">
@@ -170,6 +169,30 @@
            VIEW 1: KANBAN BOARD (Modern 2D Card Board - Velzon / Jira Style)
            =================================================================== -->
       <main id="kanbanView" class="kanban-view-container">
+        <!-- Mobile Column Navigation Bar (แสดงเฉพาะหน้าจอมือถือ/แท็บเล็ต) -->
+        <div class="kanban-mobile-col-bar" id="kanbanMobileColBar" aria-label="แถบสลับคอลัมน์บนมือถือ">
+          <button type="button" class="col-pill-btn active" data-col-target="waiting_dispatch">
+            <span class="col-pill-dot dot-blue"></span>
+            <span class="col-pill-label">รอจัด</span>
+            <span class="col-pill-badge" id="mCountColWaitingDispatch">0</span>
+          </button>
+          <button type="button" class="col-pill-btn" data-col-target="waiting_delivery">
+            <span class="col-pill-dot dot-purple"></span>
+            <span class="col-pill-label">รอส่ง</span>
+            <span class="col-pill-badge" id="mCountColWaitingDelivery">0</span>
+          </button>
+          <button type="button" class="col-pill-btn" data-col-target="active_loan">
+            <span class="col-pill-dot dot-emerald"></span>
+            <span class="col-pill-label">กำลังยืม</span>
+            <span class="col-pill-badge" id="mCountColActiveLoan">0</span>
+          </button>
+          <button type="button" class="col-pill-btn" data-col-target="overdue">
+            <span class="col-pill-dot dot-rose"></span>
+            <span class="col-pill-label">เกินกำหนด</span>
+            <span class="col-pill-badge" id="mCountColOverdue">0</span>
+          </button>
+        </div>
+
         <div class="kanban-scroll-wrap" id="kanbanClassicWrap">
           <div class="kanban-board" id="kanbanBoard">
             <!-- Rendered dynamically by app.js -->
@@ -819,7 +842,6 @@
             class="form-control dispatch-barcode-input"
             placeholder="ยิงบาร์โค้ด S/N หรือ Tag ID เพื่อจัดของ..."
             autocomplete="off"
-            autofocus
           />
           <div class="input-actions-end dispatch-barcode-actions">
             <button type="button" class="btn-input-clear hidden" data-clear-target="dispatchGlobalBarcodeInput" title="ล้างค่า">✕</button>
@@ -3092,6 +3114,6 @@
 
   <script src="/qrcode.min.js"></script>
   <script src="/html5-qrcode.min.js"></script>
-  <script src="/app.js?v=20261116_1"></script>
+  <script src="/app.js?v=20261118_1"></script>
 </body>
 </html>
