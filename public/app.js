@@ -134,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchFullState();
   initRealtimeSync();
   initMobileKanbanBar();
+  initMobileKeyboardControl();
 });
 
 function initMobileKanbanBar() {
@@ -184,6 +185,217 @@ function initMobileKanbanBar() {
       }
     }, 60);
   }, { passive: true });
+}
+
+function initMobileKeyboardControl() {
+  let mobileKbdMode = localStorage.getItem('activeasset_mobile_keyboard_mode') || 'suppressed';
+  window.mobileKeyboardMode = mobileKbdMode;
+
+  let activeFocusedInput = null;
+  let pillHideTimeout = null;
+
+  const pill = document.getElementById('mobileKeyboardPill');
+  const pillBtn = document.getElementById('btnMobileToggleKeyboard');
+  const pillLabel = document.getElementById('kbdPillLabel');
+  const btnToggleSearchKbd = document.getElementById('btnToggleSearchKeyboard');
+  const btnToggleDispatchKbd = document.getElementById('btnToggleDispatchKeyboard');
+  const btnMenuToggleMode = document.getElementById('btnToggleMobileKeyboardMode');
+  const labelMenuToggleMode = document.getElementById('labelMobileKeyboardMode');
+
+  function isInputEligible(el) {
+    if (!el || !el.tagName) return false;
+    const tag = el.tagName.toLowerCase();
+    if (tag === 'textarea') return true;
+    if (tag === 'input') {
+      const type = (el.type || 'text').toLowerCase();
+      return ['text', 'search', 'tel', 'url', 'email', 'number', 'password'].includes(type);
+    }
+    return false;
+  }
+
+  function updateMenuLabel() {
+    if (!labelMenuToggleMode) return;
+    if (window.mobileKeyboardMode === 'suppressed') {
+      labelMenuToggleMode.textContent = 'คีย์บอร์ดมือถือ: ซ่อนอัตโนมัติ (เปิด/ปิดด้วยปุ่ม)';
+    } else {
+      labelMenuToggleMode.textContent = 'คีย์บอร์ดมือถือ: เด้งอัตโนมัติตามปกติ';
+    }
+  }
+  updateMenuLabel();
+
+  if (btnMenuToggleMode) {
+    btnMenuToggleMode.addEventListener('click', () => {
+      window.mobileKeyboardMode = window.mobileKeyboardMode === 'suppressed' ? 'auto' : 'suppressed';
+      localStorage.setItem('activeasset_mobile_keyboard_mode', window.mobileKeyboardMode);
+      updateMenuLabel();
+      showToast(
+        window.mobileKeyboardMode === 'suppressed'
+          ? '🛡️ โหมดคีย์บอร์ดมือถือ: ซ่อนอัตโนมัติเมื่อแตะ/โฟกัส (มีปุ่มเปิด/ปิด)'
+          : '📱 โหมดคีย์บอร์ดมือถือ: เด้งอัตโนมัติตามปกติ'
+      );
+    });
+  }
+
+  function updatePillVisuals(inputEl) {
+    if (!pill || !pillBtn) return;
+    if (!inputEl) inputEl = activeFocusedInput || document.activeElement;
+    if (!isInputEligible(inputEl)) {
+      pill.classList.add('hidden');
+      return;
+    }
+
+    const isKeyboardActive =
+      inputEl.dataset.keyboardActive === 'true' ||
+      (inputEl.getAttribute('inputmode') && inputEl.getAttribute('inputmode') !== 'none');
+
+    if (isKeyboardActive) {
+      pillBtn.classList.add('active');
+      if (pillLabel) pillLabel.textContent = 'ซ่อนแป้นพิมพ์';
+      if (btnToggleSearchKbd) btnToggleSearchKbd.classList.add('active');
+      if (btnToggleDispatchKbd) btnToggleDispatchKbd.classList.add('active');
+    } else {
+      pillBtn.classList.remove('active');
+      if (pillLabel) pillLabel.textContent = 'แสดงแป้นพิมพ์';
+      if (btnToggleSearchKbd) btnToggleSearchKbd.classList.remove('active');
+      if (btnToggleDispatchKbd) btnToggleDispatchKbd.classList.remove('active');
+    }
+
+    if (isTouchOrMobileDevice()) {
+      pill.classList.remove('hidden');
+    }
+  }
+
+  // Pre-suppress inputs on touchstart / pointerdown before iOS Safari attempts to spawn SIP keyboard
+  const suppressOnTouch = (e) => {
+    if (!isTouchOrMobileDevice() || window.mobileKeyboardMode !== 'suppressed') return;
+    const target = e.target.closest('input, textarea');
+    if (!target || !isInputEligible(target)) return;
+
+    if (!target.dataset.keyboardActive) {
+      if (!target.dataset.originalInputmode) {
+        target.dataset.originalInputmode = target.getAttribute('inputmode') || (target.type === 'number' ? 'numeric' : 'text');
+      }
+      target.setAttribute('inputmode', 'none');
+    }
+  };
+
+  document.addEventListener('touchstart', suppressOnTouch, { capture: true, passive: true });
+  document.addEventListener('pointerdown', suppressOnTouch, { capture: true, passive: true });
+
+  // On focusin: keep track of active input and present the accessory toggle
+  document.addEventListener('focusin', (e) => {
+    const target = e.target;
+    if (!isInputEligible(target)) return;
+
+    activeFocusedInput = target;
+    if (pillHideTimeout) clearTimeout(pillHideTimeout);
+
+    if (isTouchOrMobileDevice() && window.mobileKeyboardMode === 'suppressed') {
+      if (!target.dataset.keyboardActive) {
+        if (!target.dataset.originalInputmode) {
+          target.dataset.originalInputmode = target.getAttribute('inputmode') || (target.type === 'number' ? 'numeric' : 'text');
+        }
+        target.setAttribute('inputmode', 'none');
+      }
+    }
+
+    updatePillVisuals(target);
+  });
+
+  // On focusout: smoothly hide the accessory pill after a short delay
+  document.addEventListener('focusout', (e) => {
+    pillHideTimeout = setTimeout(() => {
+      const currentActive = document.activeElement;
+      if (!isInputEligible(currentActive)) {
+        if (pill) pill.classList.add('hidden');
+        if (btnToggleSearchKbd) btnToggleSearchKbd.classList.remove('active');
+        if (btnToggleDispatchKbd) btnToggleDispatchKbd.classList.remove('active');
+        activeFocusedInput = null;
+      }
+    }, 280);
+  });
+
+  // Toggle function for a specific input
+  function toggleInputKeyboard(inputEl) {
+    if (!inputEl) inputEl = activeFocusedInput || document.activeElement;
+    if (!isInputEligible(inputEl)) {
+      inputEl = document.getElementById('searchInput');
+    }
+    if (!inputEl) return;
+
+    activeFocusedInput = inputEl;
+    const isCurrentlyActive =
+      inputEl.dataset.keyboardActive === 'true' ||
+      (inputEl.getAttribute('inputmode') && inputEl.getAttribute('inputmode') !== 'none');
+
+    if (isCurrentlyActive) {
+      // HIDE KEYBOARD
+      delete inputEl.dataset.keyboardActive;
+      inputEl.setAttribute('inputmode', 'none');
+      inputEl.blur();
+      setTimeout(() => {
+        if (activeFocusedInput === inputEl) {
+          inputEl.focus(); // Retain caret focus without popping up keyboard
+        }
+      }, 50);
+      updatePillVisuals(inputEl);
+      showToast('⌨️ ซ่อนแป้นพิมพ์แล้ว');
+    } else {
+      // SHOW KEYBOARD
+      inputEl.dataset.keyboardActive = 'true';
+      const orig = inputEl.dataset.originalInputmode || (inputEl.type === 'number' ? 'numeric' : 'text');
+      inputEl.setAttribute('inputmode', orig);
+      inputEl.focus();
+      updatePillVisuals(inputEl);
+      showToast('⌨️ แสดงแป้นพิมพ์แล้ว');
+    }
+  }
+  window.toggleInputKeyboard = toggleInputKeyboard;
+
+  // Hook floating pill button
+  if (pillBtn) {
+    pillBtn.addEventListener('mousedown', e => e.preventDefault());
+    pillBtn.addEventListener('click', e => {
+      e.preventDefault();
+      toggleInputKeyboard(activeFocusedInput);
+    });
+  }
+
+  // Hook in-bar button for searchInput
+  if (btnToggleSearchKbd) {
+    btnToggleSearchKbd.addEventListener('mousedown', e => e.preventDefault());
+    btnToggleSearchKbd.addEventListener('click', e => {
+      e.preventDefault();
+      const searchInp = document.getElementById('searchInput');
+      toggleInputKeyboard(searchInp);
+    });
+  }
+
+  // Hook in-bar button for dispatchGlobalBarcodeInput
+  if (btnToggleDispatchKbd) {
+    btnToggleDispatchKbd.addEventListener('mousedown', e => e.preventDefault());
+    btnToggleDispatchKbd.addEventListener('click', e => {
+      e.preventDefault();
+      const dispatchInp = document.getElementById('dispatchGlobalBarcodeInput');
+      toggleInputKeyboard(dispatchInp);
+    });
+  }
+
+  // Viewport tracking for iOS virtual keyboard
+  if (window.visualViewport) {
+    const updatePillPos = () => {
+      if (!pill || pill.classList.contains('hidden')) return;
+      const vv = window.visualViewport;
+      const bottomOffset = window.innerHeight - (vv.offsetTop + vv.height);
+      if (bottomOffset > 80) {
+        pill.style.bottom = `${bottomOffset + 12}px`;
+      } else {
+        pill.style.bottom = '';
+      }
+    };
+    window.visualViewport.addEventListener('resize', updatePillPos);
+    window.visualViewport.addEventListener('scroll', updatePillPos);
+  }
 }
 
 function restoreNavigationState() {

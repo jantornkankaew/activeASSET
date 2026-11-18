@@ -301,7 +301,7 @@ body {
 .search-wrap input {
   width: 100%;
   height: 32px;
-  padding: 0 62px 0 30px;
+  padding: 0 84px 0 30px;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
   background: #f8fafc;
@@ -317,6 +317,44 @@ body {
   border-color: #2563eb;
   background: #ffffff;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.btn-keyboard-toggle {
+  position: absolute;
+  right: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+  z-index: 4;
+}
+
+.btn-keyboard-toggle:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.btn-keyboard-toggle:active {
+  transform: translateY(-50%) scale(0.92);
+}
+
+.btn-keyboard-toggle.active {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.btn-keyboard-toggle svg {
+  stroke: currentColor;
 }
 
 .btn-search-barcode-scan {
@@ -381,7 +419,7 @@ input[type="search"]::-webkit-search-results-decoration {
 .search-wrap .btn-input-clear,
 .search-wrap .clear-search {
   position: absolute;
-  right: 34px !important;
+  right: 58px !important;
   top: 50%;
   transform: translateY(-50%);
   width: 20px;
@@ -15928,6 +15966,88 @@ dialog.modal-company-settings.modal-fullscreen {
   gap: 8px;
   margin-left: auto;
   flex-shrink: 0;
+}
+
+.dispatch-barcode-actions .btn-keyboard-toggle {
+  position: static;
+  transform: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+}
+
+.dispatch-barcode-actions .btn-keyboard-toggle:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.dispatch-barcode-actions .btn-keyboard-toggle.active {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+/* Floating Mobile Keyboard Show/Hide Accessory Pill */
+.mobile-keyboard-pill {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  left: calc(16px + env(safe-area-inset-left, 0px));
+  z-index: 10005;
+  display: flex;
+  align-items: center;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease, bottom 0.15s ease;
+  pointer-events: auto;
+}
+
+.mobile-keyboard-pill.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(14px) scale(0.92);
+}
+
+.btn-mobile-keyboard-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #0f172a;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.32), 0 1px 3px rgba(0, 0, 0, 0.18);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.btn-mobile-keyboard-pill:active {
+  transform: scale(0.94);
+  background: #1e293b;
+}
+
+.btn-mobile-keyboard-pill.active {
+  background: #2563eb;
+  border-color: #60a5fa;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.42);
+}
+
+.btn-mobile-keyboard-pill .kbd-pill-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-mobile-keyboard-pill .kbd-pill-icon svg {
+  stroke: currentColor;
 }
 
 .btn-dispatch-camera-scan {

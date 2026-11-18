@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=20261118_3" />
+  <link rel="stylesheet" href="/styles.css?v=20261118_4" />
   <script>
     (function() {
       try {
@@ -55,6 +55,20 @@
               autocomplete="off"
             />
             <button type="button" class="btn-input-clear clear-search hidden" id="btnClearSearch" data-clear-target="searchInput" aria-label="ล้างคำค้นหา" title="ล้างค่า">✕</button>
+            <button type="button" class="btn-keyboard-toggle" id="btnToggleSearchKeyboard" title="แสดง/ซ่อน แป้นพิมพ์บนหน้าจอ (Show/Hide Keyboard)" aria-label="แสดง/ซ่อน แป้นพิมพ์">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                <line x1="6" y1="8" x2="6" y2="8"></line>
+                <line x1="10" y1="8" x2="10" y2="8"></line>
+                <line x1="14" y1="8" x2="14" y2="8"></line>
+                <line x1="18" y1="8" x2="18" y2="8"></line>
+                <line x1="6" y1="12" x2="6" y2="12"></line>
+                <line x1="10" y1="12" x2="10" y2="12"></line>
+                <line x1="14" y1="12" x2="14" y2="12"></line>
+                <line x1="18" y1="12" x2="18" y2="12"></line>
+                <line x1="7" y1="16" x2="17" y2="16"></line>
+              </svg>
+            </button>
             <button type="button" class="btn-search-barcode-scan" id="btnSearchBarcodeScan" title="สแกนบาร์โค้ด / QR ด้วยกล้อง" aria-label="สแกนบาร์โค้ดด้วยกล้อง">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
@@ -100,6 +114,21 @@
                 </div>
               </div>
               <div class="user-dropdown-divider"></div>
+              <button type="button" class="user-dropdown-item" id="btnToggleMobileKeyboardMode" role="menuitem">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                  <line x1="6" y1="8" x2="6" y2="8"></line>
+                  <line x1="10" y1="8" x2="10" y2="8"></line>
+                  <line x1="14" y1="8" x2="14" y2="8"></line>
+                  <line x1="18" y1="8" x2="18" y2="8"></line>
+                  <line x1="6" y1="12" x2="6" y2="12"></line>
+                  <line x1="10" y1="12" x2="10" y2="12"></line>
+                  <line x1="14" y1="12" x2="14" y2="12"></line>
+                  <line x1="18" y1="12" x2="18" y2="12"></line>
+                  <line x1="7" y1="16" x2="17" y2="16"></line>
+                </svg>
+                <span id="labelMobileKeyboardMode">คีย์บอร์ดมือถือ: ซ่อนอัตโนมัติ (เปิด/ปิด)</span>
+              </button>
               <button type="button" class="user-dropdown-item" id="btnOpenSettingsFromUser" role="menuitem">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="3"></circle>
@@ -845,6 +874,20 @@
           />
           <div class="input-actions-end dispatch-barcode-actions">
             <button type="button" class="btn-input-clear hidden" data-clear-target="dispatchGlobalBarcodeInput" title="ล้างค่า">✕</button>
+            <button type="button" class="btn-keyboard-toggle" id="btnToggleDispatchKeyboard" data-keyboard-target="dispatchGlobalBarcodeInput" title="แสดง/ซ่อน แป้นพิมพ์บนหน้าจอ (Show/Hide Keyboard)" aria-label="แสดง/ซ่อน แป้นพิมพ์">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                <line x1="6" y1="8" x2="6" y2="8"></line>
+                <line x1="10" y1="8" x2="10" y2="8"></line>
+                <line x1="14" y1="8" x2="14" y2="8"></line>
+                <line x1="18" y1="8" x2="18" y2="8"></line>
+                <line x1="6" y1="12" x2="6" y2="12"></line>
+                <line x1="10" y1="12" x2="10" y2="12"></line>
+                <line x1="14" y1="12" x2="14" y2="12"></line>
+                <line x1="18" y1="12" x2="18" y2="12"></line>
+                <line x1="7" y1="16" x2="17" y2="16"></line>
+              </svg>
+            </button>
             <button type="button" class="btn-dispatch-camera-scan" id="btnDispatchCameraScan" title="เปิดกล้องสแกนบาร์โค้ด / QR ด้วยมือถือ" aria-label="สแกนบาร์โค้ดด้วยกล้อง">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
@@ -3112,8 +3155,29 @@
   <div id="printMount" class="print-only"></div>
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
+  <!-- Floating Mobile Keyboard Show/Hide Accessory Pill -->
+  <div id="mobileKeyboardPill" class="mobile-keyboard-pill hidden" aria-live="polite">
+    <button type="button" id="btnMobileToggleKeyboard" class="btn-mobile-keyboard-pill" title="สลับการแสดง/ซ่อนแป้นพิมพ์บนหน้าจอ">
+      <span class="kbd-pill-icon">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+          <line x1="6" y1="8" x2="6" y2="8"></line>
+          <line x1="10" y1="8" x2="10" y2="8"></line>
+          <line x1="14" y1="8" x2="14" y2="8"></line>
+          <line x1="18" y1="8" x2="18" y2="8"></line>
+          <line x1="6" y1="12" x2="6" y2="12"></line>
+          <line x1="10" y1="12" x2="10" y2="12"></line>
+          <line x1="14" y1="12" x2="14" y2="12"></line>
+          <line x1="18" y1="12" x2="18" y2="12"></line>
+          <line x1="7" y1="16" x2="17" y2="16"></line>
+        </svg>
+      </span>
+      <span class="kbd-pill-label" id="kbdPillLabel">แสดงแป้นพิมพ์</span>
+    </button>
+  </div>
+
   <script src="/qrcode.min.js"></script>
   <script src="/html5-qrcode.min.js"></script>
-  <script src="/app.js?v=20261118_3"></script>
+  <script src="/app.js?v=20261118_4"></script>
 </body>
 </html>
