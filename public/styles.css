@@ -12398,14 +12398,113 @@ dialog.modal-send-email {
 }
 
 .input-clearable-wrap .form-control {
-  padding-right: 32px !important;
+  padding-right: 54px !important;
 }
 
 .input-clearable-wrap.has-dropdown .form-control {
-  padding-right: 56px !important;
+  padding-right: 76px !important;
 }
 
 .input-actions-end {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  z-index: 5;
+}
+
+.input-actions-end .btn-keyboard-toggle,
+.input-clearable-wrap > .btn-keyboard-toggle,
+.model-input-wrap .btn-keyboard-toggle,
+.master-search-wrap .btn-keyboard-toggle {
+  position: static;
+  transform: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.input-actions-end .btn-keyboard-toggle:hover,
+.input-clearable-wrap > .btn-keyboard-toggle:hover,
+.model-input-wrap .btn-keyboard-toggle:hover,
+.master-search-wrap .btn-keyboard-toggle:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.input-actions-end .btn-keyboard-toggle:active,
+.input-clearable-wrap > .btn-keyboard-toggle:active,
+.model-input-wrap .btn-keyboard-toggle:active,
+.master-search-wrap .btn-keyboard-toggle:active {
+  transform: scale(0.92);
+}
+
+.input-actions-end .btn-keyboard-toggle.active,
+.input-clearable-wrap > .btn-keyboard-toggle.active,
+.model-input-wrap .btn-keyboard-toggle.active,
+.master-search-wrap .btn-keyboard-toggle.active {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.input-clearable-wrap:not(.has-actions-end) > .btn-keyboard-toggle {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+}
+
+.input-clearable-wrap:not(.has-actions-end) > .btn-input-clear:not(.hidden) ~ .btn-keyboard-toggle {
+  right: 28px;
+}
+
+.model-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.model-input-wrap .model-search-input {
+  padding-right: 56px !important;
+}
+
+.model-input-wrap .input-actions-end {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  z-index: 5;
+}
+
+.master-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.master-search-wrap .form-control {
+  padding-right: 56px !important;
+}
+
+.master-search-wrap .input-actions-end {
   position: absolute;
   right: 6px;
   top: 50%;

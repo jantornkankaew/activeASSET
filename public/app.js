@@ -493,25 +493,100 @@ function initMobileKeyboardControl() {
     });
   }
 
-  // Hook in-bar button for searchInput
-  if (btnToggleSearchKbd) {
-    btnToggleSearchKbd.addEventListener('mousedown', e => e.preventDefault());
-    btnToggleSearchKbd.addEventListener('click', e => {
-      e.preventDefault();
-      const searchInp = document.getElementById('searchInput');
-      toggleInputKeyboard(searchInp);
-    });
-  }
+  // Generic delegated click handler for all .btn-keyboard-toggle buttons
+  document.addEventListener('mousedown', e => {
+    if (e.target.closest('.btn-keyboard-toggle')) {
+      e.preventDefault(); // Keep active input focused
+    }
+  });
 
-  // Hook in-bar button for dispatchGlobalBarcodeInput
-  if (btnToggleDispatchKbd) {
-    btnToggleDispatchKbd.addEventListener('mousedown', e => e.preventDefault());
-    btnToggleDispatchKbd.addEventListener('click', e => {
-      e.preventDefault();
-      const dispatchInp = document.getElementById('dispatchGlobalBarcodeInput');
-      toggleInputKeyboard(dispatchInp);
+  document.addEventListener('click', e => {
+    const kbdBtn = e.target.closest('.btn-keyboard-toggle');
+    if (!kbdBtn) return;
+    e.preventDefault();
+
+    const targetId = kbdBtn.getAttribute('data-keyboard-target');
+    let targetInp = targetId ? document.getElementById(targetId) : null;
+    if (!targetInp) {
+      const wrap = kbdBtn.closest('.input-clearable-wrap, .search-wrap, .master-search-wrap, .model-input-wrap, .barcode-scanner-bar, .company-input-wrap');
+      targetInp = wrap?.querySelector('input:not([type="hidden"]):not([type="file"]):not([type="checkbox"]):not([type="radio"]), textarea');
+    }
+    if (!targetInp) targetInp = activeFocusedInput || document.activeElement;
+    if (targetInp && isInputEligible(targetInp)) {
+      toggleInputKeyboard(targetInp);
+    }
+  });
+
+  // Universal Auto-Enhancement for all input fields across all pages/modals
+  function enhanceInputsWithKeyboardToggle(root = document) {
+    const wraps = root.querySelectorAll(
+      '.input-clearable-wrap, .search-wrap, .master-search-wrap, .model-input-wrap, .barcode-scanner-bar, .company-input-wrap'
+    );
+
+    wraps.forEach(wrap => {
+      const input = wrap.querySelector(
+        'input:not([type="hidden"]):not([type="file"]):not([type="checkbox"]):not([type="radio"]), textarea'
+      );
+      if (!input || !isInputEligible(input)) return;
+      if (wrap.querySelector('.btn-keyboard-toggle')) return; // Already has button
+
+      const kbdBtn = document.createElement('button');
+      kbdBtn.type = 'button';
+      kbdBtn.className = 'btn-keyboard-toggle';
+      kbdBtn.title = 'แสดง/ซ่อน แป้นพิมพ์บนหน้าจอ (Show/Hide Keyboard)';
+      kbdBtn.setAttribute('aria-label', 'แสดง/ซ่อน แป้นพิมพ์');
+      kbdBtn.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+          <line x1="6" y1="8" x2="6" y2="8"></line>
+          <line x1="10" y1="8" x2="10" y2="8"></line>
+          <line x1="14" y1="8" x2="14" y2="8"></line>
+          <line x1="18" y1="8" x2="18" y2="8"></line>
+          <line x1="6" y1="12" x2="6" y2="12"></line>
+          <line x1="10" y1="12" x2="10" y2="12"></line>
+          <line x1="14" y1="12" x2="14" y2="12"></line>
+          <line x1="18" y1="12" x2="18" y2="12"></line>
+          <line x1="7" y1="16" x2="17" y2="16"></line>
+        </svg>
+      `;
+
+      let actionsEnd = wrap.querySelector('.input-actions-end');
+      if (actionsEnd) {
+        const arrow = actionsEnd.querySelector('.btn-input-dropdown-arrow');
+        if (arrow) {
+          actionsEnd.insertBefore(kbdBtn, arrow);
+        } else {
+          actionsEnd.appendChild(kbdBtn);
+        }
+      } else {
+        const clearBtn = wrap.querySelector('.btn-input-clear, .clear-search, .btn-clear-model-input');
+        if (clearBtn) {
+          actionsEnd = document.createElement('div');
+          actionsEnd.className = 'input-actions-end';
+          clearBtn.after(actionsEnd);
+          actionsEnd.appendChild(clearBtn);
+          actionsEnd.appendChild(kbdBtn);
+          wrap.classList.add('has-actions-end');
+        } else {
+          wrap.appendChild(kbdBtn);
+        }
+      }
     });
   }
+  window.enhanceInputsWithKeyboardToggle = enhanceInputsWithKeyboardToggle;
+
+  // Run enhancement immediately
+  enhanceInputsWithKeyboardToggle();
+
+  // Observe dynamically inserted dialogs, tables, and rows
+  let enhanceDebounce = null;
+  const observer = new MutationObserver(() => {
+    if (enhanceDebounce) clearTimeout(enhanceDebounce);
+    enhanceDebounce = setTimeout(() => {
+      enhanceInputsWithKeyboardToggle();
+    }, 60);
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 
   // Viewport tracking for iOS virtual keyboard
   if (window.visualViewport) {
@@ -4304,14 +4379,35 @@ function renderLoanExcelRows() {
                 data-excel-model-input="${rowIdx}"
                 autocomplete="off"
               />
-              <button
-                type="button"
-                class="btn-clear-model-input ${modelVal ? '' : 'hidden'}"
-                data-clear-model="${rowIdx}"
-                title="ล้างรุ่นที่เลือก"
-                tabindex="-1"
-                aria-label="ล้างรุ่นที่เลือก"
-              >✕</button>
+              <div class="input-actions-end">
+                <button
+                  type="button"
+                  class="btn-clear-model-input ${modelVal ? '' : 'hidden'}"
+                  data-clear-model="${rowIdx}"
+                  title="ล้างรุ่นที่เลือก"
+                  tabindex="-1"
+                  aria-label="ล้างรุ่นที่เลือก"
+                >✕</button>
+                <button
+                  type="button"
+                  class="btn-keyboard-toggle"
+                  title="แสดง/ซ่อน แป้นพิมพ์บนหน้าจอ"
+                  aria-label="แสดง/ซ่อน แป้นพิมพ์"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                    <line x1="6" y1="8" x2="6" y2="8"></line>
+                    <line x1="10" y1="8" x2="10" y2="8"></line>
+                    <line x1="14" y1="8" x2="14" y2="8"></line>
+                    <line x1="18" y1="8" x2="18" y2="8"></line>
+                    <line x1="6" y1="12" x2="6" y2="12"></line>
+                    <line x1="10" y1="12" x2="10" y2="12"></line>
+                    <line x1="14" y1="12" x2="14" y2="12"></line>
+                    <line x1="18" y1="12" x2="18" y2="12"></line>
+                    <line x1="7" y1="16" x2="17" y2="16"></line>
+                  </svg>
+                </button>
+              </div>
               <div class="model-dropdown-menu hidden" data-model-dropdown="${rowIdx}"></div>
             </div>
           </td>
@@ -9238,9 +9334,25 @@ async function renderMasterCustomersTab(container) {
         <span class="master-toolbar-title">🏢 ข้อมูลลูกค้า &amp; บริษัทคู่ค้า</span>
       </div>
       <div class="master-toolbar-actions">
-        <div class="input-clearable-wrap master-search-wrap">
+        <div class="input-clearable-wrap master-search-wrap has-actions-end">
           <input type="text" id="masterCustomerSearchInput" class="form-control" placeholder="🔍 ค้นหาลูกค้า, เลขภาษี, ผู้ติดต่อ..." value="${escapeHtml(masterCustomerQuery)}" autocomplete="off" />
-          <button type="button" class="btn-input-clear ${masterCustomerQuery ? '' : 'hidden'}" data-clear-target="masterCustomerSearchInput" title="ล้างค่า">✕</button>
+          <div class="input-actions-end">
+            <button type="button" class="btn-input-clear ${masterCustomerQuery ? '' : 'hidden'}" data-clear-target="masterCustomerSearchInput" title="ล้างค่า">✕</button>
+            <button type="button" class="btn-keyboard-toggle" data-keyboard-target="masterCustomerSearchInput" title="แสดง/ซ่อน แป้นพิมพ์บนหน้าจอ" aria-label="แสดง/ซ่อน แป้นพิมพ์">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                <line x1="6" y1="8" x2="6" y2="8"></line>
+                <line x1="10" y1="8" x2="10" y2="8"></line>
+                <line x1="14" y1="8" x2="14" y2="8"></line>
+                <line x1="18" y1="8" x2="18" y2="8"></line>
+                <line x1="6" y1="12" x2="6" y2="12"></line>
+                <line x1="10" y1="12" x2="10" y2="12"></line>
+                <line x1="14" y1="12" x2="14" y2="12"></line>
+                <line x1="18" y1="12" x2="18" y2="12"></line>
+                <line x1="7" y1="16" x2="17" y2="16"></line>
+              </svg>
+            </button>
+          </div>
         </div>
         <button type="button" class="btn btn-primary btn-sm" id="btnAddNewMasterCustomer">
           <span>➕ เพิ่มลูกค้าใหม่</span>
@@ -9594,9 +9706,25 @@ async function renderMasterCatalogsTab(container) {
         <span class="master-toolbar-title">📦 แคตตาล็อกสินค้า &amp; รุ่นเครื่อง</span>
       </div>
       <div class="master-toolbar-actions">
-        <div class="input-clearable-wrap master-search-wrap">
+        <div class="input-clearable-wrap master-search-wrap has-actions-end">
           <input type="text" id="masterCatalogSearchInput" class="form-control" placeholder="🔍 ค้นหารุ่น, ยี่ห้อ, หมวดหมู่..." value="${escapeHtml(masterCatalogQuery)}" autocomplete="off" />
-          <button type="button" class="btn-input-clear ${masterCatalogQuery ? '' : 'hidden'}" data-clear-target="masterCatalogSearchInput" title="ล้างค่า">✕</button>
+          <div class="input-actions-end">
+            <button type="button" class="btn-input-clear ${masterCatalogQuery ? '' : 'hidden'}" data-clear-target="masterCatalogSearchInput" title="ล้างค่า">✕</button>
+            <button type="button" class="btn-keyboard-toggle" data-keyboard-target="masterCatalogSearchInput" title="แสดง/ซ่อน แป้นพิมพ์บนหน้าจอ" aria-label="แสดง/ซ่อน แป้นพิมพ์">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                <line x1="6" y1="8" x2="6" y2="8"></line>
+                <line x1="10" y1="8" x2="10" y2="8"></line>
+                <line x1="14" y1="8" x2="14" y2="8"></line>
+                <line x1="18" y1="8" x2="18" y2="8"></line>
+                <line x1="6" y1="12" x2="6" y2="12"></line>
+                <line x1="10" y1="12" x2="10" y2="12"></line>
+                <line x1="14" y1="12" x2="14" y2="12"></line>
+                <line x1="18" y1="12" x2="18" y2="12"></line>
+                <line x1="7" y1="16" x2="17" y2="16"></line>
+              </svg>
+            </button>
+          </div>
         </div>
         <button type="button" class="btn btn-primary btn-sm" id="btnAddNewMasterCatalog">
           <span>➕ เพิ่มรุ่นใหม่</span>
