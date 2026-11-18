@@ -246,6 +246,33 @@ db.exec(`
   );
 `);
 
+// Auto-clean & merge duplicate/erroneous model prefixes (e.g. "Honeywell Honeywell EDA52-1" -> "Honeywell EDA52-1")
+try {
+  db.exec(`
+    UPDATE assets 
+    SET model = 'EDA52-1', name = 'Honeywell EDA52-1' 
+    WHERE brand = 'Honeywell' AND (model = 'Honeywell EDA52-1' OR model = 'Honeywell Honeywell EDA52-1');
+
+    DELETE FROM product_catalogs 
+    WHERE brand = 'Honeywell' AND (model = 'Honeywell EDA52-1' OR model = 'Honeywell Honeywell EDA52-1');
+
+    UPDATE loan_items 
+    SET model = 'EDA52-1' 
+    WHERE brand = 'Honeywell' AND (model = 'Honeywell EDA52-1' OR model = 'Honeywell Honeywell EDA52-1');
+
+    UPDATE assets 
+    SET model = substr(model, length(brand) + 2), 
+        name = brand || ' ' || substr(model, length(brand) + 2)
+    WHERE model LIKE brand || ' %';
+
+    UPDATE product_catalogs 
+    SET model = substr(model, length(brand) + 2)
+    WHERE model LIKE brand || ' %';
+  `);
+} catch (e) {
+  console.error('Model merge cleanup notice:', e.message);
+}
+
 // Real-time synchronization state versioning & latest mutation tracking
 let appStateVersion = Date.now();
 let lastCreatedLoan = null;
