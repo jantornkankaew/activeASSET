@@ -462,7 +462,6 @@ function initMobileKeyboardControl() {
         }
       }, 50);
       updatePillVisuals(inputEl);
-      showToast('⌨️ ซ่อนแป้นพิมพ์แล้ว');
     } else {
       // SHOW KEYBOARD
       inputEl.dataset.keyboardActive = 'true';
@@ -470,7 +469,6 @@ function initMobileKeyboardControl() {
       inputEl.setAttribute('inputmode', orig);
       inputEl.focus();
       updatePillVisuals(inputEl);
-      showToast('⌨️ แสดงแป้นพิมพ์แล้ว');
     }
   }
   window.toggleInputKeyboard = toggleInputKeyboard;
