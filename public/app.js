@@ -11667,20 +11667,96 @@ async function startBarcodeCamera(facingMode) {
 
     const config = {
       fps: 15,
-      qrbox: { width: 250, height: 180 },
-      aspectRatio: 1.333334
+      qrbox: (viewfinderWidth, viewfinderHeight) => {
+        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+        const boxWidth = Math.floor(minEdge * 0.78);
+        const boxHeight = Math.floor(minEdge * 0.55);
+        return { width: Math.max(boxWidth, 200), height: Math.max(boxHeight, 140) };
+      }
     };
 
-    await searchHtml5QrCode.start(
-      { facingMode: facingMode },
-      config,
-      (decodedText) => {
-        handleSearchBarcodeScanned(decodedText);
-      },
-      () => {
-        // continuous scanning
+    const onScanSuccess = (decodedText) => {
+      handleSearchBarcodeScanned(decodedText);
+    };
+
+    let started = false;
+    let lastErr = null;
+
+    // Strategy 1: Enumerate real cameras via Html5Qrcode.getCameras() (Most reliable on Android)
+    try {
+      const cameras = await Html5Qrcode.getCameras();
+      if (cameras && cameras.length > 0) {
+        let targetCamera = cameras[0];
+        if (facingMode === 'environment') {
+          const backCam = cameras.find(c => /back|rear|environment|หลัง|wide|0/i.test(c.label));
+          targetCamera = backCam || cameras[cameras.length - 1];
+        } else {
+          const frontCam = cameras.find(c => /front|user|หน้า/i.test(c.label));
+          targetCamera = frontCam || cameras[0];
+        }
+
+        if (targetCamera && targetCamera.id) {
+          await searchHtml5QrCode.start(
+            targetCamera.id,
+            config,
+            onScanSuccess,
+            () => {}
+          );
+          started = true;
+        }
       }
-    );
+    } catch (e1) {
+      console.warn('Strategy 1 (getCameras) failed:', e1);
+      lastErr = e1;
+    }
+
+    // Strategy 2: Direct ideal facingMode constraint
+    if (!started) {
+      try {
+        await searchHtml5QrCode.start(
+          { facingMode: { ideal: facingMode } },
+          config,
+          onScanSuccess,
+          () => {}
+        );
+        started = true;
+      } catch (e2) {
+        console.warn('Strategy 2 (ideal facingMode) failed:', e2);
+        lastErr = e2;
+      }
+    }
+
+    // Strategy 3: Direct facingMode string
+    if (!started) {
+      try {
+        await searchHtml5QrCode.start(
+          { facingMode: facingMode },
+          config,
+          onScanSuccess,
+          () => {}
+        );
+        started = true;
+      } catch (e3) {
+        console.warn('Strategy 3 (simple facingMode) failed:', e3);
+        lastErr = e3;
+      }
+    }
+
+    // Strategy 4: Fallback to bare true without constraints
+    if (!started) {
+      try {
+        await searchHtml5QrCode.start(
+          true,
+          config,
+          onScanSuccess,
+          () => {}
+        );
+        started = true;
+      } catch (e4) {
+        console.error('All camera strategies failed:', e4);
+        throw e4 || lastErr;
+      }
+    }
 
     isScanningActive = true;
     if (loading) loading.style.display = 'none';
@@ -11704,10 +11780,10 @@ async function startBarcodeCamera(facingMode) {
     if (errorBox) {
       const msgEl = document.getElementById('scannerErrorMsg');
       if (msgEl) {
-        msgEl.textContent =
-          err.name === 'NotAllowedError'
-            ? 'ไม่ได้รับอนุญาตให้ใช้กล้อง (กรุณากด Allow เพื่อเปิดกล้อง)'
-            : 'ไม่สามารถเปิดกล้องได้';
+        const isNotAllowed = err.name === 'NotAllowedError' || /permission/i.test(err.message || '');
+        msgEl.innerHTML = isNotAllowed
+          ? 'ไม่ได้รับอนุญาตให้ใช้กล้อง<br><small style="color:#94a3b8; font-weight:normal;">กรุณากดอนุญาต (Allow) การใช้งานกล้องในการตั้งค่าของเบราว์เซอร์</small>'
+          : 'ไม่สามารถเปิดกล้องได้<br><small style="color:#94a3b8; font-weight:normal;">หากเปิดผ่านแอป Line แนะนำกด ⋯ ที่มุมขวาบน แล้วเลือก "เปิดด้วยเบราว์เซอร์อื่น" หรือถ่ายรูปบาร์โค้ด</small>';
       }
       errorBox.classList.remove('hidden');
     }
@@ -11947,6 +12023,21 @@ function setupSearchBarcodeScanner() {
         handleFileScan(e.target.files[0]);
       }
     });
+  }
+
+  const btnExternalChrome = document.getElementById('btnOpenExternalChrome');
+  if (btnExternalChrome) {
+    const isInApp = /Line|FBAN|FBAV|Instagram|TikTok|MicroMessenger/i.test(navigator.userAgent);
+    if (isInApp && /android/i.test(navigator.userAgent)) {
+      btnExternalChrome.classList.remove('hidden');
+      btnExternalChrome.addEventListener('click', (e) => {
+        e.preventDefault();
+        const currentUrl = window.location.href.replace(/^https?:\/\//, '');
+        window.location.href = `intent://${currentUrl}#Intent;scheme=https;package=com.android.chrome;end`;
+      });
+    } else {
+      btnExternalChrome.classList.add('hidden');
+    }
   }
 }
 

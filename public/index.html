@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=20261118_18" />
+  <link rel="stylesheet" href="/styles.css?v=20261118_19" />
   <script>
     (function() {
       try {
@@ -3103,17 +3103,22 @@
         <div class="scanner-error-box hidden" id="scannerErrorBox">
           <span class="scanner-error-icon">⚠️</span>
           <span class="scanner-error-msg" id="scannerErrorMsg">ไม่สามารถเข้าถึงกล้องได้</span>
-          <label class="btn btn-primary btn-sm btn-scanner-file-fallback" style="margin-top:10px; cursor:pointer;">
-            <span>📁 เลือกรูปภาพบาร์โค้ดจากเครื่อง</span>
-            <input type="file" id="searchBarcodeFileInputFallback" accept="image/*" class="hidden" />
-          </label>
+          <div style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:280px; margin-top:12px;">
+            <label class="btn btn-primary btn-sm btn-scanner-file-fallback" style="cursor:pointer; width:100%; justify-content:center;">
+              <span>📁 ถ่ายรูป / เลือกรูปบาร์โค้ด</span>
+              <input type="file" id="searchBarcodeFileInputFallback" accept="image/*" capture="environment" class="hidden" />
+            </label>
+            <button type="button" class="btn btn-outline btn-sm hidden" id="btnOpenExternalChrome" style="border-color:#cbd5e1; color:#1e293b; background:#f8fafc; width:100%; justify-content:center;">
+              <span>🌐 เปิดใน Google Chrome</span>
+            </button>
+          </div>
         </div>
       </div>
 
       <footer class="scanner-modal-footer">
         <label class="btn-scanner-upload" title="เลือกรูปภาพบาร์โค้ด">
           <span>📁 สแกนจากไฟล์รูป</span>
-          <input type="file" id="searchBarcodeFileInput" accept="image/*" class="hidden" />
+          <input type="file" id="searchBarcodeFileInput" accept="image/*" capture="environment" class="hidden" />
         </label>
         <button type="button" class="btn btn-outline btn-sm" id="btnCancelSearchBarcode">ยกเลิก</button>
       </footer>
@@ -3235,6 +3240,6 @@
 
   <script src="/qrcode.min.js"></script>
   <script src="/html5-qrcode.min.js"></script>
-  <script src="/app.js?v=20261118_18"></script>
+  <script src="/app.js?v=20261118_19"></script>
 </body>
 </html>

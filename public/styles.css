@@ -9102,7 +9102,12 @@ dialog.modal-send-email {
   }
 }
 
-.hidden { display: none !important; }
+.hidden,
+.kanban-view-container.hidden,
+.minimal-list-section.hidden,
+.stock-view-section.hidden {
+  display: none !important;
+}
 .print-only { display: none; }
 
 .toast {
@@ -9327,7 +9332,7 @@ dialog.modal-send-email {
   }
 
   /* 0.3 Responsive Mobile Kanban Board (Swipeable & Fitted to Screen) */
-  .kanban-view-container {
+  .kanban-view-container:not(.hidden) {
     width: 100% !important;
     max-width: 100% !important;
     height: 100% !important;
@@ -9335,6 +9340,9 @@ dialog.modal-send-email {
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
+  }
+  .kanban-view-container.hidden {
+    display: none !important;
   }
 
   .kanban-scroll-wrap {
