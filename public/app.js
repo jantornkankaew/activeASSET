@@ -240,25 +240,20 @@ function initMobileKanbanBar() {
       const absX = Math.abs(dx);
       const absY = Math.abs(dy);
 
-      if (absX > 8 || absY > 8) {
+      if (absX > 10 || absY > 10) {
         isSwipeDecided = true;
-        // Require horizontal motion to be clearly dominant before treating as a column swipe
-        isHorizontalSwipe = absX > absY * 1.25;
+        // Require horizontal motion to be distinctly dominant before treating as a horizontal column swipe
+        isHorizontalSwipe = (absX > absY * 1.5) && (absX > 15);
       }
     }
 
-    if (isSwipeDecided) {
-      if (!isHorizontalSwipe) {
-        // Vertical card scroll in progress: Lock horizontal scroll position so it never slips to the right
-        const targetLeft = getColTargetScrollLeft(activeColIndex);
-        if (Math.abs(scrollWrap.scrollLeft - targetLeft) > 1) {
-          scrollWrap.scrollLeft = targetLeft;
-        }
-      } else {
-        // Horizontal swipe in progress: 1:1 live drag tracking
-        scrollWrap.scrollLeft = startScrollLeft - dx;
-      }
+    if (isSwipeDecided && isHorizontalSwipe) {
+      // Horizontal swipe in progress: 1:1 live drag tracking
+      scrollWrap.scrollLeft = startScrollLeft - dx;
     }
+    // If vertical scroll: DO NOTHING AT ALL!
+    // Never mutate scrollLeft or touch the DOM during vertical scrolling
+    // so that iOS Safari retains 100% native hardware momentum and effortless scrolling!
   }, { passive: true });
 
   scrollWrap.addEventListener('touchend', e => {
@@ -288,13 +283,9 @@ function initMobileKanbanBar() {
       }
 
       scrollToColumnIndex(targetIndex, true);
-    } else {
-      // Re-anchor active column alignment if needed
-      const targetLeft = getColTargetScrollLeft(activeColIndex);
-      if (Math.abs(scrollWrap.scrollLeft - targetLeft) > 2) {
-        scrollWrap.scrollTo({ left: targetLeft, behavior: 'smooth' });
-      }
     }
+    // If vertical scroll: DO NOTHING!
+    // Never call scrollTo or mutate DOM on touchend so native fling inertia continues uninterrupted!
   }, { passive: true });
 
   // 3. Fallback sync for active pill after smooth scroll finishes
