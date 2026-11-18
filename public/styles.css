@@ -9207,7 +9207,7 @@ dialog.modal-send-email {
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
     scroll-behavior: smooth !important;
-    scroll-snap-type: x mandatory !important;
+    scroll-snap-type: none !important;
     padding: 0 0 calc(90px + env(safe-area-inset-bottom, 0px)) 0 !important;
     box-sizing: border-box !important;
   }
@@ -9230,7 +9230,7 @@ dialog.modal-send-email {
     min-width: calc(100vw - 20px) !important;
     height: auto !important;
     min-height: min-content !important;
-    scroll-snap-align: center !important;
+    scroll-snap-align: none !important;
     scroll-snap-stop: normal !important;
     display: flex !important;
     flex-direction: column !important;

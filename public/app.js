@@ -142,48 +142,180 @@ function initMobileKanbanBar() {
   const scrollWrap = document.getElementById('kanbanClassicWrap');
   if (!bar || !scrollWrap) return;
 
+  function getColTargetScrollLeft(idx) {
+    const cols = scrollWrap.querySelectorAll('.kanban-col');
+    const targetCol = cols[idx];
+    if (!targetCol) return 0;
+    const wrapWidth = scrollWrap.clientWidth;
+    const colWidth = targetCol.offsetWidth;
+    const left = targetCol.offsetLeft - Math.max(0, (wrapWidth - colWidth) / 2);
+    return Math.max(0, left);
+  }
+
+  function getCurrentColIndex() {
+    const cols = scrollWrap.querySelectorAll('.kanban-col');
+    if (!cols.length) return 0;
+    const currentCenter = scrollWrap.scrollLeft + (scrollWrap.clientWidth / 2);
+    let closestIdx = 0;
+    let minDiff = Infinity;
+    cols.forEach((col, idx) => {
+      const colCenter = col.offsetLeft + (col.offsetWidth / 2);
+      const diff = Math.abs(currentCenter - colCenter);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestIdx = idx;
+      }
+    });
+    return closestIdx;
+  }
+
+  function scrollToColumnIndex(idx, smooth = true) {
+    const cols = scrollWrap.querySelectorAll('.kanban-col');
+    if (!cols[idx]) return;
+    const targetLeft = getColTargetScrollLeft(idx);
+    if (smooth) {
+      scrollWrap.scrollTo({ left: targetLeft, behavior: 'smooth' });
+    } else {
+      scrollWrap.scrollLeft = targetLeft;
+    }
+
+    const targetColId = cols[idx].getAttribute('data-col-id');
+    if (targetColId) {
+      bar.querySelectorAll('.col-pill-btn').forEach(btn => {
+        if (btn.getAttribute('data-col-target') === targetColId) {
+          btn.classList.add('active');
+          btn.scrollIntoView?.({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+  }
+  window.scrollToKanbanColumn = scrollToColumnIndex;
+
+  // 1. Column Navigation Pills Click
   bar.addEventListener('click', e => {
     const btn = e.target.closest('.col-pill-btn');
     if (!btn) return;
     const targetId = btn.getAttribute('data-col-target');
-    const targetCol = document.getElementById(`kanbanCol_${targetId}`);
-    if (targetCol) {
-      bar.querySelectorAll('.col-pill-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      targetCol.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    const cols = Array.from(scrollWrap.querySelectorAll('.kanban-col'));
+    const targetIdx = cols.findIndex(col => col.getAttribute('data-col-id') === targetId);
+    if (targetIdx >= 0) {
+      scrollToColumnIndex(targetIdx, true);
     }
   });
 
-  // Track swipe scroll position to update active pill
+  // 2. Gesture Control with Half-Screen Swipe Threshold (รูดมาครึ่งจอก่อนค่อยเลื่อนแถว)
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let startScrollLeft = 0;
+  let isSwipeDecided = false;
+  let isHorizontalSwipe = false;
+  let activeColIndex = 0;
+  let isUserTouching = false;
+
+  scrollWrap.addEventListener('touchstart', e => {
+    if (window.innerWidth > 768) return;
+    if (e.touches.length !== 1) return;
+
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    startScrollLeft = scrollWrap.scrollLeft;
+    isSwipeDecided = false;
+    isHorizontalSwipe = false;
+    isUserTouching = true;
+    activeColIndex = getCurrentColIndex();
+  }, { passive: true });
+
+  scrollWrap.addEventListener('touchmove', e => {
+    if (window.innerWidth > 768 || !isUserTouching) return;
+    if (e.touches.length !== 1) return;
+
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const dx = currentX - touchStartX;
+    const dy = currentY - touchStartY;
+
+    if (!isSwipeDecided) {
+      const absX = Math.abs(dx);
+      const absY = Math.abs(dy);
+
+      if (absX > 8 || absY > 8) {
+        isSwipeDecided = true;
+        // Require horizontal motion to be clearly dominant before treating as a column swipe
+        isHorizontalSwipe = absX > absY * 1.25;
+      }
+    }
+
+    if (isSwipeDecided) {
+      if (!isHorizontalSwipe) {
+        // Vertical card scroll in progress: Lock horizontal scroll position so it never slips to the right
+        const targetLeft = getColTargetScrollLeft(activeColIndex);
+        if (Math.abs(scrollWrap.scrollLeft - targetLeft) > 1) {
+          scrollWrap.scrollLeft = targetLeft;
+        }
+      } else {
+        // Horizontal swipe in progress: 1:1 live drag tracking
+        scrollWrap.scrollLeft = startScrollLeft - dx;
+      }
+    }
+  }, { passive: true });
+
+  scrollWrap.addEventListener('touchend', e => {
+    if (window.innerWidth > 768 || !isUserTouching) return;
+    isUserTouching = false;
+
+    if (isHorizontalSwipe) {
+      const touchEndX = e.changedTouches[0].clientX;
+      const deltaX = touchEndX - touchStartX;
+      const cols = scrollWrap.querySelectorAll('.kanban-col');
+      const numCols = cols.length;
+
+      // Half-screen threshold: user must swipe at least 45% of screen width to switch columns
+      const halfScreenThreshold = window.innerWidth * 0.45;
+
+      let targetIndex = activeColIndex;
+
+      if (deltaX < -halfScreenThreshold && activeColIndex < numCols - 1) {
+        // Swiped left by at least half screen -> Advance to next column
+        targetIndex = activeColIndex + 1;
+      } else if (deltaX > halfScreenThreshold && activeColIndex > 0) {
+        // Swiped right by at least half screen -> Go back to previous column
+        targetIndex = activeColIndex - 1;
+      } else {
+        // Swiped less than half screen -> Snap BACK to current column
+        targetIndex = activeColIndex;
+      }
+
+      scrollToColumnIndex(targetIndex, true);
+    } else {
+      // Re-anchor active column alignment if needed
+      const targetLeft = getColTargetScrollLeft(activeColIndex);
+      if (Math.abs(scrollWrap.scrollLeft - targetLeft) > 2) {
+        scrollWrap.scrollTo({ left: targetLeft, behavior: 'smooth' });
+      }
+    }
+  }, { passive: true });
+
+  // 3. Fallback sync for active pill after smooth scroll finishes
   let scrollDebounce = null;
   scrollWrap.addEventListener('scroll', () => {
-    if (window.innerWidth > 768) return;
+    if (window.innerWidth > 768 || isUserTouching) return;
     if (scrollDebounce) clearTimeout(scrollDebounce);
     scrollDebounce = setTimeout(() => {
+      const closestIdx = getCurrentColIndex();
       const cols = scrollWrap.querySelectorAll('.kanban-col');
-      const wrapCenter = scrollWrap.scrollLeft + (scrollWrap.clientWidth / 2);
-      let closestColId = null;
-      let minDistance = Infinity;
-
-      cols.forEach(col => {
-        const colCenter = col.offsetLeft + (col.offsetWidth / 2);
-        const dist = Math.abs(wrapCenter - colCenter);
-        if (dist < minDistance) {
-          minDistance = dist;
-          closestColId = col.getAttribute('data-col-id');
-        }
-      });
-
-      if (closestColId) {
+      const targetColId = cols[closestIdx]?.getAttribute('data-col-id');
+      if (targetColId) {
         bar.querySelectorAll('.col-pill-btn').forEach(btn => {
-          if (btn.getAttribute('data-col-target') === closestColId) {
+          if (btn.getAttribute('data-col-target') === targetColId) {
             btn.classList.add('active');
           } else {
             btn.classList.remove('active');
           }
         });
       }
-    }, 60);
+    }, 80);
   }, { passive: true });
 }
 
