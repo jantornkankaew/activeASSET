@@ -425,6 +425,8 @@ function initMobileKeyboardControl() {
 
     if (isTouchOrMobileDevice()) {
       pill.classList.remove('hidden');
+    } else {
+      pill.classList.add('hidden');
     }
   }
 
@@ -567,6 +569,12 @@ function initMobileKeyboardControl() {
 
   // Universal Auto-Enhancement for all input fields across all pages/modals
   function enhanceInputsWithKeyboardToggle(root = document) {
+    if (!isTouchOrMobileDevice()) {
+      // On desktop devices: remove any existing virtual keyboard toggle buttons
+      root.querySelectorAll('.btn-keyboard-toggle').forEach(b => b.remove());
+      return;
+    }
+
     const wraps = root.querySelectorAll(
       '.input-clearable-wrap, .search-wrap, .master-search-wrap, .model-input-wrap, .barcode-scanner-bar, .company-input-wrap'
     );
@@ -953,14 +961,28 @@ function applyServerState(data) {
 }
 
 function isTouchOrMobileDevice() {
-  return (
-    window.innerWidth <= 768 ||
-    'ontouchstart' in window ||
-    navigator.maxTouchPoints > 0 ||
-    /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-  );
+  const isMobileUa = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if (isMobileUa) return true;
+  if (window.innerWidth <= 768) return true;
+  if (window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    return false;
+  }
+  return ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 }
 window.isTouchOrMobileDevice = isTouchOrMobileDevice;
+
+function updateDeviceClasses() {
+  const isTouch = isTouchOrMobileDevice();
+  document.documentElement.classList.toggle('is-mobile-touch', isTouch);
+  document.documentElement.classList.toggle('is-desktop-device', !isTouch);
+}
+updateDeviceClasses();
+window.addEventListener('resize', () => {
+  updateDeviceClasses();
+  if (typeof enhanceInputsWithKeyboardToggle === 'function') {
+    enhanceInputsWithKeyboardToggle();
+  }
+});
 
 function focusSearchInputIfIdle(delay = 150) {
   if (isTouchOrMobileDevice()) return; // Never auto-focus and trigger virtual keyboard on mobile

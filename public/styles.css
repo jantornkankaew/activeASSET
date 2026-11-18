@@ -339,6 +339,26 @@ body {
   z-index: 4;
 }
 
+/* On desktop devices: hide virtual keyboard toggle buttons in all input fields */
+@media (min-width: 1025px) {
+  .btn-keyboard-toggle,
+  .mobile-keyboard-pill {
+    display: none !important;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) and (min-width: 769px) {
+  .btn-keyboard-toggle,
+  .mobile-keyboard-pill {
+    display: none !important;
+  }
+}
+
+.is-desktop-device .btn-keyboard-toggle,
+.is-desktop-device .mobile-keyboard-pill {
+  display: none !important;
+}
+
 .btn-keyboard-toggle:hover {
   background: #e2e8f0;
   color: #0f172a;
