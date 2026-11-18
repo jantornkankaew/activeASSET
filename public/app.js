@@ -4791,22 +4791,19 @@ function updateDispatchSummary() {
       const currentReceiverVal = (existingInp && existingInp.value !== undefined) ? existingInp.value : currentUserName;
       const isSub = Boolean(currentReceiverVal && currentReceiverVal.trim() !== currentUserName);
       hintEl.innerHTML = `
-        <div class="ret-inspector-box" style="display:inline-flex; align-items:center; gap:6px;">
-          <span style="font-size:12px; font-weight:600; color:#475569; white-space:nowrap;">ผู้รับคืน:</span>
-          <div class="input-clearable-wrap has-actions-end" style="display:inline-flex; width:190px;">
+        <div class="ret-inspector-box">
+          <span class="ret-inspector-label">ผู้รับคืน:</span>
+          <div class="input-clearable-wrap ret-inspector-input-wrap">
             <input 
               type="text" 
               id="dispatchReturnReceiverName" 
               class="form-control" 
-              style="width:100%; padding:3px 26px 3px 8px; font-size:12px; height:28px;" 
               value="${escapeHtml(currentReceiverVal)}" 
               data-default-user="${escapeHtml(currentUserName)}"
               placeholder="ระบุชื่อผู้รับคืน..." 
               autocomplete="off" 
             />
-            <div class="input-actions-end">
-              <button type="button" class="btn-input-clear ${currentReceiverVal ? '' : 'hidden'}" data-clear-target="dispatchReturnReceiverName" title="ล้างค่า">✕</button>
-            </div>
+            <button type="button" class="btn-input-clear ${currentReceiverVal ? '' : 'hidden'}" data-clear-target="dispatchReturnReceiverName" title="ล้างค่า">✕</button>
           </div>
           <span id="dispatchReceiverSubTag" class="${isSub ? '' : 'hidden'}" style="font-size:11px; font-weight:600; color:#b45309; background:#fef3c7; border:1px solid #fde68a; padding:2px 7px; border-radius:4px; white-space:nowrap;" title="บันทึกเป็นผู้รับคืนทดแทน">
             (ทดแทน)
@@ -5801,7 +5798,7 @@ function renderDispatchTable() {
             <td style="vertical-align:middle; padding:12px 14px;">
               ${row.returned 
                 ? `<div style="font-size:12px; color:#15803d; font-weight:600; padding:4px 0;">✓ คืนเมื่อ ${formatDateTimeThai(row.returned_at || loan?.return_date || '') || 'เรียบร้อยแล้ว'}${row.qcNote ? ` (${escapeHtml(row.qcNote)})` : ''}</div>`
-                : `<div class="input-clearable-wrap has-actions-end" style="width:100%; position:relative;">
+                : `<div class="input-clearable-wrap" style="width:100%;">
                     <input 
                       type="text" 
                       class="form-control" 
@@ -5809,26 +5806,9 @@ function renderDispatchTable() {
                       data-ret-qc-note="${rowIdx}" 
                       placeholder="ระบุหมายเหตุ (ถ้ามี)..." 
                       value="${escapeHtml(row.qcNote || '')}" 
-                      style="width:100%; font-size:12.5px; padding:6px 54px 6px 10px; height:34px; border-radius:6px; border:1px solid #cbd5e1; background:#fff;" 
                       autocomplete="off" 
                     />
-                    <div class="input-actions-end">
-                      <button type="button" class="btn-input-clear ${row.qcNote ? '' : 'hidden'}" data-clear-ret-qc="${rowIdx}" title="ล้างค่า">✕</button>
-                      <button type="button" class="btn-keyboard-toggle" data-keyboard-target="retQcNote_${rowIdx}" title="แสดง/ซ่อน แป้นพิมพ์บนหน้าจอ" aria-label="แสดง/ซ่อน แป้นพิมพ์">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
-                          <line x1="6" y1="8" x2="6" y2="8"></line>
-                          <line x1="10" y1="8" x2="10" y2="8"></line>
-                          <line x1="14" y1="8" x2="14" y2="8"></line>
-                          <line x1="18" y1="8" x2="18" y2="8"></line>
-                          <line x1="6" y1="12" x2="6" y2="12"></line>
-                          <line x1="10" y1="12" x2="10" y2="12"></line>
-                          <line x1="14" y1="12" x2="14" y2="12"></line>
-                          <line x1="18" y1="12" x2="18" y2="12"></line>
-                          <line x1="7" y1="16" x2="17" y2="16"></line>
-                        </svg>
-                      </button>
-                    </div>
+                    <button type="button" class="btn-input-clear ${row.qcNote ? '' : 'hidden'}" data-clear-ret-qc="${rowIdx}" title="ล้างค่า">✕</button>
                   </div>`
               }
             </td>
