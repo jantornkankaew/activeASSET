@@ -132,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
   setupAuthSystem();
   fetchFullState();
+  initRealtimeSync();
 });
 
 function restoreNavigationState() {
@@ -17842,7 +17843,31 @@ function setupAuthSystem() {
             localStorage.removeItem('activeasset_current_user');
             state.currentUser = null;
             showAlert(`เซสชันหมดอายุ: ไม่อนุญาตให้อีเมลจาก @${userDomain} เข้าใช้งาน (อนุญาตเฉพาะ ${doms})`);
+            updateUserProfileUI();
+            return;
           }
+
+          // Validate user validity and active status against live database
+          try {
+            const vRes = await fetch('/api/auth/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: state.currentUser.email })
+            });
+            const vData = await vRes.json();
+            if (!vRes.ok || !vData.valid) {
+              // User was deleted or disabled! Clear cached credentials immediately!
+              localStorage.removeItem('activeasset_current_user');
+              state.currentUser = null;
+              showAlert(vData.error || 'บัญชีผู้ใช้นี้ถูกลบหรือระงับการเข้าใช้งานแล้ว');
+              updateUserProfileUI();
+              return;
+            } else if (vData.user) {
+              state.currentUser = vData.user;
+              localStorage.setItem('activeasset_current_user', JSON.stringify(vData.user));
+              updateUserProfileUI();
+            }
+          } catch (_) {}
         }
 
         // Initialize Google One Tap / Sign In with Google if client id is configured
@@ -18051,4 +18076,236 @@ function setupAuthSystem() {
 
   // Initial load
   loadAuthConfig();
+}
+
+// ============================================================================
+// Real-time Kanban & Data Synchronization Engine (Non-flickering + Notification)
+// ============================================================================
+let realtimeSyncInitialized = false;
+
+function initRealtimeSync() {
+  if (realtimeSyncInitialized) return;
+  realtimeSyncInitialized = true;
+
+  let isSyncing = false;
+
+  async function checkSync() {
+    if (isSyncing) return;
+    // Don't poll if not authenticated
+    if (!state.currentUser || !state.currentUser.email) return;
+
+    try {
+      isSyncing = true;
+      const email = state.currentUser.email;
+      const v = state.syncVersion || 0;
+      const res = await fetch(`/api/sync/heartbeat?v=${v}&user=${encodeURIComponent(email)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+
+      // 1. If user was deleted or disabled in database, log out immediately!
+      if (data.valid === false) {
+        localStorage.removeItem('activeasset_current_user');
+        state.currentUser = null;
+        document.documentElement.classList.add('is-unauthenticated');
+        const loginOverlay = document.getElementById('loginOverlay');
+        if (loginOverlay) loginOverlay.classList.remove('hidden');
+        const alertBox = document.getElementById('loginAlertBox');
+        const alertMsg = document.getElementById('loginAlertMsg');
+        if (alertBox && alertMsg) {
+          alertMsg.textContent = data.error || 'บัญชีผู้ใช้นี้ถูกลบหรือระงับการเข้าใช้งานแล้ว';
+          alertBox.classList.remove('hidden');
+        }
+        applyPermissionsToUI();
+        showToast('🔒 ' + (data.error || 'บัญชีผู้ใช้นี้ถูกลบหรือระงับการใช้งาน'));
+        return;
+      }
+
+      // 2. If data changed, update state smoothly without flickering
+      if (data.changed) {
+        state.syncVersion = data.v;
+        await syncFreshStateSilently(data.latestLoan);
+      }
+    } catch (_) {
+      // Quiet fail on network interruption
+    } finally {
+      isSyncing = false;
+    }
+  }
+
+  // Poll heartbeat every 12 seconds (extremely lightweight, ~50 bytes per ping)
+  setInterval(checkSync, 12000);
+
+  // Sync immediately when tab is restored from background
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      checkSync();
+    }
+  });
+}
+
+async function syncFreshStateSilently(latestLoanInfo) {
+  try {
+    const res = await fetch('/api/state');
+    if (!res.ok) return;
+    const freshData = await res.json();
+
+    // Map existing loan IDs
+    const prevLoans = state.loans || [];
+    const prevLoanIds = new Set(prevLoans.map(l => l.id));
+    const incomingLoans = freshData.loans || [];
+
+    // Detect newly added loans
+    const brandNewLoans = incomingLoans.filter(l => !prevLoanIds.has(l.id));
+
+    // Save scroll positions of board columns and sub-stacks so there is ZERO jump/flicker
+    const board = document.getElementById('kanbanBoard');
+    const scrollMap = new Map();
+    if (board) {
+      board.querySelectorAll('.kanban-col').forEach((col, idx) => {
+        scrollMap.set(`col-${idx}`, col.scrollTop);
+      });
+      board.querySelectorAll('.sub-stack-cards').forEach(stack => {
+        const key = stack.closest('.sub-stack')?.querySelector('.sub-stack-header')?.getAttribute('data-toggle-substack');
+        if (key) scrollMap.set(key, stack.scrollTop);
+      });
+    }
+
+    // Apply data
+    state.today = freshData.today;
+    state.assets = freshData.assets || [];
+    state.catalogs = freshData.catalogs || [];
+    state.loans = incomingLoans;
+    state.accessorySuggestions = freshData.accessorySuggestions || [];
+    state.locations = freshData.locations || [];
+    if (freshData.companySettings) {
+      state.companySettings = { ...state.companySettings, ...freshData.companySettings };
+    }
+    if (freshData.version) {
+      state.syncVersion = freshData.version;
+    }
+
+    renderHeaderCounters();
+
+    // Re-render active view smoothly
+    if (state.viewMode === 'kanban') {
+      renderKanbanBoard();
+      // Restore scroll positions seamlessly
+      if (board) {
+        board.querySelectorAll('.kanban-col').forEach((col, idx) => {
+          if (scrollMap.has(`col-${idx}`)) col.scrollTop = scrollMap.get(`col-${idx}`);
+        });
+        board.querySelectorAll('.sub-stack-cards').forEach(stack => {
+          const key = stack.closest('.sub-stack')?.querySelector('.sub-stack-header')?.getAttribute('data-toggle-substack');
+          if (key && scrollMap.has(key)) stack.scrollTop = scrollMap.get(key);
+        });
+      }
+    } else if (state.viewMode === 'list') {
+      renderListView();
+    } else if (state.viewMode === 'returned') {
+      renderReturnedView();
+    } else if (state.viewMode === 'stock') {
+      renderStockView();
+    }
+
+    // If new loans were added by other users:
+    if (brandNewLoans.length > 0) {
+      for (const nl of brandNewLoans) {
+        // Highlight new card on board
+        const cardEl = document.querySelector(`.loan-card[data-card-loan="${nl.id}"]`);
+        if (cardEl) {
+          cardEl.classList.add('card-just-arrived');
+          setTimeout(() => cardEl.classList.remove('card-just-arrived'), 4500);
+        }
+
+        // Show Live Notification Toast
+        showLiveLoanNotification(nl);
+
+        // Play gentle audio chime
+        playNotificationChime();
+      }
+    }
+  } catch (_) {}
+}
+
+function showLiveLoanNotification(loan) {
+  let toastContainer = document.getElementById('liveLoanNotificationContainer');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'liveLoanNotificationContainer';
+    toastContainer.className = 'live-loan-notification-container';
+    document.body.appendChild(toastContainer);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = 'live-loan-toast';
+  const company = loan.customer_company || loan.customer_name || '-';
+  toast.innerHTML = `
+    <div class="live-toast-icon">🔔</div>
+    <div class="live-toast-body">
+      <div class="live-toast-title">มีใบยืมใหม่เข้ามา!</div>
+      <div class="live-toast-desc"><strong>${escapeHtml(loan.id)}</strong> · ${escapeHtml(loan.borrower_name)} (${escapeHtml(company)})</div>
+    </div>
+    <button type="button" class="btn-live-toast-view" data-view-live-loan="${escapeHtml(loan.id)}">เปิดดู</button>
+    <button type="button" class="btn-live-toast-close" title="ปิด">✕</button>
+  `;
+
+  toast.querySelector('.btn-live-toast-close')?.addEventListener('click', () => {
+    toast.classList.add('toast-fadeout');
+    setTimeout(() => toast.remove(), 250);
+  });
+
+  toast.querySelector('[data-view-live-loan]')?.addEventListener('click', () => {
+    toast.remove();
+    // Scroll to card or open print pass
+    const card = document.querySelector(`.loan-card[data-card-loan="${loan.id}"]`);
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      card.classList.add('card-highlight');
+      setTimeout(() => card.classList.remove('card-highlight'), 3000);
+    } else {
+      openPrintModal(loan.id);
+    }
+  });
+
+  toastContainer.appendChild(toast);
+
+  // Auto remove after 7 seconds
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.classList.add('toast-fadeout');
+      setTimeout(() => toast.remove(), 250);
+    }
+  }, 7000);
+}
+
+function playNotificationChime() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+
+    const now = ctx.currentTime;
+    [
+      { freq: 659.25, start: now, duration: 0.18 },
+      { freq: 987.77, start: now + 0.12, duration: 0.35 }
+    ].forEach(({ freq, start, duration }) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, start);
+
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.12, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(start);
+      osc.stop(start + duration);
+    });
+  } catch (_) {}
 }

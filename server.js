@@ -238,6 +238,30 @@ try {
   db.exec(`ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active'`);
 } catch (e) {}
 
+// Deleted Users Blacklist Table (Prevents deleted users from entering or auto-recreating accounts)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS deleted_users (
+    email TEXT PRIMARY KEY,
+    deleted_at TEXT DEFAULT (datetime('now', 'localtime'))
+  );
+`);
+
+// Real-time synchronization state versioning & latest mutation tracking
+let appStateVersion = Date.now();
+let lastCreatedLoan = null;
+
+function notifyStateChange(type, meta = null) {
+  appStateVersion = Date.now();
+  if (type === 'create_loan' && meta) {
+    lastCreatedLoan = {
+      id: meta.id,
+      borrower_name: meta.borrower_name || '',
+      customer: meta.customer || meta.customer_company || meta.customer_name || '',
+      created_at: Date.now()
+    };
+  }
+}
+
 // Roles & Permissions Table
 db.exec(`
   CREATE TABLE IF NOT EXISTS roles (
@@ -1464,7 +1488,8 @@ function getFullState() {
     companySettings: getCompanySettings(),
     roles: getAllRoles(),
     permissionKeys: PERMISSION_KEYS,
-    users: db.prepare("SELECT email, name, role FROM users WHERE status = 'active'").all()
+    users: db.prepare("SELECT email, name, role FROM users WHERE status = 'active'").all(),
+    version: appStateVersion
   };
 }
 
@@ -1532,6 +1557,64 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === '/api/state' && req.method === 'GET') {
       return sendJson(res, 200, getFullState());
+    }
+
+    // Lightweight Real-time Sync & Heartbeat (< 1ms execution, ~50 bytes response)
+    if (pathname === '/api/sync/heartbeat' && req.method === 'GET') {
+      const clientVer = parseInt(urlObj.searchParams.get('v') || '0', 10);
+      const clientEmail = (urlObj.searchParams.get('user') || '').trim().toLowerCase();
+
+      // Real-time verification of user session validity
+      if (clientEmail) {
+        const isDel = db.prepare('SELECT 1 FROM deleted_users WHERE email = ?').get(clientEmail);
+        if (isDel) {
+          return sendJson(res, 200, { valid: false, reason: 'deleted', error: 'บัญชีผู้ใช้นี้ถูกลบออกจากระบบแล้ว' });
+        }
+        const u = db.prepare('SELECT status FROM users WHERE email = ?').get(clientEmail);
+        if (!u) {
+          return sendJson(res, 200, { valid: false, reason: 'not_found', error: 'ไม่พบบัญชีผู้ใช้นี้ในระบบ' });
+        }
+        if (u.status === 'disabled') {
+          return sendJson(res, 200, { valid: false, reason: 'disabled', error: 'บัญชีผู้ใช้นี้ถูกระงับการใช้งานแล้ว' });
+        }
+      }
+
+      const hasChanged = clientVer !== appStateVersion;
+      return sendJson(res, 200, {
+        valid: true,
+        changed: hasChanged,
+        v: appStateVersion,
+        latestLoan: hasChanged ? lastCreatedLoan : null
+      });
+    }
+
+    // Explicit User Verification on App Startup
+    if (pathname === '/api/auth/verify' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      const email = String(body.email || '').trim().toLowerCase();
+      if (!email) {
+        return sendJson(res, 400, { success: false, valid: false, error: 'กรุณาระบุอีเมล' });
+      }
+
+      const isDel = db.prepare('SELECT 1 FROM deleted_users WHERE email = ?').get(email);
+      if (isDel) {
+        return sendJson(res, 401, { success: false, valid: false, reason: 'deleted', error: 'บัญชีผู้ใช้นี้ถูกลบออกจากระบบแล้ว' });
+      }
+
+      const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+      if (!user) {
+        return sendJson(res, 401, { success: false, valid: false, reason: 'not_found', error: 'ไม่พบบัญชีผู้ใช้นี้ในระบบ' });
+      }
+
+      if (user.status === 'disabled') {
+        return sendJson(res, 401, { success: false, valid: false, reason: 'disabled', error: 'บัญชีผู้ใช้นี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ' });
+      }
+
+      return sendJson(res, 200, {
+        success: true,
+        valid: true,
+        user: getUserWithRole(email)
+      });
     }
 
     // Company / Issuer Settings
@@ -1695,6 +1778,7 @@ const server = http.createServer(async (req, res) => {
       }
 
       db.prepare('UPDATE users SET role = ? WHERE email = ?').run(newRoleId, email);
+      notifyStateChange('user_role', { email, role: newRoleId });
       return sendJson(res, 200, {
         success: true,
         message: `เปลี่ยนบทบาทของ ${user.name} เป็น ${roleObj.name} เรียบร้อยแล้ว`,
@@ -1720,6 +1804,7 @@ const server = http.createServer(async (req, res) => {
       }
 
       db.prepare('UPDATE users SET status = ? WHERE email = ?').run(newStatus, email);
+      notifyStateChange('user_status', { email, status: newStatus });
       return sendJson(res, 200, {
         success: true,
         message: newStatus === 'disabled'
@@ -1744,7 +1829,10 @@ const server = http.createServer(async (req, res) => {
         }
       }
 
+      // Record in deleted_users blacklist so they cannot auto-recreate account or bypass login
+      db.prepare("INSERT OR REPLACE INTO deleted_users (email, deleted_at) VALUES (?, datetime('now', 'localtime'))").run(email);
       db.prepare('DELETE FROM users WHERE email = ?').run(email);
+      notifyStateChange('user_deleted', { email });
       return sendJson(res, 200, {
         success: true,
         message: `ลบผู้ใช้งาน ${user.name} (${email}) ออกจากระบบเรียบร้อยแล้ว`,
@@ -2198,6 +2286,14 @@ const server = http.createServer(async (req, res) => {
           error: `ไม่อนุญาตให้อีเมลจากโดเมน @${emailDomain} เข้าใช้งาน (ระบบจำกัดสิทธิ์เฉพาะบุคลากรภายใน: ${allowedDomains.map(d => '@' + d).join(', ')})`,
           domain: emailDomain,
           allowed_domains: allowedDomains
+        });
+      }
+
+      // Check if user was explicitly deleted by Admin
+      const wasDeleted = db.prepare('SELECT 1 FROM deleted_users WHERE email = ?').get(email);
+      if (wasDeleted) {
+        return sendJson(res, 403, {
+          error: 'บัญชีผู้ใช้นี้ถูกลบออกจากระบบแล้ว ไม่อนุญาตให้เข้าใช้งาน กรุณาติดต่อผู้ดูแลระบบ (Admin)'
         });
       }
 
@@ -2689,6 +2785,11 @@ const server = http.createServer(async (req, res) => {
         }
 
         db.exec('COMMIT');
+        notifyStateChange('create_loan', {
+          id: loanId,
+          borrower_name: borrowerName,
+          customer: customerCompany || customerName
+        });
         return sendJson(res, 201, { loanId, state: getFullState() });
       } catch (err) {
         db.exec('ROLLBACK');
@@ -2724,6 +2825,7 @@ const server = http.createServer(async (req, res) => {
         db.prepare('DELETE FROM loans WHERE id = ?').run(loanId);
 
         db.exec('COMMIT');
+        notifyStateChange('cancel_loan', { id: loanId });
         return sendJson(res, 200, { success: true, message: `ยกเลิกใบยืม ${loanId} เรียบร้อยแล้ว`, state: getFullState() });
       } catch (err) {
         db.exec('ROLLBACK');
@@ -2902,6 +3004,7 @@ const server = http.createServer(async (req, res) => {
         `).run(JSON.stringify(finalBefore), sigUrl, dispatcherName, loanId);
 
         db.exec('COMMIT');
+        notifyStateChange('dispatch_loan', { id: loanId });
         return sendJson(res, 200, getFullState());
       } catch (err) {
         db.exec('ROLLBACK');
@@ -2951,6 +3054,7 @@ const server = http.createServer(async (req, res) => {
         loanId
       );
 
+      notifyStateChange('deliver_loan', { id: loanId });
       return sendJson(res, 200, getFullState());
     }
 
@@ -3118,6 +3222,7 @@ const server = http.createServer(async (req, res) => {
         }
 
         db.exec('COMMIT');
+        notifyStateChange('return_loan', { id: loanId });
         return sendJson(res, 200, getFullState());
       } catch (err) {
         db.exec('ROLLBACK');
@@ -3370,6 +3475,7 @@ const server = http.createServer(async (req, res) => {
         }
 
         db.exec('COMMIT');
+        notifyStateChange('return_loan', { id: loanId });
         return sendJson(res, 200, getFullState());
       } catch (err) {
         db.exec('ROLLBACK');

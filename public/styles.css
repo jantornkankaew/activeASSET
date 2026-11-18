@@ -22604,3 +22604,133 @@ html.is-unauthenticated .app-shell {
   align-items: center;
   gap: 6px;
 }
+
+/* Real-time Notification & Smooth Card Arrival */
+.live-loan-notification-container {
+  position: fixed;
+  top: 68px;
+  right: 24px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.live-loan-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #93c5fd;
+  border-left: 4px solid #2563eb;
+  border-radius: 10px;
+  padding: 12px 16px;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+  min-width: 320px;
+  max-width: 420px;
+  animation: liveToastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.live-loan-toast.toast-fadeout {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+@keyframes liveToastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(40px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.live-toast-icon {
+  font-size: 22px;
+  line-height: 1;
+  animation: bellRing 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes bellRing {
+  0% { transform: rotate(-10deg); }
+  100% { transform: rotate(10deg); }
+}
+
+.live-toast-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.live-toast-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin-bottom: 2px;
+}
+
+.live-toast-desc {
+  font-size: 12px;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-live-toast-view {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.btn-live-toast-view:hover {
+  background: #1d4ed8;
+}
+
+.btn-live-toast-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.btn-live-toast-close:hover {
+  color: #475569;
+}
+
+/* Card Arrival Pulse Effect */
+@keyframes cardArrivalPulse {
+  0% {
+    transform: translateY(-6px) scale(0.97);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.45);
+    background: #eff6ff;
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.25);
+    background: #dbeafe;
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    background: #ffffff;
+  }
+}
+
+.card-just-arrived {
+  animation: cardArrivalPulse 2.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
