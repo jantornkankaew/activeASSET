@@ -1506,6 +1506,9 @@ function getFullState() {
         mainColumn = 'in-use';
         subGroup = 'Delivered';
       }
+    } else if (l.status === 'Pending_QC') {
+      mainColumn = 'qc';
+      subGroup = 'Pending_QC';
     } else if (l.status === 'Partially_Returned') {
       mainColumn = 'overdue-and-partial';
       subGroup = days < 0 ? 'Overdue' : 'Partially_Returned';
@@ -3524,6 +3527,75 @@ const server = http.createServer(async (req, res) => {
         });
       } catch (mailErr) {
         return sendJson(res, 500, { error: `ส่งอีเมลไม่สำเร็จ: ${mailErr.message}` });
+      }
+    }
+
+    // Receive Loan Items from Customer and move to Pending_QC
+    if (pathname.match(/^\/api\/loans\/[^/]+\/receive-for-qc$/) && req.method === 'POST') {
+      const loanId = pathname.split('/')[3];
+      const loan = db.prepare('SELECT * FROM loans WHERE id = ?').get(loanId);
+      if (!loan) return sendJson(res, 404, { error: 'ไม่พบใบยืมนี้' });
+
+      const body = await parseJsonBody(req).catch(() => ({}));
+      const returnReceiver = String(body.return_receiver || '').trim();
+
+      db.exec('BEGIN TRANSACTION');
+      try {
+        db.prepare(`
+          UPDATE loans
+          SET status = 'Pending_QC',
+              return_receiver = COALESCE(NULLIF(?, ''), return_receiver)
+          WHERE id = ?
+        `).run(returnReceiver, loanId);
+
+        // Update assets to In_QC status while awaiting QC inspection
+        const loanItems = db.prepare('SELECT tag_id FROM loan_items WHERE loan_id = ? AND returned = 0').all(loanId);
+        for (const item of loanItems) {
+          if (item.tag_id) {
+            db.prepare(`
+              UPDATE assets
+              SET status = 'In_QC',
+                  updated_at = datetime('now', 'localtime')
+              WHERE tag_id = ?
+            `).run(item.tag_id);
+          }
+        }
+
+        db.exec('COMMIT');
+        notifyStateChange('receive_for_qc', { id: loanId });
+        return sendJson(res, 200, getFullState());
+      } catch (err) {
+        db.exec('ROLLBACK');
+        return sendJson(res, 400, { error: err.message });
+      }
+    }
+
+    // Revert QC back to Delivered (in case of misclick)
+    if (pathname.match(/^\/api\/loans\/[^/]+\/revert-qc$/) && req.method === 'POST') {
+      const loanId = pathname.split('/')[3];
+      const loan = db.prepare('SELECT * FROM loans WHERE id = ?').get(loanId);
+      if (!loan) return sendJson(res, 404, { error: 'ไม่พบใบยืมนี้' });
+
+      db.exec('BEGIN TRANSACTION');
+      try {
+        db.prepare(`UPDATE loans SET status = 'Delivered' WHERE id = ?`).run(loanId);
+        const loanItems = db.prepare('SELECT tag_id FROM loan_items WHERE loan_id = ? AND returned = 0').all(loanId);
+        for (const item of loanItems) {
+          if (item.tag_id) {
+            db.prepare(`
+              UPDATE assets
+              SET status = 'On_Loan',
+                  updated_at = datetime('now', 'localtime')
+              WHERE tag_id = ?
+            `).run(item.tag_id);
+          }
+        }
+        db.exec('COMMIT');
+        notifyStateChange('revert_qc', { id: loanId });
+        return sendJson(res, 200, getFullState());
+      } catch (err) {
+        db.exec('ROLLBACK');
+        return sendJson(res, 400, { error: err.message });
       }
     }
 

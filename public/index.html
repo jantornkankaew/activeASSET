@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=20261118_14" />
+  <link rel="stylesheet" href="/styles.css?v=20261118_15" />
   <script>
     (function() {
       try {
@@ -200,25 +200,30 @@
       <main id="kanbanView" class="kanban-view-container">
         <!-- Mobile Column Navigation Bar (แสดงเฉพาะหน้าจอมือถือ/แท็บเล็ต) -->
         <div class="kanban-mobile-col-bar" id="kanbanMobileColBar" aria-label="แถบสลับคอลัมน์บนมือถือ">
-          <button type="button" class="col-pill-btn active" data-col-target="waiting_dispatch">
+          <button type="button" class="col-pill-btn active" data-col-target="requesting">
             <span class="col-pill-dot dot-blue"></span>
             <span class="col-pill-label">รอจัด</span>
             <span class="col-pill-badge" id="mCountColWaitingDispatch">0</span>
           </button>
-          <button type="button" class="col-pill-btn" data-col-target="waiting_delivery">
+          <button type="button" class="col-pill-btn" data-col-target="dispatched">
             <span class="col-pill-dot dot-purple"></span>
             <span class="col-pill-label">รอส่ง</span>
             <span class="col-pill-badge" id="mCountColWaitingDelivery">0</span>
           </button>
-          <button type="button" class="col-pill-btn" data-col-target="active_loan">
+          <button type="button" class="col-pill-btn" data-col-target="in-use">
             <span class="col-pill-dot dot-emerald"></span>
             <span class="col-pill-label">กำลังยืม</span>
             <span class="col-pill-badge" id="mCountColActiveLoan">0</span>
           </button>
-          <button type="button" class="col-pill-btn" data-col-target="overdue">
+          <button type="button" class="col-pill-btn" data-col-target="overdue-and-partial">
             <span class="col-pill-dot dot-rose"></span>
             <span class="col-pill-label">เกินกำหนด</span>
             <span class="col-pill-badge" id="mCountColOverdue">0</span>
+          </button>
+          <button type="button" class="col-pill-btn" data-col-target="qc">
+            <span class="col-pill-dot dot-amber"></span>
+            <span class="col-pill-label">ตรวจ QC</span>
+            <span class="col-pill-badge" id="mCountColQc">0</span>
           </button>
         </div>
 
@@ -3230,6 +3235,6 @@
 
   <script src="/qrcode.min.js"></script>
   <script src="/html5-qrcode.min.js"></script>
-  <script src="/app.js?v=20261118_14"></script>
+  <script src="/app.js?v=20261118_15"></script>
 </body>
 </html>

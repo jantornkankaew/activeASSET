@@ -42,6 +42,16 @@ const MAIN_COLUMNS = [
       { key: 'Overdue', label: 'เกินกำหนด' },
       { key: 'Partially_Returned', label: 'คืนไม่ครบ' }
     ]
+  },
+  {
+    id: 'qc',
+    label: 'รอตรวจ QC',
+    theme: 'theme-amber',
+    icon: '🔍',
+    sortableByDocNo: true,
+    subGroups: [
+      { key: 'Pending_QC', label: 'รอตรวจสภาพ' }
+    ]
   }
 ];
 
@@ -1102,6 +1112,7 @@ function renderHeaderCounters() {
   const dispatchedCount = state.loans.filter(l => l.main_column === 'dispatched').length;
   const inUseCount = state.loans.filter(l => l.main_column === 'in-use').length;
   const overdueCount = state.loans.filter(l => l.main_column === 'overdue-and-partial').length;
+  const qcCount = state.loans.filter(l => l.main_column === 'qc' || l.status === 'Pending_QC').length;
   const returnedCount = state.loans.filter(l => l.status === 'Returned').length;
 
   const elReq = document.getElementById('kpiRequesting');
@@ -1112,6 +1123,10 @@ function renderHeaderCounters() {
   if (elUse) elUse.textContent = inUseCount;
   const elOver = document.getElementById('kpiOverdue');
   if (elOver) elOver.textContent = overdueCount;
+  const elQc = document.getElementById('kpiQc');
+  if (elQc) elQc.textContent = qcCount;
+  const elMQc = document.getElementById('mCountColQc');
+  if (elMQc) elMQc.textContent = qcCount;
   const elRet = document.getElementById('countReturnedTab');
   if (elRet) elRet.textContent = returnedCount;
   const elStock = document.getElementById('countStockTab');
@@ -1257,6 +1272,11 @@ function renderKanbanBoard() {
 
   // Update mobile column selector badges
   const mBadgeMap = {
+    requesting: 'mCountColWaitingDispatch',
+    dispatched: 'mCountColWaitingDelivery',
+    'in-use': 'mCountColActiveLoan',
+    'overdue-and-partial': 'mCountColOverdue',
+    qc: 'mCountColQc',
     waiting_dispatch: 'mCountColWaitingDispatch',
     waiting_delivery: 'mCountColWaitingDelivery',
     active_loan: 'mCountColActiveLoan',
@@ -1350,6 +1370,9 @@ function renderKanbanCard(loan) {
   } else if (loan.status === 'Delivered') {
     wmText = 'ส่งมอบ';
     wmClass = 'wm-delivered';
+  } else if (loan.status === 'Pending_QC') {
+    wmText = 'รอตรวจ QC';
+    wmClass = 'wm-qc';
   } else if (loan.status === 'Partially_Returned') {
     wmText = 'คืนไม่ครบ';
     wmClass = 'wm-partial';
@@ -1364,7 +1387,7 @@ function renderKanbanCard(loan) {
     <article
       class="loan-card clickable-card ${isHighlight ? 'card-highlight' : ''} ${loan.is_overdue ? 'card-overdue' : ''}"
       data-card-loan="${escapeHtml(loan.id)}"
-      title="${isEditable ? 'คลิกเพื่อเปิดหน้าจัดของ & Match S/N' : 'คลิกเพื่อเปิดดูใบยืมแบบเต็มหน้าจอ'}"
+      title="${isEditable ? 'คลิกเพื่อเปิดหน้าจัดของ & Match S/N' : loan.status === 'Pending_QC' ? 'คลิกเพื่อเปิดหน้าตรวจสภาพ QC & รับเข้าคลัง' : 'คลิกเพื่อเปิดดูใบยืมแบบเต็มหน้าจอ'}"
     >
       <!-- Background Watermark (ลายน้ำสถานะ) -->
       <div class="card-watermark ${wmClass}" aria-hidden="true">${wmText}</div>
@@ -1411,6 +1434,30 @@ function renderKanbanCard(loan) {
             </button>` : ''}
           </div>
         `
+            : (loan.status === 'Delivered' || loan.status === 'Partially_Returned')
+            ? `
+          <div class="card-actions">
+            <button type="button" class="btn-card-action-minimal btn-receive-qc" data-receive-qc="${escapeHtml(loan.id)}" title="รับคืนจากลูกค้า และส่งไปแถวตรวจ QC">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>รับตรวจ QC</span>
+            </button>
+          </div>
+        `
+            : loan.status === 'Pending_QC'
+            ? `
+          <div class="card-actions">
+            <button type="button" class="btn-card-action-minimal btn-inspect-qc" data-inspect-qc="${escapeHtml(loan.id)}" title="เปิดหน้าตรวจสภาพและรับคืนเข้าคลัง">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>ตรวจ QC</span>
+            </button>
+          </div>
+        `
             : ''
         }
         <button type="button" class="doc-no doc-link-pill kanban-doc-pill card-footer-doc-pill" data-open-print="${escapeHtml(loan.id)}" title="คลิกเพื่อเปิดดูใบยืมจริง ${escapeHtml(loan.id)}">
@@ -1443,6 +1490,8 @@ function getLoanStatusBadge(loan) {
       return `<span class="min-status-badge dispatched"><span class="status-dot blue"></span>รอส่งมอบ</span>`;
     case 'Delivered':
       return `<span class="min-status-badge delivered"><span class="status-dot green"></span>กำลังยืม</span>`;
+    case 'Pending_QC':
+      return `<span class="min-status-badge pending-qc"><span class="status-dot amber"></span>รอตรวจ QC</span>`;
     case 'Partially_Returned':
       return `<span class="min-status-badge partial"><span class="status-dot purple"></span>คืนบางส่วน</span>`;
     case 'Returned':
@@ -1564,8 +1613,13 @@ function renderListView() {
                 </button>
               ` : ''}
               ${isReturnable && can('return_loan') ? `
-                <button type="button" class="btn-min-return" data-open-return="${escapeHtml(l.id)}" title="ตรวจรับคืนสินค้า / QC">
+                <button type="button" class="btn-min-return" data-open-return="${escapeHtml(l.id)}" title="รับคืนจากลูกค้า / ส่งตรวจ QC">
                   <span>📥 รับคืน</span>
+                </button>
+              ` : ''}
+              ${l.status === 'Pending_QC' && can('return_loan') ? `
+                <button type="button" class="btn-min-return btn-min-qc" data-open-return="${escapeHtml(l.id)}" title="ตรวจสภาพ QC และรับเข้าคลัง">
+                  <span>🔍 ตรวจ QC</span>
                 </button>
               ` : ''}
             </div>
@@ -2069,6 +2123,7 @@ function initCompanyAutocomplete() {
   let currentResults = [];
   let searchSeq = 0;
   let isSelecting = false;
+  let selectedCompanyValue = '';
 
   const closeDropdown = () => {
     searchSeq++; // Invalidate and discard any in-flight async searches
@@ -2082,6 +2137,12 @@ function initCompanyAutocomplete() {
 
   const renderDropdown = (results, query) => {
     if (isSelecting) return;
+    const currentVal = (companyInput.value || '').trim();
+    if (selectedCompanyValue && currentVal === selectedCompanyValue) {
+      closeDropdown();
+      return;
+    }
+
     dropdown.innerHTML = '';
     currentResults = results || [];
     activeIndex = -1;
@@ -2154,9 +2215,15 @@ function initCompanyAutocomplete() {
         <span class="company-item-badge ${badgeClass}">${badgeText}</span>
       `;
 
+      itemEl.addEventListener('mousedown', (e) => {
+        // Prevent input blur and unexpected focus bounce
+        e.preventDefault();
+      });
+
       itemEl.addEventListener('click', (e) => {
         e.stopPropagation();
         isSelecting = true;
+        selectedCompanyValue = item.name;
         closeDropdown();
 
         companyInput.value = item.name;
@@ -2201,7 +2268,7 @@ function initCompanyAutocomplete() {
 
         setTimeout(() => {
           isSelecting = false;
-        }, 350);
+        }, 500);
       });
 
       dropdown.appendChild(itemEl);
@@ -2218,9 +2285,13 @@ function initCompanyAutocomplete() {
           ใช้ชื่อใหม่: <strong>"${escapeHtml(trimmedQuery)}"</strong> <span style="font-size:11px; color:#2563eb; opacity:0.85;">(บันทึกอัตโนมัติ)</span>
         </div>
       `;
+      addNewEl.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+      });
       addNewEl.addEventListener('click', async (e) => {
         e.stopPropagation();
         isSelecting = true;
+        selectedCompanyValue = trimmedQuery;
         closeDropdown();
 
         companyInput.value = trimmedQuery;
@@ -2234,7 +2305,7 @@ function initCompanyAutocomplete() {
 
         setTimeout(() => {
           isSelecting = false;
-        }, 350);
+        }, 500);
 
         // Auto-learn in background into Master Data customers
         try {
@@ -2281,19 +2352,26 @@ function initCompanyAutocomplete() {
   companyInput.addEventListener('input', () => {
     syncClearableInputBtn(companyInput);
     if (isSelecting) return;
-    clearTimeout(debounceTimer);
     const q = companyInput.value.trim();
+    if (q !== selectedCompanyValue) {
+      selectedCompanyValue = '';
+    }
+    clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
-      if (!isSelecting) fetchCompanies(q);
+      if (!isSelecting && companyInput.value.trim() !== selectedCompanyValue) {
+        fetchCompanies(companyInput.value.trim());
+      }
     }, 180);
   });
 
   companyInput.addEventListener('focus', () => {
     if (isSelecting) return;
     const q = companyInput.value.trim();
-    // Only search on focus if input is empty or dropdown is closed
-    if (!q || dropdown.classList.contains('hidden')) {
-      fetchCompanies(q);
+    // If input already has a selected value, NEVER auto-open on focus!
+    if (q && q === selectedCompanyValue) return;
+    // Only search on focus if input is empty (to show recent customers), NOT when it already has text!
+    if (!q) {
+      fetchCompanies('');
     }
   });
 
@@ -2304,9 +2382,17 @@ function initCompanyAutocomplete() {
       closeDropdown();
     } else {
       isSelecting = false;
+      selectedCompanyValue = ''; // Allow forced viewing of full list
       fetchCompanies(companyInput.value.trim());
       companyInput.focus();
     }
+  });
+
+  // Quick clear button (✕) resets selected state
+  const clearBtn = companyInput.closest('.input-clearable-wrap')?.querySelector('.btn-input-clear');
+  clearBtn?.addEventListener('click', () => {
+    selectedCompanyValue = '';
+    closeDropdown();
   });
 
   companyInput.addEventListener('keydown', (e) => {
@@ -4784,6 +4870,7 @@ function updateDispatchSummary() {
   const rightBtnsEl = document.getElementById('dispatchFooterRightBtns');
   if (rightBtnsEl) {
     if (state.dispatchReturnMode) {
+      const isPendingQc = loan && loan.status === 'Pending_QC';
       const totalLoanItems = (state.dispatchDraftItems || []).length;
       const alreadyReturned = (state.dispatchDraftItems || []).filter(r => r.returned).length;
       const remainingToReturn = totalLoanItems - alreadyReturned;
@@ -4792,8 +4879,13 @@ function updateDispatchSummary() {
 
       const isEnabled = currentSelected > 0;
       rightBtnsEl.innerHTML = `
+        ${isPendingQc ? `
+          <button type="button" class="btn btn-ghost text-muted" id="btnRevertQcToDelivered" style="font-size:12px; margin-right:auto;" title="ย้อนกลับไปสถานะกำลังยืม">
+            ↩️ ย้อนกลับเป็นกำลังยืม
+          </button>
+        ` : ''}
         <button type="button" class="btn btn-ghost" id="btnCancelReturnMode">
-          ยกเลิก
+          ${isPendingQc ? 'ปิด' : 'ยกเลิก'}
         </button>
         <button 
           type="button" 
@@ -4804,18 +4896,24 @@ function updateDispatchSummary() {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
-          <span>${isEnabled ? `บันทึกการรับคืน (${currentSelected}/${remainingToReturn} เครื่อง)${isPartial ? ' — คืนบางส่วน' : ''}` : 'บันทึกการรับคืน (เลือกเครื่องที่คืน)'}</span>
+          <span>${isPendingQc ? `ตรวจ QC ผ่าน — รับเข้าคลัง (${currentSelected}/${remainingToReturn} เครื่อง)` : isEnabled ? `บันทึกการรับคืน (${currentSelected}/${remainingToReturn} เครื่อง)${isPartial ? ' — คืนบางส่วน' : ''}` : 'บันทึกการรับคืน (เลือกเครื่องที่คืน)'}</span>
         </button>
       `;
     } else if (isDeliveredLoan) {
       rightBtnsEl.innerHTML = `
-        <button type="button" class="btn btn-success btn-dispatch-return" id="btnDispatchStartReturn" title="เริ่มขั้นตอนการคืนสินค้า">
+        <button type="button" class="btn btn-warning btn-dispatch-receive-qc" id="btnDispatchReceiveQc" title="รับของจากลูกค้าและย้ายไปแถว รอตรวจ QC">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="7 10 12 15 17 10"></polyline>
             <line x1="12" y1="15" x2="12" y2="3"></line>
           </svg>
-          <span>คืนสินค้า</span>
+          <span>รับคืนจากลูกค้า (ส่งตรวจ QC)</span>
+        </button>
+        <button type="button" class="btn btn-success btn-dispatch-return" id="btnDispatchStartReturn" title="เริ่มขั้นตอนการตรวจรับคืนทันที">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>ตรวจรับคืนทันที</span>
         </button>
       `;
     } else if (isReadOnly) {
@@ -4888,11 +4986,12 @@ function openDispatchModal(loanId, updateHash = true) {
 
   if (updateHash) updateUrlHash('modal', `dispatch-${loan.id}`);
   state.activeDispatchLoan = loan;
-  state.dispatchReturnMode = false;
+  const isPendingQc = loan.status === 'Pending_QC';
+  state.dispatchReturnMode = isPendingQc;
   state.dispatchReturnPhotos = [];
 
   // Initialize draft items with their photos
-  const isAlreadyDispatched = ['Dispatched', 'Overdue', 'Delivered', 'Partially_Returned', 'Returned'].includes(loan.status);
+  const isAlreadyDispatched = ['Dispatched', 'Overdue', 'Delivered', 'Pending_QC', 'Partially_Returned', 'Returned'].includes(loan.status);
   state.dispatchDraftItems = (loan.items || []).map(it => {
     const existingTag = isAlreadyDispatched ? (it.tag_id || '') : '';
     const assetObj = existingTag ? state.assets.find(a => a.tag_id === existingTag) : null;
@@ -4919,7 +5018,7 @@ function openDispatchModal(loanId, updateHash = true) {
       attachments: [...(it.attachments || [])],
       returned: Boolean(it.returned),
       returned_at: it.returned_at || it.return_date || (it.returned && loan.return_date ? loan.return_date : null),
-      selectedForReturn: false,
+      selectedForReturn: isPendingQc && !Boolean(it.returned),
       scannedSn: '',
       allAccessories: [...(it.loan_accessories || (assetObj ? assetObj.accessories : []) || [])],
       missingAccessories: new Set(it.missing_accessories || []),
@@ -4949,7 +5048,9 @@ function openDispatchModal(loanId, updateHash = true) {
   const titleIconEl = document.querySelector('#dispatchDialogTitle .dispatch-title-icon');
   const titleTextEl = document.querySelector('#dispatchDialogTitle .dispatch-title-text');
   if (titleIconEl) {
-    if (state.dispatchReturnMode) {
+    if (isPendingQc) {
+      titleIconEl.textContent = '🔍';
+    } else if (state.dispatchReturnMode) {
       titleIconEl.textContent = '📥';
     } else if (isDelivered || isPartial) {
       titleIconEl.textContent = '📦';
@@ -4960,7 +5061,9 @@ function openDispatchModal(loanId, updateHash = true) {
     }
   }
   if (titleTextEl) {
-    if (state.dispatchReturnMode) {
+    if (isPendingQc) {
+      titleTextEl.textContent = 'ตรวจสภาพสินค้า (QC) & รับคืนเข้าคลัง';
+    } else if (state.dispatchReturnMode) {
       titleTextEl.textContent = 'ตรวจรับคืนสินค้า';
     } else if (isPartial || isDelivered) {
       titleTextEl.textContent = 'รายการสินค้าที่กำลังยืม';
@@ -4973,11 +5076,17 @@ function openDispatchModal(loanId, updateHash = true) {
 
   const scannerBar = document.getElementById('dispatchBarcodeScannerBar');
   if (scannerBar) {
-    scannerBar.classList.toggle('hidden', (isDispatched || isDelivered || isPartial) && !state.dispatchOnsiteEditMode && !state.dispatchReturnMode);
+    scannerBar.classList.toggle('hidden', (isDispatched || isDelivered || isPartial) && !isPendingQc && !state.dispatchOnsiteEditMode && !state.dispatchReturnMode);
   }
 
   if (stageBadge) {
-    if (state.dispatchReturnMode) {
+    if (isPendingQc) {
+      stageBadge.textContent = 'รอตรวจ QC';
+      stageBadge.className = 'badge-stage-pill';
+      stageBadge.style.background = '#fef3c7';
+      stageBadge.style.color = '#b45309';
+      stageBadge.style.borderColor = '#fde68a';
+    } else if (state.dispatchReturnMode) {
       stageBadge.textContent = 'ตรวจรับคืนสินค้า';
       stageBadge.className = 'badge-stage-pill';
       stageBadge.style.background = '#dcfce7';
@@ -12371,9 +12480,9 @@ function setupEventListeners() {
     if (cardEl && !e.target.closest('.min-actions-toolbar') && (!e.target.closest('button') || e.target.closest('.list-doc-pill'))) {
       const loanId = cardEl.getAttribute('data-card-loan');
       const loan = state.loans.find(l => l.id === loanId);
-      // If loan is waiting for picking, awaiting delivery, or currently on loan:
+      // If loan is waiting for picking, awaiting delivery, currently on loan, or pending QC:
       // Open the Dispatch & Item Inspection / Return screen directly!
-      if (loan && (loan.status === 'Requested' || loan.status === 'Dispatching' || loan.status === 'Dispatched' || loan.status === 'Delivered' || loan.status === 'Partially_Returned')) {
+      if (loan && (loan.status === 'Requested' || loan.status === 'Dispatching' || loan.status === 'Dispatched' || loan.status === 'Delivered' || loan.status === 'Pending_QC' || loan.status === 'Partially_Returned')) {
         openDispatchModal(loan.id);
         return;
       }
@@ -14669,6 +14778,80 @@ function setupEventListeners() {
       const loanId = state.activeDispatchLoan.id;
       document.getElementById('dispatchDialog')?.close();
       openDeliveryModal(loanId);
+      return;
+    }
+
+    // 4.1. Receive Loan from Customer and send to Pending_QC
+    const btnReceiveQc = e.target.closest('#btnDispatchReceiveQc') || e.target.closest('[data-receive-qc]');
+    if (btnReceiveQc) {
+      e.preventDefault();
+      e.stopPropagation();
+      const loanId = btnReceiveQc.getAttribute('data-receive-qc') || state.activeDispatchLoan?.id;
+      if (!loanId) return;
+
+      const loan = state.loans.find(l => l.id === loanId);
+      const companyName = loan ? (loan.customer_company || loan.customer_name || loan.id) : loanId;
+
+      showCustomConfirmModal({
+        title: 'ยืนยันรับคืนสินค้าจากลูกค้า',
+        message: `คุณต้องการรับคืนสินค้าของ "${companyName}" เพื่อส่งต่อไปตรวจ QC ก่อนรับเข้าคลัง ใช่หรือไม่?`,
+        confirmText: '📥 รับของส่งตรวจ QC',
+        confirmClass: 'btn-warning',
+        onConfirm: async () => {
+          try {
+            const res = await fetch(`/api/loans/${encodeURIComponent(loanId)}/receive-for-qc`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                return_receiver: state.currentUser?.name || 'เจ้าหน้าที่คลัง'
+              })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'ไม่สามารถรับคืนเข้า QC ได้');
+            applyServerState(data);
+            document.getElementById('dispatchDialog')?.close();
+            showToast(`📥 รับคืน "${loanId}" จากลูกค้าเรียบร้อย — ย้ายไปแถว "รอตรวจ QC" แล้ว`);
+          } catch (err) {
+            showToast(`❌ ${err.message}`);
+          }
+        }
+      });
+      return;
+    }
+
+    // 4.2. Open Inspection for Pending_QC card
+    const btnInspectQc = e.target.closest('[data-inspect-qc]');
+    if (btnInspectQc) {
+      e.preventDefault();
+      e.stopPropagation();
+      const loanId = btnInspectQc.getAttribute('data-inspect-qc');
+      if (loanId) {
+        openDispatchModal(loanId);
+      }
+      return;
+    }
+
+    // 4.3. Revert QC back to Delivered
+    const btnRevertQc = e.target.closest('#btnRevertQcToDelivered');
+    if (btnRevertQc) {
+      e.preventDefault();
+      if (!state.activeDispatchLoan) return;
+      const loanId = state.activeDispatchLoan.id;
+      (async () => {
+        try {
+          const res = await fetch(`/api/loans/${encodeURIComponent(loanId)}/revert-qc`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'ไม่สามารถย้อนสถานะได้');
+          applyServerState(data);
+          document.getElementById('dispatchDialog')?.close();
+          showToast(`↩️ ย้อนสถานะใบยืม "${loanId}" กลับเป็นกำลังยืมเรียบร้อย`);
+        } catch (err) {
+          showToast(`❌ ${err.message}`);
+        }
+      })();
       return;
     }
 

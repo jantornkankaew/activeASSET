@@ -988,6 +988,12 @@ input[type="search"]::-webkit-search-results-decoration {
 }
 .theme-rose .col-title, .theme-rose .sub-label { color: var(--rose-text); }
 
+.theme-amber .col-icon-box, .theme-amber .col-count-badge, .theme-amber .sub-count {
+  background: #fef3c7;
+  color: #b45309;
+}
+.theme-amber .col-title, .theme-amber .sub-label { color: #b45309; }
+
 /* Sub-Status Stack (Collapsible like v1 SubStatusStack) */
 .sub-stack {
   background: rgba(241, 245, 249, 0.7);
@@ -1102,6 +1108,7 @@ input[type="search"]::-webkit-search-results-decoration {
 .card-watermark.wm-delivered { color: #10b981; }
 .card-watermark.wm-overdue { color: #e11d48; }
 .card-watermark.wm-partial { color: #f59e0b; }
+.card-watermark.wm-qc { color: #d97706; }
 .card-watermark.wm-returned { color: #64748b; }
 
 .loan-card:hover {
@@ -1390,6 +1397,67 @@ input[type="search"]::-webkit-search-results-decoration {
   color: #b91c1c;
   border-color: #fca5a5;
   box-shadow: 0 1px 2px rgba(239, 68, 68, 0.12);
+}
+
+.btn-card-action-minimal {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-receive-qc {
+  color: #b45309;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+}
+.btn-receive-qc:hover {
+  background: #fde68a;
+  color: #92400e;
+  box-shadow: 0 1px 3px rgba(217, 119, 6, 0.2);
+}
+
+.btn-inspect-qc {
+  color: #1e40af;
+  background: #dbeafe;
+  border: 1px solid #bfdbfe;
+}
+.btn-inspect-qc:hover {
+  background: #bfdbfe;
+  color: #1e3a8a;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
+}
+
+.btn-dispatch-receive-qc {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #d97706 !important;
+}
+.btn-dispatch-receive-qc:hover {
+  background: #d97706 !important;
+}
+
+.btn-min-qc {
+  background: #fef3c7 !important;
+  color: #b45309 !important;
+  border-color: #fde68a !important;
+}
+.btn-min-qc:hover {
+  background: #fde68a !important;
+}
+
+.min-status-badge.pending-qc {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+.status-dot.amber {
+  background: #f59e0b;
 }
 
 .btn-cancel-loan-action {
@@ -9252,6 +9320,7 @@ dialog.modal-send-email {
   .dot-purple { background: #8b5cf6; }
   .dot-emerald { background: #10b981; }
   .dot-rose { background: #f43f5e; }
+  .dot-amber { background: #f59e0b; }
 
   .col-pill-badge {
     font-family: 'Inter', -apple-system, sans-serif;
