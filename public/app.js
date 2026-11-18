@@ -131,6 +131,17 @@ window.renderLoanExcelRows = renderLoanExcelRows;
 window.ensureTrailingEmptyRow = ensureTrailingEmptyRow;
 window.uploadNoteFiles = uploadNoteFiles;
 
+function getLoggedInUserName() {
+  if (state.currentUser && state.currentUser.name) return state.currentUser.name.trim();
+  try {
+    const saved = JSON.parse(localStorage.getItem('activeasset_current_user') || '{}');
+    if (saved && saved.name) return saved.name.trim();
+    if (saved && saved.email) return saved.email.trim();
+  } catch (_) {}
+  return 'เจ้าหน้าที่คลัง';
+}
+window.getLoggedInUserName = getLoggedInUserName;
+
 function syncClearableInputBtn(inp) {
   if (!inp) return;
   const wrap = inp.closest('.input-clearable-wrap');
@@ -4775,28 +4786,18 @@ function updateDispatchSummary() {
   const hintEl = document.getElementById('dispatchStatusHint');
   if (hintEl) {
     if (state.dispatchReturnMode) {
+      const currentUserName = getLoggedInUserName();
       hintEl.innerHTML = `
-        <div class="ret-inspector-box" style="display:inline-flex; align-items:center; gap:6px;">
+        <div class="ret-inspector-box" style="display:inline-flex; align-items:center; gap:8px;">
           <span style="font-size:12px; font-weight:600; color:#475569; white-space:nowrap;">ผู้รับคืน:</span>
-          <div class="input-clearable-wrap has-actions-end" style="display:inline-flex; width:170px;">
-            <input type="text" id="dispatchReturnReceiverName" class="form-control" style="width:100%; padding:3px 26px 3px 8px; font-size:12px; height:28px;" value="${escapeHtml(loan?.return_receiver || state.currentUser?.name || 'เจ้าหน้าที่คลัง')}" autocomplete="off" />
-            <div class="input-actions-end">
-              <button type="button" class="btn-keyboard-toggle" data-keyboard-target="dispatchReturnReceiverName" title="แสดง/ซ่อน แป้นพิมพ์บนหน้าจอ" aria-label="แสดง/ซ่อน แป้นพิมพ์">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
-                  <line x1="6" y1="8" x2="6" y2="8"></line>
-                  <line x1="10" y1="8" x2="10" y2="8"></line>
-                  <line x1="14" y1="8" x2="14" y2="8"></line>
-                  <line x1="18" y1="8" x2="18" y2="8"></line>
-                  <line x1="6" y1="12" x2="6" y2="12"></line>
-                  <line x1="10" y1="12" x2="10" y2="12"></line>
-                  <line x1="14" y1="12" x2="14" y2="12"></line>
-                  <line x1="18" y1="12" x2="18" y2="12"></line>
-                  <line x1="7" y1="16" x2="17" y2="16"></line>
-                </svg>
-              </button>
-            </div>
+          <div style="display:inline-flex; align-items:center; gap:6px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:3px 10px; height:28px; box-sizing:border-box;">
+            <span style="display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; background:#2563eb; color:#fff; font-size:10px; font-weight:600; flex-shrink:0;">
+              ${escapeHtml((currentUserName.trim().charAt(0) || '👤').toUpperCase())}
+            </span>
+            <span style="font-size:12px; font-weight:600; color:#0f172a; white-space:nowrap;">${escapeHtml(currentUserName)}</span>
+            <span style="font-size:10.5px; font-weight:500; color:#475569; background:#e2e8f0; padding:1px 6px; border-radius:4px; white-space:nowrap;">(ผู้ล็อกอิน)</span>
           </div>
+          <input type="hidden" id="dispatchReturnReceiverName" value="${escapeHtml(currentUserName)}" />
         </div>
       `;
     } else if (isDeliveredLoan) {
@@ -14924,7 +14925,7 @@ function setupEventListeners() {
               returned_to_location: 1
             })),
             after_photos: state.dispatchReturnPhotos || [],
-            return_receiver: document.getElementById('dispatchReturnReceiverName')?.value?.trim() || 'เจ้าหน้าที่คลัง',
+            return_receiver: getLoggedInUserName(),
             is_qc_completion: isPendingQc
           };
 
@@ -15303,7 +15304,7 @@ function setupEventListeners() {
         body: JSON.stringify({
           items: itemsPayload,
           after_photos: state.returnAfterPhotos,
-          return_receiver: document.getElementById('returnReceiverName').value.trim()
+          return_receiver: getLoggedInUserName()
         })
       });
       const data = await res.json();
