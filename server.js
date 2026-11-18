@@ -49,6 +49,24 @@ if (PERSISTENT_DIR) {
       console.warn('[Storage] Failed to copy baseline DB:', err);
     }
   }
+
+  // Sync bundled uploads into persistent UPLOADS_DIR if missing
+  try {
+    const bundledUploads = path.join(__dirname, 'uploads');
+    if (fs.existsSync(bundledUploads) && path.resolve(UPLOADS_DIR) !== path.resolve(bundledUploads)) {
+      const bundledFiles = fs.readdirSync(bundledUploads);
+      for (const f of bundledFiles) {
+        const src = path.join(bundledUploads, f);
+        const dst = path.join(UPLOADS_DIR, f);
+        if (fs.statSync(src).isFile() && !fs.existsSync(dst)) {
+          fs.copyFileSync(src, dst);
+          console.log(`[Storage] Synced bundled upload ${f} to persistent uploads`);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Storage] Failed to sync bundled uploads:', err);
+  }
 }
 
 const db = new DatabaseSync(dbPath);
@@ -4056,10 +4074,19 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname.startsWith('/uploads/')) {
       const safeName = path.basename(pathname);
-      const filePath = path.join(UPLOADS_DIR, safeName);
+      let filePath = path.join(UPLOADS_DIR, safeName);
+      if (!fs.existsSync(filePath)) {
+        const fallbackPath = path.join(__dirname, 'uploads', safeName);
+        if (fs.existsSync(fallbackPath)) {
+          filePath = fallbackPath;
+        }
+      }
       if (fs.existsSync(filePath)) {
         const ext = path.extname(filePath).toLowerCase();
-        res.writeHead(200, { 'Content-Type': MIME_TYPES[ext] || 'application/octet-stream' });
+        res.writeHead(200, {
+          'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
+          'Cache-Control': 'public, max-age=86400'
+        });
         return fs.createReadStream(filePath).pipe(res);
       }
       res.writeHead(404);

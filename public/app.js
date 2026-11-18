@@ -6759,7 +6759,7 @@ function renderSingleGatePassSheet(loan, copyType = '', sizeClass = '') {
           <div class="gp-issuer-top-row">
             ${companyLogo ? `
               <div class="gp-issuer-logo-box">
-                <img src="${escapeHtml(companyLogo)}" alt="Logo" class="gp-issuer-logo" />
+                <img src="${escapeHtml(companyLogo)}" alt="Logo" class="gp-issuer-logo" onerror="this.onerror=null; const p = this.closest('.gp-issuer-logo-box'); if (p) p.style.display='none';" />
               </div>
             ` : ''}
             <div class="gp-issuer-brand-block">
