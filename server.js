@@ -7,8 +7,11 @@ const { dispatchEmail, verifyApiKey } = require('./lib/email_service.js');
 const { generateLoanPdf } = require('./lib/pdf.js');
 
 const PORT = process.env.PORT || 3020;
-const DATA_DIR = path.join(__dirname, 'data');
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
+
+// Persistent storage configuration (supports Railway persistent volume mounted at /data)
+const PERSISTENT_DIR = process.env.PERSISTENT_DIR || (fs.existsSync('/data') ? '/data' : null);
+const DATA_DIR = PERSISTENT_DIR ? path.join(PERSISTENT_DIR, 'data') : path.join(__dirname, 'data');
+const UPLOADS_DIR = PERSISTENT_DIR ? path.join(PERSISTENT_DIR, 'uploads') : path.join(__dirname, 'uploads');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -16,6 +19,18 @@ if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 if (!fs.existsSync(PUBLIC_DIR)) fs.mkdirSync(PUBLIC_DIR, { recursive: true });
 
 const dbPath = path.join(DATA_DIR, 'activeasset_v2.db');
+
+// If running with a persistent volume for the first time, copy baseline DB if not yet present
+const bundledDbPath = path.join(__dirname, 'data', 'activeasset_v2.db');
+if (PERSISTENT_DIR && !fs.existsSync(dbPath) && fs.existsSync(bundledDbPath)) {
+  console.log(`[Storage] Initializing persistent database from bundled template to ${dbPath}...`);
+  try {
+    fs.copyFileSync(bundledDbPath, dbPath);
+  } catch (err) {
+    console.warn('[Storage] Failed to copy baseline DB:', err);
+  }
+}
+
 const db = new DatabaseSync(dbPath);
 
 db.exec(`
