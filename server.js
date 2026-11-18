@@ -903,7 +903,121 @@ function initCustomersTable() {
     { name: 'ห้างหุ้นส่วนจำกัด กิตติการ์เมนต์', name_en: 'KITTI GARMENT LIMITED PARTNERSHIP', tax_id: '0103541015694', source: 'history' },
     { name: 'บริษัท นภา ลอจิสติกส์ จำกัด', name_en: 'NAPA LOGISTICS COMPANY LIMITED', tax_id: '0105556133919', source: 'history' },
     { name: 'บจก. ไทยแมนูแฟกเจอริ่ง', name_en: 'THAI MANUFACTURING COMPANY LIMITED', tax_id: '0105553018248', source: 'history' },
-    { name: 'บริษัท แพลนเนท ที แอนด์ เอส จำกัด', name_en: 'PLANET T AND S COMPANY LIMITED', tax_id: '0105540006321', branch: 'สำนักงานใหญ่', address: '28 ซอยกรุงเทพกรีฑา 20 แยก 3 แขวงทับช้าง เขตสะพานสูง กรุงเทพมหานคร 10250', source: 'dbd' }
+    { name: 'บริษัท แพลนเนท ที แอนด์ เอส จำกัด', name_en: 'PLANET T AND S COMPANY LIMITED', tax_id: '0105540006321', branch: 'สำนักงานใหญ่', address: '28 ซอยกรุงเทพกรีฑา 20 แยก 3 แขวงทับช้าง เขตสะพานสูง กรุงเทพมหานคร 10250', source: 'dbd' },
+
+    // Major Hospitals & Healthcare (โรงพยาบาลและการแพทย์ชั้นนำ)
+    { name: 'บริษัท กรุงเทพดุสิตเวชการ จำกัด (มหาชน)', name_en: 'BANGKOK DUSIT MEDICAL SERVICES PUBLIC COMPANY LIMITED (BDMS)', tax_id: '0107537000059', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลบำรุงราษฎร์ จำกัด (มหาชน)', name_en: 'BUMRUNGRAD HOSPITAL PUBLIC COMPANY LIMITED', tax_id: '0107536000940', source: 'dbd' },
+    { name: 'บริษัท สมิติเวช จำกัด (มหาชน)', name_en: 'SAMITIVEJ PUBLIC COMPANY LIMITED', tax_id: '0107536000851', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลสมิติเวช ศรีนครินทร์ จำกัด', name_en: 'SAMITIVEJ SRINAKARIN HOSPITAL COMPANY LIMITED', tax_id: '0105534062407', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลสมิติเวช ศรีราชา จำกัด', name_en: 'SAMITIVEJ SRIRACHA HOSPITAL COMPANY LIMITED', tax_id: '0205536001403', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลสมิติเวช ธนบุรี จำกัด', name_en: 'SAMITIVEJ THONBURI HOSPITAL COMPANY LIMITED', tax_id: '0105521008685', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลสมิติเวช ชลบุรี จำกัด', name_en: 'SAMITIVEJ CHONBURI HOSPITAL COMPANY LIMITED', tax_id: '0205556014498', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลนนทเวช จำกัด (มหาชน)', name_en: 'NONTHAVEJ HOSPITAL PUBLIC COMPANY LIMITED', tax_id: '0107536000788', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลวิภาวดี จำกัด (มหาชน)', name_en: 'VIBHAVADI MEDICAL PUBLIC COMPANY LIMITED', tax_id: '0107536000737', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลพระรามเก้า จำกัด (มหาชน)', name_en: 'PRARAM 9 HOSPITAL PUBLIC COMPANY LIMITED', tax_id: '0107561000285', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลรามคำแหง จำกัด (มหาชน)', name_en: 'RAMKHAMHAENG HOSPITAL PUBLIC COMPANY LIMITED', tax_id: '0107537001408', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลไทยนครินทร์ จำกัด (มหาชน)', name_en: 'THAINAKARIN HOSPITAL PUBLIC COMPANY LIMITED', tax_id: '0107536000670', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลลาดพร้าว จำกัด (มหาชน)', name_en: 'LADPRAO GENERAL HOSPITAL PUBLIC COMPANY LIMITED', tax_id: '0107536000378', source: 'dbd' },
+    { name: 'บริษัท เอกชัยการแพทย์ จำกัด (มหาชน)', name_en: 'EKACHAI MEDICAL CARE PUBLIC COMPANY LIMITED', tax_id: '0107558000459', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลจุฬารัตน์ จำกัด (มหาชน)', name_en: 'CHULARAT HOSPITAL PUBLIC COMPANY LIMITED', tax_id: '0107547000570', source: 'dbd' },
+    { name: 'บริษัท ศรีวิชัยเวชวิวัฒน์ จำกัด (มหาชน)', name_en: 'SRIVICHAIVEJVIVAT PUBLIC COMPANY LIMITED', tax_id: '0107553000043', source: 'dbd' },
+    { name: 'บริษัท เชียงใหม่รามธุรกิจการแพทย์ จำกัด (มหาชน)', name_en: 'CHIANG MAI RAM MEDICAL BUSINESS PUBLIC COMPANY LIMITED', tax_id: '0107536000173', source: 'dbd' },
+    { name: 'บริษัท บางกอก เชน ฮอสปิทอล จำกัด (มหาชน)', name_en: 'BANGKOK CHAIN HOSPITAL PUBLIC COMPANY LIMITED (KASEMRAD)', tax_id: '0107547000154', source: 'dbd' },
+    { name: 'บริษัท ธนบุรี เฮลท์แคร์ กรุ๊ป จำกัด (มหาชน)', name_en: 'THONBURI HEALTHCARE GROUP PUBLIC COMPANY LIMITED (THG)', tax_id: '0107537002048', source: 'dbd' },
+    { name: 'บริษัท มหาชัยเวชการ จำกัด (มหาชน)', name_en: 'MAHACHAI HOSPITAL PUBLIC COMPANY LIMITED', tax_id: '0107537001491', source: 'dbd' },
+    { name: 'บริษัท ศิครินทร์ จำกัด (มหาชน)', name_en: 'SIKARIN PUBLIC COMPANY LIMITED', tax_id: '0107536000301', source: 'dbd' },
+    { name: 'บริษัท แพทย์รังสิตเฮลท์แคร์กรุ๊ป จำกัด (มหาชน)', name_en: 'PATRANGSIT HEALTHCARE GROUP PUBLIC COMPANY LIMITED', tax_id: '0107565000417', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลเจ้าพระยา จำกัด (มหาชน)', name_en: 'CHAOPHYA HOSPITAL PUBLIC COMPANY LIMITED', tax_id: '0107536000394', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลพญาไท 1 จำกัด', name_en: 'PHYATHAI 1 HOSPITAL COMPANY LIMITED', tax_id: '0105517000771', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลพญาไท 2 จำกัด', name_en: 'PHYATHAI 2 HOSPITAL COMPANY LIMITED', tax_id: '0105528033286', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลพญาไท 3 จำกัด', name_en: 'PHYATHAI 3 HOSPITAL COMPANY LIMITED', tax_id: '0105537042531', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลพญาไท นวมินทร์ จำกัด', name_en: 'PHYATHAI NAWAMIN HOSPITAL COMPANY LIMITED', tax_id: '0105537006887', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลเปาโลเมโมเรียล จำกัด', name_en: 'PAOLO MEMORIAL HOSPITAL COMPANY LIMITED', tax_id: '0105515003110', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลเปาโลเมโมเรียลสมุทรปราการ จำกัด', name_en: 'PAOLO MEMORIAL SAMUTPRAKARN HOSPITAL COMPANY LIMITED', tax_id: '0115536000591', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลเปาโลเมโมเรียลโชคชัย 4 จำกัด', name_en: 'PAOLO MEMORIAL CHOKCHAI 4 HOSPITAL COMPANY LIMITED', tax_id: '0105533036496', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลเปาโลเมโมเรียลเกษตร จำกัด', name_en: 'PAOLO MEMORIAL KASET HOSPITAL COMPANY LIMITED', tax_id: '0105512001647', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลสินแพทย์ จำกัด', name_en: 'SYNPHAETH HOSPITAL COMPANY LIMITED', tax_id: '0105535035414', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลสินแพทย์ เทพารักษ์ จำกัด', name_en: 'SYNPHAETH THEPHARAK HOSPITAL COMPANY LIMITED', tax_id: '0115560010996', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลสินแพทย์ ลำลูกกา จำกัด', name_en: 'SYNPHAETH LUMLUKKA HOSPITAL COMPANY LIMITED', tax_id: '0135559005911', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลสินแพทย์ เสรีรักษ์ จำกัด', name_en: 'SYNPHAETH SERIRUK HOSPITAL COMPANY LIMITED', tax_id: '0105547076615', source: 'dbd' },
+    { name: 'บริษัท บางปะกอก ฮอสพิทอล กรุ๊ป จำกัด', name_en: 'BANGPAKOK HOSPITAL GROUP COMPANY LIMITED', tax_id: '0105553013891', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลบางปะกอก 9 อินเตอร์เนชั่นแนล จำกัด', name_en: 'BANGPAKOK 9 INTERNATIONAL HOSPITAL COMPANY LIMITED', tax_id: '0105546029051', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลบางปะกอก 1 จำกัด', name_en: 'BANGPAKOK 1 HOSPITAL COMPANY LIMITED', tax_id: '0105524018223', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลบางปะกอก 3 จำกัด', name_en: 'BANGPAKOK 3 HOSPITAL COMPANY LIMITED', tax_id: '0115538006091', source: 'dbd' },
+    { name: 'บริษัท มงกุฎวัฒนะการแพทย์ จำกัด', name_en: 'MONGKUTWATTANA GENERAL HOSPITAL COMPANY LIMITED', tax_id: '0105525016500', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลหัวเฉียว จำกัด', name_en: 'HUACHIEW HOSPITAL COMPANY LIMITED', tax_id: '0105522002346', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลมิชชั่น จำกัด', name_en: 'MISSION HOSPITAL COMPANY LIMITED', tax_id: '0105545089335', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลกรุงเทพคริสเตียน จำกัด', name_en: 'BANGKOK CHRISTIAN HOSPITAL COMPANY LIMITED', tax_id: '0105501000109', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลเซนต์หลุยส์ จำกัด', name_en: 'SAINT LOUIS HOSPITAL COMPANY LIMITED', tax_id: '0105513000571', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลวิมุต จำกัด', name_en: 'VIMUT HOSPITAL COMPANY LIMITED', tax_id: '0105560032641', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลเมดพาร์ค จำกัด', name_en: 'MEDPARK HOSPITAL COMPANY LIMITED', tax_id: '0105560195222', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลธนบุรี บำรุงเมือง จำกัด', name_en: 'THONBURI BAMRUNGMUANG HOSPITAL COMPANY LIMITED', tax_id: '0105561081700', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลพริ้นซ์ สุวรรณภูมิ จำกัด', name_en: 'PRINC HOSPITAL SUVARNABHUMI COMPANY LIMITED', tax_id: '0115560008541', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลรวมใจรักษ์ จำกัด', name_en: 'RUAMJAIRAK HOSPITAL COMPANY LIMITED', tax_id: '0105561142548', source: 'dbd' },
+    { name: 'บริษัท การแพทย์สยาม จำกัด', name_en: 'SIAM MEDICAL COMPANY LIMITED (PIYAVATE HOSPITAL)', tax_id: '0105515003306', source: 'dbd' },
+    { name: 'บริษัท วิชัยยุทธ จำกัด', name_en: 'VICHAIYUT COMPANY LIMITED (VICHAIYUT HOSPITAL)', tax_id: '0105517006842', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลวัฒโนสถ จำกัด', name_en: 'WATTANOSOTH HOSPITAL COMPANY LIMITED', tax_id: '0105549079971', source: 'dbd' },
+    { name: 'บริษัท นวมินทร์รวมแพทย์ จำกัด', name_en: 'NAVAMIN 9 HOSPITAL COMPANY LIMITED', tax_id: '0105536066275', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลกรุงเทพพัทยา จำกัด', name_en: 'BANGKOK HOSPITAL PATTAYA COMPANY LIMITED', tax_id: '0205533003057', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลกรุงเทพภูเก็ต จำกัด', name_en: 'BANGKOK HOSPITAL PHUKET COMPANY LIMITED', tax_id: '0835536001643', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลกรุงเทพระยอง จำกัด', name_en: 'BANGKOK HOSPITAL RAYONG COMPANY LIMITED', tax_id: '0215544001929', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลกรุงเทพเชียงใหม่ จำกัด', name_en: 'BANGKOK HOSPITAL CHIANGMAI COMPANY LIMITED', tax_id: '0505554003328', source: 'dbd' },
+    { name: 'บริษัท โรงพยาบาลอินซ์ จำกัด', name_en: 'INZ HOSPITAL COMPANY LIMITED', tax_id: '0105562095691', source: 'dbd' },
+
+    // Retail, Wholesale, Hypermarkets (ห้างสรรพสินค้า ค้าปลีก ค้าส่ง)
+    { name: 'บริษัท เอก-ชัย ดีสทริบิวชั่น ซิสเทม จำกัด', name_en: 'EK-CHAI DISTRIBUTION SYSTEM COMPANY LIMITED (LOTUS)', tax_id: '0105536050549', source: 'dbd' },
+    { name: 'บริษัท สยามพิวรรธน์ จำกัด', name_en: 'SIAM PIWAT COMPANY LIMITED', tax_id: '0105502000072', source: 'dbd' },
+    { name: 'บริษัท สยามพารากอน ดีเวลลอปเม้นท์ จำกัด', name_en: 'SIAM PARAGON DEVELOPMENT COMPANY LIMITED', tax_id: '0105545107023', source: 'dbd' },
+    { name: 'บริษัท เซ็นทรัล ฟู้ด รีเทล จำกัด', name_en: 'CENTRAL FOOD RETAIL COMPANY LIMITED (TOPS)', tax_id: '0105539061452', source: 'dbd' },
+    { name: 'บริษัท ซีอาร์ซี ไทวัสดุ จำกัด', name_en: 'CRC THAI WATSADU COMPANY LIMITED', tax_id: '0105553046209', source: 'dbd' },
+    { name: 'บริษัท สยามโกลบอลเฮ้าส์ จำกัด (มหาชน)', name_en: 'SIAM GLOBAL HOUSE PUBLIC COMPANY LIMITED', tax_id: '0107551000216', source: 'dbd' },
+    { name: 'บริษัท ดูโฮม จำกัด (มหาชน)', name_en: 'DOHOME PUBLIC COMPANY LIMITED', tax_id: '0107561000439', source: 'dbd' },
+    { name: 'บริษัท เมกา โฮม เซ็นเตอร์ จำกัด', name_en: 'MEGA HOME CENTER COMPANY LIMITED', tax_id: '0105555099300', source: 'dbd' },
+    { name: 'บริษัท บุญถาวร เซรามิค จำกัด', name_en: 'BOONTHAVORN CERAMIC COMPANY LIMITED', tax_id: '0105523000622', source: 'dbd' },
+    { name: 'บริษัท เจมาร์ท โมบาย จำกัด', name_en: 'JAYMART MOBILE COMPANY LIMITED', tax_id: '0105559092822', source: 'dbd' },
+    { name: 'บริษัท ซีเอ็ดยูเคชั่น จำกัด (มหาชน)', name_en: 'SE-EDUCATION PUBLIC COMPANY LIMITED', tax_id: '0107536000289', source: 'dbd' },
+    { name: 'บริษัท ซีอาร์ซี สปอร์ต จำกัด', name_en: 'CRC SPORTS COMPANY LIMITED (SUPERSPORTS)', tax_id: '0105539091998', source: 'dbd' },
+    { name: 'บริษัท เพาเวอร์บาย จำกัด', name_en: 'POWER BUY COMPANY LIMITED', tax_id: '0105539091726', source: 'dbd' },
+    { name: 'บริษัท ออฟฟิศเมท (ไทย) จำกัด', name_en: 'OFFICEMATE (THAI) COMPANY LIMITED', tax_id: '0105551046775', source: 'dbd' },
+    { name: 'บริษัท บีทูเอส จำกัด', name_en: 'B2S COMPANY LIMITED', tax_id: '0105543085520', source: 'dbd' },
+
+    // Logistics, Courier & Supply Chain (ขนส่งและโลจิสติกส์)
+    { name: 'บริษัท นินจา โลจิสติกส์ (ประเทศไทย) จำกัด', name_en: 'NINJA LOGISTICS (THAILAND) COMPANY LIMITED', tax_id: '0105559132174', source: 'dbd' },
+    { name: 'บริษัท เบสท์ โลจิสติกส์ เทคโนโลยี (ประเทศไทย) จำกัด', name_en: 'BEST LOGISTICS TECHNOLOGY (THAILAND) COMPANY LIMITED', tax_id: '0105561081696', source: 'dbd' },
+    { name: 'บริษัท เอสซีจี เจดับเบิ้ลยูดี โลจิสติกส์ จำกัด (มหาชน)', name_en: 'SCG JWD LOGISTICS PUBLIC COMPANY LIMITED', tax_id: '0107557000188', source: 'dbd' },
+    { name: 'บริษัท เมโทรซิสเต็มส์คอร์ปอเรชั่น จำกัด (มหาชน)', name_en: 'METRO SYSTEMS CORPORATION PUBLIC COMPANY LIMITED', tax_id: '0107538000611', source: 'dbd' },
+    { name: 'บริษัท ยูไนเต็ด พาร์เซล เซอร์วิส (ประเทศไทย) จำกัด', name_en: 'UNITED PARCEL SERVICE (THAILAND) LIMITED (UPS)', tax_id: '0105531024342', source: 'dbd' },
+    { name: 'บริษัท เฟดเดอรัล เอ็กซ์เพรส (ประเทศไทย) จำกัด', name_en: 'FEDERAL EXPRESS (THAILAND) LIMITED (FEDEX)', tax_id: '0105538081191', source: 'dbd' },
+
+    // Manufacturing, Auto & Tech (อุตสาหกรรม ยานยนต์ และเทคโนโลยี)
+    { name: 'บริษัท นิสสัน มอเตอร์ (ประเทศไทย) จำกัด', name_en: 'NISSAN MOTOR (THAILAND) COMPANY LIMITED', tax_id: '0105517006834', source: 'dbd' },
+    { name: 'บริษัท ฟอร์ด มอเตอร์ คัมปะนี (ประเทศไทย) จำกัด', name_en: 'FORD MOTOR COMPANY (THAILAND) LIMITED', tax_id: '0105538137359', source: 'dbd' },
+    { name: 'บริษัท มาสด้า เซลส์ (ประเทศไทย) จำกัด', name_en: 'MAZDA SALES (THAILAND) COMPANY LIMITED', tax_id: '0105542079038', source: 'dbd' },
+    { name: 'บริษัท บีเอ็มดับเบิลยู (ประเทศไทย) จำกัด', name_en: 'BMW (THAILAND) COMPANY LIMITED', tax_id: '0105541058227', source: 'dbd' },
+    { name: 'บริษัท เมอร์เซเดส-เบนซ์ (ประเทศไทย) จำกัด', name_en: 'MERCEDES-BENZ (THAILAND) LIMITED', tax_id: '0105541065169', source: 'dbd' },
+    { name: 'บริษัท บีวายดี ออโต้ (ประเทศไทย) จำกัด', name_en: 'BYD AUTO (THAILAND) COMPANY LIMITED', tax_id: '0105565147574', source: 'dbd' },
+    { name: 'บริษัท ซีเกท เทคโนโลยี (ประเทศไทย) จำกัด', name_en: 'SEAGATE TECHNOLOGY (THAILAND) LIMITED', tax_id: '0105526019570', source: 'dbd' },
+    { name: 'บริษัท เวสเทิร์น ดิจิตอล (ประเทศไทย) จำกัด', name_en: 'WESTERN DIGITAL (THAILAND) COMPANY LIMITED', tax_id: '0105540026212', source: 'dbd' },
+    { name: 'บริษัท คาล-คอมพ์ อีเล็คโทรนิคส์ (ประเทศไทย) จำกัด (มหาชน)', name_en: 'CAL-COMP ELECTRONICS (THAILAND) PUBLIC COMPANY LIMITED', tax_id: '0107544000183', source: 'dbd' },
+    { name: 'บริษัท ฟาบริเนท จำกัด', name_en: 'FABRINET COMPANY LIMITED', tax_id: '0105542072386', source: 'dbd' },
+    { name: 'บริษัท ไมโครชิพ เทคโนโลยี (ไทยแลนด์) จำกัด', name_en: 'MICROCHIP TECHNOLOGY (THAILAND) COMPANY LIMITED', tax_id: '0105538059888', source: 'dbd' },
+    { name: 'บริษัท มูราตะ อิเล็กทรอนิกส์ (ประเทศไทย) จำกัด', name_en: 'MURATA ELECTRONICS (THAILAND) LIMITED', tax_id: '0105531062601', source: 'dbd' },
+
+    // Food, Consumer & Services (อาหาร เครื่องดื่ม สินค้าอุปโภค)
+    { name: 'บริษัท โอสถสภา จำกัด (มหาชน)', name_en: 'OSOTSPA PUBLIC COMPANY LIMITED', tax_id: '0107561000102', source: 'dbd' },
+    { name: 'บริษัท คาราบาวกรุ๊ป จำกัด (มหาชน)', name_en: 'CARABAO GROUP PUBLIC COMPANY LIMITED', tax_id: '0107557000285', source: 'dbd' },
+    { name: 'บริษัท อิชิตัน กรุ๊ป จำกัด (มหาชน)', name_en: 'ICHITAN GROUP PUBLIC COMPANY LIMITED', tax_id: '0107556000281', source: 'dbd' },
+    { name: 'บริษัท ไทยเพรซิเดนท์ฟูดส์ จำกัด (มหาชน)', name_en: 'THAI PRESIDENT FOODS PUBLIC COMPANY LIMITED (MAMA)', tax_id: '0107560000303', source: 'dbd' },
+    { name: 'บริษัท เอ็มเค เรสโตรองต์ กรุ๊ป จำกัด (มหาชน)', name_en: 'MK RESTAURANT GROUP PUBLIC COMPANY LIMITED', tax_id: '0107555000317', source: 'dbd' },
+    { name: 'บริษัท เดอะ ไมเนอร์ ฟู้ด กรุ๊ป จำกัด (มหาชน)', name_en: 'THE MINOR FOOD GROUP PUBLIC COMPANY LIMITED', tax_id: '0107535000031', source: 'dbd' },
+    { name: 'บริษัท ยัม เรสเทอรองตส์ อินเตอร์เนชั่นแนล (ประเทศไทย) จำกัด', name_en: 'YUM RESTAURANTS INTERNATIONAL (THAILAND) CO., LTD. (KFC)', tax_id: '0105526016147', source: 'dbd' },
+    { name: 'บริษัท คอฟฟี่ คอนเซ็ปต์ รีเทล จำกัด', name_en: 'COFFEE CONCEPT RETAIL COMPANY LIMITED (STARBUCKS)', tax_id: '0105562086438', source: 'dbd' },
+    { name: 'บริษัท ยูนิลีเวอร์ ไทย เทรดดิ้ง จำกัด', name_en: 'UNILEVER THAI TRADING LIMITED', tax_id: '0105538059284', source: 'dbd' },
+    { name: 'บริษัท พรอคเตอร์ แอนด์ แกมเบิล เทรดดิ้ง (ประเทศไทย) จำกัด', name_en: 'PROCTER & GAMBLE TRADING (THAILAND) LIMITED', tax_id: '0105538078971', source: 'dbd' },
+    { name: 'บริษัท เนสท์เล่ (ไทย) จำกัด', name_en: 'NESTLE (THAI) LIMITED', tax_id: '0105536098029', source: 'dbd' },
+    { name: 'บริษัท อายิโนะโมะโต๊ะ (ประเทศไทย) จำกัด', name_en: 'AJINOMOTO (THAILAND) COMPANY LIMITED', tax_id: '0105503000670', source: 'dbd' },
+    { name: 'บริษัท ดัชมิลล์ จำกัด', name_en: 'DUTCH MILL COMPANY LIMITED', tax_id: '0105527011980', source: 'dbd' }
   ];
 
   const upsertDbd = db.prepare(`
@@ -2475,10 +2589,10 @@ const server = http.createServer(async (req, res) => {
               source: 'online'
             });
 
-            if (results.length >= 6) break;
+            if (results.length >= 25) break;
           }
         } catch (_) {}
-        if (results.length >= 6) break;
+        if (results.length >= 25) break;
       }
       return results;
     }
@@ -2491,7 +2605,7 @@ const server = http.createServer(async (req, res) => {
         const recent = db.prepare(`
           SELECT id, name, name_en, tax_id, branch, address, contact_name, phone, email, source FROM customers
           ORDER BY CASE WHEN source = 'history' THEN 0 WHEN source = 'custom' THEN 1 ELSE 2 END, id DESC
-          LIMIT 10
+          LIMIT 25
         `).all();
         recent.forEach(r => { if (r.name) r.name = cleanCompanyName(r.name); });
         return sendJson(res, 200, { success: true, results: recent, fromOnline: false });
@@ -2537,7 +2651,7 @@ const server = http.createServer(async (req, res) => {
           END,
           CASE WHEN source = 'history' THEN 0 WHEN source = 'custom' THEN 1 ELSE 2 END,
           LENGTH(name) ASC
-        LIMIT 15
+        LIMIT 60
       `;
 
       const searchParams = [
@@ -2551,10 +2665,9 @@ const server = http.createServer(async (req, res) => {
       const matches = db.prepare(searchSql).all(...searchParams);
       matches.forEach(m => { if (m.name) m.name = cleanCompanyName(m.name); });
 
-      // If local matches are few (or none) and query length >= 2, search free external corporate data!
+      // If local matches are under 25 and query length >= 2, search free external corporate data!
       let onlineResults = [];
-      const hasGoodMatches = matches.length >= 4 && matches.some(m => m.name.toLowerCase().includes(qLower));
-      if (!hasGoodMatches && q.length >= 2 && !digitsOnly) {
+      if (matches.length < 25 && q.length >= 2 && !digitsOnly) {
         onlineResults = await fetchExternalCompanySuggestions(q, matches);
       }
 

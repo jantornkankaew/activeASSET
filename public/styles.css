@@ -11332,10 +11332,11 @@ dialog.modal-send-email {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  width: 440px;
-  max-width: 90vw;
-  max-height: 320px;
+  width: 480px;
+  max-width: 92vw;
+  max-height: 420px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background: #ffffff;
   border: 1px solid rgba(203, 213, 225, 0.95);
   border-radius: 12px;
