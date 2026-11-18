@@ -4787,17 +4787,30 @@ function updateDispatchSummary() {
   if (hintEl) {
     if (state.dispatchReturnMode) {
       const currentUserName = getLoggedInUserName();
+      const existingInp = document.getElementById('dispatchReturnReceiverName');
+      const currentReceiverVal = (existingInp && existingInp.value !== undefined) ? existingInp.value : currentUserName;
+      const isSub = Boolean(currentReceiverVal && currentReceiverVal.trim() !== currentUserName);
       hintEl.innerHTML = `
-        <div class="ret-inspector-box" style="display:inline-flex; align-items:center; gap:8px;">
+        <div class="ret-inspector-box" style="display:inline-flex; align-items:center; gap:6px;">
           <span style="font-size:12px; font-weight:600; color:#475569; white-space:nowrap;">ผู้รับคืน:</span>
-          <div style="display:inline-flex; align-items:center; gap:6px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:3px 10px; height:28px; box-sizing:border-box;">
-            <span style="display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; background:#2563eb; color:#fff; font-size:10px; font-weight:600; flex-shrink:0;">
-              ${escapeHtml((currentUserName.trim().charAt(0) || '👤').toUpperCase())}
-            </span>
-            <span style="font-size:12px; font-weight:600; color:#0f172a; white-space:nowrap;">${escapeHtml(currentUserName)}</span>
-            <span style="font-size:10.5px; font-weight:500; color:#475569; background:#e2e8f0; padding:1px 6px; border-radius:4px; white-space:nowrap;">(ผู้ล็อกอิน)</span>
+          <div class="input-clearable-wrap has-actions-end" style="display:inline-flex; width:190px;">
+            <input 
+              type="text" 
+              id="dispatchReturnReceiverName" 
+              class="form-control" 
+              style="width:100%; padding:3px 26px 3px 8px; font-size:12px; height:28px;" 
+              value="${escapeHtml(currentReceiverVal)}" 
+              data-default-user="${escapeHtml(currentUserName)}"
+              placeholder="ระบุชื่อผู้รับคืน..." 
+              autocomplete="off" 
+            />
+            <div class="input-actions-end">
+              <button type="button" class="btn-input-clear ${currentReceiverVal ? '' : 'hidden'}" data-clear-target="dispatchReturnReceiverName" title="ล้างค่า">✕</button>
+            </div>
           </div>
-          <input type="hidden" id="dispatchReturnReceiverName" value="${escapeHtml(currentUserName)}" />
+          <span id="dispatchReceiverSubTag" class="${isSub ? '' : 'hidden'}" style="font-size:11px; font-weight:600; color:#b45309; background:#fef3c7; border:1px solid #fde68a; padding:2px 7px; border-radius:4px; white-space:nowrap;" title="บันทึกเป็นผู้รับคืนทดแทน">
+            (ทดแทน)
+          </span>
         </div>
       `;
     } else if (isDeliveredLoan) {
@@ -14925,7 +14938,14 @@ function setupEventListeners() {
               returned_to_location: 1
             })),
             after_photos: state.dispatchReturnPhotos || [],
-            return_receiver: getLoggedInUserName(),
+            return_receiver: (() => {
+              const defaultUser = getLoggedInUserName();
+              const entered = (document.getElementById('dispatchReturnReceiverName')?.value || '').trim() || defaultUser;
+              if (entered && entered !== defaultUser && !entered.includes('ทดแทน')) {
+                return `${entered} (ทดแทน)`;
+              }
+              return entered;
+            })(),
             is_qc_completion: isPendingQc
           };
 
@@ -15304,7 +15324,14 @@ function setupEventListeners() {
         body: JSON.stringify({
           items: itemsPayload,
           after_photos: state.returnAfterPhotos,
-          return_receiver: getLoggedInUserName()
+          return_receiver: (() => {
+            const defaultUser = getLoggedInUserName();
+            const entered = (document.getElementById('returnReceiverName')?.value || '').trim() || defaultUser;
+            if (entered && entered !== defaultUser && !entered.includes('ทดแทน')) {
+              return `${entered} (ทดแทน)`;
+            }
+            return entered;
+          })()
         })
       });
       const data = await res.json();
@@ -18431,6 +18458,18 @@ function setupEventListeners() {
   document.addEventListener('input', e => {
     if (e.target.matches('.input-clearable-wrap input, .input-clearable-wrap textarea')) {
       syncClearableInputBtn(e.target);
+    }
+    if (e.target.id === 'dispatchReturnReceiverName') {
+      const subTag = document.getElementById('dispatchReceiverSubTag');
+      if (subTag) {
+        const defaultUser = (e.target.getAttribute('data-default-user') || '').trim();
+        const val = e.target.value.trim();
+        if (val && val !== defaultUser) {
+          subTag.classList.remove('hidden');
+        } else {
+          subTag.classList.add('hidden');
+        }
+      }
     }
   });
 
