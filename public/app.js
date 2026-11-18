@@ -12089,82 +12089,15 @@ function setupEventListeners() {
     renderActiveView();
   });
 
-  // Enter to directly open loan by S/N, Tag ID, or Loan ID
+  // Enter on search input: confirm search filter and blur to hide keyboard (do not auto-open loan)
   searchInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      const rawQ = (searchInput.value || '').trim();
-      if (!rawQ) return;
-      const q = rawQ.toLowerCase();
-
-      // 1. Direct match on loan.id (exact, case-insensitive)
-      let matchedLoan = state.loans.find(l => l.id.toLowerCase() === q);
-
-      // 2. Match by S/N or Tag ID in assets
-      if (!matchedLoan) {
-        const matchedAsset = state.assets.find(
-          a =>
-            (a.serial_no && a.serial_no.trim().toLowerCase() === q) ||
-            (a.tag_id && a.tag_id.trim().toLowerCase() === q)
-        );
-
-        if (matchedAsset) {
-          const candidateLoans = state.loans.filter(l =>
-            (l.items || []).some(it => it.tag_id === matchedAsset.tag_id)
-          );
-          if (candidateLoans.length > 0) {
-            // Prefer active/in-progress loans first, else the latest loan
-            matchedLoan =
-              candidateLoans.find(l => l.status !== 'Returned') || candidateLoans[candidateLoans.length - 1];
-          }
-        }
-      }
-
-      // 3. Match directly within loan.items (tag_id or serial_no)
-      if (!matchedLoan) {
-        matchedLoan = state.loans.find(l =>
-          (l.items || []).some(
-            it =>
-              (it.tag_id && it.tag_id.trim().toLowerCase() === q) ||
-              (it.serial_no && it.serial_no.trim().toLowerCase() === q)
-          )
-        );
-      }
-
-      // 4. Match loan.id containing the query (e.g. user typed "202610-004" or "004")
-      if (!matchedLoan) {
-        const cleanDigitsOnly = q.replace(/[^0-9]/g, '');
-        matchedLoan = state.loans.find(l => {
-          const lIdClean = l.id.toLowerCase();
-          if (lIdClean.includes(q)) return true;
-          if (cleanDigitsOnly.length >= 3 && lIdClean.replace(/[^0-9]/g, '').endsWith(cleanDigitsOnly)) return true;
-          return false;
-        });
-      }
-
-      // 5. Fallback to the first item from getFilteredLoans()
-      if (!matchedLoan) {
-        const filtered = getFilteredLoans();
-        if (filtered.length > 0) {
-          matchedLoan = filtered[0];
-        }
-      }
-
-      if (matchedLoan) {
-        searchInput.blur();
-        showToast(`🔍 เปิดใบยืม ${matchedLoan.id}`);
-        if (
-          matchedLoan.status === 'Requested' ||
-          matchedLoan.status === 'Dispatching' ||
-          matchedLoan.status === 'Dispatched'
-        ) {
-          openDispatchModal(matchedLoan.id);
-        } else {
-          openPrintModal(matchedLoan.id);
-        }
-      } else {
-        showToast(`⚠️ ไม่พบใบยืมหรือ S/N ที่ตรงกับ: "${rawQ}"`);
-      }
+      state.searchQuery = searchInput.value;
+      btnClearSearch.classList.toggle('hidden', !state.searchQuery);
+      if (searchKbd) searchKbd.classList.toggle('hidden', Boolean(state.searchQuery));
+      renderActiveView();
+      searchInput.blur(); // Blur to dismiss virtual keyboard and view filtered results comfortably
     }
   });
   btnClearSearch.addEventListener('click', () => {
