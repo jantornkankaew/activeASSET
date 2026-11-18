@@ -10868,7 +10868,6 @@ function setupSendEmailModal() {
   const btnCancel = document.getElementById('btnCancelSendEmail');
   const btnCopy = document.getElementById('btnCopyEmailBody');
   const btnLaunch = document.getElementById('btnLaunchMailClient');
-  const btnGmail = document.getElementById('btnOpenWebGmail');
 
   if (!modal) return;
 
@@ -11129,54 +11128,6 @@ function setupSendEmailModal() {
     window.location.href = mailtoUri;
     modal.close();
     showToast('✉️ เปิดโปรแกรมส่งอีเมลเรียบร้อยแล้ว');
-  });
-
-  btnGmail?.addEventListener('click', (e) => {
-    e.preventDefault();
-    const to = (document.getElementById('emailToInput')?.value || '').trim();
-    const cc = (document.getElementById('emailCcInput')?.value || '').trim();
-    const subject = (document.getElementById('emailSubjectInput')?.value || '').trim();
-    const body = (document.getElementById('emailBodyTextarea')?.value || '').trim();
-
-    // 1. Prepare Gmail compose URL query
-    const gmailParams = new URLSearchParams({
-      view: 'cm',
-      fs: '1'
-    });
-    if (to) gmailParams.set('to', to);
-    if (cc) gmailParams.set('cc', cc);
-    if (subject) gmailParams.set('su', subject);
-    if (body) gmailParams.set('body', body);
-
-    const gmailUri = `https://mail.google.com/mail/?${gmailParams.toString().replace(/\+/g, '%20')}`;
-
-    // 2. Persist customer email in background if provided (fire-and-forget, do NOT await)
-    if (to) {
-      persistCustomerEmail(to).catch(() => {});
-    }
-
-    // 3. Open Gmail Web immediately within synchronous user gesture turn
-    let opened = false;
-    try {
-      const win = window.open(gmailUri, '_blank');
-      if (win) {
-        opened = true;
-      }
-    } catch (_) {}
-
-    // 4. Robust fallback using anchor click
-    if (!opened) {
-      const link = document.createElement('a');
-      link.href = gmailUri;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(() => link.remove(), 100);
-    }
-
-    modal.close();
-    showToast('✉️ เปิดร่างอีเมลใน Gmail เรียบร้อยแล้ว');
   });
 }
 
