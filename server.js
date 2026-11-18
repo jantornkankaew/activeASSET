@@ -20,14 +20,34 @@ if (!fs.existsSync(PUBLIC_DIR)) fs.mkdirSync(PUBLIC_DIR, { recursive: true });
 
 const dbPath = path.join(DATA_DIR, 'activeasset_v2.db');
 
-// If running with a persistent volume for the first time, copy baseline DB if not yet present
+// If running with a persistent volume, check if DB is missing or corrupted and initialize from bundled template
 const bundledDbPath = path.join(__dirname, 'data', 'activeasset_v2.db');
-if (PERSISTENT_DIR && !fs.existsSync(dbPath) && fs.existsSync(bundledDbPath)) {
-  console.log(`[Storage] Initializing persistent database from bundled template to ${dbPath}...`);
-  try {
-    fs.copyFileSync(bundledDbPath, dbPath);
-  } catch (err) {
-    console.warn('[Storage] Failed to copy baseline DB:', err);
+if (PERSISTENT_DIR) {
+  let needCopy = !fs.existsSync(dbPath);
+  if (!needCopy) {
+    try {
+      const testDb = new DatabaseSync(dbPath);
+      const res = testDb.prepare('PRAGMA quick_check').get();
+      testDb.close();
+      if (!res || res.quick_check !== 'ok') {
+        console.warn('[Storage] Existing DB corrupted, resetting to fresh template...');
+        needCopy = true;
+      }
+    } catch (e) {
+      console.warn('[Storage] Existing DB cannot be opened:', e.message);
+      needCopy = true;
+    }
+  }
+
+  if (needCopy && fs.existsSync(bundledDbPath)) {
+    console.log(`[Storage] Initializing persistent database from bundled template to ${dbPath}...`);
+    try {
+      fs.copyFileSync(bundledDbPath, dbPath);
+      try { fs.unlinkSync(`${dbPath}-wal`); } catch (_) {}
+      try { fs.unlinkSync(`${dbPath}-shm`); } catch (_) {}
+    } catch (err) {
+      console.warn('[Storage] Failed to copy baseline DB:', err);
+    }
   }
 }
 
@@ -1052,9 +1072,13 @@ function initCustomersTable() {
     WHERE name = ?
   `);
 
-  for (const c of defaultCompanies) {
-    upsertDbd.run(c.name, c.name_en || '', c.tax_id || '', c.source);
-    updateTax.run(c.tax_id || '', c.name_en || '', c.name);
+  try {
+    for (const c of defaultCompanies) {
+      upsertDbd.run(c.name, c.name_en || '', c.tax_id || '', c.source);
+      updateTax.run(c.tax_id || '', c.name_en || '', c.name);
+    }
+  } catch (err) {
+    console.warn('[Customers] Note during init:', err.message);
   }
 
   // Ensure current company profile is always in customers
