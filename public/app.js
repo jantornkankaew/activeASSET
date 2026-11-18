@@ -4742,6 +4742,7 @@ function updateDispatchSummary() {
   const totalPhotos = (state.dispatchDraftItems || []).reduce((acc, r) => acc + (r.photos || []).length, 0);
 
   const loan = state.activeDispatchLoan;
+  const isPendingQc = loan?.status === 'Pending_QC';
   const isDispatched = loan?.status === 'Dispatched';
   const isDelivered = loan?.status === 'Delivered';
   const isPartial = loan?.status === 'Partially_Returned';
@@ -5646,6 +5647,7 @@ function renderDispatchTable() {
   if (!tbody) return;
 
   const loan = state.activeDispatchLoan;
+  const isPendingQc = loan?.status === 'Pending_QC';
   const isDispatched = loan?.status === 'Dispatched';
   const isDeliveredLoan = loan?.status === 'Delivered' || loan?.status === 'Partially_Returned' || loan?.status === 'Returned';
   const isReadOnly = (isDispatched || isDeliveredLoan) && !state.dispatchOnsiteEditMode;
