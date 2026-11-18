@@ -359,6 +359,20 @@ function initMobileKeyboardControl() {
     });
   }
 
+  function syncPillParent(activeEl) {
+    if (!pill) return;
+    const activeDialog = activeEl ? activeEl.closest('dialog[open]') : document.querySelector('dialog[open]');
+    if (activeDialog) {
+      if (pill.parentElement !== activeDialog) {
+        activeDialog.appendChild(pill);
+      }
+    } else {
+      if (pill.parentElement !== document.body) {
+        document.body.appendChild(pill);
+      }
+    }
+  }
+
   function updatePillVisuals(inputEl) {
     if (!pill || !pillBtn) return;
     if (!inputEl) inputEl = activeFocusedInput || document.activeElement;
@@ -367,6 +381,8 @@ function initMobileKeyboardControl() {
       return;
     }
 
+    syncPillParent(inputEl);
+
     const isKeyboardActive =
       inputEl.dataset.keyboardActive === 'true' ||
       (inputEl.getAttribute('inputmode') && inputEl.getAttribute('inputmode') !== 'none');
@@ -374,14 +390,24 @@ function initMobileKeyboardControl() {
     if (isKeyboardActive) {
       pillBtn.classList.add('active');
       if (pillLabel) pillLabel.textContent = 'ซ่อนแป้นพิมพ์';
-      if (btnToggleSearchKbd) btnToggleSearchKbd.classList.add('active');
-      if (btnToggleDispatchKbd) btnToggleDispatchKbd.classList.add('active');
     } else {
       pillBtn.classList.remove('active');
       if (pillLabel) pillLabel.textContent = 'แสดงแป้นพิมพ์';
-      if (btnToggleSearchKbd) btnToggleSearchKbd.classList.remove('active');
-      if (btnToggleDispatchKbd) btnToggleDispatchKbd.classList.remove('active');
     }
+
+    // Sync active state on all matching .btn-keyboard-toggle elements
+    document.querySelectorAll('.btn-keyboard-toggle').forEach(btn => {
+      const targetId = btn.getAttribute('data-keyboard-target');
+      const wrap = btn.closest('.input-clearable-wrap, .search-wrap, .master-search-wrap, .barcode-scanner-bar, .company-input-wrap');
+      const isTarget = (targetId && targetId === inputEl.id) || (wrap && wrap.contains(inputEl));
+      if (isTarget) {
+        if (isKeyboardActive) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      }
+    });
 
     if (isTouchOrMobileDevice()) {
       pill.classList.remove('hidden');
@@ -422,6 +448,7 @@ function initMobileKeyboardControl() {
       }
     }
 
+    syncPillParent(target);
     updatePillVisuals(target);
   });
 
@@ -431,18 +458,35 @@ function initMobileKeyboardControl() {
       const currentActive = document.activeElement;
       if (!isInputEligible(currentActive)) {
         if (pill) pill.classList.add('hidden');
-        if (btnToggleSearchKbd) btnToggleSearchKbd.classList.remove('active');
-        if (btnToggleDispatchKbd) btnToggleDispatchKbd.classList.remove('active');
+        document.querySelectorAll('.btn-keyboard-toggle.active').forEach(b => b.classList.remove('active'));
         activeFocusedInput = null;
+        if (pill && pill.parentElement !== document.body && !document.querySelector('dialog[open]')) {
+          document.body.appendChild(pill);
+        }
       }
     }, 280);
   });
+
+  // Reset pill back to document.body when any dialog closes
+  document.addEventListener('close', (e) => {
+    if (e.target?.tagName?.toLowerCase() === 'dialog') {
+      if (pill && pill.parentElement !== document.body) {
+        document.body.appendChild(pill);
+      }
+      pill?.classList.add('hidden');
+    }
+  }, true);
 
   // Toggle function for a specific input
   function toggleInputKeyboard(inputEl) {
     if (!inputEl) inputEl = activeFocusedInput || document.activeElement;
     if (!isInputEligible(inputEl)) {
-      inputEl = document.getElementById('searchInput');
+      const openDialog = document.querySelector('dialog[open]');
+      if (openDialog) {
+        inputEl = openDialog.querySelector('input:not([type="hidden"]):not([type="file"]):not([disabled]), textarea');
+      } else {
+        inputEl = document.getElementById('searchInput');
+      }
     }
     if (!inputEl) return;
 
@@ -466,6 +510,7 @@ function initMobileKeyboardControl() {
       // SHOW KEYBOARD
       inputEl.dataset.keyboardActive = 'true';
       const orig = inputEl.dataset.originalInputmode || (inputEl.type === 'number' ? 'numeric' : 'text');
+      inputEl.blur();
       inputEl.setAttribute('inputmode', orig);
       inputEl.focus();
       updatePillVisuals(inputEl);
@@ -4565,8 +4610,26 @@ function updateDispatchSummary() {
     if (state.dispatchReturnMode) {
       hintEl.innerHTML = `
         <div class="ret-inspector-box" style="display:inline-flex; align-items:center; gap:6px;">
-          <span style="font-size:12px; font-weight:600; color:#475569;">ผู้รับคืน:</span>
-          <input type="text" id="dispatchReturnReceiverName" class="form-control" style="width:160px; display:inline-block; padding:3px 8px; font-size:12px; height:28px;" value="${escapeHtml(loan?.return_receiver || state.currentUser?.name || 'เจ้าหน้าที่คลัง')}" />
+          <span style="font-size:12px; font-weight:600; color:#475569; white-space:nowrap;">ผู้รับคืน:</span>
+          <div class="input-clearable-wrap has-actions-end" style="display:inline-flex; width:170px;">
+            <input type="text" id="dispatchReturnReceiverName" class="form-control" style="width:100%; padding:3px 26px 3px 8px; font-size:12px; height:28px;" value="${escapeHtml(loan?.return_receiver || state.currentUser?.name || 'เจ้าหน้าที่คลัง')}" autocomplete="off" />
+            <div class="input-actions-end">
+              <button type="button" class="btn-keyboard-toggle" data-keyboard-target="dispatchReturnReceiverName" title="แสดง/ซ่อน แป้นพิมพ์บนหน้าจอ" aria-label="แสดง/ซ่อน แป้นพิมพ์">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                  <line x1="6" y1="8" x2="6" y2="8"></line>
+                  <line x1="10" y1="8" x2="10" y2="8"></line>
+                  <line x1="14" y1="8" x2="14" y2="8"></line>
+                  <line x1="18" y1="8" x2="18" y2="8"></line>
+                  <line x1="6" y1="12" x2="6" y2="12"></line>
+                  <line x1="10" y1="12" x2="10" y2="12"></line>
+                  <line x1="14" y1="12" x2="14" y2="12"></line>
+                  <line x1="18" y1="12" x2="18" y2="12"></line>
+                  <line x1="7" y1="16" x2="17" y2="16"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
       `;
     } else if (isDeliveredLoan) {
@@ -5532,14 +5595,35 @@ function renderDispatchTable() {
             <td style="vertical-align:middle; padding:12px 14px;">
               ${row.returned 
                 ? `<div style="font-size:12px; color:#15803d; font-weight:600; padding:4px 0;">✓ คืนเมื่อ ${formatDateTimeThai(row.returned_at || loan?.return_date || '') || 'เรียบร้อยแล้ว'}${row.qcNote ? ` (${escapeHtml(row.qcNote)})` : ''}</div>`
-                : `<input 
-                    type="text" 
-                    class="form-control" 
-                    data-ret-qc-note="${rowIdx}" 
-                    placeholder="ระบุหมายเหตุ (ถ้ามี)..." 
-                    value="${escapeHtml(row.qcNote || '')}" 
-                    style="width:100%; font-size:12.5px; padding:6px 10px; height:34px; border-radius:6px; border:1px solid #cbd5e1; background:#fff;" 
-                  />`
+                : `<div class="input-clearable-wrap has-actions-end" style="width:100%; position:relative;">
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      id="retQcNote_${rowIdx}" 
+                      data-ret-qc-note="${rowIdx}" 
+                      placeholder="ระบุหมายเหตุ (ถ้ามี)..." 
+                      value="${escapeHtml(row.qcNote || '')}" 
+                      style="width:100%; font-size:12.5px; padding:6px 54px 6px 10px; height:34px; border-radius:6px; border:1px solid #cbd5e1; background:#fff;" 
+                      autocomplete="off" 
+                    />
+                    <div class="input-actions-end">
+                      <button type="button" class="btn-input-clear ${row.qcNote ? '' : 'hidden'}" data-clear-ret-qc="${rowIdx}" title="ล้างค่า">✕</button>
+                      <button type="button" class="btn-keyboard-toggle" data-keyboard-target="retQcNote_${rowIdx}" title="แสดง/ซ่อน แป้นพิมพ์บนหน้าจอ" aria-label="แสดง/ซ่อน แป้นพิมพ์">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                          <line x1="6" y1="8" x2="6" y2="8"></line>
+                          <line x1="10" y1="8" x2="10" y2="8"></line>
+                          <line x1="14" y1="8" x2="14" y2="8"></line>
+                          <line x1="18" y1="8" x2="18" y2="8"></line>
+                          <line x1="6" y1="12" x2="6" y2="12"></line>
+                          <line x1="10" y1="12" x2="10" y2="12"></line>
+                          <line x1="14" y1="12" x2="14" y2="12"></line>
+                          <line x1="18" y1="12" x2="18" y2="12"></line>
+                          <line x1="7" y1="16" x2="17" y2="16"></line>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>`
               }
             </td>
           </tr>
@@ -5828,6 +5912,20 @@ function renderDispatchTable() {
                       />
                       <div class="input-actions-end">
                         <button type="button" class="btn-input-clear hidden" data-clear-dispatch-sn="${rowIdx}" title="ล้างค่า">✕</button>
+                        <button type="button" class="btn-keyboard-toggle" data-keyboard-target="dispatchSnInput_${rowIdx}" title="แสดง/ซ่อน แป้นพิมพ์บนหน้าจอ" aria-label="แสดง/ซ่อน แป้นพิมพ์">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                            <line x1="6" y1="8" x2="6" y2="8"></line>
+                            <line x1="10" y1="8" x2="10" y2="8"></line>
+                            <line x1="14" y1="8" x2="14" y2="8"></line>
+                            <line x1="18" y1="8" x2="18" y2="8"></line>
+                            <line x1="6" y1="12" x2="6" y2="12"></line>
+                            <line x1="10" y1="12" x2="10" y2="12"></line>
+                            <line x1="14" y1="12" x2="14" y2="12"></line>
+                            <line x1="18" y1="12" x2="18" y2="12"></line>
+                            <line x1="7" y1="16" x2="17" y2="16"></line>
+                          </svg>
+                        </button>
                         <button type="button" class="btn-input-dropdown-arrow" data-toggle-dispatch-sn="${rowIdx}" title="แสดงรายการ S/N">▾</button>
                       </div>
                     </div>
@@ -5870,6 +5968,20 @@ function renderDispatchTable() {
                       />
                       <div class="input-actions-end">
                         <button type="button" class="btn-input-clear hidden" data-clear-dispatch-acc="${rowIdx}" title="ล้างค่า">✕</button>
+                        <button type="button" class="btn-keyboard-toggle" data-keyboard-target="dispatchAccInput_${rowIdx}" title="แสดง/ซ่อน แป้นพิมพ์บนหน้าจอ" aria-label="แสดง/ซ่อน แป้นพิมพ์">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                            <line x1="6" y1="8" x2="6" y2="8"></line>
+                            <line x1="10" y1="8" x2="10" y2="8"></line>
+                            <line x1="14" y1="8" x2="14" y2="8"></line>
+                            <line x1="18" y1="8" x2="18" y2="8"></line>
+                            <line x1="6" y1="12" x2="6" y2="12"></line>
+                            <line x1="10" y1="12" x2="10" y2="12"></line>
+                            <line x1="14" y1="12" x2="14" y2="12"></line>
+                            <line x1="18" y1="12" x2="18" y2="12"></line>
+                            <line x1="7" y1="16" x2="17" y2="16"></line>
+                          </svg>
+                        </button>
                         <button type="button" class="btn-input-dropdown-arrow" data-toggle-dispatch-acc="${rowIdx}" title="แสดงรายการอุปกรณ์เสริม">▾</button>
                       </div>
                     </div>
@@ -14513,6 +14625,27 @@ function setupEventListeners() {
       const rowIdx = Number(qcNoteInput.getAttribute('data-ret-qc-note'));
       if (state.dispatchDraftItems && state.dispatchDraftItems[rowIdx]) {
         state.dispatchDraftItems[rowIdx].qcNote = qcNoteInput.value;
+      }
+      const clearBtn = qcNoteInput.parentElement?.querySelector('[data-clear-ret-qc]');
+      if (clearBtn) {
+        clearBtn.classList.toggle('hidden', !qcNoteInput.value);
+      }
+    }
+  });
+
+  // Delegate click for QC note clear button
+  dispatchTableBody?.addEventListener('click', e => {
+    const clearBtn = e.target.closest('[data-clear-ret-qc]');
+    if (clearBtn) {
+      const rowIdx = Number(clearBtn.getAttribute('data-clear-ret-qc'));
+      const input = document.getElementById(`retQcNote_${rowIdx}`) || document.querySelector(`[data-ret-qc-note="${rowIdx}"]`);
+      if (input) {
+        input.value = '';
+        if (state.dispatchDraftItems && state.dispatchDraftItems[rowIdx]) {
+          state.dispatchDraftItems[rowIdx].qcNote = '';
+        }
+        clearBtn.classList.add('hidden');
+        input.focus();
       }
     }
   });

@@ -16101,6 +16101,14 @@ dialog.modal-company-settings.modal-fullscreen {
   pointer-events: auto;
 }
 
+/* Position floating pill above bottom footer when inside top-layer dialogs */
+dialog .mobile-keyboard-pill,
+#dispatchDialog .mobile-keyboard-pill,
+#returnDialog .mobile-keyboard-pill {
+  bottom: calc(76px + env(safe-area-inset-bottom, 10px)) !important;
+  z-index: 10050 !important;
+}
+
 .mobile-keyboard-pill.hidden {
   opacity: 0;
   pointer-events: none;
