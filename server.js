@@ -3616,6 +3616,8 @@ const server = http.createServer(async (req, res) => {
       const combinedAfterPhotos = [...existingAfterPhotos, ...newAfterPhotos];
       const returnReceiver = String(body.return_receiver || '').trim();
 
+      const isQcPhase = loan.status === 'Pending_QC' || Boolean(body.is_qc_completion);
+
       db.exec('BEGIN TRANSACTION');
       try {
         for (const ri of returnItems) {
@@ -3624,31 +3626,32 @@ const server = http.createServer(async (req, res) => {
 
           const returnedAcc = Array.isArray(ri.returned_accessories) ? ri.returned_accessories : [];
           const missingAcc = Array.isArray(ri.missing_accessories) ? ri.missing_accessories : [];
-          const qcStatus = ri.qc_status === 'Fail' || missingAcc.length > 0 ? 'Fail' : 'Pass';
           const qcNote = String(ri.qc_note || '').trim();
-          const returnedToLoc = qcStatus === 'Pass' && ri.returned_to_location ? 1 : 0;
 
-          db.prepare(`
-            UPDATE loan_items
-            SET returned = 1,
-                returned_at = datetime('now', 'localtime'),
-                returned_accessories_json = ?,
-                missing_accessories_json = ?,
-                qc_status = ?,
-                qc_note = ?,
-                returned_to_location = ?
-            WHERE id = ?
-          `).run(
-            JSON.stringify(returnedAcc),
-            JSON.stringify(missingAcc),
-            qcStatus,
-            qcNote,
-            returnedToLoc,
-            loanItem.id
-          );
-
-          const isQcPhase = loan.status === 'Pending_QC' || body.is_qc_completion;
           if (isQcPhase) {
+            // STEP 2: In QC queue -> Approving QC inspection and restock into Available
+            const qcStatus = ri.qc_status === 'Fail' || missingAcc.length > 0 ? 'Fail' : 'Pass';
+            const returnedToLoc = 1;
+
+            db.prepare(`
+              UPDATE loan_items
+              SET returned = 1,
+                  returned_at = COALESCE(returned_at, datetime('now', 'localtime')),
+                  returned_accessories_json = ?,
+                  missing_accessories_json = ?,
+                  qc_status = ?,
+                  qc_note = ?,
+                  returned_to_location = ?
+              WHERE id = ?
+            `).run(
+              JSON.stringify(returnedAcc),
+              JSON.stringify(missingAcc),
+              qcStatus,
+              qcNote,
+              returnedToLoc,
+              loanItem.id
+            );
+
             if (qcStatus === 'Pass') {
               db.prepare(`
                 UPDATE assets
@@ -3676,7 +3679,25 @@ const server = http.createServer(async (req, res) => {
               `).run(issueText, JSON.stringify(missingAcc), ri.tag_id);
             }
           } else {
-            // Receiving from customer -> Set asset to In_QC awaiting inspection
+            // STEP 1: Receiving from customer -> Send to QC queue (Pending_QC)
+            db.prepare(`
+              UPDATE loan_items
+              SET returned = 0,
+                  returned_at = datetime('now', 'localtime'),
+                  returned_accessories_json = ?,
+                  missing_accessories_json = ?,
+                  qc_status = 'Pending',
+                  qc_note = ?,
+                  returned_to_location = 0
+              WHERE id = ?
+            `).run(
+              JSON.stringify(returnedAcc),
+              JSON.stringify(missingAcc),
+              qcNote,
+              loanItem.id
+            );
+
+            // Asset moves to In_QC awaiting inspection
             db.prepare(`
               UPDATE assets
               SET status = 'In_QC',
@@ -3686,13 +3707,16 @@ const server = http.createServer(async (req, res) => {
           }
         }
 
-        // Check if all items in the loan are returned
-        const allLoanItems = db.prepare('SELECT * FROM loan_items WHERE loan_id = ?').all(loanId);
-        const allComplete = allLoanItems.every(i => i.returned === 1);
-        const isQcPhase = loan.status === 'Pending_QC' || body.is_qc_completion;
-        const nextLoanStatus = isQcPhase
-          ? (allComplete ? 'Returned' : 'Pending_QC')
-          : (allComplete ? 'Pending_QC' : 'Partially_Returned');
+        let nextLoanStatus;
+        if (isQcPhase) {
+          // Check if all items in the loan are fully returned & QC completed
+          const allLoanItems = db.prepare('SELECT * FROM loan_items WHERE loan_id = ?').all(loanId);
+          const allComplete = allLoanItems.every(i => i.returned === 1);
+          nextLoanStatus = allComplete ? 'Returned' : 'Partially_Returned';
+        } else {
+          // Saving return from customer ALWAYS moves loan to Pending_QC (เข้าคิว รอตรวจ QC)
+          nextLoanStatus = 'Pending_QC';
+        }
 
         db.prepare(`
           UPDATE loans

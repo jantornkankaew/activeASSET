@@ -902,9 +902,9 @@ input[type="search"]::-webkit-search-results-decoration {
 
 .kanban-board {
   display: grid;
-  grid-template-columns: repeat(4, minmax(310px, 1fr));
-  gap: 20px;
-  min-width: 1260px;
+  grid-template-columns: repeat(5, minmax(260px, 1fr));
+  gap: 16px;
+  min-width: 1380px;
   align-items: stretch;
   min-height: 100%;
   position: relative;

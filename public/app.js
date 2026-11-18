@@ -4970,6 +4970,10 @@ function openDispatchModal(loanId, updateHash = true) {
       : Array.isArray(it.attachments)
       ? it.attachments.filter(a => a.url).map(a => a.url)
       : [];
+
+    const isAlreadyFullyReturned = Boolean(it.returned) && it.returned_to_location === 1 && it.qc_status !== 'Pending';
+    const isInQcQueue = isPendingQc && !isAlreadyFullyReturned;
+
     return {
       id: it.id,
       brand: it.brand || (assetObj ? assetObj.brand : ''),
@@ -4986,14 +4990,15 @@ function openDispatchModal(loanId, updateHash = true) {
       photos: existingPhotos,
       free_note: it.loan_free_note || (assetObj ? assetObj.free_note || '' : ''),
       attachments: [...(it.attachments || [])],
-      returned: Boolean(it.returned),
+      returned: isAlreadyFullyReturned,
       returned_at: it.returned_at || it.return_date || (it.returned && loan.return_date ? loan.return_date : null),
-      selectedForReturn: isPendingQc && !Boolean(it.returned),
+      selectedForReturn: isPendingQc ? isInQcQueue : false,
       scannedSn: '',
       allAccessories: [...(it.loan_accessories || (assetObj ? assetObj.accessories : []) || [])],
       missingAccessories: new Set(it.missing_accessories || []),
       qcStatus: it.qc_status === 'Fail' ? 'Fail' : 'Pass',
-      qcNote: it.qc_note || ''
+      qcNote: it.qc_note || '',
+      isInQcQueue
     };
   });
 
@@ -5705,9 +5710,11 @@ function renderDispatchTable() {
                       ${escapeHtml(row.brand || '')} <strong>${escapeHtml(row.model || '')}</strong>
                     </span>
                     ${row.returned 
-                      ? `<span class="ret-status-badge badge-returned" style="font-size:11px; padding:2px 8px;">✓ คืนเรียบร้อยแล้ว</span>`
+                      ? `<span class="ret-status-badge badge-returned" style="font-size:11px; padding:2px 8px;">✓ คืนเข้าคลังแล้ว</span>`
+                      : (isPendingQc && row.isInQcQueue)
+                      ? `<span class="ret-status-badge" style="font-size:11px; padding:2px 8px; background:#fef3c7; color:#92400e; border:1px solid #fde68a;">🔍 กำลังรอตรวจ QC</span>`
                       : `<span class="ret-status-badge ${isReturned ? 'badge-returned' : 'badge-pending'}" style="font-size:11px; padding:2px 8px;">
-                          ${isReturned ? '✓ ได้รับเครื่องแล้ว' : '⏳ รอตรวจรับคืน'}
+                          ${isReturned ? '✓ ได้รับเครื่องแล้ว' : '⏳ รอรับคืน'}
                         </span>`
                     }
                   </div>
@@ -14823,10 +14830,7 @@ function setupEventListeners() {
               : `✅ ตรวจ QC ผ่านบางส่วน (${selectedItems.length} เครื่อง) รับเข้าคลังเรียบร้อย`
             );
           } else {
-            showToast(updatedLoan?.status === 'Pending_QC'
-              ? `📥 รับคืนสินค้าจากลูกค้าเรียบร้อย — ย้ายไปแถว "รอตรวจ QC"`
-              : `✅ บันทึกรับคืนสินค้าบางส่วน (${selectedItems.length} เครื่อง)`
-            );
+            showToast(`📥 บันทึกการรับคืนเรียบร้อย — ส่งไปเข้าคิว "รอตรวจ QC" (${selectedItems.length} เครื่อง)`);
           }
         } catch (err) {
           showToast('⚠️ ' + err.message);
