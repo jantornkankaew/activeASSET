@@ -121,6 +121,20 @@ window.renderLoanExcelRows = renderLoanExcelRows;
 window.ensureTrailingEmptyRow = ensureTrailingEmptyRow;
 window.uploadNoteFiles = uploadNoteFiles;
 
+function syncClearableInputBtn(inp) {
+  if (!inp) return;
+  const wrap = inp.closest('.input-clearable-wrap');
+  if (!wrap) return;
+  const btn = wrap.querySelector('.btn-input-clear');
+  if (!btn) return;
+  if (inp.value && String(inp.value).trim().length > 0) {
+    btn.classList.remove('hidden');
+  } else {
+    btn.classList.add('hidden');
+  }
+}
+window.syncClearableInputBtn = syncClearableInputBtn;
+
 document.addEventListener('DOMContentLoaded', () => {
   restoreNavigationState();
   setupDialogsLightDismissFallback();
@@ -2031,8 +2045,12 @@ function initCompanyAutocomplete() {
   let debounceTimer = null;
   let activeIndex = -1;
   let currentResults = [];
+  let searchSeq = 0;
+  let isSelecting = false;
 
   const closeDropdown = () => {
+    searchSeq++; // Invalidate and discard any in-flight async searches
+    clearTimeout(debounceTimer);
     dropdown.classList.add('hidden');
     dropdown.innerHTML = '';
     activeIndex = -1;
@@ -2041,6 +2059,7 @@ function initCompanyAutocomplete() {
   };
 
   const renderDropdown = (results, query) => {
+    if (isSelecting) return;
     dropdown.innerHTML = '';
     currentResults = results || [];
     activeIndex = -1;
@@ -2113,19 +2132,24 @@ function initCompanyAutocomplete() {
         <span class="company-item-badge ${badgeClass}">${badgeText}</span>
       `;
 
-      itemEl.addEventListener('click', () => {
+      itemEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        isSelecting = true;
+        closeDropdown();
+
         companyInput.value = item.name;
+        syncClearableInputBtn(companyInput);
 
         // Autofill contact & phone if available and currently empty
         const customerInput = document.getElementById('loanCustomer');
         const phoneInput = document.getElementById('loanCustomerPhone');
         if (customerInput && !customerInput.value.trim() && item.contact_name) {
           customerInput.value = item.contact_name;
-          customerInput.dispatchEvent(new Event('input', { bubbles: true }));
+          syncClearableInputBtn(customerInput);
         }
         if (phoneInput && !phoneInput.value.trim() && item.phone) {
           phoneInput.value = item.phone;
-          phoneInput.dispatchEvent(new Event('input', { bubbles: true }));
+          syncClearableInputBtn(phoneInput);
         }
 
         // If from external online lookup, automatically learn & save into Master Data!
@@ -2144,9 +2168,18 @@ function initCompanyAutocomplete() {
           showToast(`💾 บันทึก "${item.name}" เข้าสู่ระบบเรียบร้อย`);
         }
 
-        companyInput.dispatchEvent(new Event('input', { bubbles: true }));
-        closeDropdown();
         updateTopInfoSummary();
+
+        // Advance focus to next input field (Customer / Contact name if empty, or phone)
+        if (customerInput && !customerInput.value.trim()) {
+          customerInput.focus();
+        } else if (phoneInput && !phoneInput.value.trim()) {
+          phoneInput.focus();
+        }
+
+        setTimeout(() => {
+          isSelecting = false;
+        }, 350);
       });
 
       dropdown.appendChild(itemEl);
@@ -2163,11 +2196,23 @@ function initCompanyAutocomplete() {
           ใช้ชื่อใหม่: <strong>"${escapeHtml(trimmedQuery)}"</strong> <span style="font-size:11px; color:#2563eb; opacity:0.85;">(บันทึกอัตโนมัติ)</span>
         </div>
       `;
-      addNewEl.addEventListener('click', async () => {
-        companyInput.value = trimmedQuery;
-        companyInput.dispatchEvent(new Event('input', { bubbles: true }));
+      addNewEl.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        isSelecting = true;
         closeDropdown();
+
+        companyInput.value = trimmedQuery;
+        syncClearableInputBtn(companyInput);
         updateTopInfoSummary();
+
+        const customerInput = document.getElementById('loanCustomer');
+        if (customerInput && !customerInput.value.trim()) {
+          customerInput.focus();
+        }
+
+        setTimeout(() => {
+          isSelecting = false;
+        }, 350);
 
         // Auto-learn in background into Master Data customers
         try {
@@ -2186,34 +2231,48 @@ function initCompanyAutocomplete() {
       dropdown.appendChild(addNewEl);
     }
 
-    dropdown.classList.remove('hidden');
+    if (!isSelecting) {
+      dropdown.classList.remove('hidden');
+    }
   };
 
   const fetchCompanies = async (q) => {
+    if (isSelecting) return;
+    const thisSearchSeq = ++searchSeq;
     if (spinner) spinner.classList.remove('hidden');
     try {
       const res = await fetch(`/api/customers/search?q=${encodeURIComponent(q)}`);
       const json = await res.json();
+      if (thisSearchSeq !== searchSeq) {
+        // Obsolete search or closed dropdown - discard stale response immediately
+        return;
+      }
       if (spinner) spinner.classList.add('hidden');
-      if (json.success) {
+      if (json.success && !isSelecting) {
         renderDropdown(json.results, q);
       }
     } catch {
-      if (spinner) spinner.classList.add('hidden');
+      if (thisSearchSeq === searchSeq && spinner) spinner.classList.add('hidden');
     }
   };
 
   companyInput.addEventListener('input', () => {
+    syncClearableInputBtn(companyInput);
+    if (isSelecting) return;
     clearTimeout(debounceTimer);
     const q = companyInput.value.trim();
     debounceTimer = setTimeout(() => {
-      fetchCompanies(q);
+      if (!isSelecting) fetchCompanies(q);
     }, 180);
   });
 
   companyInput.addEventListener('focus', () => {
+    if (isSelecting) return;
     const q = companyInput.value.trim();
-    fetchCompanies(q);
+    // Only search on focus if input is empty or dropdown is closed
+    if (!q || dropdown.classList.contains('hidden')) {
+      fetchCompanies(q);
+    }
   });
 
   // Dropdown toggle arrow button (GEMINI.md Rule 1)
@@ -2222,6 +2281,7 @@ function initCompanyAutocomplete() {
     if (!dropdown.classList.contains('hidden')) {
       closeDropdown();
     } else {
+      isSelecting = false;
       fetchCompanies(companyInput.value.trim());
       companyInput.focus();
     }
