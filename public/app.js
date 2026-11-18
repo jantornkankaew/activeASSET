@@ -18168,6 +18168,8 @@ function initRealtimeSync() {
     if (isSyncing) return;
     // Don't poll if not authenticated
     if (!state.currentUser || !state.currentUser.email) return;
+    // Don't poll if tab is hidden in background / screen locked
+    if (document.visibilityState === 'hidden') return;
 
     try {
       isSyncing = true;
@@ -18207,8 +18209,8 @@ function initRealtimeSync() {
     }
   }
 
-  // Poll heartbeat every 12 seconds (extremely lightweight, ~50 bytes per ping)
-  setInterval(checkSync, 12000);
+  // Poll heartbeat every 60 seconds (1 นาที) เฉพาะตอนที่หน้าจอกำลังเปิดอยู่
+  setInterval(checkSync, 60000);
 
   // Sync immediately when tab is restored from background
   document.addEventListener('visibilitychange', () => {
