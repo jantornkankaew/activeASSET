@@ -8621,12 +8621,73 @@ dialog.modal-send-email {
   margin-bottom: 12px;
 }
 
+.sig-saved-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+.sig-saved-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #166534;
+}
+
+.sig-saved-icon {
+  font-size: 14px;
+}
+
 .sig-modal-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding-top: 12px;
   border-top: 1px solid #f1f5f9;
+}
+
+.sig-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sig-save-default-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #1d4ed8;
+  cursor: pointer;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 4px 10px;
+  border-radius: 6px;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.sig-save-default-toggle:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.sig-save-default-toggle input[type="checkbox"] {
+  accent-color: #1d4ed8;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
 }
 
 .sig-time-badge {
@@ -15713,6 +15774,91 @@ dialog.modal-company-settings.modal-fullscreen {
 }
 
 .logo-btn-group .btn-ghost.text-danger:hover {
+  background: #fef2f2;
+}
+
+.company-signature-uploader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: transparent;
+  border: none;
+  padding: 2px 0;
+}
+
+.company-signature-preview {
+  width: 120px;
+  height: 54px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  padding: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.company-signature-preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.signature-placeholder {
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: center;
+  font-weight: 400;
+}
+
+.company-signature-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.signature-btn-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.signature-btn-group .btn-secondary {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.signature-btn-group .btn-secondary:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.signature-btn-group .btn-ghost.text-danger {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.signature-btn-group .btn-ghost.text-danger:hover {
   background: #fef2f2;
 }
 

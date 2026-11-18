@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=20261118_11" />
+  <link rel="stylesheet" href="/styles.css?v=20261118_12" />
   <script>
     (function() {
       try {
@@ -1446,6 +1446,17 @@
           <button type="button" class="sig-tab-btn" id="tabSigUpload" data-sig-mode="upload">อัปโหลดรูป</button>
         </div>
 
+        <!-- Quick Apply Saved Dispatcher Signature Banner -->
+        <div id="sigSavedDispatcherBanner" class="sig-saved-banner hidden">
+          <div class="sig-saved-info">
+            <span class="sig-saved-icon">⚡</span>
+            <span>มีลายเซ็นผู้จ่ายเครื่องที่บันทึกไว้ในโปรแกรม</span>
+          </div>
+          <button type="button" class="btn btn-sm btn-secondary" id="btnApplySavedDispatcherSig">
+            ดึงลายเซ็นที่บันทึกไว้มาใช้
+          </button>
+        </div>
+
         <!-- Mode 1: Draw on Canvas -->
         <div id="sigDrawSection" class="sig-pane active">
           <div class="sig-canvas-wrap" id="sigCanvasWrap">
@@ -1499,7 +1510,13 @@
       </div>
 
       <footer class="modal-footer sig-modal-footer">
-        <div class="sig-time-badge" id="sigCurrentTimeText"></div>
+        <div class="sig-footer-left">
+          <div class="sig-time-badge" id="sigCurrentTimeText"></div>
+          <label class="sig-save-default-toggle hidden" id="lblSaveDefaultDispatcherSig">
+            <input type="checkbox" id="chkSaveDefaultDispatcherSig" />
+            <span>บันทึกเก็บไว้ในโปรแกรม (ค่าเริ่มต้นผู้จ่ายเครื่อง)</span>
+          </label>
+        </div>
         <div class="sig-footer-btns">
           <button type="button" class="btn btn-outline" id="btnCancelSigModal">ยกเลิก</button>
           <button type="button" class="btn btn-primary" id="btnSaveDigitalSig">บันทึก</button>
@@ -1614,6 +1631,27 @@
                 </div>
                 <div class="form-hint">PNG หรือ SVG โปร่งใส</div>
                 <input type="hidden" id="companyLogoUrlVal" value="" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Dispatcher Default Signature Section -->
+          <div class="settings-section dispatcher-signature-section-minimal">
+            <label class="form-label">ลายเซ็นผู้จ่ายเครื่อง (ค่าเริ่มต้นประจำระบบ)</label>
+            <div class="company-signature-uploader">
+              <div class="company-signature-preview" id="companyDispatcherSigPreviewBox">
+                <img id="companyDispatcherSigPreviewImg" src="" alt="ลายเซ็นผู้จ่ายเครื่อง" class="hidden" />
+                <div id="companyDispatcherSigPlaceholder" class="signature-placeholder">ยังไม่มีลายเซ็น</div>
+              </div>
+              <div class="company-signature-controls">
+                <input type="file" id="companyDispatcherSigFileInput" accept="image/png, image/jpeg, image/webp" class="hidden" />
+                <div class="signature-btn-group">
+                  <button type="button" class="btn btn-sm btn-secondary" id="btnDrawCompanyDispatcherSig">✍️ วาดลายเซ็น</button>
+                  <button type="button" class="btn btn-sm btn-secondary" id="btnUploadCompanyDispatcherSig">📁 อัปโหลดรูปภาพ</button>
+                  <button type="button" class="btn btn-sm btn-ghost text-danger hidden" id="btnRemoveCompanyDispatcherSig">ลบ</button>
+                </div>
+                <div class="form-hint">บันทึกเป็นลายเซ็นผู้จ่ายเครื่องในเอกสารใบยืม (Gate Pass) ทุกใบโดยอัตโนมัติ</div>
+                <input type="hidden" id="companyDispatcherSigUrlVal" value="" />
               </div>
             </div>
           </div>
@@ -3197,6 +3235,6 @@
 
   <script src="/qrcode.min.js"></script>
   <script src="/html5-qrcode.min.js"></script>
-  <script src="/app.js?v=20261118_11"></script>
+  <script src="/app.js?v=20261118_12"></script>
 </body>
 </html>

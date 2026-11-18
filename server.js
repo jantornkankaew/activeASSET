@@ -445,6 +445,7 @@ const DEFAULT_COMPANY_SETTINGS = {
   company_email: 'sales@iconnect.co.th',
   company_website: 'www.iconnect.co.th',
   company_logo: '',
+  dispatcher_signature: '',
   gatepass_terms: '* ผู้ยืมตกลงดูแลรักษาเครื่องและอุปกรณ์เสริมทั้งหมดให้อยู่ในสภาพสมบูรณ์ และนำส่งคืนภายในวันที่กำหนด',
   email_provider: 'resend',
   email_api_key: '',
@@ -1765,6 +1766,9 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === '/api/company-settings' && req.method === 'POST') {
       const body = await parseJsonBody(req);
+      if (body.dispatcher_signature && typeof body.dispatcher_signature === 'string' && body.dispatcher_signature.startsWith('data:image/')) {
+        body.dispatcher_signature = saveBase64Image(body.dispatcher_signature, 'dispatcher-sig');
+      }
       const upsert = db.prepare(`
         INSERT INTO company_settings (key, value)
         VALUES (?, ?)
@@ -2814,13 +2818,20 @@ const server = http.createServer(async (req, res) => {
       }
       if (!createdBy) createdBy = (borrowerName || '').trim();
 
+      const defaultDispatcherSig = (getCompanySettings().dispatcher_signature || '').trim();
+      const initialDispatcherSig = body.dispatcher_signature 
+        ? saveBase64Image(body.dispatcher_signature, `sig-dispatcher-${loanId}`) 
+        : defaultDispatcherSig;
+      const initialDispatcherSignedAt = initialDispatcherSig ? (body.dispatcher_signed_at || new Date().toISOString()) : '';
+
       db.exec('BEGIN TRANSACTION');
       try {
         db.prepare(`
           INSERT INTO loans (
             id, customer_name, customer_company, borrower_name, borrower_phone, customer_phone,
-            purpose, checkout_date, due_date, status, before_photos_json, borrower_signature, created_by
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            purpose, checkout_date, due_date, status, before_photos_json, borrower_signature, created_by,
+            dispatcher_signature, dispatcher_signed_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).run(
           loanId,
           customerName || borrowerName,
@@ -2834,7 +2845,9 @@ const server = http.createServer(async (req, res) => {
           initialStatus,
           JSON.stringify(beforePhotos),
           signatureUrl,
-          createdBy
+          createdBy,
+          initialDispatcherSig,
+          initialDispatcherSignedAt
         );
 
         if (customerCompany && customerCompany.trim()) {
@@ -3404,6 +3417,14 @@ const server = http.createServer(async (req, res) => {
         const sigUrl = saveBase64Image(body.signature, `sig-${role}-${loanId}`);
         const nowStr = body.signed_at || new Date().toISOString();
         db.prepare(`UPDATE loans SET ${sigCol} = ?, ${dateCol} = ? WHERE id = ?`).run(sigUrl, nowStr, loanId);
+
+        if (role === 'dispatcher' && body.save_as_default) {
+          db.prepare(`
+            INSERT INTO company_settings (key, value)
+            VALUES ('dispatcher_signature', ?)
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value
+          `).run(sigUrl);
+        }
       }
 
       return sendJson(res, 200, getFullState());

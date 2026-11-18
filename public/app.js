@@ -6841,9 +6841,9 @@ function renderSingleGatePassSheet(loan, copyType = '', sizeClass = '') {
         <!-- 2. ผู้จ่ายเครื่อง / เจ้าหน้าที่คลัง -->
         <div class="gp-sig-box" data-sig-role="dispatcher">
           <div class="gp-sig-slot">
-            ${loan.dispatcher_signature ? `
+            ${(loan.dispatcher_signature || state.companySettings?.dispatcher_signature) ? `
               <div class="gp-sig-preview-wrap">
-                <img class="gp-sig-img" src="${escapeHtml(loan.dispatcher_signature)}" alt="ลายเซ็นผู้จ่ายเครื่อง" />
+                <img class="gp-sig-img" src="${escapeHtml(loan.dispatcher_signature || state.companySettings?.dispatcher_signature)}" alt="ลายเซ็นผู้จ่ายเครื่อง" />
                 ${!isDelivered ? `
                   <div class="gp-sig-hover-actions no-print">
                     <button type="button" class="btn-sig-icon-action" data-open-sig="dispatcher" title="แก้ไข">✎</button>
@@ -6864,8 +6864,8 @@ function renderSingleGatePassSheet(loan, copyType = '', sizeClass = '') {
           <div class="gp-sig-line"></div>
           <div class="gp-sig-info">
             <div class="gp-sig-role">ผู้จ่ายเครื่อง / เจ้าหน้าที่คลัง</div>
-            <div class="gp-sig-date">${loan.dispatcher_signed_at ? `วันที่ ${formatShortDate(loan.dispatcher_signed_at)}` : 'วันที่ ....../....../......'}</div>
-            ${loan.dispatcher_signed_at ? `<div class="gp-sig-time">เซ็นเมื่อ: ${formatDateTimeThai(loan.dispatcher_signed_at)}</div>` : ''}
+            <div class="gp-sig-date">${loan.dispatcher_signed_at ? `วันที่ ${formatShortDate(loan.dispatcher_signed_at)}` : ((loan.dispatcher_signature || state.companySettings?.dispatcher_signature) ? `วันที่ ${formatShortDate(loan.checkout_date || new Date().toISOString())}` : 'วันที่ ....../....../......')}</div>
+            ${loan.dispatcher_signed_at ? `<div class="gp-sig-time">เซ็นเมื่อ: ${formatDateTimeThai(loan.dispatcher_signed_at)}</div>` : ((!loan.dispatcher_signature && state.companySettings?.dispatcher_signature) ? '<div class="gp-sig-time">ลายเซ็นประจำระบบ</div>' : '')}
           </div>
         </div>
 
@@ -7497,11 +7497,30 @@ function setupDigitalSignatureModal() {
   document.getElementById('btnCloseSigModal')?.addEventListener('click', closeSig);
   document.getElementById('btnCancelSigModal')?.addEventListener('click', closeSig);
 
+  // Apply saved dispatcher signature from settings
+  document.getElementById('btnApplySavedDispatcherSig')?.addEventListener('click', () => {
+    const saved = state.companySettings?.dispatcher_signature;
+    if (!saved) {
+      showToast('⚠️ ไม่พบลายเซ็นผู้จ่ายเครื่องที่บันทึกไว้ในระบบ');
+      return;
+    }
+    state.activeSigMode = 'upload';
+    state.uploadedSigDataUrl = saved;
+    document.querySelectorAll('.sig-tab-btn').forEach(b => {
+      b.classList.toggle('active', b.getAttribute('data-sig-mode') === 'upload');
+    });
+    document.getElementById('sigDrawSection')?.classList.add('hidden');
+    document.getElementById('sigUploadSection')?.classList.remove('hidden');
+
+    const previewImg = document.getElementById('sigUploadPreviewImg');
+    if (previewImg) previewImg.src = saved;
+    document.getElementById('sigUploadPreviewWrap')?.classList.remove('hidden');
+    document.getElementById('sigUploadDropzone')?.classList.add('hidden');
+    showToast('⚡ ดึงลายเซ็นที่บันทึกไว้มาใช้เรียบร้อย');
+  });
+
   // Save Signature
   document.getElementById('btnSaveDigitalSig')?.addEventListener('click', async () => {
-    const loan = state.loans.find(l => l.id === state.activePrintLoanId);
-    if (!loan) return;
-
     let sigData = '';
     if (state.activeSigMode === 'draw') {
       if (!state.digitalSigDirty) {
@@ -7518,6 +7537,48 @@ function setupDigitalSignatureModal() {
     }
 
     const saveBtn = document.getElementById('btnSaveDigitalSig');
+
+    // Case 1: Saving system default dispatcher signature from Company Settings
+    if (state.activeSigRole === 'dispatcher_setting') {
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'บันทึก...';
+      }
+      try {
+        const res = await fetch('/api/company-settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dispatcher_signature: sigData })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'บันทึกลายเซ็นไม่สำเร็จ');
+        if (data.success && data.settings) {
+          state.companySettings = data.settings;
+          const savedUrl = data.settings.dispatcher_signature || sigData;
+          if (typeof window.updateCompanyDispatcherSigPreview === 'function') {
+            window.updateCompanyDispatcherSigPreview(savedUrl);
+          }
+          renderGatePassHtml();
+        }
+        modal.close();
+        showToast('✅ บันทึกลายเซ็นผู้จ่ายเครื่องในโปรแกรมเรียบร้อย');
+      } catch (err) {
+        showAlert(err.message || 'เกิดข้อผิดพลาดในการบันทึก');
+      } finally {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'บันทึก';
+        }
+      }
+      return;
+    }
+
+    // Case 2: Saving signature for a specific loan
+    const loan = state.loans.find(l => l.id === state.activePrintLoanId);
+    if (!loan) return;
+
+    const saveAsDefault = state.activeSigRole === 'dispatcher' && Boolean(document.getElementById('chkSaveDefaultDispatcherSig')?.checked);
+
     if (saveBtn) {
       saveBtn.disabled = true;
       saveBtn.textContent = 'บันทึก...';
@@ -7530,19 +7591,29 @@ function setupDigitalSignatureModal() {
         body: JSON.stringify({
           role: state.activeSigRole,
           signature: sigData,
-          signed_at: new Date().toISOString()
+          signed_at: new Date().toISOString(),
+          save_as_default: saveAsDefault
         })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'บันทึกลายเซ็นไม่สำเร็จ');
       applyServerState(data);
+      if (saveAsDefault) {
+        state.companySettings = {
+          ...state.companySettings,
+          dispatcher_signature: sigData
+        };
+        if (typeof window.updateCompanyDispatcherSigPreview === 'function') {
+          window.updateCompanyDispatcherSigPreview(sigData);
+        }
+      }
       if (state.activeDispatchLoan) {
         state.activeDispatchLoan = state.loans.find(l => l.id === state.activeDispatchLoan.id) || state.activeDispatchLoan;
         updateDispatchSummary();
       }
       renderGatePassHtml();
       modal.close();
-      showToast('✅ บันทึกลายเซ็นเรียบร้อย');
+      showToast(saveAsDefault ? '✅ บันทึกลายเซ็นและบันทึกเป็นค่าเริ่มต้นประจำระบบเรียบร้อย' : '✅ บันทึกลายเซ็นเรียบร้อย');
     } catch (err) {
       showAlert(err.message || 'เกิดข้อผิดพลาดในการบันทึก');
     } finally {
@@ -7643,16 +7714,18 @@ function setupDigitalSignatureModal() {
   });
 
   window.openDigitalSigModalForRole = function(role) {
-    if (!state.activePrintLoanId && state.loans.length > 0) {
-      state.activePrintLoanId = state.loans[0].id;
-    }
-    const loan = state.loans.find(l => l.id === state.activePrintLoanId);
-    if (!loan) return;
+    if (role !== 'dispatcher_setting') {
+      if (!state.activePrintLoanId && state.loans.length > 0) {
+        state.activePrintLoanId = state.loans[0].id;
+      }
+      const loan = state.loans.find(l => l.id === state.activePrintLoanId);
+      if (!loan) return;
 
-    const isDelivered = ['Delivered', 'Partially_Returned', 'Returned'].includes(loan.status);
-    if (isDelivered && role !== 'receiver') {
-      showToast('🔒 ใบยืมนี้ส่งมอบแล้ว ไม่สามารถแก้ไขลายเซ็นต์ได้');
-      return;
+      const isDelivered = ['Delivered', 'Partially_Returned', 'Returned'].includes(loan.status);
+      if (isDelivered && role !== 'receiver') {
+        showToast('🔒 ใบยืมนี้ส่งมอบแล้ว ไม่สามารถแก้ไขลายเซ็นต์ได้');
+        return;
+      }
     }
     state.activeSigRole = role || 'borrower';
     state.activeSigMode = 'draw';
@@ -7664,16 +7737,43 @@ function setupDigitalSignatureModal() {
       dispatcher: 'ผู้จ่ายเครื่อง / คลัง',
       receiver: 'ผู้ตรวจรับคืน (QC)'
     };
+    const loan = state.loans.find(l => l.id === state.activePrintLoanId);
     const rolePersons = {
-      borrower: loan.customer_name || loan.borrower_name,
+      borrower: (loan && (loan.customer_name || loan.borrower_name)) || '',
       dispatcher: 'เจ้าหน้าที่คลัง',
-      receiver: loan.return_receiver || 'เจ้าหน้าที่ QC'
+      receiver: (loan && (loan.return_receiver || 'เจ้าหน้าที่ QC')) || ''
     };
 
     const titleEl = document.getElementById('sigModalTitle');
-    if (titleEl) titleEl.textContent = 'เซ็นชื่อ';
     const subEl = document.getElementById('sigModalSubtitle');
-    if (subEl) subEl.textContent = `${roleTitles[role] || 'ผู้ลงนาม'} • ${rolePersons[role] || loan.id}`;
+    const banner = document.getElementById('sigSavedDispatcherBanner');
+    const chkSaveDefaultWrap = document.getElementById('lblSaveDefaultDispatcherSig');
+    const chkSaveDefault = document.getElementById('chkSaveDefaultDispatcherSig');
+
+    if (role === 'dispatcher_setting') {
+      if (titleEl) titleEl.textContent = 'บันทึกลายเซ็นผู้จ่ายเครื่อง';
+      if (subEl) subEl.textContent = 'บันทึกเป็นลายเซ็นประจำโปรแกรม (ใช้ซ้ำทุกใบยืมอัตโนมัติ)';
+      if (chkSaveDefaultWrap) chkSaveDefaultWrap.classList.add('hidden');
+      if (banner) banner.classList.add('hidden');
+    } else {
+      if (titleEl) titleEl.textContent = 'เซ็นชื่อ';
+      if (subEl) subEl.textContent = `${roleTitles[role] || 'ผู้ลงนาม'} • ${(loan && (rolePersons[role] || loan.id)) || ''}`;
+
+      if (role === 'dispatcher') {
+        if (chkSaveDefaultWrap) chkSaveDefaultWrap.classList.remove('hidden');
+        if (chkSaveDefault) chkSaveDefault.checked = false;
+        if (banner) {
+          if (state.companySettings?.dispatcher_signature) {
+            banner.classList.remove('hidden');
+          } else {
+            banner.classList.add('hidden');
+          }
+        }
+      } else {
+        if (chkSaveDefaultWrap) chkSaveDefaultWrap.classList.add('hidden');
+        if (banner) banner.classList.add('hidden');
+      }
+    }
 
     const timeEl = document.getElementById('sigCurrentTimeText');
     if (timeEl) timeEl.textContent = `🕒 ${formatDateTimeThai(new Date().toISOString())}`;
@@ -7853,7 +7953,33 @@ function setupCompanySettingsModal() {
     }
 
     updateLogoPreview(c.company_logo || '');
+    updateDispatcherSigPreview(c.dispatcher_signature || '');
   }
+
+  function updateDispatcherSigPreview(url) {
+    const previewImg = document.getElementById('companyDispatcherSigPreviewImg');
+    const placeholder = document.getElementById('companyDispatcherSigPlaceholder');
+    const btnRemove = document.getElementById('btnRemoveCompanyDispatcherSig');
+    const sigUrlVal = document.getElementById('companyDispatcherSigUrlVal');
+
+    if (sigUrlVal) sigUrlVal.value = url || '';
+    if (url) {
+      if (previewImg) {
+        previewImg.src = url;
+        previewImg.classList.remove('hidden');
+      }
+      if (placeholder) placeholder.classList.add('hidden');
+      if (btnRemove) btnRemove.classList.remove('hidden');
+    } else {
+      if (previewImg) {
+        previewImg.src = '';
+        previewImg.classList.add('hidden');
+      }
+      if (placeholder) placeholder.classList.remove('hidden');
+      if (btnRemove) btnRemove.classList.add('hidden');
+    }
+  }
+  window.updateCompanyDispatcherSigPreview = updateDispatcherSigPreview;
 
   function updateLogoPreview(url) {
     const previewImg = document.getElementById('companyLogoPreviewImg');
@@ -8156,6 +8282,87 @@ function setupCompanySettingsModal() {
     });
   }
 
+  // Dispatcher Default Signature controls
+  const btnDrawDispatcherSig = document.getElementById('btnDrawCompanyDispatcherSig');
+  const btnUploadDispatcherSig = document.getElementById('btnUploadCompanyDispatcherSig');
+  const dispatcherSigFileInput = document.getElementById('companyDispatcherSigFileInput');
+  const btnRemoveDispatcherSig = document.getElementById('btnRemoveCompanyDispatcherSig');
+
+  if (btnDrawDispatcherSig) {
+    btnDrawDispatcherSig.addEventListener('click', () => {
+      openDigitalSigModalForRole('dispatcher_setting');
+    });
+  }
+
+  if (btnUploadDispatcherSig && dispatcherSigFileInput) {
+    btnUploadDispatcherSig.addEventListener('click', () => dispatcherSigFileInput.click());
+    dispatcherSigFileInput.addEventListener('change', async e => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        showToast('⚠️ กรุณาเลือกไฟล์รูปภาพ (PNG, JPG, WEBP)');
+        return;
+      }
+      try {
+        const dataUrl = await compressImageFile(file, 800, 0.9);
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: file.name,
+            data: dataUrl,
+            size: file.size,
+            type: file.type
+          })
+        });
+        const uploadData = await uploadRes.json();
+        const savedUrl = (uploadData.success && uploadData.url) ? uploadData.url : dataUrl;
+
+        // Persist immediately to company_settings
+        const setRes = await fetch('/api/company-settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dispatcher_signature: savedUrl })
+        });
+        const setData = await setRes.json();
+        if (setData.success && setData.settings) {
+          state.companySettings = setData.settings;
+        } else {
+          state.companySettings = { ...state.companySettings, dispatcher_signature: savedUrl };
+        }
+        updateDispatcherSigPreview(savedUrl);
+        renderGatePassHtml();
+        showToast('✅ อัปโหลดและบันทึกลายเซ็นผู้จ่ายเครื่องเรียบร้อย');
+      } catch (err) {
+        showToast('❌ อัปโหลดรูปภาพไม่สำเร็จ: ' + err.message);
+      }
+    });
+  }
+
+  if (btnRemoveDispatcherSig) {
+    btnRemoveDispatcherSig.addEventListener('click', async () => {
+      if (dispatcherSigFileInput) dispatcherSigFileInput.value = '';
+      updateDispatcherSigPreview('');
+      try {
+        const setRes = await fetch('/api/company-settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dispatcher_signature: '' })
+        });
+        const setData = await setRes.json();
+        if (setData.success && setData.settings) {
+          state.companySettings = setData.settings;
+        } else {
+          state.companySettings = { ...state.companySettings, dispatcher_signature: '' };
+        }
+        renderGatePassHtml();
+        showToast('ลบลายเซ็นผู้จ่ายเครื่องเรียบร้อย');
+      } catch (err) {
+        showToast('❌ ลบลายเซ็นไม่สำเร็จ: ' + err.message);
+      }
+    });
+  }
+
   if (btnSave) {
     btnSave.addEventListener('click', async () => {
       const getVal = id => {
@@ -8187,6 +8394,7 @@ function setupCompanySettingsModal() {
         smtp_pass: getVal('settingSmtpPass'),
         smtp_from_name: getVal('settingSmtpFromName'),
         company_logo: document.getElementById('companyLogoUrlVal')?.value || '',
+        dispatcher_signature: document.getElementById('companyDispatcherSigUrlVal')?.value || '',
         auth_require_login: document.getElementById('settingAuthRequireLogin')?.checked ? '1' : '0',
         auth_allowed_domains: getVal('settingAuthAllowedDomains') || 'active5.co.th',
         auth_google_client_id: getVal('settingAuthGoogleClientId')
