@@ -881,10 +881,29 @@ async function fetchFullState() {
 }
 
 function applyServerState(data) {
+  // Rule: Any card that changes status must be highlighted with a colored border (like new loans)
+  const oldLoanStatusMap = new Map((state.loans || []).map(l => [l.id, l.status]));
+  const newLoans = data.loans || [];
+
+  if (oldLoanStatusMap.size > 0) {
+    if (!state.recentlyChangedLoans) state.recentlyChangedLoans = new Set();
+    newLoans.forEach(l => {
+      const prevStatus = oldLoanStatusMap.get(l.id);
+      if (prevStatus && prevStatus !== l.status) {
+        state.recentlyChangedLoans.add(l.id);
+        setTimeout(() => {
+          if (state.recentlyChangedLoans) state.recentlyChangedLoans.delete(l.id);
+          const card = document.querySelector(`.loan-card[data-card-loan="${l.id}"]`);
+          if (card) card.classList.remove('card-status-changed', 'card-highlight');
+        }, 6000);
+      }
+    });
+  }
+
   state.today = data.today;
   state.assets = data.assets || [];
   state.catalogs = data.catalogs || [];
-  state.loans = data.loans || [];
+  state.loans = newLoans;
   state.accessorySuggestions = data.accessorySuggestions || [];
   state.locations = data.locations || [];
   if (data.users) {
@@ -1318,7 +1337,9 @@ function renderMiniCalendar(dateStr, isOverdue, isDueSoon, overdueDays) {
 }
 
 function renderKanbanCard(loan) {
-  const isHighlight = loan.id === state.highlightDocNo;
+  const isStatusChanged = state.recentlyChangedLoans && state.recentlyChangedLoans.has(loan.id);
+  const isHighlight = loan.id === state.highlightDocNo || isStatusChanged;
+  const statusClass = loan.status === 'Pending_QC' ? 'status-qc' : '';
   const miniCalHtml = renderMiniCalendar(
     loan.due_date,
     loan.is_overdue,
@@ -1385,7 +1406,7 @@ function renderKanbanCard(loan) {
 
   return `
     <article
-      class="loan-card clickable-card ${isHighlight ? 'card-highlight' : ''} ${loan.is_overdue ? 'card-overdue' : ''}"
+      class="loan-card clickable-card ${isHighlight ? 'card-highlight card-status-changed' : ''} ${statusClass} ${loan.is_overdue ? 'card-overdue' : ''}"
       data-card-loan="${escapeHtml(loan.id)}"
       title="${isEditable ? 'คลิกเพื่อเปิดหน้าจัดของ & Match S/N' : loan.status === 'Pending_QC' ? 'คลิกเพื่อเปิดหน้าตรวจสภาพ QC & รับเข้าคลัง' : 'คลิกเพื่อเปิดดูใบยืมแบบเต็มหน้าจอ'}"
     >
@@ -1395,6 +1416,7 @@ function renderKanbanCard(loan) {
       <!-- Line 1: Prominent Company Name + Mini Calendar -->
       <div class="card-top-row">
         <div class="card-top-left">
+          ${isStatusChanged ? `<span class="badge-status-changed-pill">🔄 เพิ่งเปลี่ยนสถานะ</span>` : ''}
           <div class="card-company-headline" title="${escapeHtml(companyHeadline)}">
             ${escapeHtml(companyHeadline)}
           </div>
@@ -14913,8 +14935,28 @@ function setupEventListeners() {
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || 'บันทึกการรับคืนไม่สำเร็จ');
+          state.highlightDocNo = loan.id;
+          if (!state.recentlyChangedLoans) state.recentlyChangedLoans = new Set();
+          state.recentlyChangedLoans.add(loan.id);
+
           applyServerState(data);
           document.getElementById('dispatchDialog')?.close();
+
+          // On mobile: switch to 'qc' column automatically so user sees the newly moved card
+          if (!isPendingQc && window.innerWidth <= 768) {
+            const qcColBtn = document.querySelector('.col-pill-btn[data-col-target="qc"]');
+            qcColBtn?.click();
+          }
+
+          // Smooth scroll to highlight the card with colored border
+          setTimeout(() => {
+            const card = document.querySelector(`.loan-card[data-card-loan="${loan.id}"]`);
+            if (card) {
+              card.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+              card.classList.add('card-highlight', 'card-status-changed');
+            }
+          }, 200);
+
           const updatedLoan = (state.loans || []).find(l => l.id === loan.id);
           if (isPendingQc) {
             const isAllDone = updatedLoan ? updatedLoan.status === 'Returned' : false;

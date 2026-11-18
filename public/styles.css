@@ -1117,9 +1117,80 @@ input[type="search"]::-webkit-search-results-decoration {
   border-color: var(--border-strong);
 }
 
-.loan-card.card-highlight {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+.loan-card.card-highlight,
+.loan-card.card-status-changed {
+  border-width: 2px !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3.5px rgba(37, 99, 235, 0.28), 0 4px 14px rgba(37, 99, 235, 0.16) !important;
+  animation: cardHighlightPulse 3.5s ease-out forwards;
+}
+
+/* Specific theme highlights when changing status to specific columns */
+.kanban-col[data-col="qc"] .loan-card.card-highlight,
+.kanban-col[data-col="qc"] .loan-card.card-status-changed,
+.loan-card.card-status-changed.status-qc,
+.loan-card.card-highlight.status-qc {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.35), 0 4px 14px rgba(245, 158, 11, 0.2) !important;
+  animation: cardAmberHighlightPulse 3.5s ease-out forwards;
+}
+
+.kanban-col[data-col="dispatched"] .loan-card.card-highlight,
+.kanban-col[data-col="dispatched"] .loan-card.card-status-changed {
+  border-color: #8b5cf6 !important;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.32), 0 4px 14px rgba(139, 92, 246, 0.18) !important;
+}
+
+.kanban-col[data-col="in-use"] .loan-card.card-highlight,
+.kanban-col[data-col="in-use"] .loan-card.card-status-changed {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.32), 0 4px 14px rgba(16, 185, 129, 0.18) !important;
+}
+
+.badge-status-changed-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #b45309;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 4px;
+  padding: 1px 6px;
+  width: fit-content;
+  margin-bottom: 3px;
+  line-height: 1.2;
+}
+
+@keyframes cardHighlightPulse {
+  0% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.45), 0 6px 18px rgba(37, 99, 235, 0.25);
+  }
+  60% {
+    transform: scale(1.005);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3), 0 4px 12px rgba(37, 99, 235, 0.15);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  }
+}
+
+@keyframes cardAmberHighlightPulse {
+  0% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.5), 0 6px 18px rgba(245, 158, 11, 0.3);
+  }
+  60% {
+    transform: scale(1.005);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35), 0 4px 12px rgba(245, 158, 11, 0.18);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+  }
 }
 
 .loan-card.card-overdue {
