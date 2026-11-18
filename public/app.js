@@ -1434,30 +1434,6 @@ function renderKanbanCard(loan) {
             </button>` : ''}
           </div>
         `
-            : (loan.status === 'Delivered' || loan.status === 'Partially_Returned')
-            ? `
-          <div class="card-actions">
-            <button type="button" class="btn-card-action-minimal btn-receive-qc" data-receive-qc="${escapeHtml(loan.id)}" title="รับคืนจากลูกค้า และส่งไปแถวตรวจ QC">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              <span>รับตรวจ QC</span>
-            </button>
-          </div>
-        `
-            : loan.status === 'Pending_QC'
-            ? `
-          <div class="card-actions">
-            <button type="button" class="btn-card-action-minimal btn-inspect-qc" data-inspect-qc="${escapeHtml(loan.id)}" title="เปิดหน้าตรวจสภาพและรับคืนเข้าคลัง">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-              <span>ตรวจ QC</span>
-            </button>
-          </div>
-        `
             : ''
         }
         <button type="button" class="doc-no doc-link-pill kanban-doc-pill card-footer-doc-pill" data-open-print="${escapeHtml(loan.id)}" title="คลิกเพื่อเปิดดูใบยืมจริง ${escapeHtml(loan.id)}">
@@ -4901,19 +4877,13 @@ function updateDispatchSummary() {
       `;
     } else if (isDeliveredLoan) {
       rightBtnsEl.innerHTML = `
-        <button type="button" class="btn btn-warning btn-dispatch-receive-qc" id="btnDispatchReceiveQc" title="รับของจากลูกค้าและย้ายไปแถว รอตรวจ QC">
+        <button type="button" class="btn btn-success btn-dispatch-return" id="btnDispatchStartReturn" title="เริ่มขั้นตอนการคืนสินค้า">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="7 10 12 15 17 10"></polyline>
             <line x1="12" y1="15" x2="12" y2="3"></line>
           </svg>
-          <span>รับคืนจากลูกค้า (ส่งตรวจ QC)</span>
-        </button>
-        <button type="button" class="btn btn-success btn-dispatch-return" id="btnDispatchStartReturn" title="เริ่มขั้นตอนการตรวจรับคืนทันที">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-          <span>ตรวจรับคืนทันที</span>
+          <span>คืนสินค้า</span>
         </button>
       `;
     } else if (isReadOnly) {
@@ -14714,44 +14684,6 @@ function setupEventListeners() {
       return;
     }
 
-    // 4.1. Receive Loan from Customer and send to Pending_QC
-    const btnReceiveQc = e.target.closest('#btnDispatchReceiveQc') || e.target.closest('[data-receive-qc]');
-    if (btnReceiveQc) {
-      e.preventDefault();
-      e.stopPropagation();
-      const loanId = btnReceiveQc.getAttribute('data-receive-qc') || state.activeDispatchLoan?.id;
-      if (!loanId) return;
-
-      const loan = state.loans.find(l => l.id === loanId);
-      const companyName = loan ? (loan.customer_company || loan.customer_name || loan.id) : loanId;
-
-      showCustomConfirmModal({
-        title: 'ยืนยันรับคืนสินค้าจากลูกค้า',
-        message: `คุณต้องการรับคืนสินค้าของ "${companyName}" เพื่อส่งต่อไปตรวจ QC ก่อนรับเข้าคลัง ใช่หรือไม่?`,
-        confirmText: '📥 รับของส่งตรวจ QC',
-        confirmClass: 'btn-warning',
-        onConfirm: async () => {
-          try {
-            const res = await fetch(`/api/loans/${encodeURIComponent(loanId)}/receive-for-qc`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                return_receiver: state.currentUser?.name || 'เจ้าหน้าที่คลัง'
-              })
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'ไม่สามารถรับคืนเข้า QC ได้');
-            applyServerState(data);
-            document.getElementById('dispatchDialog')?.close();
-            showToast(`📥 รับคืน "${loanId}" จากลูกค้าเรียบร้อย — ย้ายไปแถว "รอตรวจ QC" แล้ว`);
-          } catch (err) {
-            showToast(`❌ ${err.message}`);
-          }
-        }
-      });
-      return;
-    }
-
     // 4.2. Open Inspection for Pending_QC card
     const btnInspectQc = e.target.closest('[data-inspect-qc]');
     if (btnInspectQc) {
@@ -14859,6 +14791,7 @@ function setupEventListeners() {
 
       (async () => {
         try {
+          const isPendingQc = loan.status === 'Pending_QC';
           const payload = {
             items: selectedItems.map(r => ({
               tag_id: r.tag_id,
@@ -14869,7 +14802,8 @@ function setupEventListeners() {
               returned_to_location: 1
             })),
             after_photos: state.dispatchReturnPhotos || [],
-            return_receiver: document.getElementById('dispatchReturnReceiverName')?.value?.trim() || 'เจ้าหน้าที่คลัง'
+            return_receiver: document.getElementById('dispatchReturnReceiverName')?.value?.trim() || 'เจ้าหน้าที่คลัง',
+            is_qc_completion: isPendingQc
           };
 
           const res = await fetch(`/api/loans/${encodeURIComponent(loan.id)}/return`, {
@@ -14882,11 +14816,18 @@ function setupEventListeners() {
           applyServerState(data);
           document.getElementById('dispatchDialog')?.close();
           const updatedLoan = (state.loans || []).find(l => l.id === loan.id);
-          const isAllDone = updatedLoan ? updatedLoan.status === 'Returned' : false;
-          showToast(isAllDone 
-            ? `✅ บันทึกรับคืนสินค้า ${loan.id} ครบทุกรายการเรียบร้อยแล้ว` 
-            : `✅ บันทึกรับคืนสินค้าบางส่วน (${selectedItems.length} เครื่อง) เรียบร้อยแล้ว (สถานะ: คืนไม่ครบ)`
-          );
+          if (isPendingQc) {
+            const isAllDone = updatedLoan ? updatedLoan.status === 'Returned' : false;
+            showToast(isAllDone 
+              ? `✅ ตรวจ QC ผ่าน — รับสินค้า ${loan.id} เข้าคลังเรียบร้อยแล้ว` 
+              : `✅ ตรวจ QC ผ่านบางส่วน (${selectedItems.length} เครื่อง) รับเข้าคลังเรียบร้อย`
+            );
+          } else {
+            showToast(updatedLoan?.status === 'Pending_QC'
+              ? `📥 รับคืนสินค้าจากลูกค้าเรียบร้อย — ย้ายไปแถว "รอตรวจ QC"`
+              : `✅ บันทึกรับคืนสินค้าบางส่วน (${selectedItems.length} เครื่อง)`
+            );
+          }
         } catch (err) {
           showToast('⚠️ ' + err.message);
           btnSubmitReturn.disabled = false;

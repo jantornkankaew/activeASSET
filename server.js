@@ -3647,38 +3647,52 @@ const server = http.createServer(async (req, res) => {
             loanItem.id
           );
 
-          if (qcStatus === 'Pass') {
+          const isQcPhase = loan.status === 'Pending_QC' || body.is_qc_completion;
+          if (isQcPhase) {
+            if (qcStatus === 'Pass') {
+              db.prepare(`
+                UPDATE assets
+                SET status = 'Available',
+                    current_loan_id = NULL,
+                    issue_note = '',
+                    missing_tags_json = '[]',
+                    updated_at = datetime('now', 'localtime')
+                WHERE tag_id = ?
+              `).run(ri.tag_id);
+            } else {
+              const issueParts = [];
+              if (missingAcc.length > 0) issueParts.push(`ขาด: ${missingAcc.join(', ')}`);
+              if (qcNote) issueParts.push(qcNote);
+              const issueText = issueParts.join(' | ') || 'มีตำหนิ/อุปกรณ์ไม่ครบ';
+
+              db.prepare(`
+                UPDATE assets
+                SET status = 'Available',
+                    current_loan_id = NULL,
+                    issue_note = ?,
+                    missing_tags_json = ?,
+                    updated_at = datetime('now', 'localtime')
+                WHERE tag_id = ?
+              `).run(issueText, JSON.stringify(missingAcc), ri.tag_id);
+            }
+          } else {
+            // Receiving from customer -> Set asset to In_QC awaiting inspection
             db.prepare(`
               UPDATE assets
-              SET status = 'Available',
-                  current_loan_id = NULL,
-                  issue_note = '',
-                  missing_tags_json = '[]',
+              SET status = 'In_QC',
                   updated_at = datetime('now', 'localtime')
               WHERE tag_id = ?
             `).run(ri.tag_id);
-          } else {
-            const issueParts = [];
-            if (missingAcc.length > 0) issueParts.push(`ขาด: ${missingAcc.join(', ')}`);
-            if (qcNote) issueParts.push(qcNote);
-            const issueText = issueParts.join(' | ') || 'มีตำหนิ/อุปกรณ์ไม่ครบ';
-
-            db.prepare(`
-              UPDATE assets
-              SET status = 'Available',
-                  current_loan_id = NULL,
-                  issue_note = ?,
-                  missing_tags_json = ?,
-                  updated_at = datetime('now', 'localtime')
-              WHERE tag_id = ?
-            `).run(issueText, JSON.stringify(missingAcc), ri.tag_id);
           }
         }
 
         // Check if all items in the loan are returned
         const allLoanItems = db.prepare('SELECT * FROM loan_items WHERE loan_id = ?').all(loanId);
         const allComplete = allLoanItems.every(i => i.returned === 1);
-        const nextLoanStatus = allComplete ? 'Returned' : 'Partially_Returned';
+        const isQcPhase = loan.status === 'Pending_QC' || body.is_qc_completion;
+        const nextLoanStatus = isQcPhase
+          ? (allComplete ? 'Returned' : 'Pending_QC')
+          : (allComplete ? 'Pending_QC' : 'Partially_Returned');
 
         db.prepare(`
           UPDATE loans
