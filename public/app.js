@@ -13004,7 +13004,7 @@ function setupEventListeners() {
       // Auto-expand textarea height as user types multiple lines, start at 1 line
       e.target.style.height = 'auto';
       if (e.target.value && (e.target.value.includes('\n') || e.target.scrollHeight > 26)) {
-        e.target.style.height = `${e.target.scrollHeight}px`;
+        e.target.style.height = `${Math.min(96, Math.max(22, e.target.scrollHeight))}px`;
       } else {
         e.target.style.height = '22px';
       }
@@ -13336,21 +13336,50 @@ function setupEventListeners() {
         commitAccessoryTag(e.target);
       }
     }
-    // Pressing Ctrl+Enter or Cmd+Enter in free note advances to next item (Enter alone allows typing multiline)
-    if (e.target.matches('[data-excel-free-note]') && e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    // Pressing Enter in free note confirms note and advances (Shift+Enter allows multiline)
+    if (e.target.matches('[data-excel-free-note]') && e.key === 'Enter') {
+      if (e.shiftKey) {
+        // Shift+Enter: allow typing multiline without advancing
+        return;
+      }
       e.preventDefault();
       const rowIdx = Number(e.target.getAttribute('data-excel-free-note'));
-      state.loanDraftRows[rowIdx].free_note = e.target.value;
-      ensureTrailingEmptyRow();
-      state.activeLoanRowIdx = rowIdx + 1;
-      renderLoanExcelRows();
-      setTimeout(() => {
-        const nextInp = excelTbody.querySelector(`[data-excel-model-input="${rowIdx + 1}"]`);
-        if (nextInp) {
-          nextInp.focus();
-          nextInp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      state.loanDraftRows[rowIdx].free_note = e.target.value.trim();
+      e.target.value = state.loanDraftRows[rowIdx].free_note;
+
+      // If user pressed Ctrl+Enter / Cmd+Enter, or if there is already a next row, advance to next row
+      if (e.ctrlKey || e.metaKey) {
+        ensureTrailingEmptyRow();
+        state.activeLoanRowIdx = rowIdx + 1;
+        renderLoanExcelRows();
+        setTimeout(() => {
+          const nextInp = excelTbody.querySelector(`[data-excel-model-input="${rowIdx + 1}"], [data-excel-brand-input="${rowIdx + 1}"]`);
+          if (nextInp) {
+            nextInp.focus();
+            nextInp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 50);
+        return;
+      }
+
+      if (rowIdx < state.loanDraftRows.length - 1) {
+        state.activeLoanRowIdx = rowIdx + 1;
+        renderLoanExcelRows();
+        setTimeout(() => {
+          const nextInp = excelTbody.querySelector(`[data-excel-model-input="${rowIdx + 1}"], [data-excel-brand-input="${rowIdx + 1}"]`);
+          if (nextInp) {
+            nextInp.focus();
+            nextInp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 50);
+      } else {
+        // Last row: keep note confirmed and advance focus to submit button
+        e.target.blur();
+        const submitBtn = document.getElementById('btnSubmitLoan') || document.querySelector('#loanForm button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.focus();
         }
-      }, 50);
+      }
       return;
     }
 

@@ -3361,8 +3361,8 @@ dialog.modal-sn-sheet {
   flex-direction: column;
   justify-content: center;
   width: 100%;
-  height: 38px;
   min-height: 38px;
+  height: auto;
   padding: 7px 32px 7px 12px;
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(203, 213, 225, 0.85);
@@ -3386,7 +3386,8 @@ dialog.modal-sn-sheet {
 .note-box-textarea {
   width: 100% !important;
   min-height: 22px !important;
-  height: 22px;
+  height: auto;
+  max-height: 96px;
   resize: none !important;
   line-height: 22px !important;
   font-family: inherit !important;
@@ -3398,7 +3399,7 @@ dialog.modal-sn-sheet {
   box-shadow: none !important;
   box-sizing: border-box !important;
   color: var(--text-main, #1e293b);
-  overflow-y: hidden;
+  overflow-y: auto;
 }
 
 .note-box-textarea::placeholder {
