@@ -1610,7 +1610,7 @@ function getFullState() {
       mainColumn = 'qc';
       subGroup = 'Pending_QC';
     } else if (l.status === 'Pending_Return_Supplier_Sale') {
-      mainColumn = 'supplier-sale-return';
+      mainColumn = 'qc';
       subGroup = 'Pending_Supplier_Return';
     } else if (l.status === 'Partially_Returned') {
       mainColumn = 'overdue-and-partial';
