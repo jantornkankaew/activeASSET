@@ -24256,3 +24256,151 @@ html.is-unauthenticated .app-shell {
   cursor: text !important;
 }
 
+/* --------------------------------------------------------------------------
+   BRAND INPUT FOR SUPPLIER & SALES STOCK SOURCES (GEMINI.md Rule 1 & 2)
+   -------------------------------------------------------------------------- */
+.custom-source-inputs-wrap {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  align-items: flex-start;
+}
+
+.brand-field-wrap {
+  flex: 1;
+  min-width: 130px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.model-field-wrap {
+  flex: 1.2;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.field-label-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.field-micro-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 1px 6px;
+  line-height: 1.3;
+}
+
+.field-micro-badge .req {
+  color: #ef4444;
+  font-weight: 800;
+}
+
+.badge-brand {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.badge-model {
+  background: #f8fafc;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.brand-field-wrap .input-clearable-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.excel-loan-table .brand-search-input {
+  width: 100%;
+  height: 38px;
+  border: 1px solid rgba(203, 213, 225, 0.75);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 0 48px 0 10px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-main);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03), 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.excel-loan-table .brand-search-input:focus {
+  outline: none;
+  background: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18), inset 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.brand-field-wrap .input-actions-end {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  z-index: 5;
+}
+
+.brand-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.12s ease;
+}
+
+.brand-dropdown-item:hover {
+  background: #f0fdf4;
+}
+
+.brand-dropdown-item.brand-item-new {
+  background: #eff6ff;
+  border-bottom: 1px solid #dbeafe;
+}
+
+.brand-dropdown-item.brand-item-new:hover {
+  background: #dbeafe;
+}
+
+.brand-item-new-icon {
+  font-size: 13px;
+}
+
+.brand-count-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+}
+
+@media (max-width: 640px) {
+  .custom-source-inputs-wrap {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .brand-field-wrap, .model-field-wrap {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+

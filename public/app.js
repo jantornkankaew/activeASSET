@@ -3818,6 +3818,11 @@ function closeAllModelDropdowns() {
     srcDd.classList.add('hidden');
     srcDd.removeAttribute('data-active-row');
   }
+  const brandDd = document.getElementById('globalBrandDropdown');
+  if (brandDd) {
+    brandDd.classList.add('hidden');
+    brandDd.removeAttribute('data-active-row');
+  }
   document.querySelectorAll('.model-dropdown-menu').forEach(d => d.classList.add('hidden'));
 }
 
@@ -4045,6 +4050,126 @@ function renderSourceDropdown(rowIdx) {
     const maxHeight = Math.max(260, Math.floor(spaceBelow));
     dropdown.style.maxHeight = `${maxHeight}px`;
     dropdown.style.top = `${btnRect.bottom + 6}px`;
+    dropdown.style.bottom = 'auto';
+  }
+
+  dropdown.classList.remove('hidden');
+}
+
+function getAllAvailableBrands() {
+  const brandSet = new Set();
+  (state.catalogs || []).forEach(c => { if (c.brand && c.brand.trim()) brandSet.add(c.brand.trim()); });
+  (state.assets || []).forEach(a => { if (a.brand && a.brand.trim()) brandSet.add(a.brand.trim()); });
+  const commonBrands = [
+    'Zebra', 'Honeywell', 'Bixolon', 'Point Mobile', 'Sunmi', 
+    'Datalogic', 'Newland', 'Urovo', 'Seiko', 'CipherLab', 
+    'Argox', 'Citizen', 'TSC', 'Godex', 'Epson', 'Apple', 'Samsung'
+  ];
+  commonBrands.forEach(b => brandSet.add(b));
+  return Array.from(brandSet).sort((a, b) => a.localeCompare(b));
+}
+
+function renderBrandDropdown(rowIdx, query = '') {
+  const dropdown = document.getElementById('globalBrandDropdown');
+  if (!dropdown) return;
+
+  const targetInput = document.querySelector(`[data-excel-brand-input="${rowIdx}"]`);
+  if (!targetInput) return;
+
+  dropdown.setAttribute('data-active-row', String(rowIdx));
+
+  const allBrands = getAllAvailableBrands();
+  const q = String(query || '').trim().toLowerCase();
+  const filtered = q
+    ? allBrands.filter(b => b.toLowerCase().includes(q))
+    : allBrands;
+
+  const exactMatch = allBrands.some(b => b.toLowerCase() === q);
+
+  const headerHtml = `
+    <div class="dropdown-header-bar">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span class="dropdown-header-title">🏷️ เลือกแบรนด์สินค้า</span>
+        <span class="dropdown-count-badge">${filtered.length} แบรนด์</span>
+      </div>
+      <button type="button" class="btn-close-dropdown" data-close-brand-dropdown title="ปิด (✕)">✕</button>
+    </div>
+  `;
+
+  let itemsHtml = '';
+
+  // If query does not match any existing brand, offer adding as new brand (GEMINI.md rule 1.2)
+  if (q && !exactMatch) {
+    itemsHtml += `
+      <div
+        class="model-dropdown-item brand-dropdown-item brand-item-new"
+        data-select-brand="${escapeHtml(query.trim())}"
+        data-row="${rowIdx}"
+      >
+        <div class="model-item-main">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="brand-item-new-icon">➕</span>
+            <span class="model-item-name" style="color:#2563eb; font-weight:700;">ใช้แบรนด์ใหม่: "${escapeHtml(query.trim())}"</span>
+          </div>
+          <span class="model-item-sub">บันทึกแบรนด์ใหม่นี้ลงฐานข้อมูลอัตโนมัติ</span>
+        </div>
+        <span class="source-item-badge badge-source-supplier">แบรนด์ใหม่</span>
+      </div>
+    `;
+  }
+
+  itemsHtml += filtered.map(brand => {
+    const count = (state.assets || []).filter(a => (a.brand || '').toLowerCase() === brand.toLowerCase()).length;
+    return `
+      <div
+        class="model-dropdown-item brand-dropdown-item"
+        data-select-brand="${escapeHtml(brand)}"
+        data-row="${rowIdx}"
+      >
+        <div class="model-item-main">
+          <span class="model-item-name" style="font-weight:600;">${escapeHtml(brand)}</span>
+          <span class="model-item-sub">${count > 0 ? `มีเครื่องในระบบ ${count} เครื่อง` : 'แบรนด์มาตรฐาน'}</span>
+        </div>
+        ${count > 0 ? `<span class="brand-count-badge">${count} เครื่อง</span>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  if (!itemsHtml) {
+    itemsHtml = `<div class="model-dropdown-empty">ไม่พบแบรนด์ที่ตรงกับคำค้นหา</div>`;
+  }
+
+  dropdown.innerHTML = `
+    ${headerHtml}
+    <div class="dropdown-scroll-list brand-options-list">
+      ${itemsHtml}
+    </div>
+  `;
+
+  const inputRect = targetInput.getBoundingClientRect();
+  const isMobile = window.innerWidth <= 640;
+  const dropdownWidth = isMobile ? Math.min(window.innerWidth - 20, 360) : 320;
+
+  dropdown.style.width = `${dropdownWidth}px`;
+
+  if (isMobile) {
+    dropdown.style.left = `${Math.max(10, Math.floor((window.innerWidth - dropdownWidth) / 2))}px`;
+  } else {
+    dropdown.style.left = `${Math.max(10, Math.min(inputRect.left, window.innerWidth - dropdownWidth - 16))}px`;
+  }
+
+  const spaceBelow = window.innerHeight - inputRect.bottom - 20;
+  const spaceAbove = inputRect.top - 20;
+
+  if (spaceBelow < 220 && spaceAbove > spaceBelow) {
+    const maxHeight = Math.max(200, Math.floor(spaceAbove));
+    dropdown.style.maxHeight = `${maxHeight}px`;
+    dropdown.style.bottom = `${window.innerHeight - inputRect.top + 6}px`;
+    dropdown.style.top = 'auto';
+  } else {
+    const maxHeight = Math.max(240, Math.floor(spaceBelow));
+    dropdown.style.maxHeight = `${maxHeight}px`;
+    dropdown.style.top = `${inputRect.bottom + 6}px`;
     dropdown.style.bottom = 'auto';
   }
 
@@ -4405,8 +4530,10 @@ function renderLoanExcelRows() {
 
   tbody.innerHTML = state.loanDraftRows
     .map((row, rowIdx) => {
-      const modelVal = row.model ? (row.brand ? `${row.brand} ${row.model}` : row.model) : '';
+      const isSupplierOrSale = row.source === 'Supplier' || row.source === 'คลังขาย';
+      const hasBrand = Boolean(row.brand && row.brand.trim());
       const hasModel = Boolean(row.model && row.model.trim());
+      const modelVal = row.model ? (row.brand ? `${row.brand} ${row.model}` : row.model) : '';
       const isBlankRow = !row.model && !row.brand;
       const isActive = (rowIdx === state.activeLoanRowIdx);
       const isNewRow = Boolean(row._isNew);
@@ -4417,15 +4544,19 @@ function renderLoanExcelRows() {
       const sim = rowSimulations[rowIdx] || null;
 
       // Duplicate readiness check:
-      // Must have model selected, and IF S/N has been started it must be completely filled
+      // Must have model selected (and brand for Supplier/คลังขาย), and IF S/N has been started it must be completely filled
       const hasIncompleteSn = (filledSn.length > 0 && filledSn.length < rowQty);
-      const isRowComplete = hasModel && !hasIncompleteSn;
+      const isRowComplete = isSupplierOrSale
+        ? (hasBrand && hasModel && !hasIncompleteSn)
+        : (hasModel && !hasIncompleteSn);
 
       let dupDisabledAttr = '';
       let dupTitle = 'คัดลอกรายการนี้';
       if (!isRowComplete) {
         dupDisabledAttr = 'disabled';
-        if (!hasModel) {
+        if (isSupplierOrSale && !hasBrand) {
+          dupTitle = 'กรุณาระบุแบรนด์สินค้าก่อนคัดลอก';
+        } else if (!hasModel) {
           dupTitle = 'กรุณาเลือกรุ่นสินค้าก่อนคัดลอก';
         } else if (hasIncompleteSn) {
           dupTitle = `กรุณาระบุ S/N ให้ครบตามจำนวน (${filledSn.length}/${rowQty}) ก่อนคัดลอก`;
@@ -4494,7 +4625,8 @@ function renderLoanExcelRows() {
                     </span>
                   ` : ''}
                 </span>
-                <span class="collapsed-model-name">${escapeHtml(modelVal)}</span>
+                <span class="collapsed-model-name">${escapeHtml(modelVal || (row.brand ? row.brand : ''))}</span>
+                ${isSupplierOrSale && !hasBrand ? '<span class="badge-brand-missing" style="color:#ef4444; font-size:11px; margin-left:6px; font-weight:600;">(⚠️ ยังไม่ระบุแบรนด์)</span>' : ''}
                 ${isNewRow ? '<span class="badge-card-new">ใหม่</span>' : ''}
               </div>
             </td>
@@ -4664,48 +4796,100 @@ function renderLoanExcelRows() {
             ${isNewRow ? '<span class="badge-card-new">ใหม่</span>' : ''}
           </td>
 
-          <!-- Col 2: Model Search Input -->
-          <td class="model-picker-cell">
-            <div class="model-input-wrap">
-              <input
-                type="text"
-                class="cell-inline-edit model-search-input"
-                placeholder="พิมพ์ค้นหารุ่นสินค้า (เช่น EDA52, ZT411)..."
-                value="${escapeHtml(modelVal)}"
-                data-excel-model-input="${rowIdx}"
-                autocomplete="off"
-              />
-              <div class="input-actions-end">
-                <button
-                  type="button"
-                  class="btn-clear-model-input ${modelVal ? '' : 'hidden'}"
-                  data-clear-model="${rowIdx}"
-                  title="ล้างรุ่นที่เลือก"
-                  tabindex="-1"
-                  aria-label="ล้างรุ่นที่เลือก"
-                >✕</button>
-                <button
-                  type="button"
-                  class="btn-keyboard-toggle"
-                  title="แสดง/ซ่อน แป้นพิมพ์บนหน้าจอ"
-                  aria-label="แสดง/ซ่อน แป้นพิมพ์"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
-                    <line x1="6" y1="8" x2="6" y2="8"></line>
-                    <line x1="10" y1="8" x2="10" y2="8"></line>
-                    <line x1="14" y1="8" x2="14" y2="8"></line>
-                    <line x1="18" y1="8" x2="18" y2="8"></line>
-                    <line x1="6" y1="12" x2="6" y2="12"></line>
-                    <line x1="10" y1="12" x2="10" y2="12"></line>
-                    <line x1="14" y1="12" x2="14" y2="12"></line>
-                    <line x1="18" y1="12" x2="18" y2="12"></line>
-                    <line x1="7" y1="16" x2="17" y2="16"></line>
-                  </svg>
-                </button>
+          <!-- Col 2: Model Search Input (and Brand Input for Supplier/คลังขาย) -->
+          <td class="model-picker-cell ${isSupplierOrSale ? 'is-custom-source-cell' : ''}">
+            ${isSupplierOrSale ? `
+              <div class="custom-source-inputs-wrap">
+                <!-- Brand Input -->
+                <div class="brand-field-wrap">
+                  <div class="field-label-line">
+                    <span class="field-micro-badge badge-brand">แบรนด์ / ยี่ห้อ <span class="req">*</span></span>
+                  </div>
+                  <div class="input-clearable-wrap has-dropdown">
+                    <input
+                      type="text"
+                      class="cell-inline-edit brand-search-input"
+                      placeholder="ระบุแบรนด์ (เช่น Zebra, Honeywell)..."
+                      value="${escapeHtml(row.brand || '')}"
+                      data-excel-brand-input="${rowIdx}"
+                      autocomplete="off"
+                    />
+                    <div class="input-actions-end">
+                      <button type="button" class="btn-input-clear ${row.brand ? '' : 'hidden'}" data-clear-brand="${rowIdx}" title="ล้างค่า">✕</button>
+                      <button type="button" class="btn-input-dropdown-arrow" data-brand-dropdown-trigger="${rowIdx}" title="เลือกแบรนด์">▾</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Model Input -->
+                <div class="model-field-wrap">
+                  <div class="field-label-line">
+                    <span class="field-micro-badge badge-model">รุ่นสินค้า (Model) <span class="req">*</span></span>
+                  </div>
+                  <div class="model-input-wrap">
+                    <input
+                      type="text"
+                      class="cell-inline-edit model-search-input"
+                      placeholder="ระบุรุ่นสินค้า..."
+                      value="${escapeHtml(row.model || '')}"
+                      data-excel-model-input="${rowIdx}"
+                      autocomplete="off"
+                    />
+                    <div class="input-actions-end">
+                      <button
+                        type="button"
+                        class="btn-clear-model-input ${row.model ? '' : 'hidden'}"
+                        data-clear-model="${rowIdx}"
+                        title="ล้างรุ่นที่เลือก"
+                        tabindex="-1"
+                        aria-label="ล้างรุ่นที่เลือก"
+                      >✕</button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="model-dropdown-menu hidden" data-model-dropdown="${rowIdx}"></div>
-            </div>
+            ` : `
+              <div class="model-input-wrap">
+                <input
+                  type="text"
+                  class="cell-inline-edit model-search-input"
+                  placeholder="พิมพ์ค้นหารุ่นสินค้า (เช่น EDA52, ZT411)..."
+                  value="${escapeHtml(modelVal)}"
+                  data-excel-model-input="${rowIdx}"
+                  autocomplete="off"
+                />
+                <div class="input-actions-end">
+                  <button
+                    type="button"
+                    class="btn-clear-model-input ${modelVal ? '' : 'hidden'}"
+                    data-clear-model="${rowIdx}"
+                    title="ล้างรุ่นที่เลือก"
+                    tabindex="-1"
+                    aria-label="ล้างรุ่นที่เลือก"
+                  >✕</button>
+                  <button
+                    type="button"
+                    class="btn-keyboard-toggle"
+                    title="แสดง/ซ่อน แป้นพิมพ์บนหน้าจอ"
+                    aria-label="แสดง/ซ่อน แป้นพิมพ์"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                      <line x1="6" y1="8" x2="6" y2="8"></line>
+                      <line x1="10" y1="8" x2="10" y2="8"></line>
+                      <line x1="14" y1="8" x2="14" y2="8"></line>
+                      <line x1="18" y1="8" x2="18" y2="8"></line>
+                      <line x1="6" y1="12" x2="6" y2="12"></line>
+                      <line x1="10" y1="12" x2="10" y2="12"></line>
+                      <line x1="14" y1="12" x2="14" y2="12"></line>
+                      <line x1="18" y1="12" x2="18" y2="12"></line>
+                      <line x1="7" y1="16" x2="17" y2="16"></line>
+                    </svg>
+                  </button>
+                </div>
+                <div class="model-dropdown-menu hidden" data-model-dropdown="${rowIdx}"></div>
+              </div>
+            `}
           </td>
 
           <!-- Col 3: Quantity with +/- Stepper & Real-time Stock Simulation -->
@@ -12690,6 +12874,20 @@ function setupEventListeners() {
 
   // Input event: typing model name, accessory tag, qty, or free note
   excelTbody.addEventListener('input', e => {
+    // 0. In-line Brand Input (for Supplier & คลังขาย)
+    if (e.target.matches('[data-excel-brand-input]')) {
+      const rowIdx = Number(e.target.getAttribute('data-excel-brand-input'));
+      const text = e.target.value;
+      const wrap = e.target.closest('.brand-field-wrap');
+      const clearBtn = wrap ? wrap.querySelector('[data-clear-brand]') : null;
+      if (clearBtn) {
+        clearBtn.classList.toggle('hidden', !text.trim());
+      }
+      state.loanDraftRows[rowIdx].brand = text;
+      renderBrandDropdown(rowIdx, text);
+      return;
+    }
+
     // 1. In-line Model Input: filter the dropdown in real-time WITHOUT re-rendering the whole table
     if (e.target.matches('[data-excel-model-input]')) {
       const rowIdx = Number(e.target.getAttribute('data-excel-model-input'));
@@ -12699,6 +12897,14 @@ function setupEventListeners() {
       if (clearBtn) {
         clearBtn.classList.toggle('hidden', !text.trim());
       }
+
+      const isCustomSource = state.loanDraftRows[rowIdx]?.source === 'Supplier' || state.loanDraftRows[rowIdx]?.source === 'คลังขาย';
+      if (isCustomSource) {
+        state.loanDraftRows[rowIdx].model = text;
+        // Keep brand intact for Supplier / คลังขาย
+        return;
+      }
+
       const matched = matchCatalogModel(text);
 
       if (matched) {
@@ -12753,10 +12959,15 @@ function setupEventListeners() {
 
   // Focus event: clicking or tabbing into inputs opens the corresponding rich floating list
   excelTbody.addEventListener('focusin', e => {
-    if (e.target.matches('[data-excel-model-input]')) {
-      const rowIdx = Number(e.target.getAttribute('data-excel-model-input'));
+    if (e.target.matches('[data-excel-brand-input]')) {
+      const rowIdx = Number(e.target.getAttribute('data-excel-brand-input'));
       closeAllModelDropdowns();
-      if (e.target.value.trim().length > 0) {
+      renderBrandDropdown(rowIdx, e.target.value);
+    } else if (e.target.matches('[data-excel-model-input]')) {
+      const rowIdx = Number(e.target.getAttribute('data-excel-model-input'));
+      const isCustomSource = state.loanDraftRows[rowIdx]?.source === 'Supplier' || state.loanDraftRows[rowIdx]?.source === 'คลังขาย';
+      closeAllModelDropdowns();
+      if (!isCustomSource && e.target.value.trim().length > 0) {
         renderModelDropdown(rowIdx, e.target.value);
       }
     } else if (e.target.matches('[data-excel-add-tag]')) {
@@ -12766,15 +12977,85 @@ function setupEventListeners() {
     }
   });
 
-  // Prevent blur when clicking clear button in model input
+  // Prevent blur when clicking clear button in model / brand input or triggers
   document.addEventListener('mousedown', e => {
-    if (e.target.closest('[data-clear-model]')) {
+    if (e.target.closest('[data-clear-model]') || e.target.closest('[data-clear-brand]') || e.target.closest('[data-brand-dropdown-trigger]')) {
       e.preventDefault();
     }
   });
 
   // Clicking an item from either the rich model dropdown or the rich accessory dropdown
   document.addEventListener('click', e => {
+    // 0a. Clear Brand for this row
+    const clearBrandBtn = e.target.closest('[data-clear-brand]');
+    if (clearBrandBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const rowIdx = Number(clearBrandBtn.getAttribute('data-clear-brand'));
+      if (state.loanDraftRows[rowIdx]) {
+        state.loanDraftRows[rowIdx].brand = '';
+        const brandInp = excelTbody.querySelector(`[data-excel-brand-input="${rowIdx}"]`);
+        if (brandInp) {
+          brandInp.value = '';
+          brandInp.focus();
+        }
+        clearBrandBtn.classList.add('hidden');
+        renderBrandDropdown(rowIdx, '');
+      }
+      return;
+    }
+
+    // 0b. Toggle Brand Dropdown (▾ button)
+    const brandArrowBtn = e.target.closest('[data-brand-dropdown-trigger]');
+    if (brandArrowBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const rowIdx = Number(brandArrowBtn.getAttribute('data-brand-dropdown-trigger'));
+      const brandDd = document.getElementById('globalBrandDropdown');
+      const isCurrentlyOpen = brandDd && !brandDd.classList.contains('hidden') && brandDd.getAttribute('data-active-row') === String(rowIdx);
+      closeAllModelDropdowns();
+      if (!isCurrentlyOpen) {
+        const brandInp = excelTbody.querySelector(`[data-excel-brand-input="${rowIdx}"]`);
+        const q = brandInp ? brandInp.value : '';
+        renderBrandDropdown(rowIdx, q);
+      }
+      return;
+    }
+
+    // 0c. Close Brand Dropdown (X button in header)
+    if (e.target.closest('[data-close-brand-dropdown]')) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllModelDropdowns();
+      return;
+    }
+
+    // 0d. Pick Brand item
+    const brandItem = e.target.closest('.brand-dropdown-item[data-select-brand]');
+    if (brandItem) {
+      e.preventDefault();
+      e.stopPropagation();
+      const rowIdx = Number(brandItem.getAttribute('data-row'));
+      const chosenBrand = brandItem.getAttribute('data-select-brand');
+      if (state.loanDraftRows[rowIdx]) {
+        state.loanDraftRows[rowIdx].brand = chosenBrand;
+        const brandInp = excelTbody.querySelector(`[data-excel-brand-input="${rowIdx}"]`);
+        if (brandInp) {
+          brandInp.value = chosenBrand;
+          const wrap = brandInp.closest('.brand-field-wrap');
+          const clearBtn = wrap ? wrap.querySelector('[data-clear-brand]') : null;
+          if (clearBtn) clearBtn.classList.remove('hidden');
+        }
+        // Advance focus to Model input
+        const modelInp = excelTbody.querySelector(`[data-excel-model-input="${rowIdx}"]`);
+        if (modelInp) {
+          modelInp.focus();
+        }
+      }
+      closeAllModelDropdowns();
+      return;
+    }
+
     // 0. Clear Model for this row (X button inside model input)
     const clearModelBtn = e.target.closest('[data-clear-model]');
     if (clearModelBtn) {
@@ -12782,7 +13063,10 @@ function setupEventListeners() {
       e.stopPropagation();
       const rowIdx = Number(clearModelBtn.getAttribute('data-clear-model'));
       if (state.loanDraftRows[rowIdx]) {
-        state.loanDraftRows[rowIdx].brand = '';
+        const isCustomSource = state.loanDraftRows[rowIdx].source === 'Supplier' || state.loanDraftRows[rowIdx].source === 'คลังขาย';
+        if (!isCustomSource) {
+          state.loanDraftRows[rowIdx].brand = '';
+        }
         state.loanDraftRows[rowIdx].model = '';
         state.loanDraftRows[rowIdx].serials = [];
         state.loanDraftRows[rowIdx].accessories = [];
@@ -12870,6 +13154,16 @@ function setupEventListeners() {
       if (state.loanDraftRows[rowIdx]) {
         state.loanDraftRows[rowIdx].source = chosenSource;
         renderLoanExcelRows();
+        // If switched to Supplier or คลังขาย, auto focus brand input
+        if (chosenSource === 'Supplier' || chosenSource === 'คลังขาย') {
+          setTimeout(() => {
+            const brandInp = excelTbody.querySelector(`[data-excel-brand-input="${rowIdx}"]`);
+            if (brandInp) {
+              brandInp.focus();
+              renderBrandDropdown(rowIdx, brandInp.value);
+            }
+          }, 50);
+        }
       }
       closeAllModelDropdowns();
       return;
@@ -12880,9 +13174,11 @@ function setupEventListeners() {
       !e.target.closest('.model-picker-cell') &&
       !e.target.closest('.tag-editor') &&
       !e.target.closest('.cell-source') &&
+      !e.target.closest('.brand-field-wrap') &&
       !e.target.closest('#globalModelDropdown') &&
       !e.target.closest('#globalAccessoryDropdown') &&
-      !e.target.closest('#globalSourceDropdown')
+      !e.target.closest('#globalSourceDropdown') &&
+      !e.target.closest('#globalBrandDropdown')
     ) {
       closeAllModelDropdowns();
     }
@@ -12890,9 +13186,21 @@ function setupEventListeners() {
 
   // Change event: when user changes dropdown or completes input
   excelTbody.addEventListener('change', e => {
+    if (e.target.matches('[data-excel-brand-input]')) {
+      const rowIdx = Number(e.target.getAttribute('data-excel-brand-input'));
+      state.loanDraftRows[rowIdx].brand = e.target.value.trim();
+      return;
+    }
+
     if (e.target.matches('[data-excel-model-input]')) {
       const rowIdx = Number(e.target.getAttribute('data-excel-model-input'));
       const text = e.target.value;
+      const isCustomSource = state.loanDraftRows[rowIdx]?.source === 'Supplier' || state.loanDraftRows[rowIdx]?.source === 'คลังขาย';
+      if (isCustomSource) {
+        state.loanDraftRows[rowIdx].model = text.trim();
+        ensureTrailingEmptyRow();
+        return;
+      }
       const matched = matchCatalogModel(text);
       if (matched) {
         state.loanDraftRows[rowIdx].brand = matched.brand;
@@ -12943,6 +13251,31 @@ function setupEventListeners() {
   });
 
   excelTbody.addEventListener('keydown', e => {
+    // Brand Input (Enter picks first item or text, advances to model input)
+    if (e.target.matches('[data-excel-brand-input]')) {
+      const rowIdx = Number(e.target.getAttribute('data-excel-brand-input'));
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const brandDd = document.getElementById('globalBrandDropdown');
+        const firstItem = brandDd ? brandDd.querySelector('.brand-dropdown-item') : null;
+        if (firstItem && !brandDd.classList.contains('hidden')) {
+          const chosen = firstItem.getAttribute('data-select-brand');
+          if (chosen) {
+            state.loanDraftRows[rowIdx].brand = chosen;
+            e.target.value = chosen;
+          }
+        } else {
+          state.loanDraftRows[rowIdx].brand = e.target.value.trim();
+        }
+        closeAllModelDropdowns();
+        const modelInp = excelTbody.querySelector(`[data-excel-model-input="${rowIdx}"]`);
+        if (modelInp) modelInp.focus();
+      } else if (e.key === 'Escape') {
+        closeAllModelDropdowns();
+      }
+      return;
+    }
+
     if (e.target.matches('[data-excel-add-tag]')) {
       if (e.key === 'Enter' || e.key === ',') {
         e.preventDefault();
@@ -13425,6 +13758,27 @@ function setupEventListeners() {
         setTimeout(() => firstInput.classList.remove('input-attention-ring'), 1500);
       }
       return;
+    }
+
+    // Validate Brand for Supplier & คลังขาย items
+    for (let i = 0; i < validRows.length; i++) {
+      const r = validRows[i];
+      const isSupplierOrSale = r.source === 'Supplier' || r.source === 'คลังขาย';
+      if (isSupplierOrSale && (!r.brand || !r.brand.trim())) {
+        showToast(`⚠️ รายการที่ ${i + 1} (${r.model || 'สินค้านี้'}): กรุณาระบุแบรนด์สินค้าสำหรับสินค้าจาก ${r.source}`);
+        state.activeLoanRowIdx = state.loanDraftRows.indexOf(r);
+        renderLoanExcelRows();
+        setTimeout(() => {
+          const brandInp = document.querySelector(`[data-excel-brand-input="${state.activeLoanRowIdx}"]`);
+          if (brandInp) {
+            brandInp.focus();
+            brandInp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            brandInp.classList.add('input-attention-ring');
+            setTimeout(() => brandInp.classList.remove('input-attention-ring'), 1500);
+          }
+        }, 100);
+        return;
+      }
     }
 
     // Validate optional S/N vs Quantity rule: If S/N is entered, must have exact count of qty

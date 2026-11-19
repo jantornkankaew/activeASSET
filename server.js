@@ -1710,6 +1710,19 @@ function generateNextLoanId() {
   return `${prefix}${String(maxSeq + 1).padStart(3, '0')}`;
 }
 
+function getNextActTagId() {
+  const rows = db.prepare("SELECT tag_id FROM assets WHERE tag_id LIKE 'ACT-%'").all();
+  let maxNum = 0;
+  for (const r of rows) {
+    const match = r.tag_id.match(/^ACT-(\d+)$/i);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      if (num > maxNum) maxNum = num;
+    }
+  }
+  return `ACT-${String(maxNum + 1).padStart(3, '0')}`;
+}
+
 function parseJsonBody(req) {
   return new Promise((resolve, reject) => {
     let body = '';
@@ -2949,6 +2962,24 @@ const server = http.createServer(async (req, res) => {
             throw new Error(`รุ่น ${brandName} ${modelName} ระบุจำนวน ${qty} เครื่อง แต่ใส่ S/N มา ${itemSerials.length} เครื่อง (หากจะใส่ S/N ต้องใส่ให้ครบตามจำนวนที่กำหนด หรือเว้นว่างทั้งหมด)`);
           }
 
+          // Auto-register brand and catalog for Supplier and คลังขาย
+          if (itemSource === 'Supplier' || itemSource === 'คลังขาย') {
+            if (brandName) {
+              try {
+                db.prepare(`
+                  INSERT OR IGNORE INTO master_options (type, name, code)
+                  VALUES ('brand', ?, ?)
+                `).run(brandName, brandName.toUpperCase().replace(/[^A-Z0-9]/g, ''));
+              } catch (_) {}
+            }
+            try {
+              db.prepare(`
+                INSERT OR IGNORE INTO product_catalogs (brand, model, category, default_specs, default_accessories)
+                VALUES (?, ?, 'General', '', ?)
+              `).run(brandName || 'Other', modelName, JSON.stringify(itemAcc));
+            } catch (_) {}
+          }
+
           totalUnits += qty;
 
           for (let q = 0; q < qty; q++) {
@@ -2958,13 +2989,38 @@ const server = http.createServer(async (req, res) => {
 
             if (sn) {
               unitsWithSn++;
-              const asset = db.prepare(`
+              let asset = db.prepare(`
                 SELECT * FROM assets 
                 WHERE (serial_no = ? OR tag_id = ?) 
                 AND status = 'Available'
               `).get(sn, sn);
 
-              if (asset) {
+              if (!asset && (itemSource === 'Supplier' || itemSource === 'คลังขาย')) {
+                // Auto-create asset into assets DB for Supplier / คลังขาย
+                const newTagId = getNextActTagId();
+                const fullName = brandName ? `${brandName} ${modelName}` : modelName;
+                const defaultLocation = itemSource === 'Supplier' ? 'Supplier (ยืมภายนอก)' : 'คลังขาย (สต็อกขาย)';
+                db.prepare(`
+                  INSERT INTO assets (
+                    tag_id, name, model, brand, category, serial_no,
+                    source, location, accessories_json, free_note, status, current_loan_id, updated_at
+                  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'On_Loan', ?, datetime('now', 'localtime'))
+                `).run(
+                  newTagId,
+                  fullName,
+                  modelName,
+                  brandName,
+                  'General',
+                  sn,
+                  itemSource,
+                  defaultLocation,
+                  JSON.stringify(itemAcc),
+                  itemNote,
+                  loanId
+                );
+                matchedTagId = newTagId;
+                matchedLocation = defaultLocation;
+              } else if (asset) {
                 matchedTagId = asset.tag_id;
                 matchedLocation = asset.location || '';
                 db.prepare(`
@@ -3149,7 +3205,39 @@ const server = http.createServer(async (req, res) => {
           }
           usedTags.add(tagId);
 
-          const asset = db.prepare('SELECT * FROM assets WHERE tag_id = ?').get(tagId);
+          let asset = db.prepare('SELECT * FROM assets WHERE tag_id = ?').get(tagId);
+          if (!asset && mi.serial_no) {
+            asset = db.prepare('SELECT * FROM assets WHERE serial_no = ?').get(mi.serial_no);
+          }
+          if (!asset && (mi.source === 'Supplier' || mi.source === 'คลังขาย')) {
+            const newTagId = getNextActTagId();
+            const brand = String(mi.brand || '').trim();
+            const model = String(mi.model || '').trim();
+            const fullName = brand ? `${brand} ${model}` : model;
+            const defaultLocation = mi.source === 'Supplier' ? 'Supplier (ยืมภายนอก)' : 'คลังขาย (สต็อกขาย)';
+            const acc = Array.isArray(mi.accessories) ? mi.accessories : [];
+            const note = String(mi.free_note || '').trim();
+
+            db.prepare(`
+              INSERT INTO assets (
+                tag_id, name, model, brand, category, serial_no,
+                source, location, accessories_json, free_note, status, current_loan_id, updated_at
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Available', ?, datetime('now', 'localtime'))
+            `).run(
+              newTagId,
+              fullName,
+              model,
+              brand,
+              'General',
+              mi.serial_no || newTagId,
+              mi.source,
+              defaultLocation,
+              JSON.stringify(acc),
+              note,
+              loanId
+            );
+            asset = db.prepare('SELECT * FROM assets WHERE tag_id = ?').get(newTagId);
+          }
           if (!asset) throw new Error(`ไม่พบเครื่องรหัส ${tagId} ในคลัง`);
           if (asset.status !== 'Available') {
             if (asset.status === 'Disposed') {
@@ -3423,6 +3511,24 @@ const server = http.createServer(async (req, res) => {
               throw new Error(`รุ่น ${brandName} ${modelName} ระบุจำนวน ${qty} เครื่อง แต่ใส่ S/N มา ${itemSerials.length} เครื่อง (หากจะใส่ S/N ต้องใส่ให้ครบตามจำนวนที่กำหนด หรือเว้นว่างทั้งหมด)`);
             }
 
+            // Auto-register brand and catalog for Supplier and คลังขาย
+            if (itemSource === 'Supplier' || itemSource === 'คลังขาย') {
+              if (brandName) {
+                try {
+                  db.prepare(`
+                    INSERT OR IGNORE INTO master_options (type, name, code)
+                    VALUES ('brand', ?, ?)
+                  `).run(brandName, brandName.toUpperCase().replace(/[^A-Z0-9]/g, ''));
+                } catch (_) {}
+              }
+              try {
+                db.prepare(`
+                  INSERT OR IGNORE INTO product_catalogs (brand, model, category, default_specs, default_accessories)
+                  VALUES (?, ?, 'General', '', ?)
+                `).run(brandName || 'Other', modelName, JSON.stringify(itemAcc));
+              } catch (_) {}
+            }
+
             totalUnits += qty;
 
             for (let q = 0; q < qty; q++) {
@@ -3432,13 +3538,38 @@ const server = http.createServer(async (req, res) => {
 
               if (sn) {
                 unitsWithSn++;
-                const asset = db.prepare(`
+                let asset = db.prepare(`
                   SELECT * FROM assets 
                   WHERE (serial_no = ? OR tag_id = ?) 
                   AND (status = 'Available' OR current_loan_id = ?)
                 `).get(sn, sn, loanId);
 
-                if (asset) {
+                if (!asset && (itemSource === 'Supplier' || itemSource === 'คลังขาย')) {
+                  // Auto-create asset into assets DB for Supplier / คลังขาย
+                  const newTagId = getNextActTagId();
+                  const fullName = brandName ? `${brandName} ${modelName}` : modelName;
+                  const defaultLocation = itemSource === 'Supplier' ? 'Supplier (ยืมภายนอก)' : 'คลังขาย (สต็อกขาย)';
+                  db.prepare(`
+                    INSERT INTO assets (
+                      tag_id, name, model, brand, category, serial_no,
+                      source, location, accessories_json, free_note, status, current_loan_id, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'On_Loan', ?, datetime('now', 'localtime'))
+                  `).run(
+                    newTagId,
+                    fullName,
+                    modelName,
+                    brandName,
+                    'General',
+                    sn,
+                    itemSource,
+                    defaultLocation,
+                    JSON.stringify(itemAcc),
+                    itemNote,
+                    loanId
+                  );
+                  matchedTagId = newTagId;
+                  matchedLocation = defaultLocation;
+                } else if (asset) {
                   matchedTagId = asset.tag_id;
                   matchedLocation = asset.location || '';
                   db.prepare(`
@@ -3854,18 +3985,6 @@ const server = http.createServer(async (req, res) => {
     // ========================================================================
     // ASSET MASTER DATABASE APIS
     // ========================================================================
-    function getNextActTagId() {
-      const rows = db.prepare("SELECT tag_id FROM assets WHERE tag_id LIKE 'ACT-%'").all();
-      let maxNum = 0;
-      for (const r of rows) {
-        const match = r.tag_id.match(/^ACT-(\d+)$/i);
-        if (match) {
-          const num = parseInt(match[1], 10);
-          if (num > maxNum) maxNum = num;
-        }
-      }
-      return `ACT-${String(maxNum + 1).padStart(3, '0')}`;
-    }
 
     if (pathname === '/api/assets/next-tag' && req.method === 'GET') {
       return sendJson(res, 200, { nextTagId: getNextActTagId() });
