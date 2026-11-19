@@ -7200,42 +7200,6 @@ function renderGatePassHtml() {
   const idBadge = document.getElementById('printLoanIdBadge');
   if (idBadge) idBadge.textContent = loan.id;
 
-  const isEditable = loan.status === 'Requested' || loan.status === 'Dispatching';
-  const stageActionsEl = document.getElementById('printDialogStageActions');
-  if (stageActionsEl) {
-    let stageHtml = '';
-    if (isEditable && can('edit_loan')) {
-      stageHtml = `<button type="button" class="btn btn-navbar-action btn-navbar-edit" data-edit-from-print="${escapeHtml(loan.id)}" title="แก้ไขข้อมูลใบยืม">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-        </svg>
-        <span>แก้ไข</span>
-      </button>`;
-    } else if (loan.status === 'Dispatched' && can('deliver_loan')) {
-      stageHtml = `<button type="button" class="btn btn-navbar-action btn-navbar-deliver" data-deliver-from-print="${escapeHtml(loan.id)}" title="ส่งมอบสินค้าให้ลูกค้า">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="1" y="3" width="15" height="13"></rect>
-          <polygon points="16 8 20 8 23 11 23 16 16 16 8"></polygon>
-          <circle cx="5.5" cy="18.5" r="2.5"></circle>
-          <circle cx="18.5" cy="18.5" r="2.5"></circle>
-        </svg>
-        <span>ส่งมอบ</span>
-      </button>`;
-    } else if ((loan.status === 'Delivered' || loan.status === 'Partially_Returned') && can('return_loan')) {
-      stageHtml = `<button type="button" class="btn btn-navbar-action btn-navbar-return" data-return-from-print="${escapeHtml(loan.id)}" title="ตรวจรับคืนสินค้า / QC">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="9 11 12 14 22 4"></polyline>
-          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-        </svg>
-        <span>รับคืน</span>
-      </button>`;
-    } else {
-      stageHtml = '';
-    }
-    stageActionsEl.innerHTML = stageHtml;
-  }
-
   // Auto-detect if content exceeds half an A4 page
   const exceedsHalf = isLoanExceedingHalfPage(loan);
   let effectiveSize = state.printSize;

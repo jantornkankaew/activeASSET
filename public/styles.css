@@ -4658,9 +4658,7 @@ dialog.modal-fullscreen .modal-inner {
 }
 
 .print-stage-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: none !important;
 }
 
 .loan-card.clickable-card {
@@ -6395,9 +6393,7 @@ dialog:not([open]) * {
 }
 
 .print-stage-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  display: none !important;
 }
 
 .btn-navbar-action {
