@@ -5292,13 +5292,6 @@ function updateDispatchSummary() {
           </svg>
           <span>แก้ไขใบยืม</span>
         </button>
-        <button type="button" class="btn btn-secondary btn-onsite-edit" id="btnToggleOnsiteEdit" title="ปลดล็อกเพื่อแก้ไข S/N หรืออุปกรณ์หน้างาน">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-          </svg>
-          <span>สลับ S/N หน้างาน</span>
-        </button>
         <button type="button" class="btn btn-outline btn-borrower-sig ${hasBorrowerSig ? 'is-signed' : ''}" id="btnDispatchSignBorrower" title="ลงลายเซ็นดิจิทัลผู้ยืม / ผู้รับเครื่อง">
           ${
             hasBorrowerSig
@@ -5527,26 +5520,6 @@ function openDispatchModal(loanId, updateHash = true) {
   state.activeDispatchRowIdx = null; // Start with clean minimal checklist
   closeDispatchSnDropdown();
   closeLiveCamera();
-
-  // Update Edit Loan button in dispatch header
-  const btnEditLoan = document.getElementById('btnDispatchEditLoan');
-  const btnEditLoanText = document.getElementById('btnDispatchEditLoanText');
-  const isFullEditable = ['Requested', 'Dispatching', 'Dispatched'].includes(loan.status);
-  const isDeliveredStage = ['Delivered', 'Partially_Returned', 'Returned'].includes(loan.status);
-
-  if (btnEditLoan) {
-    if (isFullEditable) {
-      btnEditLoan.classList.remove('hidden');
-      if (btnEditLoanText) btnEditLoanText.textContent = 'แก้ไขใบยืม';
-      btnEditLoan.title = 'แก้ไขข้อมูลใบยืม / เพิ่มรายการสินค้า';
-    } else if (isDeliveredStage) {
-      btnEditLoan.classList.remove('hidden');
-      if (btnEditLoanText) btnEditLoanText.textContent = 'แก้ไขหมายเหตุ';
-      btnEditLoan.title = 'แก้ไขหมายเหตุการยืม (ส่งมอบแล้ว)';
-    } else {
-      btnEditLoan.classList.add('hidden');
-    }
-  }
 
   renderDispatchTable();
   updateDispatchSummary();
