@@ -1226,6 +1226,39 @@ function renderActiveView() {
   }
 }
 
+function focusLoanCardInKanban(loanId) {
+  if (!loanId) return;
+
+  // 1. Switch to kanban view if not already there
+  if (state.viewMode !== 'kanban') {
+    state.viewMode = 'kanban';
+    document.querySelectorAll('.view-btn').forEach(b => {
+      b.classList.toggle('active', b.getAttribute('data-view') === 'kanban');
+    });
+    updateUrlHash('kanban');
+  }
+
+  // 2. Set highlight targets
+  state.highlightDocNo = loanId;
+  if (!state.recentlyChangedLoans) state.recentlyChangedLoans = new Set();
+  state.recentlyChangedLoans.add(loanId);
+
+  // 3. Render kanban view & header counters
+  renderActiveView();
+  renderHeaderCounters();
+
+  // 4. Smooth scroll and focus the card on the board
+  setTimeout(() => {
+    const card = document.querySelector(`[data-card-loan="${loanId}"]`);
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      card.classList.add('card-highlight', 'card-status-changed');
+      card.setAttribute('tabindex', '-1');
+      card.focus?.();
+    }
+  }, 120);
+}
+
 // ============================================================================
 // VIEW 1: KANBAN BOARD (MATCHING activeASSET v1 COLUMNS & SUB-STACKS)
 // ============================================================================
@@ -13802,7 +13835,8 @@ function setupEventListeners() {
         }))
       };
       try {
-        const res = await fetch(`/api/loans/${encodeURIComponent(state.editingLoanId)}/update`, {
+        const targetId = state.editingLoanId;
+        const res = await fetch(`/api/loans/${encodeURIComponent(targetId)}/update`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(notePayload)
@@ -13810,9 +13844,10 @@ function setupEventListeners() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'บันทึกไม่สำเร็จ');
         applyServerState(data);
-        showToast(`✅ บันทึกหมายเหตุใบยืม ${state.editingLoanId} เรียบร้อย`);
-        document.getElementById('loanDialog').close();
-        if (state.printAfterSave) openPrintModal(state.editingLoanId);
+        showToast(`✅ บันทึกหมายเหตุใบยืม ${targetId} เรียบร้อย`);
+        document.getElementById('loanDialog')?.close();
+        if (state.printAfterSave) openPrintModal(targetId);
+        focusLoanCardInKanban(targetId);
       } catch (err) {
         showToast('⚠️ ' + err.message);
       }
@@ -13984,7 +14019,8 @@ function setupEventListeners() {
 
     try {
       if (state.editingLoanId) {
-        const res = await fetch(`/api/loans/${encodeURIComponent(state.editingLoanId)}/update`, {
+        const targetId = state.editingLoanId;
+        const res = await fetch(`/api/loans/${encodeURIComponent(targetId)}/update`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -13993,14 +14029,14 @@ function setupEventListeners() {
         if (!res.ok) throw new Error(data.error || 'บันทึกไม่สำเร็จ');
         applyServerState(data);
 
-        // Collapse all items so user sees the clean summary, and can tap any item to edit
+        // Collapse all items
         state.activeLoanRowIdx = -1;
-        ensureTrailingEmptyRow();
-        renderLoanExcelRows();
+        state.editingLoanId = null;
 
-        showToast(`✅ บันทึกการแก้ไขใบยืม ${state.editingLoanId} เรียบร้อย`);
+        showToast(`✅ บันทึกการแก้ไขใบยืม ${targetId} เรียบร้อย`);
         document.getElementById('loanDialog')?.close();
-        if (state.printAfterSave) openPrintModal(state.editingLoanId);
+        if (state.printAfterSave) openPrintModal(targetId);
+        focusLoanCardInKanban(targetId);
       } else {
         const res = await fetch('/api/loans', {
           method: 'POST',
@@ -14009,18 +14045,17 @@ function setupEventListeners() {
         });
         const result = await res.json();
         if (!res.ok) throw new Error(result.error || 'ออกใบยืมไม่สำเร็จ');
-        state.highlightDocNo = result.loanId;
-        state.editingLoanId = result.loanId;
-        document.getElementById('loanDialogTitle').textContent = `แก้ไขใบยืม ${result.loanId}`;
+        const targetId = result.loanId;
         applyServerState(result.state);
 
-        // Collapse all items so user sees the clean summary, and can tap any item to edit
+        // Collapse all items and reset editing state
         state.activeLoanRowIdx = -1;
-        ensureTrailingEmptyRow();
-        renderLoanExcelRows();
+        state.editingLoanId = null;
 
-        showToast(`✅ ออกใบยืม ${result.loanId} เรียบร้อยแล้ว`);
-        if (state.printAfterSave) openPrintModal(result.loanId);
+        showToast(`✅ ออกใบยืม ${targetId} เรียบร้อยแล้ว`);
+        document.getElementById('loanDialog')?.close();
+        if (state.printAfterSave) openPrintModal(targetId);
+        focusLoanCardInKanban(targetId);
       }
     } catch (err) {
       showToast('⚠️ ' + err.message);
