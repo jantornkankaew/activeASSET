@@ -4213,9 +4213,15 @@ function getLoanDraftStockSimulation() {
     const usedBefore = modelUsed.get(key) || 0;
     const availBefore = Math.max(0, totalAvail - usedBefore);
 
-    const isSufficient = (availBefore >= rowQty);
+    const isSufficientRaw = (availBefore >= rowQty);
+    const isSupplier = (source === 'Supplier');
+    const isSale = (source === 'คลังขาย');
+    const isAutoSupplier = isSupplier && !isSufficientRaw;
+    const isAutoSale = isSale && !isSufficientRaw;
+    const isSufficient = (isAutoSupplier || isAutoSale) ? true : isSufficientRaw;
+
     const allocated = Math.min(rowQty, availBefore);
-    const shortage = isSufficient ? 0 : (rowQty - allocated);
+    const shortage = (isAutoSupplier || isAutoSale) ? 0 : (isSufficient ? 0 : (rowQty - allocated));
     const remainingAfter = Math.max(0, availBefore - rowQty);
 
     modelUsed.set(key, usedBefore + rowQty);
@@ -4225,6 +4231,9 @@ function getLoanDraftStockSimulation() {
       key,
       brand,
       model,
+      source,
+      isAutoSupplier,
+      isAutoSale,
       totalAvailable: totalAvail,
       rowQty,
       usedBefore,
@@ -4240,6 +4249,9 @@ function getLoanDraftStockSimulation() {
       key,
       brand,
       model,
+      source,
+      isAutoSupplier,
+      isAutoSale,
       available: totalAvail,
       totalRequested: 0,
       isSufficient: true,
@@ -4247,9 +4259,16 @@ function getLoanDraftStockSimulation() {
       remaining: totalAvail
     };
     prevSummary.totalRequested += rowQty;
-    prevSummary.isSufficient = (prevSummary.totalRequested <= totalAvail);
-    prevSummary.shortage = prevSummary.isSufficient ? 0 : (prevSummary.totalRequested - totalAvail);
-    prevSummary.remaining = prevSummary.isSufficient ? (totalAvail - prevSummary.totalRequested) : 0;
+    if (isAutoSupplier || isAutoSale) {
+      prevSummary.isSufficient = true;
+      prevSummary.shortage = 0;
+      prevSummary.isAutoSupplier = isAutoSupplier;
+      prevSummary.isAutoSale = isAutoSale;
+    } else {
+      prevSummary.isSufficient = (prevSummary.totalRequested <= totalAvail);
+      prevSummary.shortage = prevSummary.isSufficient ? 0 : (prevSummary.totalRequested - totalAvail);
+      prevSummary.remaining = prevSummary.isSufficient ? (totalAvail - prevSummary.totalRequested) : 0;
+    }
     modelSummary.set(key, prevSummary);
   });
 
@@ -4572,7 +4591,23 @@ function renderLoanExcelRows() {
           snBadgeHtml = `<span class="collapsed-sn-pill warn" title="ระบุแล้ว ${filledSn.length}/${rowQty} เครื่อง (ต้องครบตามจำนวน)">🏷️ S/N: ${filledSn.length}/${rowQty}</span>`;
         }
 
-        const stockPillHtml = (sim && !sim.isSufficient) ? `
+        const stockPillHtml = sim?.isAutoSupplier ? `
+          <span
+            class="collapsed-stock-pill auto-supplier"
+            title="สินค้าจากการยืม Supplier จะถูกเพิ่มเข้าคลัง Supplier ในระบบอัตโนมัติ"
+          >
+            <span class="sim-dot auto-supplier"></span>
+            เพิ่มเข้าคลัง Supplier อัตโนมัติ
+          </span>
+        ` : sim?.isAutoSale ? `
+          <span
+            class="collapsed-stock-pill auto-supplier"
+            title="สินค้าจากคลังขาย จะถูกเพิ่มเข้าคลังในระบบอัตโนมัติ"
+          >
+            <span class="sim-dot auto-supplier"></span>
+            เพิ่มเข้าคลังขาย อัตโนมัติ
+          </span>
+        ` : (sim && !sim.isSufficient) ? `
           <span
             class="collapsed-stock-pill short"
             title="ทดลองจอง: ขอ ${sim.rowQty} เครื่อง (สะสม ${sim.cumulativeRequested} / ในคลังมี ${sim.totalAvailable})"
@@ -4907,7 +4942,17 @@ function renderLoanExcelRows() {
                 />
                 <button type="button" class="qty-step-btn" data-qty-inc="${rowIdx}" title="เพิ่มจำนวน">+</button>
               </div>
-              ${sim && !sim.isSufficient ? `
+              ${sim?.isAutoSupplier ? `
+                <div class="stock-sim-tag auto-supplier" title="สินค้าจากการยืม Supplier จะถูกเพิ่มเข้าคลัง Supplier ในระบบอัตโนมัติ">
+                  <span class="sim-dot auto-supplier"></span>
+                  <span>เพิ่มเข้าคลัง Supplier อัตโนมัติ</span>
+                </div>
+              ` : sim?.isAutoSale ? `
+                <div class="stock-sim-tag auto-supplier" title="สินค้าจากคลังขาย จะถูกเพิ่มเข้าคลังในระบบอัตโนมัติ">
+                  <span class="sim-dot auto-supplier"></span>
+                  <span>เพิ่มเข้าคลังขาย อัตโนมัติ</span>
+                </div>
+              ` : (sim && !sim.isSufficient) ? `
                 <div class="stock-sim-tag short" title="ทดลองจอง: ขอ ${sim.rowQty} เครื่อง (สะสม ${sim.cumulativeRequested} / ในคลังมี ${sim.totalAvailable})">
                   <span class="sim-dot short"></span>
                   <span>ขาด ${sim.shortage} (มี ${sim.totalAvailable})</span>
@@ -13856,6 +13901,7 @@ function setupEventListeners() {
     const simMap = getStockSimulationMap();
     const shortItems = [];
     for (const [key, sim] of simMap.entries()) {
+      if (sim.isAutoSupplier || sim.isAutoSale) continue;
       if (!sim.isSufficient) {
         shortItems.push(`• รุ่น ${key.toUpperCase()}: ขอรวม ${sim.totalRequested} เครื่อง (ในคลังว่าง ${sim.available} เครื่อง, ขาด ${sim.shortage} เครื่อง)`);
       }

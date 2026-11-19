@@ -3184,6 +3184,24 @@ dialog.modal-sn-sheet {
   background: #ef4444;
 }
 
+.sim-dot.auto-supplier {
+  background: #2563eb;
+}
+
+.stock-sim-tag.auto-supplier {
+  color: #1d4ed8;
+  background: rgba(37, 99, 235, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  font-weight: 600;
+}
+
+.collapsed-stock-pill.auto-supplier {
+  color: #1d4ed8;
+  background: rgba(37, 99, 235, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  font-weight: 600;
+}
+
 .collapsed-stock-pill {
   font-size: 11px;
   font-weight: 600;
