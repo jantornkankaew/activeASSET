@@ -4541,6 +4541,21 @@ function renderLoanExcelRows() {
   const tbody = document.getElementById('loanExcelRowsBody');
   if (!tbody) return;
 
+  const thModel = document.getElementById('thLoanModel') || document.querySelector('.excel-loan-table thead .th-model');
+  const hasCustomSource = (state.loanDraftRows || []).some(r => r.source === 'Supplier' || r.source === 'คลังขาย');
+  if (thModel) {
+    if (hasCustomSource) {
+      thModel.innerHTML = `
+        <div class="th-split-header">
+          <span class="th-col-brand">แบรนด์ (Brand) <span class="req">*</span></span>
+          <span class="th-col-model">รุ่นสินค้า (Model) <span class="req">*</span></span>
+        </div>
+      `;
+    } else {
+      thModel.innerHTML = `<span>เลือกรุ่นสินค้า</span>`;
+    }
+  }
+
   if (state.activeLoanRowIdx === undefined || state.activeLoanRowIdx === null) {
     state.activeLoanRowIdx = 0;
   }
@@ -4837,14 +4852,11 @@ function renderLoanExcelRows() {
               <div class="custom-source-inputs-wrap">
                 <!-- Brand Input -->
                 <div class="brand-field-wrap">
-                  <div class="field-label-line">
-                    <span class="field-micro-badge badge-brand">แบรนด์ / ยี่ห้อ <span class="req">*</span></span>
-                  </div>
                   <div class="input-clearable-wrap has-dropdown">
                     <input
                       type="text"
                       class="cell-inline-edit brand-search-input"
-                      placeholder="ระบุแบรนด์ (เช่น Zebra, Honeywell)..."
+                      placeholder="แบรนด์ (Brand)..."
                       value="${escapeHtml(row.brand || '')}"
                       data-excel-brand-input="${rowIdx}"
                       autocomplete="off"
@@ -4858,9 +4870,6 @@ function renderLoanExcelRows() {
 
                 <!-- Model Input -->
                 <div class="model-field-wrap">
-                  <div class="field-label-line">
-                    <span class="field-micro-badge badge-model">รุ่นสินค้า (Model) <span class="req">*</span></span>
-                  </div>
                   <div class="model-input-wrap">
                     <input
                       type="text"

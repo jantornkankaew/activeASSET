@@ -24275,29 +24275,55 @@ html.is-unauthenticated .app-shell {
 }
 
 /* --------------------------------------------------------------------------
-   BRAND INPUT FOR SUPPLIER & SALES STOCK SOURCES (GEMINI.md Rule 1 & 2)
+   BRAND & MODEL INPUT FOR SUPPLIER & SALES STOCK SOURCES (GEMINI.md Rule 1 & 2)
    -------------------------------------------------------------------------- */
+.th-split-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.th-col-brand {
+  flex: 1;
+  min-width: 130px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.th-col-model {
+  flex: 1.2;
+  min-width: 140px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.th-col-brand .req,
+.th-col-model .req {
+  color: #ef4444;
+  font-weight: 800;
+}
+
 .custom-source-inputs-wrap {
   display: flex;
   gap: 8px;
   width: 100%;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .brand-field-wrap {
   flex: 1;
   min-width: 130px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
 }
 
 .model-field-wrap {
   flex: 1.2;
   min-width: 140px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
 }
 
 .field-label-line {
