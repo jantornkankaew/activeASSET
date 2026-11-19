@@ -7270,7 +7270,7 @@ function renderGatePassHtml() {
             <span class="indicator-title">★ แผ่นที่ 1: ต้นฉบับ (ORIGINAL)</span>
             <span class="indicator-page">หน้า 1/2</span>
           </div>
-          ${renderSingleGatePassSheet(loan, 'original', '')}
+          ${renderSingleGatePassSheet(loan, 'original', 'size-a4')}
         </div>
 
         <!-- แผ่นที่ 2: สำเนา เต็มหน้า A4 -->
@@ -7279,14 +7279,30 @@ function renderGatePassHtml() {
             <span class="indicator-title">📑 แผ่นที่ 2: สำเนา (COPY)</span>
             <span class="indicator-page">หน้า 2/2</span>
           </div>
-          ${renderSingleGatePassSheet(loan, 'copy', '')}
+          ${renderSingleGatePassSheet(loan, 'copy', 'size-a4')}
         </div>
       </div>
     `;
   } else if (effectiveSize === 'half') {
-    html = renderSingleGatePassSheet(loan, 'original', 'size-half');
+    html = `
+      <div class="gate-pass-half-wrapper">
+        <div class="gp-half-slot gp-half-top">
+          ${renderSingleGatePassSheet(loan, 'original', 'size-half size-dual')}
+        </div>
+        <div class="gp-perforation-divider">
+          <div class="gp-perf-line"></div>
+          <span class="gp-perf-label">✂️ รอยตัดแบ่งครึ่งหน้ากระดาษ A4</span>
+          <div class="gp-perf-line"></div>
+        </div>
+      </div>
+    `;
   } else {
-    html = renderSingleGatePassSheet(loan, 'original', '');
+    // effectiveSize === 'a4' or other
+    html = `
+      <div class="gate-pass-single-a4-wrapper">
+        ${renderSingleGatePassSheet(loan, 'original', 'size-a4')}
+      </div>
+    `;
   }
 
   document.getElementById('printPreviewContainer').innerHTML = html;
