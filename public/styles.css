@@ -19282,24 +19282,9 @@ dialog.modal-camera-dialog::backdrop {
    ========================================================================== */
 
 .fab-delivery-btn {
-  position: fixed;
-  bottom: 32px;
-  right: 32px;
-  z-index: 1060;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 13px 24px;
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  color: #ffffff;
-  font-size: 15px;
-  font-weight: 700;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 9999px;
-  cursor: pointer;
-  box-shadow: 0 10px 25px -4px rgba(37, 99, 235, 0.45), 0 6px 12px -4px rgba(37, 99, 235, 0.35);
-  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
-  user-select: none;
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 .fab-delivery-btn:hover {

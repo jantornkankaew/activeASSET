@@ -7236,18 +7236,6 @@ function renderGatePassHtml() {
     stageActionsEl.innerHTML = stageHtml;
   }
 
-  // Floating Action Button (FAB) for Delivery (รอส่งมอบ -> ส่งมอบ)
-  const fabDeliverBtn = document.getElementById('btnFabDeliverLoan');
-  if (fabDeliverBtn) {
-    if (loan.status === 'Dispatched') {
-      fabDeliverBtn.classList.remove('hidden');
-      fabDeliverBtn.setAttribute('data-loan-id', loan.id);
-    } else {
-      fabDeliverBtn.classList.add('hidden');
-      fabDeliverBtn.removeAttribute('data-loan-id');
-    }
-  }
-
   // Auto-detect if content exceeds half an A4 page
   const exceedsHalf = isLoanExceedingHalfPage(loan);
   let effectiveSize = state.printSize;
