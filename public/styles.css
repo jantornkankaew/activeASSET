@@ -11098,7 +11098,7 @@ dialog.modal-send-email {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 0;
+    margin: 0mm;
   }
   html, body {
     width: 210mm !important;
@@ -11124,6 +11124,7 @@ dialog.modal-send-email {
     padding: 0 !important;
     display: block !important;
     overflow: visible !important;
+    page-break-inside: avoid !important;
   }
 
   /* Dual Sheet Layout for A4 Split (Original + Copy) */
@@ -11131,41 +11132,49 @@ dialog.modal-send-email {
     display: flex !important;
     flex-direction: column !important;
     width: 210mm !important;
-    height: 297mm !important;
-    max-height: 297mm !important;
+    max-width: 100% !important;
+    height: 280mm !important;
+    max-height: 280mm !important;
     position: relative !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
     padding: 0 !important;
     box-sizing: border-box !important;
     page-break-inside: avoid !important;
+    break-inside: avoid !important;
     page-break-after: avoid !important;
+    break-after: avoid !important;
+    page-break-before: avoid !important;
+    break-before: avoid !important;
     overflow: hidden !important;
   }
 
   .gp-half-slot {
     width: 210mm !important;
-    height: 148.5mm !important;
-    min-height: 148.5mm !important;
-    max-height: 148.5mm !important;
+    max-width: 100% !important;
+    height: 139mm !important;
+    min-height: 139mm !important;
+    max-height: 139mm !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: flex-start !important;
     align-items: stretch !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .gp-half-slot.gp-half-top {
-    padding: 4.5mm 8mm 4.5mm 8mm !important;
+    padding: 3mm 8mm 3.5mm 8mm !important;
   }
 
   .gp-half-slot.gp-half-bottom {
-    padding: 3mm 8mm 9.5mm 8mm !important;
+    padding: 3.5mm 8mm 3mm 8mm !important;
   }
 
   .gate-pass-dual-wrapper .gp-perforation-divider {
     position: absolute !important;
-    top: 148.5mm !important;
+    top: 50% !important;
     left: 0 !important;
     right: 0 !important;
     transform: translateY(-50%) !important;
@@ -11226,16 +11235,17 @@ dialog.modal-send-email {
 
   .gate-pass-sheet.size-dual {
     width: 100% !important;
-    height: 136mm !important;
-    min-height: 136mm !important;
-    max-height: 136mm !important;
-    padding: 3mm 0 3mm 0 !important;
+    height: 132.5mm !important;
+    min-height: 132.5mm !important;
+    max-height: 132.5mm !important;
+    padding: 2.5mm 0 2.5mm 0 !important;
     font-size: 12px !important;
-    line-height: 1.4 !important;
+    line-height: 1.35 !important;
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
     page-break-inside: avoid !important;
+    break-inside: avoid !important;
     box-sizing: border-box !important;
     margin: 0 !important;
     display: flex !important;
