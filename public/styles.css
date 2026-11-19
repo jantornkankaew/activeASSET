@@ -3431,11 +3431,11 @@ dialog.modal-sn-sheet {
 .btn-box-clip:hover {
   background: rgba(0, 122, 255, 0.12);
   color: #0056b3;
-  transform: scale(1.08);
+  transform: translateY(calc(-50% + 1px)) scale(1.04);
 }
 
 .btn-box-clip:active {
-  transform: scale(0.95);
+  transform: translateY(-50%) scale(0.95);
 }
 
 .note-box-tags {
