@@ -529,6 +529,19 @@ if (!currentEmailFrom || currentEmailFrom.value === 'onboarding@resend.dev') {
   db.prepare("INSERT OR REPLACE INTO company_settings (key, value) VALUES ('email_from_address', 'a5@active5.co.th')").run();
 }
 
+// Remove asset ACT-105 upon user request
+try {
+  const targetAsset = db.prepare("SELECT * FROM assets WHERE tag_id = 'ACT-105' OR serial_no = '960-001360'").get();
+  if (targetAsset) {
+    db.prepare("DELETE FROM loan_items WHERE tag_id = ?").run(targetAsset.tag_id);
+    db.prepare("DELETE FROM asset_disposition_logs WHERE tag_id = ?").run(targetAsset.tag_id);
+    db.prepare("DELETE FROM assets WHERE tag_id = ?").run(targetAsset.tag_id);
+    console.log(`[CLEANUP] Deleted asset ${targetAsset.tag_id} (${targetAsset.model}) as requested`);
+  }
+} catch (e) {
+  console.warn('[CLEANUP] Note:', e.message);
+}
+
 function getCompanySettings() {
   const rows = db.prepare('SELECT key, value FROM company_settings').all();
   const settings = { ...DEFAULT_COMPANY_SETTINGS };
@@ -4229,6 +4242,31 @@ const server = http.createServer(async (req, res) => {
         tagId
       );
       return sendJson(res, 200, getFullState());
+    }
+
+    // Delete Asset completely from system
+    if (pathname.startsWith('/api/assets/') && req.method === 'DELETE') {
+      const tagId = pathname.replace('/api/assets/', '');
+      const asset = db.prepare('SELECT * FROM assets WHERE tag_id = ?').get(tagId);
+      if (!asset) return sendJson(res, 404, { error: 'ไม่พบเครื่องนี้' });
+
+      if (asset.status === 'On_Loan') {
+        return sendJson(res, 400, { error: 'ไม่สามารถลบเครื่องที่กำลังถูกยืมอยู่ได้' });
+      }
+
+      db.exec('BEGIN TRANSACTION');
+      try {
+        db.prepare('DELETE FROM loan_items WHERE tag_id = ?').run(tagId);
+        db.prepare('DELETE FROM asset_disposition_logs WHERE tag_id = ?').run(tagId);
+        db.prepare('DELETE FROM assets WHERE tag_id = ?').run(tagId);
+        db.exec('COMMIT');
+
+        notifyStateChange('delete_asset', { tag_id: tagId });
+        return sendJson(res, 200, { success: true, message: `ลบเครื่อง ${tagId} ออกจากระบบเรียบร้อยแล้ว`, state: getFullState() });
+      } catch (err) {
+        db.exec('ROLLBACK');
+        return sendJson(res, 500, { error: 'เกิดข้อผิดพลาดในการลบเครื่อง: ' + err.message });
+      }
     }
 
     if (pathname.startsWith('/uploads/')) {

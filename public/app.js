@@ -16835,6 +16835,11 @@ function setupEventListeners() {
       }
     }
 
+    const btnDelete = document.getElementById('btnDeleteAssetDirect');
+    if (btnDelete) {
+      btnDelete.classList.toggle('hidden', asset.status === 'On_Loan');
+    }
+
     const titleEl = document.getElementById('assetDetailModalTitle');
     if (titleEl) {
       titleEl.textContent = asset.brand ? `${asset.brand} ${asset.model}` : asset.model;
@@ -17255,6 +17260,45 @@ function setupEventListeners() {
   document.getElementById('btnReactivateFromCallout')?.addEventListener('click', () => {
     if (state.currentDetailTagId) {
       openReactivateAssetDialog(state.currentDetailTagId);
+    }
+  });
+
+  document.getElementById('btnDeleteAssetDirect')?.addEventListener('click', async () => {
+    const asset = state.currentDetailAsset;
+    if (!asset) return;
+
+    if (asset.status === 'On_Loan') {
+      showToast('⚠️ ไม่สามารถลบเครื่องที่กำลังถูกยืมอยู่ได้');
+      return;
+    }
+
+    const modelDisplay = asset.brand ? `${asset.brand} ${asset.model}` : asset.model;
+    const confirmed = await showConfirmDialog({
+      title: '🗑️ ยืนยันการลบเครื่องออกจากระบบ',
+      message: `คุณต้องการลบเครื่อง "${modelDisplay}" (รหัส ${asset.tag_id}, S/N: ${asset.serial_no || '-'}) ออกจากฐานข้อมูลคลังสินค้าใช่หรือไม่?\n\nการกระทำนี้จะลบข้อมูลเครื่องถาวร ไม่สามารถย้อนกลับได้`,
+      itemText: `${asset.tag_id}: ${modelDisplay}`,
+      icon: '🗑️',
+      confirmText: '🗑️ ยืนยันลบเครื่อง',
+      cancelText: 'ยกเลิก',
+      confirmBtnClass: 'btn-danger'
+    });
+
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/assets/${encodeURIComponent(asset.tag_id)}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'ลบเครื่องไม่สำเร็จ');
+
+      document.getElementById('assetDetailModalDialog')?.close();
+      applyServerState(data.state || data);
+      showToast(`🗑️ ลบเครื่อง ${asset.tag_id} เรียบร้อยแล้ว`);
+      renderActiveView();
+      renderHeaderCounters();
+    } catch (err) {
+      showToast('⚠️ ' + err.message);
     }
   });
 
