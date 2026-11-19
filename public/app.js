@@ -1380,8 +1380,9 @@ function renderKanbanCard(loan) {
           )
           .join('');
 
-  // Editable & Cancelable ONLY strictly before picking (status === 'Requested')
-  const isEditable = loan.status === 'Requested';
+  // Editable: Requested, Dispatching, Dispatched. Delivered: Note-only.
+  const isEditable = loan.status === 'Requested' || loan.status === 'Dispatching' || loan.status === 'Dispatched';
+  const isDeliveredStage = ['Delivered', 'Partially_Returned'].includes(loan.status);
 
   // Watermark (ลายน้ำปกติแสดงสถานะของการ์ด ไม่ใช่ปุ่มกด)
   let wmText = 'รอจัด';
@@ -1446,18 +1447,18 @@ function renderKanbanCard(loan) {
 
       <div class="card-footer">
         ${
-          isEditable && (can('edit_loan') || can('cancel_loan'))
+          ((isEditable || isDeliveredStage) && can('edit_loan')) || (loan.status === 'Requested' && can('cancel_loan'))
             ? `
           <div class="card-actions">
             ${can('edit_loan') ? `
-            <button type="button" class="btn-card-edit-minimal" data-edit-loan="${escapeHtml(loan.id)}" title="แก้ไขรายการใบยืม">
+            <button type="button" class="btn-card-edit-minimal" data-edit-loan="${escapeHtml(loan.id)}" title="${isDeliveredStage ? 'แก้ไขหมายเหตุใบยืม' : 'แก้ไขรายการใบยืม'}">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
               </svg>
-              <span>แก้ไข</span>
+              <span>${isDeliveredStage ? 'หมายเหตุ' : 'แก้ไข'}</span>
             </button>` : ''}
-            ${can('cancel_loan') ? `
+            ${loan.status === 'Requested' && can('cancel_loan') ? `
             <button type="button" class="btn-card-cancel-minimal" data-cancel-loan="${escapeHtml(loan.id)}" title="ยกเลิกใบยืมนี้">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#ef4444; margin-right:2px; vertical-align:-1px;">
                 <polyline points="3 6 5 6 21 6"></polyline>
@@ -1540,7 +1541,8 @@ function renderListView() {
         `;
       }).join('');
 
-      const isEditable = l.status === 'Requested' || l.status === 'Dispatching';
+      const isEditable = l.status === 'Requested' || l.status === 'Dispatching' || l.status === 'Dispatched';
+      const isDeliveredStage = ['Delivered', 'Partially_Returned', 'Returned'].includes(l.status);
       const isDispatched = l.status === 'Dispatched';
       const isReturnable = ['Delivered', 'Partially_Returned'].includes(l.status);
       const isOverdue = l.is_overdue || (['Delivered', 'Partially_Returned'].includes(l.status) && l.overdue_days > 0);
@@ -1610,10 +1612,12 @@ function renderListView() {
           <!-- Col 6: Actions Toolbar (สอดคล้องกับสถานะใบยืม) -->
           <td style="text-align:right;">
             <div class="min-actions-toolbar">
-              ${isEditable && can('edit_loan') ? `
-                <button type="button" class="btn-min-tool" data-edit-loan="${escapeHtml(l.id)}" title="แก้ไขใบยืม">✏️</button>
+              ${(isEditable || isDeliveredStage) && can('edit_loan') ? `
+                <button type="button" class="btn-min-tool" data-edit-loan="${escapeHtml(l.id)}" title="${isDeliveredStage ? 'แก้ไขหมายเหตุใบยืม' : 'แก้ไขใบยืม'}">
+                  ${isDeliveredStage ? '📝' : '✏️'}
+                </button>
               ` : ''}
-              ${isEditable && can('cancel_loan') ? `
+              ${l.status === 'Requested' && can('cancel_loan') ? `
                 <button type="button" class="btn-min-tool danger" data-cancel-loan="${escapeHtml(l.id)}" title="ยกเลิกใบยืม">🗑️</button>
               ` : ''}
               ${isDispatched && can('deliver_loan') ? `
@@ -2516,6 +2520,29 @@ function openCreateLoanModal(updateHash = true) {
   }
   if (updateHash) updateUrlHash('modal', 'create');
   state.editingLoanId = null;
+  state.editingLoanNoteOnly = false;
+
+  const loanDialog = document.getElementById('loanDialog');
+  if (loanDialog) {
+    loanDialog.classList.remove('mode-note-only');
+  }
+  document.getElementById('loanNoteOnlyBanner')?.classList.add('hidden');
+
+  // Ensure top info inputs are unlocked
+  ['loanBorrower', 'loanCustomer', 'loanCustomerPhone', 'loanCompany'].forEach(inpId => {
+    const el = document.getElementById(inpId);
+    if (el) {
+      el.readOnly = false;
+      el.classList.remove('is-locked');
+    }
+  });
+
+  const submitBtns = document.querySelectorAll('#loanForm button[type="submit"]');
+  submitBtns.forEach(btn => {
+    const span = btn.querySelector('span') || btn;
+    span.textContent = 'ออกใบยืมสินค้า';
+  });
+
   document.getElementById('loanDialogTitle').textContent = 'ออกใบยืมสินค้า';
   document.getElementById('btnLoanEditPrintPass')?.classList.add('hidden');
 
@@ -2622,21 +2649,60 @@ function openEditLoanModal(loanId, updateHash = true) {
   const loan = state.loans.find(l => l.id === loanId);
   if (!loan) return;
 
-  if (loan.status !== 'Requested' && loan.status !== 'Dispatching') {
-    showToast('🔒 ใบยืมนี้จัดของไปแล้ว ไม่สามารถแก้ไขได้');
+  const isDeliveredStage = ['Delivered', 'Partially_Returned', 'Returned'].includes(loan.status);
+  const isFullEditable = ['Requested', 'Dispatching', 'Dispatched'].includes(loan.status);
+
+  if (!isFullEditable && !isDeliveredStage) {
+    showToast('🔒 ใบยืมในสถานะนี้ไม่สามารถแก้ไขได้');
     return;
   }
 
   if (updateHash) updateUrlHash('modal', `edit-${loan.id}`);
   state.editingLoanId = loan.id;
-  document.getElementById('loanDialogTitle').textContent = `แก้ไขใบยืม ${loan.id}`;
+  state.editingLoanNoteOnly = isDeliveredStage;
+
+  const loanDialog = document.getElementById('loanDialog');
+  if (loanDialog) {
+    loanDialog.classList.toggle('mode-note-only', isDeliveredStage);
+  }
+
+  const titleEl = document.getElementById('loanDialogTitle');
+  if (titleEl) {
+    titleEl.textContent = isDeliveredStage
+      ? `แก้ไขหมายเหตุใบยืม ${loan.id} (ส่งมอบแล้ว)`
+      : `แก้ไขใบยืม ${loan.id}`;
+  }
   document.getElementById('btnLoanEditPrintPass')?.classList.remove('hidden');
 
   const btnCancelEdit = document.getElementById('btnCancelLoanFromEdit');
   if (btnCancelEdit) {
-    btnCancelEdit.classList.remove('hidden');
-    btnCancelEdit.setAttribute('data-cancel-loan', loan.id);
+    if (isFullEditable && (loan.status === 'Requested' || loan.status === 'Dispatching')) {
+      btnCancelEdit.classList.remove('hidden');
+      btnCancelEdit.setAttribute('data-cancel-loan', loan.id);
+    } else {
+      btnCancelEdit.classList.add('hidden');
+    }
   }
+
+  // Update submit button labels
+  const submitBtns = document.querySelectorAll('#loanForm button[type="submit"]');
+  submitBtns.forEach(btn => {
+    const span = btn.querySelector('span') || btn;
+    if (isDeliveredStage) {
+      span.textContent = 'บันทึกหมายเหตุ';
+    } else {
+      span.textContent = 'บันทึกการแก้ไข';
+    }
+  });
+
+  // Lock/Unlock top info inputs for note-only mode
+  ['loanBorrower', 'loanCustomer', 'loanCustomerPhone', 'loanCompany'].forEach(inpId => {
+    const el = document.getElementById(inpId);
+    if (el) {
+      el.readOnly = isDeliveredStage;
+      el.classList.toggle('is-locked', isDeliveredStage);
+    }
+  });
 
   document.getElementById('loanBorrower').value = loan.borrower_name || '';
   document.getElementById('loanCustomer').value = loan.customer_name || '';
@@ -2650,46 +2716,64 @@ function openEditLoanModal(loanId, updateHash = true) {
   document.getElementById('loanDueDate').value = (loan.due_date || state.today).slice(0, 10);
   updateAgodaDateDisplay();
 
-  // Group identical model rows when editing a pre-dispatch loan
-  const grouped = [];
-  for (const it of loan.items || []) {
-    const accStr = JSON.stringify(it.loan_accessories || []);
-    const attStr = JSON.stringify(it.attachments || []);
-    const existing = grouped.find(
-      g =>
-        g.brand === (it.brand || '') &&
-        g.model === (it.model || '') &&
-        g.source === (it.source_snapshot || 'Demo') &&
-        g.free_note === (it.loan_free_note || '') &&
-        JSON.stringify(g.accessories) === accStr &&
-        JSON.stringify(g.attachments || []) === attStr
-    );
-    if (existing) {
-      existing.qty += 1;
-      if (it.serial_no) {
-        if (!existing.serials) existing.serials = [];
-        existing.serials.push(it.serial_no);
-      }
-    } else {
-      grouped.push({
-        brand: it.brand || '',
-        model: it.model || '',
-        qty: 1,
-        source: it.source_snapshot || 'Demo',
-        accessories: [...(it.loan_accessories || [])],
-        free_note: it.loan_free_note || '',
-        attachments: [...(it.attachments || [])],
-        serials: it.serial_no ? [it.serial_no] : []
-      });
-    }
+  const noteBanner = document.getElementById('loanNoteOnlyBanner');
+  if (noteBanner) {
+    noteBanner.classList.toggle('hidden', !isDeliveredStage);
   }
 
-  // Start with all rows collapsed so user has a clean overview, and can tap any item to edit
-  state.activeLoanRowIdx = -1;
-  state.loanDraftRows =
-    grouped.length > 0
-      ? grouped
-      : [{ brand: '', model: '', qty: 1, source: 'Demo', accessories: [], free_note: '', serials: [], attachments: [] }];
+  if (isDeliveredStage) {
+    // Delivered: each item keeps its distinct row & ID for individual note editing
+    state.loanDraftRows = (loan.items || []).map(it => ({
+      id: it.id,
+      brand: it.brand || '',
+      model: it.model || '',
+      qty: 1,
+      source: it.source_snapshot || 'Demo',
+      accessories: [...(it.loan_accessories || [])],
+      free_note: it.loan_free_note || '',
+      attachments: [...(it.attachments || [])],
+      serials: it.serial_no ? [it.serial_no] : []
+    }));
+  } else {
+    // Group identical model rows when editing a pre-dispatch or dispatched loan
+    const grouped = [];
+    for (const it of loan.items || []) {
+      const accStr = JSON.stringify(it.loan_accessories || []);
+      const attStr = JSON.stringify(it.attachments || []);
+      const existing = grouped.find(
+        g =>
+          g.brand === (it.brand || '') &&
+          g.model === (it.model || '') &&
+          g.source === (it.source_snapshot || 'Demo') &&
+          g.free_note === (it.loan_free_note || '') &&
+          JSON.stringify(g.accessories) === accStr &&
+          JSON.stringify(g.attachments || []) === attStr
+      );
+      if (existing) {
+        existing.qty += 1;
+        if (it.serial_no) {
+          if (!existing.serials) existing.serials = [];
+          existing.serials.push(it.serial_no);
+        }
+      } else {
+        grouped.push({
+          id: it.id,
+          brand: it.brand || '',
+          model: it.model || '',
+          qty: 1,
+          source: it.source_snapshot || 'Demo',
+          accessories: [...(it.loan_accessories || [])],
+          free_note: it.loan_free_note || '',
+          attachments: [...(it.attachments || [])],
+          serials: it.serial_no ? [it.serial_no] : []
+        });
+      }
+    }
+    state.loanDraftRows =
+      grouped.length > 0
+        ? grouped
+        : [{ brand: '', model: '', qty: 1, source: 'Demo', accessories: [], free_note: '', serials: [], attachments: [] }];
+  }
 
   // Ensure trailing empty row is present for seamless adding
   ensureTrailingEmptyRow();
@@ -2706,6 +2790,7 @@ function openEditLoanModal(loanId, updateHash = true) {
 }
 
 function ensureTrailingEmptyRow() {
+  if (state.editingLoanNoteOnly) return;
   const lastRow = state.loanDraftRows[state.loanDraftRows.length - 1];
   if (!lastRow || lastRow.model.trim() !== '') {
     state.loanDraftRows.push({
@@ -4911,6 +4996,13 @@ function updateDispatchSummary() {
       `;
     } else if (isDeliveredLoan) {
       rightBtnsEl.innerHTML = `
+        <button type="button" class="btn btn-outline btn-dispatch-edit-note" id="btnDispatchEditFromFooter" title="แก้ไขหมายเหตุการยืม">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          <span>แก้ไขหมายเหตุ</span>
+        </button>
         <button type="button" class="btn btn-success btn-dispatch-return" id="btnDispatchStartReturn" title="เริ่มขั้นตอนการคืนสินค้า">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -4922,12 +5014,19 @@ function updateDispatchSummary() {
       `;
     } else if (isReadOnly) {
       rightBtnsEl.innerHTML = `
+        <button type="button" class="btn btn-outline btn-dispatch-edit-full" id="btnDispatchEditFromFooter" title="แก้ไขข้อมูลใบยืม / เพิ่มสินค้า">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          <span>แก้ไขใบยืม</span>
+        </button>
         <button type="button" class="btn btn-secondary btn-onsite-edit" id="btnToggleOnsiteEdit" title="ปลดล็อกเพื่อแก้ไข S/N หรืออุปกรณ์หน้างาน">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
           </svg>
-          <span>แก้ไขหน้างาน</span>
+          <span>สลับ S/N หน้างาน</span>
         </button>
         <button type="button" class="btn btn-outline btn-borrower-sig ${hasBorrowerSig ? 'is-signed' : ''}" id="btnDispatchSignBorrower" title="ลงลายเซ็นดิจิทัลผู้ยืม / ผู้รับเครื่อง">
           ${
@@ -5157,6 +5256,27 @@ function openDispatchModal(loanId, updateHash = true) {
   state.activeDispatchRowIdx = null; // Start with clean minimal checklist
   closeDispatchSnDropdown();
   closeLiveCamera();
+
+  // Update Edit Loan button in dispatch header
+  const btnEditLoan = document.getElementById('btnDispatchEditLoan');
+  const btnEditLoanText = document.getElementById('btnDispatchEditLoanText');
+  const isFullEditable = ['Requested', 'Dispatching', 'Dispatched'].includes(loan.status);
+  const isDeliveredStage = ['Delivered', 'Partially_Returned', 'Returned'].includes(loan.status);
+
+  if (btnEditLoan) {
+    if (isFullEditable) {
+      btnEditLoan.classList.remove('hidden');
+      if (btnEditLoanText) btnEditLoanText.textContent = 'แก้ไขใบยืม';
+      btnEditLoan.title = 'แก้ไขข้อมูลใบยืม / เพิ่มรายการสินค้า';
+    } else if (isDeliveredStage) {
+      btnEditLoan.classList.remove('hidden');
+      if (btnEditLoanText) btnEditLoanText.textContent = 'แก้ไขหมายเหตุ';
+      btnEditLoan.title = 'แก้ไขหมายเหตุการยืม (ส่งมอบแล้ว)';
+    } else {
+      btnEditLoan.classList.add('hidden');
+    }
+  }
+
   renderDispatchTable();
   updateDispatchSummary();
   document.getElementById('dispatchDialog').showModal();
@@ -13258,6 +13378,31 @@ function setupEventListeners() {
   document.getElementById('loanForm').addEventListener('submit', async e => {
     e.preventDefault();
 
+    if (state.editingLoanNoteOnly && state.editingLoanId) {
+      const notePayload = {
+        items: state.loanDraftRows.map(r => ({
+          id: r.id,
+          free_note: r.free_note || ''
+        }))
+      };
+      try {
+        const res = await fetch(`/api/loans/${encodeURIComponent(state.editingLoanId)}/update`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(notePayload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'บันทึกไม่สำเร็จ');
+        applyServerState(data);
+        showToast(`✅ บันทึกหมายเหตุใบยืม ${state.editingLoanId} เรียบร้อย`);
+        document.getElementById('loanDialog').close();
+        if (state.printAfterSave) openPrintModal(state.editingLoanId);
+      } catch (err) {
+        showToast('⚠️ ' + err.message);
+      }
+      return;
+    }
+
     // Auto-commit any pending text in tag inputs
     document.querySelectorAll('[data-excel-add-tag]').forEach(inp => {
       const val = inp.value.replace(/,/g, '').trim();
@@ -13416,6 +13561,7 @@ function setupEventListeners() {
         renderLoanExcelRows();
 
         showToast(`✅ บันทึกการแก้ไขใบยืม ${state.editingLoanId} เรียบร้อย`);
+        document.getElementById('loanDialog')?.close();
         if (state.printAfterSave) openPrintModal(state.editingLoanId);
       } else {
         const res = await fetch('/api/loans', {
@@ -14653,6 +14799,17 @@ function setupEventListeners() {
     if (state.activeDispatchLoan) {
       document.getElementById('dispatchDialog')?.close();
       openPrintModal(state.activeDispatchLoan.id);
+    }
+  });
+
+  // Edit loan / notes button from dispatch dialog (header & footer)
+  document.addEventListener('click', e => {
+    const editBtn = e.target.closest('#btnDispatchEditLoan, #btnDispatchEditFromFooter');
+    if (editBtn && state.activeDispatchLoan) {
+      e.preventDefault();
+      const loanId = state.activeDispatchLoan.id;
+      document.getElementById('dispatchDialog')?.close();
+      openEditLoanModal(loanId);
     }
   });
 

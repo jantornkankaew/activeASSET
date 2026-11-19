@@ -16866,7 +16866,8 @@ dialog.modal-company-settings.modal-fullscreen {
   margin-left: auto;
 }
 
-.btn-header-printpass {
+.btn-header-printpass,
+.btn-header-editloan {
   font-size: 12px;
   font-weight: 550;
   padding: 5px 12px;
@@ -16881,7 +16882,8 @@ dialog.modal-company-settings.modal-fullscreen {
   cursor: pointer;
 }
 
-.btn-header-printpass:hover {
+.btn-header-printpass:hover,
+.btn-header-editloan:hover {
   background: #f8fafc;
   border-color: #94a3b8;
   color: #0f172a;
@@ -19073,7 +19075,9 @@ dialog.modal-camera-dialog::backdrop {
   }
 
   #dispatchDialog .btn-header-printpass,
-  .modal-dialog .btn-header-printpass {
+  #dispatchDialog .btn-header-editloan,
+  .modal-dialog .btn-header-printpass,
+  .modal-dialog .btn-header-editloan {
     width: 36px !important;
     height: 36px !important;
     min-width: 36px !important;
@@ -19091,8 +19095,10 @@ dialog.modal-camera-dialog::backdrop {
   }
 
   #dispatchDialog .btn-header-printpass span,
-  .modal-dialog .btn-header-printpass span {
-    display: none !important; /* Hide text, keep printer icon on mobile */
+  #dispatchDialog .btn-header-editloan span,
+  .modal-dialog .btn-header-printpass span,
+  .modal-dialog .btn-header-editloan span {
+    display: none !important; /* Hide text, keep printer/edit icon on mobile */
   }
 
   /* 2. Modal Body & Summary Strip */
@@ -24183,3 +24189,70 @@ html.is-unauthenticated .app-shell {
 .card-just-arrived {
   animation: cardArrivalPulse 2.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
+
+/* ==========================================================================
+   NOTE-ONLY EDITING MODE (สำหรับใบยืมที่ส่งมอบไปแล้ว)
+   ========================================================================== */
+.loan-note-only-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+}
+
+.loan-note-only-banner .note-banner-icon {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.loan-note-only-banner .note-banner-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: #1e40af;
+  line-height: 1.45;
+}
+
+.loan-note-only-banner .note-banner-content strong {
+  font-size: 13.5px;
+  color: #1e3a8a;
+}
+
+#loanDialog.mode-note-only .is-locked {
+  background: #f8fafc !important;
+  color: #64748b !important;
+  border-color: #e2e8f0 !important;
+  cursor: not-allowed !important;
+}
+
+#loanDialog.mode-note-only .cell-model input,
+#loanDialog.mode-note-only .cell-qty input,
+#loanDialog.mode-note-only .cell-source select,
+#loanDialog.mode-note-only .cell-options-cell button,
+#loanDialog.mode-note-only .cell-action .btn-item-dup,
+#loanDialog.mode-note-only .cell-action .btn-item-delete,
+#loanDialog.mode-note-only .row-add-next-item,
+#loanDialog.mode-note-only .btn-add-item-drawer {
+  pointer-events: none !important;
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+#loanDialog.mode-note-only .cell-note .note-unified-box {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 1px #3b82f6 !important;
+  background: #ffffff !important;
+}
+
+#loanDialog.mode-note-only .cell-note .note-box-textarea {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  cursor: text !important;
+}
+

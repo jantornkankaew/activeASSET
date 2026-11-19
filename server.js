@@ -3271,22 +3271,54 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, getFullState());
     }
 
-    // Update existing Loan (Before Dispatch ONLY: model-based editing)
+    // Update existing Loan (Dispatched allowed full edit/add items, Delivered allows note-only edit)
     if (pathname.match(/^\/api\/loans\/[^/]+\/update$/) && req.method === 'POST') {
       const loanId = pathname.split('/')[3];
       const loan = db.prepare('SELECT * FROM loans WHERE id = ?').get(loanId);
       if (!loan) return sendJson(res, 404, { error: 'ไม่พบใบยืมนี้' });
 
       const body = await parseJsonBody(req);
-      const isEditableStage = loan.status === 'Requested' || loan.status === 'Dispatching';
+      const isDeliveredStage = ['Delivered', 'Partially_Returned', 'Returned'].includes(loan.status);
+      const isFullEditable = ['Requested', 'Dispatching', 'Dispatched'].includes(loan.status);
 
-      // If already dispatched, only allow transitioning status from Dispatched -> Delivered
-      if (!isEditableStage) {
-        if (body.status === 'Delivered' && loan.status === 'Dispatched') {
-          db.prepare('UPDATE loans SET status = ? WHERE id = ?').run('Delivered', loanId);
+      // Case 1: Delivered Stage - Note-only editing ("ถ้าส่งมอบไปแล้ว แก้ไขได้แค่หมายเหตุ")
+      if (isDeliveredStage) {
+        db.exec('BEGIN TRANSACTION');
+        try {
+          if (body.delivery_note !== undefined) {
+            db.prepare('UPDATE loans SET delivery_note = ? WHERE id = ?').run(String(body.delivery_note || '').trim(), loanId);
+          }
+          if (Array.isArray(body.items)) {
+            const existingItems = db.prepare('SELECT id FROM loan_items WHERE loan_id = ? ORDER BY id ASC').all(loanId);
+            for (let i = 0; i < body.items.length; i++) {
+              const it = body.items[i];
+              const note = String(it.free_note || it.loan_free_note || '').trim();
+              if (it.id) {
+                db.prepare('UPDATE loan_items SET loan_free_note = ? WHERE id = ? AND loan_id = ?').run(note, it.id, loanId);
+              } else if (existingItems[i]) {
+                db.prepare('UPDATE loan_items SET loan_free_note = ? WHERE id = ? AND loan_id = ?').run(note, existingItems[i].id, loanId);
+              }
+            }
+          }
+          db.exec('COMMIT');
+          notifyStateChange('update_loan_notes', { id: loanId });
           return sendJson(res, 200, getFullState());
+        } catch (err) {
+          db.exec('ROLLBACK');
+          return sendJson(res, 400, { error: err.message });
         }
-        return sendJson(res, 400, { error: 'ใบยืมที่จัดของไปแล้ว ไม่สามารถแก้ไขข้อมูลได้' });
+      }
+
+      // Case 2: Status transition from Dispatched -> Delivered (via dispatch deliver flow)
+      if (body.status === 'Delivered' && loan.status === 'Dispatched') {
+        db.prepare('UPDATE loans SET status = ? WHERE id = ?').run('Delivered', loanId);
+        notifyStateChange('deliver_loan', { id: loanId });
+        return sendJson(res, 200, getFullState());
+      }
+
+      // Block uneditable statuses
+      if (!isFullEditable) {
+        return sendJson(res, 400, { error: 'ไม่สามารถแก้ไขใบยืมในสถานะนี้ได้' });
       }
 
       if (body.borrower_name !== undefined && !String(body.borrower_name).trim()) {
@@ -3299,7 +3331,7 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 400, { error: 'กรุณาระบุชื่อผู้ติดต่อ' });
       }
 
-      const nextStatus = body.status || loan.status;
+      let nextStatus = body.status || loan.status;
       const newBeforePhotos = (Array.isArray(body.before_photos) ? body.before_photos : [])
         .map(p => saveBase64Image(p, `out-${loanId}`))
         .filter(Boolean);
@@ -3321,7 +3353,10 @@ const server = http.createServer(async (req, res) => {
               customer_phone = COALESCE(?, customer_phone),
               borrower_phone = COALESCE(?, borrower_phone),
               borrower_name = COALESCE(?, borrower_name),
+              purpose = COALESCE(?, purpose),
+              checkout_date = COALESCE(?, checkout_date),
               due_date = COALESCE(?, due_date),
+              delivery_note = COALESCE(?, delivery_note),
               before_photos_json = ?,
               borrower_signature = ?
           WHERE id = ?
@@ -3332,7 +3367,10 @@ const server = http.createServer(async (req, res) => {
           body.customer_phone !== undefined ? body.customer_phone : null,
           body.customer_phone !== undefined ? body.customer_phone : (body.borrower_phone !== undefined ? body.borrower_phone : null),
           body.borrower_name !== undefined ? body.borrower_name : null,
+          body.purpose !== undefined ? body.purpose : null,
+          body.checkout_date !== undefined ? body.checkout_date : null,
           body.due_date !== undefined ? body.due_date : null,
+          body.delivery_note !== undefined ? body.delivery_note : null,
           JSON.stringify(finalBefore),
           sigUrl,
           loanId
@@ -3375,7 +3413,7 @@ const server = http.createServer(async (req, res) => {
             if (!modelName) throw new Error('กรุณาเลือกรุ่นสินค้าให้ครบทุกแถว');
             const qty = Math.max(1, parseInt(it.qty || 1, 10) || 1);
             const itemAcc = Array.isArray(it.accessories) ? it.accessories : [];
-            const itemNote = String(it.free_note || '').trim();
+            const itemNote = String(it.free_note || it.loan_free_note || '').trim();
             const itemSource = it.source || 'Demo';
             const itemSerials = Array.isArray(it.serials) ? it.serials.map(s => String(s || '').trim()).filter(Boolean) : [];
             const itemAttachments = Array.isArray(it.attachments) ? it.attachments : [];
@@ -3397,8 +3435,8 @@ const server = http.createServer(async (req, res) => {
                 const asset = db.prepare(`
                   SELECT * FROM assets 
                   WHERE (serial_no = ? OR tag_id = ?) 
-                  AND status = 'Available'
-                `).get(sn, sn);
+                  AND (status = 'Available' OR current_loan_id = ?)
+                `).get(sn, sn, loanId);
 
                 if (asset) {
                   matchedTagId = asset.tag_id;
@@ -3426,16 +3464,18 @@ const server = http.createServer(async (req, res) => {
             }
           }
 
-          // สถานะ: "รายการที่มี s/n ถือว่า complete จัดของเสร็จแล้วพร้อมส่ง"
+          // อัปเดตสถานะอัตโนมัติ: ถ้ามี S/N ครบทุกรายการเป็น Dispatched, ถ้ามีบางส่วนเป็น Dispatching, ถ้าไม่มีเลยเป็น Requested
           if (totalUnits > 0 && unitsWithSn === totalUnits) {
             db.prepare(`UPDATE loans SET status = 'Dispatched' WHERE id = ?`).run(loanId);
           } else if (unitsWithSn > 0) {
             db.prepare(`UPDATE loans SET status = 'Dispatching' WHERE id = ?`).run(loanId);
+          } else {
+            db.prepare(`UPDATE loans SET status = 'Requested' WHERE id = ?`).run(loanId);
           }
         }
 
         db.exec('COMMIT');
-        notifyStateChange('return_loan', { id: loanId });
+        notifyStateChange('update_loan', { id: loanId });
         return sendJson(res, 200, getFullState());
       } catch (err) {
         db.exec('ROLLBACK');
