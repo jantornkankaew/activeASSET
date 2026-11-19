@@ -559,39 +559,7 @@ if (!currentEmailFrom || currentEmailFrom.value === 'onboarding@resend.dev') {
   db.prepare("INSERT OR REPLACE INTO company_settings (key, value) VALUES ('email_from_address', 'a5@active5.co.th')").run();
 }
 
-// Remove asset ACT-105 upon user request
-try {
-  const targetAsset = db.prepare("SELECT * FROM assets WHERE tag_id = 'ACT-105' OR serial_no = '960-001360'").get();
-  if (targetAsset) {
-    db.prepare("DELETE FROM loan_items WHERE tag_id = ?").run(targetAsset.tag_id);
-    db.prepare("DELETE FROM asset_disposition_logs WHERE tag_id = ?").run(targetAsset.tag_id);
-    db.prepare("DELETE FROM assets WHERE tag_id = ?").run(targetAsset.tag_id);
-    console.log(`[CLEANUP] Deleted asset ${targetAsset.tag_id} (${targetAsset.model}) as requested`);
-  }
-} catch (e) {
-  console.warn('[CLEANUP] Note:', e.message);
-}
 
-// Remove loan LOAN-202611-028 upon user request
-try {
-  const targetLoan = db.prepare("SELECT * FROM loans WHERE id = 'LOAN-202611-028'").get();
-  if (targetLoan) {
-    db.exec('BEGIN TRANSACTION');
-    const items = db.prepare('SELECT tag_id FROM loan_items WHERE loan_id = ?').all('LOAN-202611-028');
-    for (const it of items) {
-      if (it.tag_id) {
-        db.prepare(`UPDATE assets SET status = 'Available', current_loan_id = NULL WHERE tag_id = ?`).run(it.tag_id);
-      }
-    }
-    db.prepare(`UPDATE assets SET status = 'Available', current_loan_id = NULL WHERE current_loan_id = ?`).run('LOAN-202611-028');
-    db.prepare('DELETE FROM loan_items WHERE loan_id = ?').run('LOAN-202611-028');
-    db.prepare('DELETE FROM loans WHERE id = ?').run('LOAN-202611-028');
-    db.exec('COMMIT');
-    console.log('[CLEANUP] Deleted loan LOAN-202611-028 as requested');
-  }
-} catch (e) {
-  console.warn('[CLEANUP] Note:', e.message);
-}
 
 function getCompanySettings() {
   const rows = db.prepare('SELECT key, value FROM company_settings').all();
