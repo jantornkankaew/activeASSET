@@ -10732,12 +10732,12 @@ dialog.modal-send-email {
 
   .footer-right-btns {
     width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
     gap: 10px;
   }
 
   .footer-right-btns .btn {
+    flex: 1;
     height: 42px;
     min-height: 42px;
     font-size: 13.5px;
