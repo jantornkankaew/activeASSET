@@ -3073,9 +3073,9 @@ const server = http.createServer(async (req, res) => {
       const loan = db.prepare('SELECT * FROM loans WHERE id = ?').get(loanId);
       if (!loan) return sendJson(res, 404, { error: 'ไม่พบใบยืมนี้' });
 
-      // อนุญาตให้ยกเลิกได้เฉพาะก่อนจัดของ (Requested หรือ Dispatching)
-      if (loan.status !== 'Requested' && loan.status !== 'Dispatching') {
-        return sendJson(res, 400, { error: `ไม่สามารถยกเลิกใบยืมสถานะ "${loan.status}" ได้ (ยกเลิกได้เฉพาะใบที่ยังไม่ได้จัดของ)` });
+      // อนุญาตให้ยกเลิกได้เฉพาะก่อนส่งมอบสินค้า (Requested, Dispatching หรือ Dispatched)
+      if (loan.status !== 'Requested' && loan.status !== 'Dispatching' && loan.status !== 'Dispatched') {
+        return sendJson(res, 400, { error: `ไม่สามารถยกเลิกใบยืมสถานะ "${loan.status}" ได้ (ยกเลิกได้เฉพาะใบที่ยังไม่ได้ส่งมอบสินค้า)` });
       }
 
       db.exec('BEGIN TRANSACTION');
@@ -3111,10 +3111,10 @@ const server = http.createServer(async (req, res) => {
       const loan = db.prepare('SELECT * FROM loans WHERE id = ?').get(loanId);
       if (!loan) return sendJson(res, 404, { error: 'ไม่พบใบยืมนี้' });
 
-      // อนุญาตให้ลบได้เฉพาะสถานะ Requested หรือ Dispatching
-      if (loan.status !== 'Requested' && loan.status !== 'Dispatching') {
+      // อนุญาตให้ลบได้เฉพาะสถานะ Requested, Dispatching หรือ Dispatched (ก่อนส่งมอบ)
+      if (loan.status !== 'Requested' && loan.status !== 'Dispatching' && loan.status !== 'Dispatched') {
         return sendJson(res, 400, {
-          error: `ไม่สามารถลบรายการในใบยืมสถานะ "${loan.status}" ได้ (ลบได้เฉพาะสถานะรอจัดของ หรือกำลังจัดของ)`
+          error: `ไม่สามารถลบรายการในใบยืมสถานะ "${loan.status}" ได้ (ลบได้เฉพาะใบที่ยังไม่ได้ส่งมอบสินค้า)`
         });
       }
 

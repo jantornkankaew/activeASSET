@@ -2709,7 +2709,7 @@ function openEditLoanModal(loanId, updateHash = true) {
 
   const btnCancelEdit = document.getElementById('btnCancelLoanFromEdit');
   if (btnCancelEdit) {
-    if (isFullEditable && (loan.status === 'Requested' || loan.status === 'Dispatching')) {
+    if (isFullEditable && ['Requested', 'Dispatching', 'Dispatched'].includes(loan.status)) {
       btnCancelEdit.classList.remove('hidden');
       btnCancelEdit.setAttribute('data-cancel-loan', loan.id);
     } else {
@@ -12630,8 +12630,8 @@ function setupEventListeners() {
   async function handleCancelLoan(loanId) {
     if (!loanId) return;
     const loan = state.loans.find(l => l.id === loanId);
-    if (loan && loan.status !== 'Requested' && loan.status !== 'Dispatching') {
-      showToast('⚠️ ยกเลิกได้เฉพาะใบยืมที่ยังไม่ได้จัดของเท่านั้น');
+    if (loan && loan.status !== 'Requested' && loan.status !== 'Dispatching' && loan.status !== 'Dispatched') {
+      showToast('⚠️ ยกเลิกได้เฉพาะใบยืมที่ยังไม่ได้ส่งมอบสินค้าเท่านั้น');
       return;
     }
 
@@ -13479,6 +13479,53 @@ function setupEventListeners() {
       const rowIdx = Number(rmRow.getAttribute('data-excel-rm-row'));
       const row = state.loanDraftRows[rowIdx];
       if (!row) return;
+
+      // Check if editing an existing loan AND this is the last remaining item with data
+      if (state.editingLoanId) {
+        const remainingFilledRows = state.loanDraftRows.filter((r, idx) => idx !== rowIdx && r.model && r.model.trim());
+        if (remainingFilledRows.length === 0) {
+          const modelDisplay = row.brand ? `${row.brand} ${row.model}` : (row.model || 'สินค้านี้');
+          const confirmed = await showConfirmDialog({
+            title: '⚠️ ลบรายการสุดท้าย & ยกเลิกใบยืม',
+            message: `รายการนี้เป็นสินค้าชิ้นสุดท้ายในใบยืม ${state.editingLoanId}\nหากลบรายการนี้ ระบบจะทำการ "ยกเลิกใบยืมนี้" ทั้งหมด\n\nคุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้และยกเลิกใบยืม?`,
+            itemText: `${modelDisplay} (จำนวน ${row.qty || 1} เครื่อง)`,
+            icon: '⚠️',
+            confirmText: '🗑️ ยืนยันลบ & ยกเลิกใบยืม',
+            cancelText: 'ยกเลิก (คงรายการไว้)',
+            confirmBtnClass: 'btn-danger'
+          });
+
+          if (!confirmed) return;
+
+          try {
+            const loanId = state.editingLoanId;
+            const res = await fetch(`/api/loans/${encodeURIComponent(loanId)}/cancel`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'ไม่สามารถยกเลิกใบยืมได้');
+
+            document.getElementById('loanDialog')?.close();
+            state.editingLoanId = null;
+            applyServerState(data.state || data);
+            showToast(`🗑️ ลบรายการสุดท้ายและยกเลิกใบยืม ${loanId} เรียบร้อยแล้ว`);
+
+            if (state.viewMode !== 'kanban') {
+              state.viewMode = 'kanban';
+              document.querySelectorAll('.view-btn').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('data-view') === 'kanban');
+              });
+              updateUrlHash('kanban');
+            }
+            renderActiveView();
+            renderHeaderCounters();
+          } catch (err) {
+            showToast('⚠️ ' + err.message);
+          }
+          return;
+        }
+      }
 
       const hasModel = Boolean(row.model && row.model.trim());
       const hasAccessories = Boolean(row.accessories && row.accessories.length > 0);
