@@ -14013,7 +14013,19 @@ function setupEventListeners() {
       nextInput.focus();
       nextInput.select();
     } else {
-      inputEl.blur();
+      // Last slot -> check if all slots are filled, then automatically confirm and save!
+      const allInputs = Array.from(container.querySelectorAll('.sn-modal-slot-input'));
+      const allFilled = allInputs.length > 0 && allInputs.every(inp => inp.value.trim().length > 0);
+      if (allFilled) {
+        document.getElementById('btnSaveSnModal')?.click();
+      } else {
+        const emptyInp = allInputs.find(inp => !inp.value.trim());
+        if (emptyInp) {
+          emptyInp.focus();
+        } else {
+          inputEl.blur();
+        }
+      }
     }
   }
 
@@ -14025,7 +14037,15 @@ function setupEventListeners() {
 
     const isDemo = String(row.source || 'Demo').trim().toLowerCase() === 'demo';
     if (!isDemo || !val) {
-      if (!val) inputEl.dataset.confirmedSn = '';
+      if (val) {
+        inputEl.dataset.confirmedSn = val;
+      } else {
+        inputEl.dataset.confirmedSn = '';
+      }
+      closeSnDropdown();
+      if (advanceOnSuccess && val) {
+        advanceToNextSnSlot(inputEl);
+      }
       return true;
     }
 
@@ -14213,7 +14233,8 @@ function setupEventListeners() {
       document.getElementById('snModalDialog')?.close();
       return;
     }
-    const row = state.loanDraftRows[state.activeSnModalRowIdx];
+    const savedRowIdx = state.activeSnModalRowIdx;
+    const row = state.loanDraftRows[savedRowIdx];
     const rowQty = Math.max(1, Number(row.qty || 1));
     const inputs = Array.from(document.querySelectorAll('.sn-modal-slot-input[data-sn-modal-idx]'));
     const values = inputs.map(i => i.value.trim());
@@ -14240,6 +14261,12 @@ function setupEventListeners() {
       renderLoanExcelRows();
       document.getElementById('snModalDialog')?.close();
       showToast('⚪ ยังไม่ระบุ S/N (รอคนจัดของ Match)');
+      setTimeout(() => {
+        if (savedRowIdx !== null && savedRowIdx !== undefined) {
+          const noteTa = document.querySelector(`[data-excel-free-note="${savedRowIdx}"]`);
+          if (noteTa) noteTa.focus();
+        }
+      }, 80);
       return;
     }
 
@@ -14260,6 +14287,14 @@ function setupEventListeners() {
     renderLoanExcelRows();
     document.getElementById('snModalDialog')?.close();
     showToast(`✅ ระบุ S/N ครบ ${rowQty} เครื่องเรียบร้อย`);
+    setTimeout(() => {
+      if (savedRowIdx !== null && savedRowIdx !== undefined) {
+        const noteTa = document.querySelector(`[data-excel-free-note="${savedRowIdx}"]`);
+        if (noteTa) {
+          noteTa.focus();
+        }
+      }
+    }, 80);
   });
 
   document.getElementById('btnClearSnModal')?.addEventListener('click', () => {
