@@ -572,6 +572,27 @@ try {
   console.warn('[CLEANUP] Note:', e.message);
 }
 
+// Remove loan LOAN-202611-028 upon user request
+try {
+  const targetLoan = db.prepare("SELECT * FROM loans WHERE id = 'LOAN-202611-028'").get();
+  if (targetLoan) {
+    db.exec('BEGIN TRANSACTION');
+    const items = db.prepare('SELECT tag_id FROM loan_items WHERE loan_id = ?').all('LOAN-202611-028');
+    for (const it of items) {
+      if (it.tag_id) {
+        db.prepare(`UPDATE assets SET status = 'Available', current_loan_id = NULL WHERE tag_id = ?`).run(it.tag_id);
+      }
+    }
+    db.prepare(`UPDATE assets SET status = 'Available', current_loan_id = NULL WHERE current_loan_id = ?`).run('LOAN-202611-028');
+    db.prepare('DELETE FROM loan_items WHERE loan_id = ?').run('LOAN-202611-028');
+    db.prepare('DELETE FROM loans WHERE id = ?').run('LOAN-202611-028');
+    db.exec('COMMIT');
+    console.log('[CLEANUP] Deleted loan LOAN-202611-028 as requested');
+  }
+} catch (e) {
+  console.warn('[CLEANUP] Note:', e.message);
+}
+
 function getCompanySettings() {
   const rows = db.prepare('SELECT key, value FROM company_settings').all();
   const settings = { ...DEFAULT_COMPANY_SETTINGS };
@@ -3121,8 +3142,9 @@ const server = http.createServer(async (req, res) => {
       const loan = db.prepare('SELECT * FROM loans WHERE id = ?').get(loanId);
       if (!loan) return sendJson(res, 404, { error: 'ไม่พบใบยืมนี้' });
 
-      // อนุญาตให้ยกเลิกได้เฉพาะก่อนส่งมอบสินค้า (Requested, Dispatching หรือ Dispatched)
-      if (loan.status !== 'Requested' && loan.status !== 'Dispatching' && loan.status !== 'Dispatched') {
+      // อนุญาตให้ยกเลิกได้ก่อนส่งมอบสินค้า หรือเมื่อใช้เมธอด DELETE โดยตรง
+      const isDirectDelete = req.method === 'DELETE';
+      if (!isDirectDelete && loan.status !== 'Requested' && loan.status !== 'Dispatching' && loan.status !== 'Dispatched') {
         return sendJson(res, 400, { error: `ไม่สามารถยกเลิกใบยืมสถานะ "${loan.status}" ได้ (ยกเลิกได้เฉพาะใบที่ยังไม่ได้ส่งมอบสินค้า)` });
       }
 
