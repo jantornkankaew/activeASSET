@@ -52,6 +52,16 @@ const MAIN_COLUMNS = [
     subGroups: [
       { key: 'Pending_QC', label: 'รอตรวจสภาพ' }
     ]
+  },
+  {
+    id: 'supplier-sale-return',
+    label: 'คืน Supplier,คลังขาย',
+    theme: 'theme-indigo',
+    icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>`,
+    sortableByDocNo: true,
+    subGroups: [
+      { key: 'Pending_Supplier_Return', label: 'คืน Supplier,คลังขาย' }
+    ]
   }
 ];
 
@@ -164,6 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupCompanySettingsModal();
   setupSendEmailModal();
   setupDeliveryModal();
+  setupSupplierSaleReturnModal();
   setupEventListeners();
   setupAuthSystem();
   fetchFullState();
@@ -1143,6 +1154,7 @@ function renderHeaderCounters() {
   const inUseCount = state.loans.filter(l => l.main_column === 'in-use').length;
   const overdueCount = state.loans.filter(l => l.main_column === 'overdue-and-partial').length;
   const qcCount = state.loans.filter(l => l.main_column === 'qc' || l.status === 'Pending_QC').length;
+  const supplierSaleCount = state.loans.filter(l => l.main_column === 'supplier-sale-return' || l.status === 'Pending_Return_Supplier_Sale').length;
   const returnedCount = state.loans.filter(l => l.status === 'Returned').length;
 
   const elReq = document.getElementById('kpiRequesting');
@@ -1157,6 +1169,8 @@ function renderHeaderCounters() {
   if (elQc) elQc.textContent = qcCount;
   const elMQc = document.getElementById('mCountColQc');
   if (elMQc) elMQc.textContent = qcCount;
+  const elMSupp = document.getElementById('mCountColSupplierSale');
+  if (elMSupp) elMSupp.textContent = supplierSaleCount;
   const elRet = document.getElementById('countReturnedTab');
   if (elRet) elRet.textContent = returnedCount;
   const elStock = document.getElementById('countStockTab');
@@ -1439,6 +1453,9 @@ function renderKanbanCard(loan) {
   } else if (loan.status === 'Pending_QC') {
     wmText = 'รอตรวจ QC';
     wmClass = 'wm-qc';
+  } else if (loan.status === 'Pending_Return_Supplier_Sale') {
+    wmText = 'คืน Supp/ขาย';
+    wmClass = 'wm-supplier-sale';
   } else if (loan.status === 'Partially_Returned') {
     wmText = 'คืนไม่ครบ';
     wmClass = 'wm-partial';
@@ -1453,7 +1470,7 @@ function renderKanbanCard(loan) {
     <article
       class="loan-card clickable-card ${isHighlight ? 'card-highlight card-status-changed' : ''} ${statusClass} ${loan.is_overdue ? 'card-overdue' : ''}"
       data-card-loan="${escapeHtml(loan.id)}"
-      title="${isEditable ? 'คลิกเพื่อเปิดหน้าจัดของ & Match S/N' : loan.status === 'Pending_QC' ? 'คลิกเพื่อเปิดหน้าตรวจสภาพ QC & รับเข้าคลัง' : 'คลิกเพื่อเปิดดูใบยืมแบบเต็มหน้าจอ'}"
+      title="${isEditable ? 'คลิกเพื่อเปิดหน้าจัดของ & Match S/N' : loan.status === 'Pending_QC' ? 'คลิกเพื่อเปิดหน้าตรวจสภาพ QC & รับเข้าคลัง' : loan.status === 'Pending_Return_Supplier_Sale' ? 'คลิกเพื่อเปิดหน้าคืน Supplier, คลังขาย' : 'คลิกเพื่อเปิดดูใบยืมแบบเต็มหน้าจอ'}"
     >
       <!-- Background Watermark (ลายน้ำสถานะ) -->
       <div class="card-watermark ${wmClass}" aria-hidden="true">${wmText}</div>
@@ -1480,7 +1497,15 @@ function renderKanbanCard(loan) {
 
       <div class="card-footer">
         ${
-          ((isEditable || isDeliveredStage) && can('edit_loan')) || (loan.status === 'Requested' && can('cancel_loan'))
+          loan.status === 'Pending_Return_Supplier_Sale'
+            ? `
+          <div class="card-actions">
+            <button type="button" class="btn-card-edit-minimal" data-open-sup-sale-return="${escapeHtml(loan.id)}" title="จัดการส่งคืน Supplier / คลังขาย" style="color:#4338ca; border-color:#c7d2fe; background:#e0e7ff; font-weight:600;">
+              <span>คืน Supp/ขาย</span>
+            </button>
+          </div>
+          `
+            : ((isEditable || isDeliveredStage) && can('edit_loan')) || (loan.status === 'Requested' && can('cancel_loan'))
             ? `
           <div class="card-actions">
             ${can('edit_loan') ? `
@@ -1535,6 +1560,8 @@ function getLoanStatusBadge(loan) {
       return `<span class="min-status-badge delivered"><span class="status-dot green"></span>กำลังยืม</span>`;
     case 'Pending_QC':
       return `<span class="min-status-badge pending-qc"><span class="status-dot amber"></span>รอตรวจ QC</span>`;
+    case 'Pending_Return_Supplier_Sale':
+      return `<span class="min-status-badge pending-supplier-sale"><span class="status-dot indigo"></span>คืน Supp/ขาย</span>`;
     case 'Partially_Returned':
       return `<span class="min-status-badge partial"><span class="status-dot purple"></span>คืนบางส่วน</span>`;
     case 'Returned':
@@ -1733,7 +1760,12 @@ function renderReturnedView() {
             </div>
           </td>
           <td style="text-align:right;">
-            <span style="display:inline-block; font-size:11.5px; font-weight:600; color:#15803d; background:#f0fdf4; border:1px solid #bbf7d0; padding:2px 8px; border-radius:6px;">✓ คืนครบแล้ว</span>
+            <div style="display:flex; justify-content:flex-end; gap:6px; align-items:center;">
+              <button type="button" class="btn btn-sm btn-outline" data-open-return-slip="${escapeHtml(l.id)}" title="คลิกเพื่อเปิดพิมพ์ใบคืนสินค้า" style="font-size:11px; padding:2px 7px; color:#0f766e; border-color:#99f6e4; background:#f0fdfa;">
+                🖨️ ใบคืน
+              </button>
+              <span style="display:inline-block; font-size:11.5px; font-weight:600; color:#15803d; background:#f0fdf4; border:1px solid #bbf7d0; padding:2px 8px; border-radius:6px;">✓ คืนครบแล้ว</span>
+            </div>
           </td>
         </tr>
       `;
@@ -11980,6 +12012,655 @@ function clearSignatureCanvas() {
 }
 
 // ============================================================================
+// SUPPLIER & SALES STOCK RETURN (คืน Supplier, คลังขาย)
+// ============================================================================
+let currentSupplierReturnPhotos = [];
+let currentSaleActions = {};
+
+function setupSupplierSaleReturnModal() {
+  const dialog = document.getElementById('supplierSaleReturnDialog');
+  const btnSubmit = document.getElementById('btnSubmitSupSaleReturn');
+  const btnOpenSlip = document.getElementById('btnOpenReturnSlipFromModal');
+  const btnRevert = document.getElementById('btnRevertSupSaleReturn');
+
+  btnOpenSlip?.addEventListener('click', () => {
+    if (state.activeSupplierSaleLoan) {
+      openReturnSlipModal(state.activeSupplierSaleLoan.id);
+    }
+  });
+
+  btnRevert?.addEventListener('click', async () => {
+    if (!state.activeSupplierSaleLoan) return;
+    const loanId = state.activeSupplierSaleLoan.id;
+    if (!confirm(`ต้องการย้อนสถานะใบยืม "${loanId}" กลับเป็นกำลังยืมหรือไม่?`)) return;
+    try {
+      const res = await fetch(`/api/loans/${encodeURIComponent(loanId)}/revert-qc`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'ไม่สามารถย้อนสถานะได้');
+      applyServerState(data);
+      dialog?.close();
+      showToast(`↩️ ย้อนสถานะใบยืม "${loanId}" เรียบร้อย`);
+    } catch (err) {
+      showToast(`❌ ${err.message}`);
+    }
+  });
+
+  btnSubmit?.addEventListener('click', async () => {
+    if (!state.activeSupplierSaleLoan) return;
+    const loan = state.activeSupplierSaleLoan;
+    const loanId = loan.id;
+
+    const items = loan.items || [];
+    const hasSupplier = items.some(it => (it.source_snapshot || 'Demo') === 'Supplier');
+    const hasSale = items.some(it => (it.source_snapshot || 'Demo') === 'คลังขาย');
+
+    const supReceiver = (document.getElementById('supRetReceiver')?.value || '').trim();
+    const supSender = (document.getElementById('supRetSender')?.value || '').trim();
+    const supTimestamp = (document.getElementById('supRetTimestamp')?.value || '').trim();
+    const supNote = (document.getElementById('supRetNote')?.value || '').trim();
+
+    const saleSender = (document.getElementById('saleRetSender')?.value || '').trim();
+    const saleTimestamp = (document.getElementById('saleRetTimestamp')?.value || '').trim();
+    const saleNote = (document.getElementById('saleRetNote')?.value || '').trim();
+
+    if (hasSupplier && !supReceiver) {
+      showToast('⚠️ กรุณาระบุชื่อผู้รับคืนฝั่ง Supplier');
+      document.getElementById('supRetReceiver')?.focus();
+      return;
+    }
+    if (hasSupplier && !supSender) {
+      showToast('⚠️ กรุณาระบุชื่อพนักงานผู้ส่งคืน');
+      document.getElementById('supRetSender')?.focus();
+      return;
+    }
+    if (hasSale && !saleSender) {
+      showToast('⚠️ กรุณาระบุชื่อผู้ดำเนินการคืนคลังขาย');
+      document.getElementById('saleRetSender')?.focus();
+      return;
+    }
+
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = '<span>กำลังบันทึก...</span>';
+
+    try {
+      const payload = {
+        supplier_return_receiver: supReceiver,
+        supplier_return_sender: supSender,
+        supplier_return_timestamp: supTimestamp,
+        supplier_return_note: supNote,
+        supplier_return_photos: currentSupplierReturnPhotos,
+        sale_return_sender: saleSender,
+        sale_return_timestamp: saleTimestamp,
+        sale_return_note: saleNote,
+        sale_actions: currentSaleActions
+      };
+
+      const res = await fetch(`/api/loans/${encodeURIComponent(loanId)}/complete-supplier-sale-return`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'บันทึกการส่งคืนไม่สำเร็จ');
+
+      applyServerState(data);
+      dialog?.close();
+      showToast(`✅ บันทึกส่งคืน Supplier / คลังขาย (${loanId}) เรียบร้อยแล้ว`);
+
+      // Prompt to optionally view or print Return Slip
+      showModalAlert({
+        title: 'บันทึกการคืนสำเร็จ',
+        message: `บันทึกการคืนสำหรับใบยืม ${loanId} เรียบร้อยแล้ว\nต้องการออกใบคืนสินค้าเป็นหลักฐานหรือไม่?`,
+        confirmText: '🖨️ ออกใบคืนสินค้า',
+        cancelText: 'ปิด (ไม่พิมพ์)',
+        onConfirm: () => {
+          openReturnSlipModal(loanId);
+        }
+      });
+    } catch (err) {
+      showToast(`❌ ${err.message}`);
+    } finally {
+      btnSubmit.disabled = false;
+      btnSubmit.innerHTML = '<span>✅ บันทึกยืนยันการคืน</span>';
+    }
+  });
+
+  // Direct print button in Return Slip dialog
+  const btnPrintReturnSlipDirect = document.getElementById('btnPrintReturnSlipDirect');
+  btnPrintReturnSlipDirect?.addEventListener('click', () => {
+    window.print();
+  });
+}
+
+async function handleSupPhotoFiles(files) {
+  if (!files || !files.length) return;
+  for (const file of Array.from(files)) {
+    try {
+      const compressed = await compressImageFile(file, 1280, 0.75);
+      currentSupplierReturnPhotos.push(compressed);
+    } catch (e) {
+      console.warn('Failed to compress supplier return photo:', e);
+    }
+  }
+  renderSupPhotoGrid();
+}
+
+function renderSupPhotoGrid() {
+  const grid = document.getElementById('supPhotoGrid');
+  const countBadge = document.getElementById('supPhotoCountBadge');
+  if (countBadge) countBadge.textContent = `${currentSupplierReturnPhotos.length} รูป`;
+  if (!grid) return;
+  if (currentSupplierReturnPhotos.length === 0) {
+    grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:12px; color:#94a3b8; font-size:12px;">ยังไม่มีรูปถ่ายหลักฐาน</div>`;
+    return;
+  }
+  grid.innerHTML = currentSupplierReturnPhotos.map((src, idx) => `
+    <div class="delivery-photo-item">
+      <img src="${src}" alt="หลักฐานการคืน #${idx + 1}" />
+      <button type="button" class="btn-remove-photo" data-del-sup-photo="${idx}" title="ลบรูปนี้">✕</button>
+    </div>
+  `).join('');
+}
+
+function attachSupplierSaleModalEvents() {
+  const contentWrap = document.getElementById('supSaleContentWrap');
+  if (!contentWrap) return;
+
+  // 1. Action switcher for sales stock
+  contentWrap.querySelectorAll('.sale-action-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const switcher = opt.closest('.sale-action-switcher');
+      const tagId = switcher?.getAttribute('data-sale-tag');
+      const val = opt.getAttribute('data-action-val');
+      if (tagId && val) {
+        currentSaleActions[tagId] = val;
+        switcher.querySelectorAll('.sale-action-option').forEach(o => {
+          o.classList.remove('active-sale', 'active-demo');
+        });
+        if (val === 'return_to_sale') opt.classList.add('active-sale');
+        if (val === 'convert_to_demo') opt.classList.add('active-demo');
+      }
+    });
+  });
+
+  // 2. Quick clear buttons
+  contentWrap.querySelectorAll('.btn-input-clear').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-clear-target');
+      const inp = document.getElementById(targetId);
+      if (inp) {
+        inp.value = '';
+        btn.classList.add('hidden');
+        inp.focus();
+      }
+    });
+  });
+
+  // 3. Clear button toggle on typing
+  contentWrap.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const btn = inp.closest('.input-clearable-wrap')?.querySelector('.btn-input-clear');
+      if (btn) btn.classList.toggle('hidden', !(inp.value && inp.value.trim().length > 0));
+    });
+  });
+
+  // 4. Camera snap and file pick for Supplier photos
+  const snapBtn = document.getElementById('btnSnapSupCamera');
+  const pickBtn = document.getElementById('btnPickSupFile');
+  const camInput = document.getElementById('supCameraInput');
+  const fileInput = document.getElementById('supFileInput');
+
+  snapBtn?.addEventListener('click', () => camInput?.click());
+  camInput?.addEventListener('change', async (e) => {
+    await handleSupPhotoFiles(e.target.files);
+    camInput.value = '';
+  });
+
+  pickBtn?.addEventListener('click', () => fileInput?.click());
+  fileInput?.addEventListener('change', async (e) => {
+    await handleSupPhotoFiles(e.target.files);
+    fileInput.value = '';
+  });
+
+  // 5. Remove photo
+  const grid = document.getElementById('supPhotoGrid');
+  grid?.addEventListener('click', (e) => {
+    const rmBtn = e.target.closest('[data-del-sup-photo]');
+    if (rmBtn) {
+      const idx = Number(rmBtn.getAttribute('data-del-sup-photo'));
+      if (!isNaN(idx) && idx >= 0 && idx < currentSupplierReturnPhotos.length) {
+        currentSupplierReturnPhotos.splice(idx, 1);
+        renderSupPhotoGrid();
+      }
+    }
+  });
+}
+
+function openSupplierSaleReturnModal(loanId) {
+  const loan = state.loans.find(l => l.id === loanId);
+  if (!loan) return;
+  state.activeSupplierSaleLoan = loan;
+  currentSupplierReturnPhotos = Array.isArray(loan.supplier_return_photos) ? [...loan.supplier_return_photos] : [];
+  currentSaleActions = { ...(loan.sale_return_action || {}) };
+
+  const dialog = document.getElementById('supplierSaleReturnDialog');
+  if (!dialog) return;
+
+  const loanBadge = document.getElementById('supSaleLoanBadge');
+  if (loanBadge) loanBadge.textContent = loan.id;
+  const subEl = document.getElementById('supSaleCustomerSubtitle');
+  if (subEl) {
+    const cust = loan.customer_company ? `${loan.customer_company} (${loan.customer_name})` : (loan.customer_name || 'ลูกค้า');
+    subEl.textContent = `ลูกค้า: ${cust} • ผู้ยืม: ${loan.borrower_name || '-'}`;
+  }
+
+  const hiddenId = document.getElementById('supSaleLoanId');
+  if (hiddenId) hiddenId.value = loan.id;
+
+  const items = loan.items || [];
+  const supplierItems = items.filter(it => (it.source_snapshot || 'Demo') === 'Supplier');
+  const saleItems = items.filter(it => (it.source_snapshot || 'Demo') === 'คลังขาย');
+
+  // Pre-fill default actions for sale items
+  saleItems.forEach(it => {
+    if (!currentSaleActions[it.tag_id]) {
+      currentSaleActions[it.tag_id] = 'return_to_sale';
+    }
+  });
+
+  const contentWrap = document.getElementById('supSaleContentWrap');
+  if (!contentWrap) return;
+
+  const nowDt = new Date();
+  const nowIsoString = new Date(nowDt.getTime() - (nowDt.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+  const defaultUser = getLoggedInUserName() || loan.borrower_name || '';
+
+  let html = '';
+
+  // SECTION 1: SUPPLIER ITEMS (ถ้ามี)
+  if (supplierItems.length > 0) {
+    html += `
+      <div class="return-section-block">
+        <div class="return-section-header">
+          <div class="return-section-title-wrap">
+            <span style="font-size:18px;">🚚</span>
+            <h4 class="return-section-title">1. รายการคืน Supplier</h4>
+            <span class="badge" style="background:#e0e7ff; color:#4338ca; border:1px solid #c7d2fe; font-size:12px; padding:2px 8px; border-radius:999px;">
+              ${supplierItems.length} เครื่อง
+            </span>
+          </div>
+          <div class="return-flow-notice supplier-flow" style="padding:4px 10px; font-size:12px;">
+            ⚡ ไม่ต้องผ่าน QC (ส่งคืน Supplier ภายนอก)
+          </div>
+        </div>
+
+        <table class="return-items-table">
+          <thead>
+            <tr>
+              <th style="width:40px; text-align:center;">#</th>
+              <th>แบรนด์ & รุ่น</th>
+              <th>Serial Number (S/N)</th>
+              <th>อุปกรณ์เสริม</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${supplierItems.map((it, idx) => `
+              <tr>
+                <td style="text-align:center; color:#64748b; font-weight:600;">${idx + 1}</td>
+                <td>
+                  <strong style="color:#0f172a;">${escapeHtml(it.brand || '')}</strong>
+                  <div style="color:#475569;">${escapeHtml(it.model || '')}</div>
+                </td>
+                <td>
+                  <span class="return-sn-pill">${escapeHtml(it.serial_no || it.tag_id || '-')}</span>
+                </td>
+                <td style="color:#64748b; font-size:12px;">
+                  ${Array.isArray(it.loan_accessories) && it.loan_accessories.length > 0 ? it.loan_accessories.join(', ') : 'ตัวเครื่องมาตรฐาน'}
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <!-- Form Fields for Supplier Return -->
+        <div class="form-grid grid-2-col" style="margin-top:6px;">
+          <div class="form-group mb-0">
+            <label class="form-label" for="supRetReceiver">คืนให้ใคร (ผู้รับคืนฝั่ง Supplier) <span class="required">*</span></label>
+            <div class="input-clearable-wrap">
+              <input type="text" id="supRetReceiver" class="form-control" placeholder="ชื่อเจ้าหน้าที่ / ตัวแทน Supplier ผู้รับคืน..." value="${escapeHtml(loan.supplier_return_receiver || '')}" autocomplete="off" />
+              <button type="button" class="btn-input-clear ${loan.supplier_return_receiver ? '' : 'hidden'}" data-clear-target="supRetReceiver" title="ล้างค่า">✕</button>
+            </div>
+          </div>
+          <div class="form-group mb-0">
+            <label class="form-label" for="supRetSender">คืนโดยใคร (พนักงานผู้ส่งคืน) <span class="required">*</span></label>
+            <div class="input-clearable-wrap">
+              <input type="text" id="supRetSender" class="form-control" placeholder="ชื่อพนักงานผู้ส่งคืน..." value="${escapeHtml(loan.supplier_return_sender || defaultUser)}" autocomplete="off" />
+              <button type="button" class="btn-input-clear" data-clear-target="supRetSender" title="ล้างค่า">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-grid grid-2-col" style="margin-top:6px;">
+          <div class="form-group mb-0">
+            <label class="form-label" for="supRetTimestamp">วันที่และเวลาที่ส่งคืน</label>
+            <input type="datetime-local" id="supRetTimestamp" class="form-control" value="${escapeHtml(loan.supplier_return_timestamp || nowIsoString)}" />
+          </div>
+          <div class="form-group mb-0">
+            <label class="form-label" for="supRetNote">หมายเหตุส่งคืน Supplier</label>
+            <div class="input-clearable-wrap">
+              <input type="text" id="supRetNote" class="form-control" placeholder="เช่น ฝาก รปภ., ส่งคืนเคาน์เตอร์, ใบส่งของเลขที่..." value="${escapeHtml(loan.supplier_return_note || '')}" autocomplete="off" />
+              <button type="button" class="btn-input-clear ${loan.supplier_return_note ? '' : 'hidden'}" data-clear-target="supRetNote" title="ล้างค่า">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Supplier Return Photos -->
+        <div class="form-group mb-0" style="margin-top:4px;">
+          <div class="photo-upload-header">
+            <label class="form-label mb-0">รูปถ่ายหลักฐานการส่งคืน Supplier (ถ้ามี)</label>
+            <span class="photo-count-badge" id="supPhotoCountBadge">${currentSupplierReturnPhotos.length} รูป</span>
+          </div>
+          <div class="delivery-photo-actions">
+            <input type="file" id="supCameraInput" accept="image/*" capture="environment" class="hidden" />
+            <input type="file" id="supFileInput" accept="image/*" multiple class="hidden" />
+            <button type="button" class="btn btn-outline btn-photo-snap" id="btnSnapSupCamera">📷 ถ่ายรูป</button>
+            <button type="button" class="btn btn-outline btn-photo-pick" id="btnPickSupFile">📁 เลือกรูป</button>
+          </div>
+          <div id="supPhotoGrid" class="delivery-photo-grid"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  // SECTION 2: SALE ITEMS (ถ้ามี)
+  if (saleItems.length > 0) {
+    html += `
+      <div class="return-section-block">
+        <div class="return-section-header">
+          <div class="return-section-title-wrap">
+            <span style="font-size:18px;">🏢</span>
+            <h4 class="return-section-title">2. รายการคืนคลังขาย</h4>
+            <span class="badge" style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-size:12px; padding:2px 8px; border-radius:999px;">
+              ${saleItems.length} เครื่อง
+            </span>
+          </div>
+          <div class="return-flow-notice" style="padding:4px 10px; font-size:12px;">
+            ✅ ผ่านการตรวจสภาพ QC เรียบร้อยแล้ว
+          </div>
+        </div>
+
+        <table class="return-items-table">
+          <thead>
+            <tr>
+              <th style="width:40px; text-align:center;">#</th>
+              <th>แบรนด์ & รุ่น</th>
+              <th>Serial Number (S/N)</th>
+              <th style="min-width:240px;">การจัดการสต็อก (เลือกปลายทาง)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${saleItems.map((it, idx) => {
+              const currentAction = currentSaleActions[it.tag_id] || 'return_to_sale';
+              return `
+                <tr>
+                  <td style="text-align:center; color:#64748b; font-weight:600;">${idx + 1}</td>
+                  <td>
+                    <strong style="color:#0f172a;">${escapeHtml(it.brand || '')}</strong>
+                    <div style="color:#475569;">${escapeHtml(it.model || '')}</div>
+                  </td>
+                  <td>
+                    <span class="return-sn-pill">${escapeHtml(it.serial_no || it.tag_id || '-')}</span>
+                  </td>
+                  <td>
+                    <div class="sale-action-switcher" data-sale-tag="${escapeHtml(it.tag_id)}">
+                      <div class="sale-action-option ${currentAction === 'return_to_sale' ? 'active-sale' : ''}" data-action-val="return_to_sale">
+                        <span>🏢 คืนคลังขายปกติ</span>
+                      </div>
+                      <div class="sale-action-option ${currentAction === 'convert_to_demo' ? 'active-demo' : ''}" data-action-val="convert_to_demo">
+                        <span>📦 ตีเป็น Demo</span>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+
+        <!-- Form Fields for Sale Return -->
+        <div class="form-grid grid-2-col" style="margin-top:6px;">
+          <div class="form-group mb-0">
+            <label class="form-label" for="saleRetSender">คืนโดยใคร (พนักงานผู้ดำเนินการ) <span class="required">*</span></label>
+            <div class="input-clearable-wrap">
+              <input type="text" id="saleRetSender" class="form-control" placeholder="ชื่อผู้ดำเนินการ..." value="${escapeHtml(loan.sale_return_sender || defaultUser)}" autocomplete="off" />
+              <button type="button" class="btn-input-clear" data-clear-target="saleRetSender" title="ล้างค่า">✕</button>
+            </div>
+          </div>
+          <div class="form-group mb-0">
+            <label class="form-label" for="saleRetTimestamp">วันที่และเวลา</label>
+            <input type="datetime-local" id="saleRetTimestamp" class="form-control" value="${escapeHtml(loan.sale_return_timestamp || nowIsoString)}" />
+          </div>
+        </div>
+
+        <div class="form-group mb-0" style="margin-top:6px;">
+          <label class="form-label" for="saleRetNote">หมายเหตุการคืนคลังขาย</label>
+          <div class="input-clearable-wrap">
+            <input type="text" id="saleRetNote" class="form-control" placeholder="เช่น สภาพสมบูรณ์ ไม่ชำรุดเสียหาย, หรือตีเข้าเดโมเพราะมีรอยแกะ..." value="${escapeHtml(loan.sale_return_note || '')}" autocomplete="off" />
+            <button type="button" class="btn-input-clear ${loan.sale_return_note ? '' : 'hidden'}" data-clear-target="saleRetNote" title="ล้างค่า">✕</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  contentWrap.innerHTML = html;
+
+  renderSupPhotoGrid();
+  attachSupplierSaleModalEvents();
+
+  dialog.showModal();
+}
+
+function openReturnSlipModal(loanId) {
+  const loan = state.loans.find(l => l.id === loanId);
+  if (!loan) return;
+
+  const dialog = document.getElementById('returnSlipDialog');
+  if (!dialog) return;
+
+  const badgeEl = document.getElementById('returnSlipLoanBadge');
+  if (badgeEl) badgeEl.textContent = `${loan.id} (ใบคืน)`;
+
+  const paper = document.getElementById('returnSlipPaperContent');
+  if (!paper) return;
+
+  const items = loan.items || [];
+  const supplierItems = items.filter(it => (it.source_snapshot || 'Demo') === 'Supplier');
+  const saleItems = items.filter(it => (it.source_snapshot || 'Demo') === 'คลังขาย');
+  const demoItems = items.filter(it => (it.source_snapshot || 'Demo') === 'Demo');
+
+  const supReceiver = loan.supplier_return_receiver || '-';
+  const supSender = loan.supplier_return_sender || loan.borrower_name || '-';
+  const supTimestamp = loan.supplier_return_timestamp ? formatDateTimeThai(loan.supplier_return_timestamp) : '-';
+  const supNote = loan.supplier_return_note || '-';
+
+  const saleSender = loan.sale_return_sender || loan.borrower_name || '-';
+  const saleTimestamp = loan.sale_return_timestamp ? formatDateTimeThai(loan.sale_return_timestamp) : '-';
+  const saleNote = loan.sale_return_note || '-';
+  const saleActions = loan.sale_return_action || {};
+
+  const customerStr = loan.customer_company ? `${loan.customer_company} (${loan.customer_name})` : (loan.customer_name || 'ลูกค้า');
+  const printDateStr = formatDateTimeThai(loan.return_date || new Date().toISOString());
+
+  let itemsHtml = '';
+  let rowCounter = 1;
+
+  if (supplierItems.length > 0) {
+    itemsHtml += `
+      <tr>
+        <td colspan="5" style="background:#eff6ff; font-weight:700; color:#1e40af; padding:8px 10px;">
+          🚚 1. รายการส่งคืนให้ Supplier (ยืมภายนอก)
+        </td>
+      </tr>
+      ${supplierItems.map(it => `
+        <tr>
+          <td style="text-align:center;">${rowCounter++}</td>
+          <td><strong>${escapeHtml(it.brand || '')}</strong> ${escapeHtml(it.model || '')}</td>
+          <td style="font-family:monospace; font-weight:600;">${escapeHtml(it.serial_no || it.tag_id || '-')}</td>
+          <td>${Array.isArray(it.loan_accessories) && it.loan_accessories.length > 0 ? it.loan_accessories.join(', ') : 'ตัวเครื่องมาตรฐาน'}</td>
+          <td style="color:#1d4ed8; font-weight:600;">ส่งคืน Supplier เรียบร้อย</td>
+        </tr>
+      `).join('')}
+    `;
+  }
+
+  if (saleItems.length > 0) {
+    itemsHtml += `
+      <tr>
+        <td colspan="5" style="background:#fef3c7; font-weight:700; color:#b45309; padding:8px 10px;">
+          🏢 2. รายการคืนคลังขาย (เบิกสต็อกขาย)
+        </td>
+      </tr>
+      ${saleItems.map(it => {
+        const action = saleActions[it.tag_id] || it.return_action || 'return_to_sale';
+        const actionLabel = action === 'convert_to_demo' ? '📦 ตีเข้าเป็นคลัง Demo' : '🏢 คืนสต็อกคลังขายปกติ';
+        return `
+          <tr>
+            <td style="text-align:center;">${rowCounter++}</td>
+            <td><strong>${escapeHtml(it.brand || '')}</strong> ${escapeHtml(it.model || '')}</td>
+            <td style="font-family:monospace; font-weight:600;">${escapeHtml(it.serial_no || it.tag_id || '-')}</td>
+            <td>${Array.isArray(it.loan_accessories) && it.loan_accessories.length > 0 ? it.loan_accessories.join(', ') : 'ตัวเครื่องมาตรฐาน'}</td>
+            <td style="font-weight:600; color:${action === 'convert_to_demo' ? '#7c3aed' : '#2563eb'};">${actionLabel}</td>
+          </tr>
+        `;
+      }).join('')}
+    `;
+  }
+
+  if (demoItems.length > 0 && supplierItems.length === 0 && saleItems.length === 0) {
+    itemsHtml += `
+      <tr>
+        <td colspan="5" style="background:#f8fafc; font-weight:700; color:#475569; padding:8px 10px;">
+          📦 รายการคืนคลัง Demo
+        </td>
+      </tr>
+      ${demoItems.map(it => `
+        <tr>
+          <td style="text-align:center;">${rowCounter++}</td>
+          <td><strong>${escapeHtml(it.brand || '')}</strong> ${escapeHtml(it.model || '')}</td>
+          <td style="font-family:monospace; font-weight:600;">${escapeHtml(it.serial_no || it.tag_id || '-')}</td>
+          <td>${Array.isArray(it.loan_accessories) && it.loan_accessories.length > 0 ? it.loan_accessories.join(', ') : 'ตัวเครื่องมาตรฐาน'}</td>
+          <td style="color:#059669; font-weight:600;">รับเข้าคลัง Demo (QC ผ่าน)</td>
+        </tr>
+      `).join('')}
+    `;
+  }
+
+  paper.innerHTML = `
+    <div class="slip-header">
+      <div>
+        <div class="slip-company-name">บริษัท แอคทีฟ 5 จำกัด</div>
+        <div class="slip-company-sub">ACTIVE 5 COMPANY LIMITED • ระบบจัดการทรัพย์สิน activeASSET</div>
+      </div>
+      <div class="slip-title-box">
+        <div class="slip-title-main">ใบส่งคืนสินค้า</div>
+        <div class="slip-meta-line"><strong>เลขที่อ้างอิง:</strong> ${escapeHtml(loan.id)}</div>
+        <div class="slip-meta-line"><strong>วันที่ออกเอกสาร:</strong> ${printDateStr}</div>
+      </div>
+    </div>
+
+    <div class="slip-info-grid">
+      <div>
+        <div class="slip-info-row">
+          <div class="slip-info-label">ลูกค้า / บริษัท:</div>
+          <div class="slip-info-val">${escapeHtml(customerStr)}</div>
+        </div>
+        <div class="slip-info-row">
+          <div class="slip-info-label">ผู้ยืมสินค้า:</div>
+          <div class="slip-info-val">${escapeHtml(loan.borrower_name || '-')}</div>
+        </div>
+        <div class="slip-info-row">
+          <div class="slip-info-label">วัตถุประสงค์:</div>
+          <div class="slip-info-val">${escapeHtml(loan.purpose || 'Demo')}</div>
+        </div>
+      </div>
+      <div>
+        ${supplierItems.length > 0 ? `
+          <div class="slip-info-row">
+            <div class="slip-info-label">ผู้รับคืน (Supplier):</div>
+            <div class="slip-info-val">${escapeHtml(supReceiver)}</div>
+          </div>
+          <div class="slip-info-row">
+            <div class="slip-info-label">ผู้ส่งคืน:</div>
+            <div class="slip-info-val">${escapeHtml(supSender)}</div>
+          </div>
+          <div class="slip-info-row">
+            <div class="slip-info-label">วันเวลาส่งคืน:</div>
+            <div class="slip-info-val">${escapeHtml(supTimestamp)}</div>
+          </div>
+        ` : `
+          <div class="slip-info-row">
+            <div class="slip-info-label">ผู้รับคืนคลัง:</div>
+            <div class="slip-info-val">${escapeHtml(saleSender)}</div>
+          </div>
+          <div class="slip-info-row">
+            <div class="slip-info-label">วันเวลาคืน:</div>
+            <div class="slip-info-val">${escapeHtml(saleTimestamp)}</div>
+          </div>
+        `}
+      </div>
+    </div>
+
+    <table class="slip-table">
+      <thead>
+        <tr>
+          <th style="width:40px; text-align:center;">#</th>
+          <th>แบรนด์ & รุ่นสินค้า</th>
+          <th>Serial Number (S/N)</th>
+          <th>อุปกรณ์เสริม</th>
+          <th>ผลการจัดการสต็อก</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemsHtml}
+      </tbody>
+    </table>
+
+    ${supNote && supNote !== '-' ? `
+      <div style="font-size:12px; color:#475569; margin-bottom:14px; background:#f8fafc; padding:8px 12px; border-radius:6px; border:1px solid #e2e8f0;">
+        <strong>หมายเหตุคืน Supplier:</strong> ${escapeHtml(supNote)}
+      </div>
+    ` : ''}
+
+    ${saleNote && saleNote !== '-' ? `
+      <div style="font-size:12px; color:#475569; margin-bottom:14px; background:#f8fafc; padding:8px 12px; border-radius:6px; border:1px solid #e2e8f0;">
+        <strong>หมายเหตุคืนคลังขาย:</strong> ${escapeHtml(saleNote)}
+      </div>
+    ` : ''}
+
+    <div class="slip-signatures-grid">
+      <div class="slip-sig-box">
+        <div class="slip-sig-line"></div>
+        <div class="slip-sig-label">ลงชื่อ .....................................................</div>
+        <div style="font-size:12px; color:#475569; margin-top:2px;">( ${escapeHtml(supplierItems.length > 0 ? supSender : saleSender)} )</div>
+        <div class="slip-sig-date">ผู้ส่งคืนสินค้า / พนักงาน</div>
+      </div>
+      <div class="slip-sig-box">
+        <div class="slip-sig-line"></div>
+        <div class="slip-sig-label">ลงชื่อ .....................................................</div>
+        <div style="font-size:12px; color:#475569; margin-top:2px;">( ${escapeHtml(supplierItems.length > 0 ? supReceiver : 'เจ้าหน้าที่คลังสินค้า')} )</div>
+        <div class="slip-sig-date">ผู้รับคืนสินค้า / ตัวแทน Supplier / คลังขาย</div>
+      </div>
+    </div>
+  `;
+
+  dialog.showModal();
+}
+
+// ============================================================================
 // TOP SEARCH & UNIVERSAL BARCODE & QR SCANNER (CAMERA)
 // ============================================================================
 let searchHtml5QrCode = null;
@@ -12827,10 +13508,30 @@ function setupEventListeners() {
       return;
     }
 
+    const returnSlipBtn = e.target.closest('[data-open-return-slip]');
+    if (returnSlipBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      openReturnSlipModal(returnSlipBtn.getAttribute('data-open-return-slip'));
+      return;
+    }
+
+    const supSaleReturnBtn = e.target.closest('[data-open-sup-sale-return]');
+    if (supSaleReturnBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      openSupplierSaleReturnModal(supSaleReturnBtn.getAttribute('data-open-sup-sale-return'));
+      return;
+    }
+
     const cardEl = e.target.closest('[data-card-loan]');
     if (cardEl && !e.target.closest('.min-actions-toolbar') && (!e.target.closest('button') || e.target.closest('.list-doc-pill'))) {
       const loanId = cardEl.getAttribute('data-card-loan');
       const loan = state.loans.find(l => l.id === loanId);
+      if (loan && loan.status === 'Pending_Return_Supplier_Sale') {
+        openSupplierSaleReturnModal(loan.id);
+        return;
+      }
       // If loan is waiting for picking, awaiting delivery, currently on loan, or pending QC:
       // Open the Dispatch & Item Inspection / Return screen directly!
       if (loan && (loan.status === 'Requested' || loan.status === 'Dispatching' || loan.status === 'Dispatched' || loan.status === 'Delivered' || loan.status === 'Pending_QC' || loan.status === 'Partially_Returned')) {
@@ -15596,10 +16297,18 @@ function setupEventListeners() {
           applyServerState(data);
           document.getElementById('dispatchDialog')?.close();
 
-          // On mobile: switch to 'qc' column automatically so user sees the newly moved card
-          if (!isPendingQc && window.innerWidth <= 768) {
-            const qcColBtn = document.querySelector('.col-pill-btn[data-col-target="qc"]');
-            qcColBtn?.click();
+          const updatedLoan = (state.loans || []).find(l => l.id === loan.id);
+          const nextStatus = updatedLoan?.status;
+
+          // On mobile: switch to target column automatically so user sees the newly moved card
+          if (window.innerWidth <= 768) {
+            if (nextStatus === 'Pending_Return_Supplier_Sale') {
+              const supColBtn = document.querySelector('.col-pill-btn[data-col-target="supplier-sale-return"]');
+              supColBtn?.click();
+            } else if (!isPendingQc) {
+              const qcColBtn = document.querySelector('.col-pill-btn[data-col-target="qc"]');
+              qcColBtn?.click();
+            }
           }
 
           // Smooth scroll to highlight the card with colored border
@@ -15611,8 +16320,13 @@ function setupEventListeners() {
             }
           }, 200);
 
-          const updatedLoan = (state.loans || []).find(l => l.id === loan.id);
-          if (isPendingQc) {
+          if (nextStatus === 'Pending_Return_Supplier_Sale') {
+            if (isPendingQc) {
+              showToast(`✅ ตรวจ QC ผ่านเรียบร้อย — ส่งต่อไปยังขั้นตอน "คืน Supplier,คลังขาย"`);
+            } else {
+              showToast(`📥 รับคืนเรียบร้อย — สินค้า Supplier ส่งไปยังขั้นตอน "คืน Supplier,คลังขาย"`);
+            }
+          } else if (isPendingQc) {
             const isAllDone = updatedLoan ? updatedLoan.status === 'Returned' : false;
             showToast(isAllDone 
               ? `✅ ตรวจ QC ผ่าน — รับสินค้า ${loan.id} เข้าคลังเรียบร้อยแล้ว` 

@@ -225,6 +225,11 @@
             <span class="col-pill-label">ตรวจ QC</span>
             <span class="col-pill-badge" id="mCountColQc">0</span>
           </button>
+          <button type="button" class="col-pill-btn" data-col-target="supplier-sale-return">
+            <span class="col-pill-dot dot-indigo"></span>
+            <span class="col-pill-label">คืน Supp/ขาย</span>
+            <span class="col-pill-badge" id="mCountColSupplierSale">0</span>
+          </button>
         </div>
 
         <div class="kanban-scroll-wrap" id="kanbanClassicWrap">
@@ -1411,6 +1416,85 @@
           </button>
         </footer>
       </form>
+    </div>
+  </dialog>
+
+  <!-- =====================================================================
+       MODAL: คืน Supplier, คลังขาย (Supplier & Sales Stock Return Modal)
+       ===================================================================== -->
+  <dialog id="supplierSaleReturnDialog" class="modal-dialog modal-supplier-sale no-print" aria-labelledby="supSaleModalTitle">
+    <div class="modal-card supplier-sale-modal-card">
+      <div class="sheet-drag-handle"></div>
+      <header class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-title-with-badge">
+            <h3 id="supSaleModalTitle" class="modal-title">คืน Supplier, คลังขาย</h3>
+            <span class="badge badge-purple" id="supSaleLoanBadge">LOAN-XXXX</span>
+          </div>
+          <p class="modal-subtitle" id="supSaleCustomerSubtitle">บันทึกข้อมูลการส่งคืนสินค้าให้ Supplier และจัดสต็อกคืนคลังขาย</p>
+        </div>
+        <button type="button" class="btn-close-modal" data-close-dialog="supplierSaleReturnDialog" aria-label="ปิด">✕</button>
+      </header>
+
+      <div class="modal-body supplier-sale-body">
+        <input type="hidden" id="supSaleLoanId" />
+
+        <!-- Dynamic Container rendered by app.js: Supplier Section & Sale Section -->
+        <div id="supSaleContentWrap"></div>
+      </div>
+
+      <footer class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn btn-outline" data-close-dialog="supplierSaleReturnDialog">ปิด</button>
+          <button type="button" class="btn btn-sm btn-outline" id="btnRevertSupSaleReturn" style="color:#ef4444; border-color:#fecaca;" title="ย้อนสถานะกลับไปก่อนหน้า">
+            ↩️ ย้อนสถานะ
+          </button>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn btn-outline" id="btnOpenReturnSlipFromModal" style="border-color:#cbd5e1; color:#0f766e;">
+            🖨️ ออกใบคืนสินค้า
+          </button>
+          <button type="button" class="btn btn-primary" id="btnSubmitSupSaleReturn" style="background:#4338ca; border-color:#4338ca;">
+            ✅ บันทึกยืนยันการคืน
+          </button>
+        </div>
+      </footer>
+    </div>
+  </dialog>
+
+  <!-- =====================================================================
+       MODAL: ใบคืนสินค้า (Goods Return Slip / Receipt Modal)
+       ===================================================================== -->
+  <dialog id="returnSlipDialog" class="modal-dialog modal-fullscreen no-print" closedby="any" aria-labelledby="returnSlipTitle">
+    <div class="modal-inner">
+      <header class="modal-header print-modal-header">
+        <div class="print-navbar-left">
+          <div class="print-title-group">
+            <button type="button" class="btn-navbar-back btn-navbar-icon-only" data-close-dialog="returnSlipDialog" title="ย้อนกลับ" aria-label="ย้อนกลับ">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <div class="print-nav-divider"></div>
+            <div class="print-title-wrap">
+              <h2 id="returnSlipTitle" class="print-nav-title">ใบคืนสินค้า</h2>
+              <span class="print-loan-badge" id="returnSlipLoanBadge"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="print-navbar-right">
+          <button type="button" class="btn btn-primary btn-print-action" id="btnPrintReturnSlipDirect">
+            🖨️ สั่งพิมพ์ / บันทึกเป็น PDF
+          </button>
+        </div>
+      </header>
+
+      <div class="modal-body print-modal-body print-preview-scroll">
+        <div class="return-slip-paper" id="returnSlipPaperContent">
+          <!-- Rendered dynamically by app.js -->
+        </div>
+      </div>
     </div>
   </dialog>
 

@@ -273,6 +273,36 @@ try {
 try {
   db.exec(`ALTER TABLE loans ADD COLUMN dispatcher_name TEXT DEFAULT ''`);
 } catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN supplier_return_receiver TEXT DEFAULT ''`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN supplier_return_sender TEXT DEFAULT ''`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN supplier_return_timestamp TEXT DEFAULT ''`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN supplier_return_note TEXT DEFAULT ''`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN supplier_return_photos_json TEXT DEFAULT '[]'`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN sale_return_sender TEXT DEFAULT ''`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN sale_return_timestamp TEXT DEFAULT ''`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN sale_return_note TEXT DEFAULT ''`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loans ADD COLUMN sale_return_action_json TEXT DEFAULT '{}'`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE loan_items ADD COLUMN return_action TEXT DEFAULT ''`);
+} catch (e) {}
 
 // Users & Corporate Authentication Table
 db.exec(`
@@ -1579,6 +1609,9 @@ function getFullState() {
     } else if (l.status === 'Pending_QC') {
       mainColumn = 'qc';
       subGroup = 'Pending_QC';
+    } else if (l.status === 'Pending_Return_Supplier_Sale') {
+      mainColumn = 'supplier-sale-return';
+      subGroup = 'Pending_Supplier_Return';
     } else if (l.status === 'Partially_Returned') {
       mainColumn = 'overdue-and-partial';
       subGroup = days < 0 ? 'Overdue' : 'Partially_Returned';
@@ -1595,6 +1628,8 @@ function getFullState() {
       before_photos: JSON.parse(l.before_photos_json || '[]'),
       after_photos: JSON.parse(l.after_photos_json || '[]'),
       delivery_photos: JSON.parse(l.delivery_photos_json || '[]'),
+      supplier_return_photos: JSON.parse(l.supplier_return_photos_json || '[]'),
+      sale_return_action: JSON.parse(l.sale_return_action_json || '{}'),
       items,
       days_until: days,
       is_overdue: isOverdue,
@@ -3870,57 +3905,81 @@ const server = http.createServer(async (req, res) => {
           const qcNote = String(ri.qc_note || '').trim();
 
           if (isQcPhase) {
-            // STEP 2: In QC queue -> Approving QC inspection and restock into Available
+            // STEP 2: In QC queue -> Approving QC inspection
             const qcStatus = ri.qc_status === 'Fail' || missingAcc.length > 0 ? 'Fail' : 'Pass';
-            const returnedToLoc = 1;
+            const isSaleItem = (loanItem.source_snapshot || 'Demo') === 'คลังขาย';
+            const isSupplierItem = (loanItem.source_snapshot || 'Demo') === 'Supplier';
 
-            db.prepare(`
-              UPDATE loan_items
-              SET returned = 1,
-                  returned_at = COALESCE(returned_at, datetime('now', 'localtime')),
-                  returned_accessories_json = ?,
-                  missing_accessories_json = ?,
-                  qc_status = ?,
-                  qc_note = ?,
-                  returned_to_location = ?
-              WHERE id = ?
-            `).run(
-              JSON.stringify(returnedAcc),
-              JSON.stringify(missingAcc),
-              qcStatus,
-              qcNote,
-              returnedToLoc,
-              loanItem.id
-            );
-
-            if (qcStatus === 'Pass') {
+            if (isSaleItem || isSupplierItem) {
+              // Sale and Supplier items must proceed to "คืน Supplier,คลังขาย" step
               db.prepare(`
-                UPDATE assets
-                SET status = 'Available',
-                    current_loan_id = NULL,
-                    issue_note = '',
-                    missing_tags_json = '[]',
-                    updated_at = datetime('now', 'localtime')
-                WHERE tag_id = ?
-              `).run(ri.tag_id);
+                UPDATE loan_items
+                SET returned = 0,
+                    returned_accessories_json = ?,
+                    missing_accessories_json = ?,
+                    qc_status = ?,
+                    qc_note = ?,
+                    returned_to_location = 0
+                WHERE id = ?
+              `).run(
+                JSON.stringify(returnedAcc),
+                JSON.stringify(missingAcc),
+                qcStatus,
+                qcNote,
+                loanItem.id
+              );
             } else {
-              const issueParts = [];
-              if (missingAcc.length > 0) issueParts.push(`ขาด: ${missingAcc.join(', ')}`);
-              if (qcNote) issueParts.push(qcNote);
-              const issueText = issueParts.join(' | ') || 'มีตำหนิ/อุปกรณ์ไม่ครบ';
+              // Standard Demo items are restocked into Available Demo inventory
+              const returnedToLoc = 1;
 
               db.prepare(`
-                UPDATE assets
-                SET status = 'Available',
-                    current_loan_id = NULL,
-                    issue_note = ?,
-                    missing_tags_json = ?,
-                    updated_at = datetime('now', 'localtime')
-                WHERE tag_id = ?
-              `).run(issueText, JSON.stringify(missingAcc), ri.tag_id);
+                UPDATE loan_items
+                SET returned = 1,
+                    returned_at = COALESCE(returned_at, datetime('now', 'localtime')),
+                    returned_accessories_json = ?,
+                    missing_accessories_json = ?,
+                    qc_status = ?,
+                    qc_note = ?,
+                    returned_to_location = ?
+                WHERE id = ?
+              `).run(
+                JSON.stringify(returnedAcc),
+                JSON.stringify(missingAcc),
+                qcStatus,
+                qcNote,
+                returnedToLoc,
+                loanItem.id
+              );
+
+              if (qcStatus === 'Pass') {
+                db.prepare(`
+                  UPDATE assets
+                  SET status = 'Available',
+                      current_loan_id = NULL,
+                      issue_note = '',
+                      missing_tags_json = '[]',
+                      updated_at = datetime('now', 'localtime')
+                  WHERE tag_id = ?
+                `).run(ri.tag_id);
+              } else {
+                const issueParts = [];
+                if (missingAcc.length > 0) issueParts.push(`ขาด: ${missingAcc.join(', ')}`);
+                if (qcNote) issueParts.push(qcNote);
+                const issueText = issueParts.join(' | ') || 'มีตำหนิ/อุปกรณ์ไม่ครบ';
+
+                db.prepare(`
+                  UPDATE assets
+                  SET status = 'Available',
+                      current_loan_id = NULL,
+                      issue_note = ?,
+                      missing_tags_json = ?,
+                      updated_at = datetime('now', 'localtime')
+                  WHERE tag_id = ?
+                `).run(issueText, JSON.stringify(missingAcc), ri.tag_id);
+              }
             }
           } else {
-            // STEP 1: Receiving from customer -> Send to QC queue (Pending_QC)
+            // STEP 1: Receiving from customer -> Send to QC queue or Supplier/Sale Return queue
             db.prepare(`
               UPDATE loan_items
               SET returned = 0,
@@ -3938,7 +3997,7 @@ const server = http.createServer(async (req, res) => {
               loanItem.id
             );
 
-            // Asset moves to In_QC awaiting inspection
+            // Asset moves to In_QC awaiting inspection / return
             db.prepare(`
               UPDATE assets
               SET status = 'In_QC',
@@ -3950,13 +4009,24 @@ const server = http.createServer(async (req, res) => {
 
         let nextLoanStatus;
         if (isQcPhase) {
-          // Check if all items in the loan are fully returned & QC completed
           const allLoanItems = db.prepare('SELECT * FROM loan_items WHERE loan_id = ?').all(loanId);
-          const allComplete = allLoanItems.every(i => i.returned === 1);
-          nextLoanStatus = allComplete ? 'Returned' : 'Partially_Returned';
+          // If there are any Supplier or Sale items waiting for final supplier/sale return step
+          const hasPendingSupplierOrSale = allLoanItems.some(i => 
+            ((i.source_snapshot || 'Demo') === 'Supplier' || (i.source_snapshot || 'Demo') === 'คลังขาย') && i.returned !== 1
+          );
+          if (hasPendingSupplierOrSale) {
+            nextLoanStatus = 'Pending_Return_Supplier_Sale';
+          } else {
+            const allComplete = allLoanItems.every(i => i.returned === 1);
+            nextLoanStatus = allComplete ? 'Returned' : 'Partially_Returned';
+          }
         } else {
-          // Saving return from customer ALWAYS moves loan to Pending_QC (เข้าคิว รอตรวจ QC)
-          nextLoanStatus = 'Pending_QC';
+          // If all returning items are Supplier items, skip QC directly to "คืน Supplier,คลังขาย"
+          const allLoanItems = db.prepare('SELECT * FROM loan_items WHERE loan_id = ?').all(loanId);
+          const returnedTagIds = new Set(returnItems.map(ri => ri.tag_id));
+          const returningItems = allLoanItems.filter(i => returnedTagIds.has(i.tag_id));
+          const hasSupplierOnly = returningItems.length > 0 && returningItems.every(i => (i.source_snapshot || 'Demo') === 'Supplier');
+          nextLoanStatus = hasSupplierOnly ? 'Pending_Return_Supplier_Sale' : 'Pending_QC';
         }
 
         db.prepare(`
@@ -3988,6 +4058,131 @@ const server = http.createServer(async (req, res) => {
 
         db.exec('COMMIT');
         notifyStateChange('return_loan', { id: loanId });
+        return sendJson(res, 200, getFullState());
+      } catch (err) {
+        db.exec('ROLLBACK');
+        return sendJson(res, 400, { error: err.message });
+      }
+    }
+
+    // Complete Supplier & Sales Stock Return (ขั้นตอน "คืน Supplier,คลังขาย")
+    if (pathname.match(/^\/api\/loans\/[^/]+\/complete-supplier-sale-return$/) && req.method === 'POST') {
+      const loanId = pathname.split('/')[3];
+      const loan = db.prepare('SELECT * FROM loans WHERE id = ?').get(loanId);
+      if (!loan) return sendJson(res, 404, { error: 'ไม่พบใบยืมนี้' });
+
+      const body = await parseJsonBody(req);
+      const supplierReceiver = String(body.supplier_return_receiver || '').trim();
+      const supplierSender = String(body.supplier_return_sender || '').trim();
+      const supplierTimestamp = String(body.supplier_return_timestamp || '').trim();
+      const supplierNote = String(body.supplier_return_note || '').trim();
+      const supplierPhotos = (Array.isArray(body.supplier_return_photos) ? body.supplier_return_photos : [])
+        .map(p => saveBase64Image(p, `ret-sup-${loanId}`))
+        .filter(Boolean);
+
+      const saleSender = String(body.sale_return_sender || '').trim();
+      const saleTimestamp = String(body.sale_return_timestamp || '').trim();
+      const saleNote = String(body.sale_return_note || '').trim();
+      const saleActions = body.sale_actions || {}; // { [tag_id]: 'convert_to_demo' | 'return_to_sale' }
+
+      db.exec('BEGIN TRANSACTION');
+      try {
+        const loanItems = db.prepare('SELECT * FROM loan_items WHERE loan_id = ?').all(loanId);
+        for (const it of loanItems) {
+          const src = it.source_snapshot || 'Demo';
+          if (src === 'Supplier') {
+            db.prepare(`
+              UPDATE loan_items
+              SET returned = 1,
+                  returned_at = COALESCE(NULLIF(?, ''), datetime('now', 'localtime')),
+                  return_action = 'return_to_supplier',
+                  returned_to_location = 1
+              WHERE id = ?
+            `).run(supplierTimestamp, it.id);
+
+            if (it.tag_id) {
+              db.prepare(`
+                UPDATE assets
+                SET status = 'Available',
+                    current_loan_id = NULL,
+                    updated_at = datetime('now', 'localtime')
+                WHERE tag_id = ?
+              `).run(it.tag_id);
+            }
+          } else if (src === 'คลังขาย') {
+            const action = saleActions[it.tag_id] === 'convert_to_demo' ? 'convert_to_demo' : 'return_to_sale';
+            db.prepare(`
+              UPDATE loan_items
+              SET returned = 1,
+                  returned_at = COALESCE(NULLIF(?, ''), datetime('now', 'localtime')),
+                  return_action = ?,
+                  returned_to_location = 1
+              WHERE id = ?
+            `).run(action, it.id);
+
+            if (it.tag_id) {
+              if (action === 'convert_to_demo') {
+                db.prepare(`
+                  UPDATE assets
+                  SET source = 'Demo',
+                      location = 'Main Stock (ตู้โชว์/คลังกลาง)',
+                      status = 'Available',
+                      current_loan_id = NULL,
+                      updated_at = datetime('now', 'localtime')
+                  WHERE tag_id = ?
+                `).run(it.tag_id);
+              } else {
+                db.prepare(`
+                  UPDATE assets
+                  SET source = 'คลังขาย',
+                      status = 'Available',
+                      current_loan_id = NULL,
+                      updated_at = datetime('now', 'localtime')
+                  WHERE tag_id = ?
+                `).run(it.tag_id);
+              }
+            }
+          }
+        }
+
+        const updatedLoanItems = db.prepare('SELECT * FROM loan_items WHERE loan_id = ?').all(loanId);
+        const allDone = updatedLoanItems.every(i => i.returned === 1);
+        const finalStatus = allDone ? 'Returned' : 'Partially_Returned';
+
+        const existingPhotos = JSON.parse(loan.supplier_return_photos_json || '[]');
+        const combinedPhotos = [...existingPhotos, ...supplierPhotos];
+
+        db.prepare(`
+          UPDATE loans
+          SET supplier_return_receiver = COALESCE(NULLIF(?, ''), supplier_return_receiver),
+              supplier_return_sender = COALESCE(NULLIF(?, ''), supplier_return_sender),
+              supplier_return_timestamp = COALESCE(NULLIF(?, ''), supplier_return_timestamp),
+              supplier_return_note = COALESCE(NULLIF(?, ''), supplier_return_note),
+              supplier_return_photos_json = ?,
+              sale_return_sender = COALESCE(NULLIF(?, ''), sale_return_sender),
+              sale_return_timestamp = COALESCE(NULLIF(?, ''), sale_return_timestamp),
+              sale_return_note = COALESCE(NULLIF(?, ''), sale_return_note),
+              sale_return_action_json = ?,
+              status = ?,
+              return_date = CASE WHEN ? = 'Returned' THEN datetime('now', 'localtime') ELSE return_date END
+          WHERE id = ?
+        `).run(
+          supplierReceiver,
+          supplierSender,
+          supplierTimestamp,
+          supplierNote,
+          JSON.stringify(combinedPhotos),
+          saleSender,
+          saleTimestamp,
+          saleNote,
+          JSON.stringify(saleActions),
+          finalStatus,
+          finalStatus,
+          loanId
+        );
+
+        db.exec('COMMIT');
+        notifyStateChange('complete_supplier_sale_return', { id: loanId });
         return sendJson(res, 200, getFullState());
       } catch (err) {
         db.exec('ROLLBACK');
