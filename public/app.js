@@ -2645,15 +2645,9 @@ function initCompanyAutocomplete() {
     }, 180);
   });
 
+  // Keep clean focus without auto-opening on empty input to avoid flicker (GEMINI.md & Appllama standard)
   companyInput.addEventListener('focus', () => {
-    if (isSelecting) return;
-    const q = companyInput.value.trim();
-    // If input already has a selected value, NEVER auto-open on focus!
-    if (q && q === selectedCompanyValue) return;
-    // Only search on focus if input is empty (to show recent customers), NOT when it already has text!
-    if (!q) {
-      fetchCompanies('');
-    }
+    // Focus cleanly without auto-popping list when empty
   });
 
   // Dropdown toggle arrow button (GEMINI.md Rule 1)
@@ -3957,26 +3951,44 @@ function setupDropdownScrollArrows(dropdown) {
   }
 }
 
-function renderModelDropdown(rowIdx, query = '') {
+function renderModelDropdown(rowIdx, query = '', forceOpen = false) {
   const dropdown = document.getElementById('globalModelDropdown');
   if (!dropdown) return;
 
   const targetInput = document.querySelector(`[data-excel-model-input="${rowIdx}"]`);
   if (!targetInput) return;
 
+  dropdown.setAttribute('data-active-row', String(rowIdx));
+
   const q = query.trim().toLowerCase();
-  if (!q) {
+  if (!q && !forceOpen) {
     dropdown.classList.add('hidden');
     return;
   }
 
-  const filtered = state.catalogs.filter(c => {
-    const hay = `${c.brand} ${c.model} ${c.category || ''}`.toLowerCase();
-    return hay.includes(q);
-  });
+  const filtered = q
+    ? state.catalogs.filter(c => {
+        const hay = `${c.brand} ${c.model} ${c.category || ''}`.toLowerCase();
+        return hay.includes(q);
+      })
+    : state.catalogs;
+
+  const headerHtml = `
+    <div class="dropdown-header-bar">
+      <div class="dropdown-header-title">
+        ${APP_ICONS.tag}
+        <span>เลือกรุ่นสินค้า</span>
+        <span class="dropdown-count-badge">${filtered.length} รุ่น</span>
+      </div>
+      <button type="button" class="btn-close-dropdown" data-close-model-dropdown title="ปิด (✕)">✕</button>
+    </div>
+  `;
 
   if (filtered.length === 0) {
-    dropdown.innerHTML = `<div class="model-dropdown-empty">ไม่พบรุ่นสินค้าที่ตรงกับ "${escapeHtml(query)}" (กด Enter เพื่อใช้ชื่อนี้)</div>`;
+    dropdown.innerHTML = `
+      ${headerHtml}
+      <div class="model-dropdown-empty">ไม่พบรุ่นสินค้าที่ตรงกับ "${escapeHtml(query)}" (กด Enter เพื่อใช้ชื่อนี้)</div>
+    `;
   } else {
     // Group by Brand
     const byBrand = new Map();
@@ -4033,6 +4045,7 @@ function renderModelDropdown(rowIdx, query = '') {
       }
     }
     dropdown.innerHTML = `
+      ${headerHtml}
       <div class="dropdown-scroll-arrow top-arrow hidden" title="เลื่อนขึ้น">▲</div>
       <div class="dropdown-scroll-list">
         ${html}
@@ -5179,6 +5192,13 @@ function renderLoanExcelRows() {
                     tabindex="-1"
                     aria-label="ล้างรุ่นที่เลือก"
                   >✕</button>
+                  <button
+                    type="button"
+                    class="btn-input-dropdown-arrow"
+                    data-model-dropdown-trigger="${rowIdx}"
+                    title="แสดงรุ่นสินค้าทั้งหมด"
+                    tabindex="-1"
+                  >▾</button>
                   <button
                     type="button"
                     class="btn-keyboard-toggle"
@@ -14319,29 +14339,16 @@ function setupEventListeners() {
     }
   });
 
-  // Focus event: clicking or tabbing into inputs opens the corresponding rich floating list
+  // Focus event: clicking or tabbing into inputs cleans up open dropdowns without auto-popping to prevent flicker
   excelTbody.addEventListener('focusin', e => {
-    if (e.target.matches('[data-excel-brand-input]')) {
-      const rowIdx = Number(e.target.getAttribute('data-excel-brand-input'));
+    if (e.target.matches('[data-excel-brand-input], [data-excel-model-input], [data-excel-add-tag]')) {
       closeAllModelDropdowns();
-      renderBrandDropdown(rowIdx, e.target.value);
-    } else if (e.target.matches('[data-excel-model-input]')) {
-      const rowIdx = Number(e.target.getAttribute('data-excel-model-input'));
-      const isCustomSource = state.loanDraftRows[rowIdx]?.source === 'Supplier' || state.loanDraftRows[rowIdx]?.source === 'คลังขาย';
-      closeAllModelDropdowns();
-      if (!isCustomSource && e.target.value.trim().length > 0) {
-        renderModelDropdown(rowIdx, e.target.value);
-      }
-    } else if (e.target.matches('[data-excel-add-tag]')) {
-      const rowIdx = Number(e.target.getAttribute('data-excel-add-tag'));
-      closeAllModelDropdowns();
-      renderAccessoryDropdown(rowIdx, e.target.value);
     }
   });
 
   // Prevent blur when clicking clear button in model / brand input or triggers
   document.addEventListener('mousedown', e => {
-    if (e.target.closest('[data-clear-model]') || e.target.closest('[data-clear-brand]') || e.target.closest('[data-brand-dropdown-trigger]')) {
+    if (e.target.closest('[data-clear-model]') || e.target.closest('[data-clear-brand]') || e.target.closest('[data-brand-dropdown-trigger]') || e.target.closest('[data-model-dropdown-trigger]')) {
       e.preventDefault();
     }
   });
@@ -14384,8 +14391,25 @@ function setupEventListeners() {
       return;
     }
 
-    // 0c. Close Brand Dropdown (X button in header)
-    if (e.target.closest('[data-close-brand-dropdown]')) {
+    // 0b2. Toggle Model Dropdown (▾ button)
+    const modelArrowBtn = e.target.closest('[data-model-dropdown-trigger]');
+    if (modelArrowBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const rowIdx = Number(modelArrowBtn.getAttribute('data-model-dropdown-trigger'));
+      const modelDd = document.getElementById('globalModelDropdown');
+      const isCurrentlyOpen = modelDd && !modelDd.classList.contains('hidden') && modelDd.getAttribute('data-active-row') === String(rowIdx);
+      closeAllModelDropdowns();
+      if (!isCurrentlyOpen) {
+        const modelInp = excelTbody.querySelector(`[data-excel-model-input="${rowIdx}"]`);
+        const q = modelInp ? modelInp.value : '';
+        renderModelDropdown(rowIdx, q, true);
+      }
+      return;
+    }
+
+    // 0c. Close Brand or Model Dropdown (X button in header)
+    if (e.target.closest('[data-close-brand-dropdown], [data-close-model-dropdown]')) {
       e.preventDefault();
       e.stopPropagation();
       closeAllModelDropdowns();
@@ -18690,10 +18714,11 @@ function setupEventListeners() {
   const disposeReasonInp = document.getElementById('disposeReason');
   if (disposeReasonInp) {
     disposeReasonInp.addEventListener('input', e => {
-      renderDisposeReasonDropdown(e.target.value);
-    });
-    disposeReasonInp.addEventListener('focus', e => {
-      renderDisposeReasonDropdown(e.target.value);
+      if (e.target.value.trim().length > 0) {
+        renderDisposeReasonDropdown(e.target.value);
+      } else {
+        document.getElementById('disposeReasonDropdown')?.classList.add('hidden');
+      }
     });
   }
 
@@ -18701,10 +18726,11 @@ function setupEventListeners() {
   const reactivateLocInp = document.getElementById('reactivateLocation');
   if (reactivateLocInp) {
     reactivateLocInp.addEventListener('input', e => {
-      renderReactivateLocationDropdown(e.target.value);
-    });
-    reactivateLocInp.addEventListener('focus', e => {
-      renderReactivateLocationDropdown(e.target.value);
+      if (e.target.value.trim().length > 0) {
+        renderReactivateLocationDropdown(e.target.value);
+      } else {
+        document.getElementById('reactivateLocationDropdown')?.classList.add('hidden');
+      }
     });
   }
 
@@ -19330,20 +19356,12 @@ function setupEventListeners() {
     }
   });
 
-  document.getElementById('editAssetLocationInput')?.addEventListener('click', () => {
-    const inp = document.getElementById('editAssetLocationInput');
-    inp?.select?.();
-    renderEditAssetLocationDropdown('', true);
-  });
-
-  document.getElementById('editAssetLocationInput')?.addEventListener('focus', () => {
-    const inp = document.getElementById('editAssetLocationInput');
-    inp?.select?.();
-    renderEditAssetLocationDropdown('', true);
-  });
-
   document.getElementById('editAssetLocationInput')?.addEventListener('input', e => {
-    renderEditAssetLocationDropdown(e.target.value, true);
+    if (e.target.value.trim().length > 0) {
+      renderEditAssetLocationDropdown(e.target.value, true);
+    } else {
+      document.getElementById('editAssetLocationDropdown')?.classList.add('hidden');
+    }
     syncClearableInputBtn(e.target);
   });
 
@@ -20481,15 +20499,13 @@ function setupEventListeners() {
   });
   addSourceEl?.addEventListener('focus', () => {
     closeAddDemoFieldDropdowns();
-    addSourceEl.select?.();
-    renderAddDemoSourceDropdown('', true);
-  });
-  addSourceEl?.addEventListener('click', () => {
-    closeAddDemoFieldDropdowns();
-    renderAddDemoSourceDropdown('', true);
   });
   addSourceEl?.addEventListener('input', () => {
-    renderAddDemoSourceDropdown(addSourceEl.value, true);
+    if (addSourceEl.value.trim().length > 0) {
+      renderAddDemoSourceDropdown(addSourceEl.value, true);
+    } else {
+      document.getElementById('addDemoSourceDropdown')?.classList.add('hidden');
+    }
   });
 
   const addSerialEl = document.getElementById('addDemoSerialNo');
@@ -20501,7 +20517,6 @@ function setupEventListeners() {
       if (catInp) {
         catInp.focus();
         catInp.select?.();
-        renderAddDemoCategoryDropdown(catInp.value);
       }
     }
   });
@@ -20520,14 +20535,13 @@ function setupEventListeners() {
   });
   addModelEl?.addEventListener('focus', () => {
     closeAddDemoFieldDropdowns();
-    renderAddDemoModelDropdown(addModelEl.value);
-  });
-  addModelEl?.addEventListener('click', () => {
-    closeAddDemoFieldDropdowns();
-    renderAddDemoModelDropdown(addModelEl.value);
   });
   addModelEl?.addEventListener('input', () => {
-    renderAddDemoModelDropdown(addModelEl.value);
+    if (addModelEl.value.trim().length > 0) {
+      renderAddDemoModelDropdown(addModelEl.value);
+    } else {
+      document.getElementById('addDemoModelDropdown')?.classList.add('hidden');
+    }
   });
 
   const addBrandEl = document.getElementById('addDemoBrand');
@@ -20539,20 +20553,18 @@ function setupEventListeners() {
       if (modelInp) {
         modelInp.focus();
         modelInp.select?.();
-        renderAddDemoModelDropdown(modelInp.value);
       }
     }
   });
   addBrandEl?.addEventListener('focus', () => {
     closeAddDemoFieldDropdowns();
-    renderAddDemoBrandDropdown(addBrandEl.value);
-  });
-  addBrandEl?.addEventListener('click', () => {
-    closeAddDemoFieldDropdowns();
-    renderAddDemoBrandDropdown(addBrandEl.value);
   });
   addBrandEl?.addEventListener('input', () => {
-    renderAddDemoBrandDropdown(addBrandEl.value);
+    if (addBrandEl.value.trim().length > 0) {
+      renderAddDemoBrandDropdown(addBrandEl.value);
+    } else {
+      document.getElementById('addDemoBrandDropdown')?.classList.add('hidden');
+    }
   });
 
   const addCatEl = document.getElementById('addDemoCategory');
@@ -20569,45 +20581,42 @@ function setupEventListeners() {
   });
   addCatEl?.addEventListener('focus', () => {
     closeAddDemoFieldDropdowns();
-    renderAddDemoCategoryDropdown(addCatEl.value);
-  });
-  addCatEl?.addEventListener('click', () => {
-    closeAddDemoFieldDropdowns();
-    renderAddDemoCategoryDropdown(addCatEl.value);
   });
   addCatEl?.addEventListener('input', () => {
-    renderAddDemoCategoryDropdown(addCatEl.value);
+    if (addCatEl.value.trim().length > 0) {
+      renderAddDemoCategoryDropdown(addCatEl.value);
+    } else {
+      document.getElementById('addDemoCategoryDropdown')?.classList.add('hidden');
+    }
   });
 
   const addLocEl = document.getElementById('addDemoLocation');
   addLocEl?.addEventListener('focus', () => {
     closeAddDemoFieldDropdowns();
-    addLocEl.select?.();
-    renderAddDemoLocationDropdown('');
-  });
-  addLocEl?.addEventListener('click', () => {
-    closeAddDemoFieldDropdowns();
-    renderAddDemoLocationDropdown('');
   });
   addLocEl?.addEventListener('input', () => {
-    renderAddDemoLocationDropdown(addLocEl.value);
+    if (addLocEl.value.trim().length > 0) {
+      renderAddDemoLocationDropdown(addLocEl.value);
+    } else {
+      document.getElementById('addDemoLocationDropdown')?.classList.add('hidden');
+    }
   });
 
   // Global click outside to dismiss Add Demo dropdowns
   document.addEventListener('click', e => {
-    if (!e.target.closest('#addDemoSource') && !e.target.closest('#addDemoSourceDropdown')) {
+    if (!e.target.closest('#addDemoSource') && !e.target.closest('#addDemoSourceDropdown') && !e.target.closest('[data-dropdown-trigger="source"]')) {
       document.getElementById('addDemoSourceDropdown')?.classList.add('hidden');
     }
-    if (!e.target.closest('#addDemoModel') && !e.target.closest('#addDemoModelDropdown')) {
+    if (!e.target.closest('#addDemoModel') && !e.target.closest('#addDemoModelDropdown') && !e.target.closest('[data-dropdown-trigger="model"]')) {
       document.getElementById('addDemoModelDropdown')?.classList.add('hidden');
     }
-    if (!e.target.closest('#addDemoBrand') && !e.target.closest('#addDemoBrandDropdown')) {
+    if (!e.target.closest('#addDemoBrand') && !e.target.closest('#addDemoBrandDropdown') && !e.target.closest('[data-dropdown-trigger="brand"]')) {
       document.getElementById('addDemoBrandDropdown')?.classList.add('hidden');
     }
-    if (!e.target.closest('#addDemoCategory') && !e.target.closest('#addDemoCategoryDropdown')) {
+    if (!e.target.closest('#addDemoCategory') && !e.target.closest('#addDemoCategoryDropdown') && !e.target.closest('[data-dropdown-trigger="category"]')) {
       document.getElementById('addDemoCategoryDropdown')?.classList.add('hidden');
     }
-    if (!e.target.closest('#addDemoLocation') && !e.target.closest('#addDemoLocationDropdown')) {
+    if (!e.target.closest('#addDemoLocation') && !e.target.closest('#addDemoLocationDropdown') && !e.target.closest('[data-dropdown-trigger="location"]')) {
       document.getElementById('addDemoLocationDropdown')?.classList.add('hidden');
     }
     if (!e.target.closest('#editAssetSourceInput') && !e.target.closest('#btnToggleEditSourceDd') && !e.target.closest('#editAssetSourceDropdown')) {

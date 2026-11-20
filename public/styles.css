@@ -11094,8 +11094,9 @@ dialog.modal-send-email {
     white-space: nowrap;
   }
 
-  /* 7. Dropdown เมนูเลือกรุ่น/อุปกรณ์เสริมบนมือถือ */
-  .model-dropdown-menu:not(#snModalDropdownMenu) {
+  /* 7. Dropdown เมนูเลือกรุ่น/อุปกรณ์เสริม/ลูกค้าบนมือถือ */
+  .model-dropdown-menu:not(#snModalDropdownMenu),
+  .company-dropdown-menu {
     position: fixed !important;
     left: 10px !important;
     right: 10px !important;
@@ -12496,23 +12497,34 @@ dialog.modal-send-email {
 
 .company-dropdown-menu {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 6px);
   left: 0;
   width: 480px;
   max-width: 92vw;
   max-height: 420px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.98);
+  -webkit-backdrop-filter: blur(25px) saturate(190%);
+  backdrop-filter: blur(25px) saturate(190%);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 14px;
+  box-shadow: 0 16px 40px -4px rgba(15, 23, 42, 0.16), 0 8px 16px -4px rgba(15, 23, 42, 0.08);
+  z-index: 1000;
+  padding: 0;
+  animation: fadeInDown 0.15s ease-out;
+}
+
+.company-dropdown-menu .dropdown-scroll-list {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  background: #ffffff;
-  border: 1px solid rgba(203, 213, 225, 0.95);
-  border-radius: 12px;
-  box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.18), 0 6px 12px -4px rgba(15, 23, 42, 0.08);
-  z-index: 1000;
   padding: 6px;
   display: flex;
   flex-direction: column;
   gap: 3px;
-  animation: fadeInDown 0.15s ease-out;
 }
 
 .company-item {
