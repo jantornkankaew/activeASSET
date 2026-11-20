@@ -9352,7 +9352,7 @@ function setupCompanySettingsModal() {
     ` : `
       <th class="col-add-role-header">
         <button type="button" class="btn-add-role-minimal" id="btnColumnAddRole" title="สร้างบทบาทใหม่ในตาราง">
-          <span class="btn-add-role-icon">➕</span>
+          <span class="btn-add-role-icon" style="display:inline-flex; align-items:center;">${APP_ICONS.plusMini}</span>
           <span>สร้างบทบาทใหม่</span>
         </button>
       </th>
@@ -12823,8 +12823,11 @@ function openSupplierSaleReturnModal(loanId) {
           </div>
         </div>
         <div style="display:flex; gap:6px;">
-          <button type="button" class="btn btn-sm btn-outline" id="btnEditSupSig" style="font-size:11.5px; padding:4px 10px; font-weight:600;">✎ เซ็นใหม่</button>
-          <button type="button" class="btn btn-sm btn-outline" id="btnClearSupSig" style="font-size:11.5px; padding:4px 8px; color:#ef4444; border-color:#fecaca;" title="ลบลายเซ็น">✕</button>
+          <button type="button" class="btn btn-sm btn-outline" id="btnEditSupSig">
+            <span style="display:inline-flex; align-items:center;">${APP_ICONS.edit}</span>
+            <span>เซ็นใหม่</span>
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-danger" id="btnClearSupSig" title="ลบลายเซ็น">✕</button>
         </div>
       </div>
     </div>
