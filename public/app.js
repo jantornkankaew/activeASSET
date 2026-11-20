@@ -1581,8 +1581,18 @@ function renderKanbanCard(loan) {
     wmText = 'รอตรวจ QC';
     wmClass = 'wm-qc';
   } else if (loan.status === 'Pending_Return_Supplier_Sale') {
-    wmText = 'คืน Supp/ขาย';
-    wmClass = 'wm-supplier-sale';
+    const hasSup = (loan.items || []).some(it => (it.source_snapshot || it.source) === 'Supplier');
+    const hasSale = (loan.items || []).some(it => (it.source_snapshot || it.source) === 'คลังขาย');
+    if (hasSale && !hasSup) {
+      wmText = 'คืนคลังขาย';
+      wmClass = 'wm-sale';
+    } else if (hasSup && !hasSale) {
+      wmText = 'คืน Supplier';
+      wmClass = 'wm-supplier';
+    } else {
+      wmText = 'คืน Supp/ขาย';
+      wmClass = 'wm-supplier-sale';
+    }
   } else if (loan.status === 'Partially_Returned') {
     wmText = 'คืนไม่ครบ';
     wmClass = 'wm-partial';
@@ -1676,13 +1686,23 @@ function renderKanbanCard(loan) {
       <div class="card-footer">
         ${
           loan.status === 'Pending_Return_Supplier_Sale'
-            ? `
-          <div class="card-actions">
-            <button type="button" class="btn-card-edit-minimal" data-open-sup-sale-return="${escapeHtml(loan.id)}" title="จัดการส่งคืน Supplier / คลังขาย" style="color:#4338ca; border-color:#c7d2fe; background:#e0e7ff; font-weight:600;">
-              <span>คืน Supp/ขาย</span>
-            </button>
-          </div>
-          `
+            ? (() => {
+              const hasSup = (loan.items || []).some(it => (it.source_snapshot || it.source) === 'Supplier');
+              const hasSale = (loan.items || []).some(it => (it.source_snapshot || it.source) === 'คลังขาย');
+              const isSaleOnly = hasSale && !hasSup;
+              const isSupOnly = hasSup && !hasSale;
+              const label = isSaleOnly ? 'คืนคลังขาย' : isSupOnly ? 'คืน Supplier' : 'คืน Supp/ขาย';
+              const btnColor = isSaleOnly ? '#0369a1' : '#4338ca';
+              const btnBorder = isSaleOnly ? '#bae6fd' : '#c7d2fe';
+              const btnBg = isSaleOnly ? '#f0f9ff' : '#e0e7ff';
+              return `
+                <div class="card-actions">
+                  <button type="button" class="btn-card-edit-minimal" data-open-sup-sale-return="${escapeHtml(loan.id)}" title="จัดการส่ง${escapeHtml(label)}" style="color:${btnColor}; border-color:${btnBorder}; background:${btnBg}; font-weight:600;">
+                    <span>${escapeHtml(label)}</span>
+                  </button>
+                </div>
+              `;
+            })()
             : ((isEditable || isDeliveredStage) && can('edit_loan')) || (loan.status === 'Requested' && can('cancel_loan'))
             ? `
           <div class="card-actions">
@@ -2066,17 +2086,8 @@ function getAssetWorkflowStatus(asset) {
   const isSupplier = src.includes('supplier');
   const isSale = src.includes('ขาย') || src.includes('sale');
 
-  if (loanStatus === 'Pending_Return_Supplier_Sale') {
-    if (isSupplier) {
-      return {
-        text: 'รอคืน Supplier',
-        pillCls: 'purple',
-        dotCls: 'purple',
-        indicatorCls: 'purple',
-        badgeIcon: APP_ICONS.truck,
-        calloutBadge: 'รอคืน Supplier (ภายนอก)'
-      };
-    }
+  // Supplier & Sale stock returns
+  if (loanStatus === 'Pending_Return_Supplier_Sale' || ((loanStatus === 'Pending_QC' || asset.status === 'In_QC') && (isSupplier || isSale))) {
     if (isSale) {
       return {
         text: 'รอคืนคลังขาย',
@@ -2085,6 +2096,16 @@ function getAssetWorkflowStatus(asset) {
         indicatorCls: 'amber',
         badgeIcon: APP_ICONS.building,
         calloutBadge: 'รอส่งคืนคลังขาย'
+      };
+    }
+    if (isSupplier) {
+      return {
+        text: 'รอคืน Supplier',
+        pillCls: 'purple',
+        dotCls: 'purple',
+        indicatorCls: 'purple',
+        badgeIcon: APP_ICONS.truck,
+        calloutBadge: 'รอคืน Supplier (ภายนอก)'
       };
     }
     return {
@@ -12809,6 +12830,17 @@ function openSupplierSaleReturnModal(loanId) {
   const supplierItems = items.filter(it => (it.source_snapshot || 'Demo') === 'Supplier');
   const saleItems = items.filter(it => (it.source_snapshot || 'Demo') === 'คลังขาย');
 
+  const titleEl = document.getElementById('supSaleModalTitle');
+  if (titleEl) {
+    if (saleItems.length > 0 && supplierItems.length === 0) {
+      titleEl.textContent = 'บันทึกคืนคลังขาย';
+    } else if (supplierItems.length > 0 && saleItems.length === 0) {
+      titleEl.textContent = 'บันทึกคืน Supplier';
+    } else {
+      titleEl.textContent = 'บันทึกคืน Supplier, คลังขาย';
+    }
+  }
+
   // Pre-fill default actions for sale items
   saleItems.forEach(it => {
     if (!currentSaleActions[it.tag_id]) {
@@ -12876,18 +12908,19 @@ function openSupplierSaleReturnModal(loanId) {
 
   // SECTION 2: SALE ITEMS (ถ้ามี)
   if (saleItems.length > 0) {
+    const secPrefix = supplierItems.length > 0 ? '2. ' : '1. ';
     html += `
       <div class="return-section-block" style="margin-bottom:14px;">
         <div class="return-section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <div class="return-section-title-wrap" style="display:flex; align-items:center; gap:8px;">
             <span style="display:inline-flex; align-items:center; color:#b45309;">${APP_ICONS.building}</span>
-            <h4 class="return-section-title" style="margin:0; font-size:14px; font-weight:700; color:#1e293b;">2. รายการคืนคลังขาย</h4>
+            <h4 class="return-section-title" style="margin:0; font-size:14px; font-weight:700; color:#1e293b;">${secPrefix}รายการคืนคลังขาย</h4>
             <span class="badge" style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-size:12px; padding:2px 8px; border-radius:999px;">
               ${saleItems.length} เครื่อง
             </span>
           </div>
-          <div class="return-flow-notice" style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; font-size:11.5px; border-radius:6px; background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0;">
-            ${APP_ICONS.check} <span>ผ่านการตรวจสภาพ QC เรียบร้อยแล้ว</span>
+          <div class="return-flow-notice" style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; font-size:11.5px; border-radius:6px; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe;">
+            ${APP_ICONS.zap} <span>ไม่ต้องผ่าน QC (ส่งคืนเข้าคลังขาย)</span>
           </div>
         </div>
 
@@ -17907,10 +17940,18 @@ function setupEventListeners() {
       const isOverdue = !hasReturnedFromCustomer && h.due_date && (new Date(h.due_date).getTime() < new Date().setHours(0,0,0,0));
 
       let stampHtml = '';
+      const hSource = String(h.source_snapshot || h.source || (state.activeAsset ? state.activeAsset.source : '') || '').trim();
+      const isSaleSource = hSource.includes('ขาย') || hSource.toLowerCase().includes('sale');
+      const isSupplierSource = hSource.toLowerCase().includes('supplier');
+
       if (isReturnedComplete) {
         stampHtml = '<span class="lib-stamp stamped-returned">คืนแล้ว</span>';
-      } else if (isWaitingSupplier) {
-        stampHtml = '<span class="lib-stamp stamped-supplier">รอคืน Supplier</span>';
+      } else if (isWaitingSupplier || (isWaitingQc && (isSaleSource || isSupplierSource))) {
+        if (isSaleSource) {
+          stampHtml = '<span class="lib-stamp stamped-sale">รอคืนคลังขาย</span>';
+        } else {
+          stampHtml = '<span class="lib-stamp stamped-supplier">รอคืน Supplier</span>';
+        }
       } else if (isWaitingQc) {
         stampHtml = '<span class="lib-stamp stamped-qc">รอตรวจ QC</span>';
       } else if (isOverdue) {

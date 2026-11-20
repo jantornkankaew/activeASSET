@@ -4095,13 +4095,16 @@ const server = http.createServer(async (req, res) => {
               loanItem.id
             );
 
-            // Asset moves to In_QC awaiting inspection / return
-            db.prepare(`
-              UPDATE assets
-              SET status = 'In_QC',
-                  updated_at = datetime('now', 'localtime')
-              WHERE tag_id = ?
-            `).run(ri.tag_id);
+            // Asset moves to In_QC awaiting inspection for Demo, or stays On_Loan awaiting return to Supplier/Sale
+            const isSupOrSale = (loanItem.source_snapshot || 'Demo') === 'Supplier' || (loanItem.source_snapshot || 'Demo') === 'คลังขาย';
+            if (!isSupOrSale) {
+              db.prepare(`
+                UPDATE assets
+                SET status = 'In_QC',
+                    updated_at = datetime('now', 'localtime')
+                WHERE tag_id = ?
+              `).run(ri.tag_id);
+            }
           }
         }
 
@@ -4119,12 +4122,15 @@ const server = http.createServer(async (req, res) => {
             nextLoanStatus = allComplete ? 'Returned' : 'Partially_Returned';
           }
         } else {
-          // If all returning items are Supplier items, skip QC directly to "คืน Supplier,คลังขาย"
+          // If all returning items are Supplier or Sale items, skip QC directly to "คืน Supplier,คลังขาย"
           const allLoanItems = db.prepare('SELECT * FROM loan_items WHERE loan_id = ?').all(loanId);
           const returnedTagIds = new Set(returnItems.map(ri => ri.tag_id));
           const returningItems = allLoanItems.filter(i => returnedTagIds.has(i.tag_id));
-          const hasSupplierOnly = returningItems.length > 0 && returningItems.every(i => (i.source_snapshot || 'Demo') === 'Supplier');
-          nextLoanStatus = hasSupplierOnly ? 'Pending_Return_Supplier_Sale' : 'Pending_QC';
+          const hasSupplierOrSaleOnly = returningItems.length > 0 && returningItems.every(i => {
+            const s = (i.source_snapshot || 'Demo').trim();
+            return s === 'Supplier' || s === 'คลังขาย';
+          });
+          nextLoanStatus = hasSupplierOrSaleOnly ? 'Pending_Return_Supplier_Sale' : 'Pending_QC';
         }
 
         db.prepare(`
@@ -4405,6 +4411,7 @@ const server = http.createServer(async (req, res) => {
           li.serial_no,
           li.returned,
           li.returned_at,
+          li.source_snapshot,
           li.loan_accessories_json,
           li.loan_free_note,
           l.id AS loan_id,
@@ -4433,6 +4440,8 @@ const server = http.createServer(async (req, res) => {
           ...r,
           returned_at: itemReturnedAt,
           returned: Boolean(r.returned),
+          source: r.source_snapshot || asset.source || 'Demo',
+          source_snapshot: r.source_snapshot || asset.source || 'Demo',
           loan_accessories: JSON.parse(r.loan_accessories_json || '[]')
         };
       });
