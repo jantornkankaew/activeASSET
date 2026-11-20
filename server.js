@@ -559,39 +559,6 @@ if (!currentEmailFrom || currentEmailFrom.value === 'onboarding@resend.dev') {
   db.prepare("INSERT OR REPLACE INTO company_settings (key, value) VALUES ('email_from_address', 'a5@active5.co.th')").run();
 }
 
-// Restore LOAN-202611-029 item if cleared by earlier startup cleanup
-try {
-  const l029 = db.prepare("SELECT * FROM loans WHERE id = 'LOAN-202611-029'").get();
-  if (l029) {
-    const existingItems = db.prepare("SELECT count(*) as count FROM loan_items WHERE loan_id = 'LOAN-202611-029'").get();
-    if (existingItems && existingItems.count === 0) {
-      db.prepare(`
-        INSERT INTO loan_items (
-          loan_id, tag_id, model, brand, serial_no,
-          source_snapshot, location_snapshot, loan_accessories_json, loan_free_note, attachments_json
-        ) VALUES (
-          'LOAN-202611-029', 'ACT-105', 'C920E', 'Logitech', '960-001360',
-          'Supplier', 'Supplier (ยืมภายนอก)', '["กล่อง"]', 'Webcam', '[]'
-        )
-      `).run();
-      const asset = db.prepare("SELECT * FROM assets WHERE serial_no = '960-001360' OR tag_id = 'ACT-105'").get();
-      if (!asset) {
-        db.prepare(`
-          INSERT INTO assets (
-            tag_id, name, model, brand, category, serial_no,
-            source, location, accessories_json, free_note, status, current_loan_id, updated_at
-          ) VALUES (
-            'ACT-105', 'Logitech C920E', 'C920E', 'Logitech', 'General', '960-001360',
-            'Supplier', 'Supplier (ยืมภายนอก)', '["กล่อง"]', 'Webcam', 'On_Loan', 'LOAN-202611-029', datetime('now', 'localtime')
-          )
-        `).run();
-      }
-    }
-  }
-} catch (e) {
-  console.warn('[Fix LOAN-029]:', e.message);
-}
-
 
 
 function getCompanySettings() {
