@@ -3124,11 +3124,28 @@ function renderSnDropdown(slotIdx, query = '') {
     });
   }
 
+  const headerHtml = `
+    <div class="dropdown-header-bar">
+      <div class="dropdown-header-title">
+        ${APP_ICONS.tag}
+        <span>เลือก S/N: ${escapeHtml(row.model || 'สินค้านี้')}</span>
+        <span class="dropdown-count-badge">ว่าง ${pool.length} เครื่อง</span>
+      </div>
+      <button type="button" class="btn-close-dropdown" id="btnCloseSnModalDropdown" title="ปิด (✕)">✕</button>
+    </div>
+  `;
+
   if (pool.length === 0) {
     const displayModel = row.model || 'ที่เลือก';
-    dropdown.innerHTML = `<div class="model-dropdown-empty">ไม่มี S/N ว่างในคลัง Demo สำหรับรุ่น "${escapeHtml(displayModel)}" (สามารถพิมพ์ระบุเองได้)</div>`;
+    dropdown.innerHTML = `
+      ${headerHtml}
+      <div class="model-dropdown-empty">ไม่มี S/N ว่างในคลัง Demo สำหรับรุ่น "${escapeHtml(displayModel)}" (สามารถพิมพ์ระบุเองได้)</div>
+    `;
   } else if (filtered.length === 0) {
-    dropdown.innerHTML = `<div class="model-dropdown-empty">ไม่พบ S/N ของรุ่น "${escapeHtml(row.model)}" ที่ตรงกับ "${escapeHtml(query)}" (กด Enter เพื่อใช้ค่านี้)</div>`;
+    dropdown.innerHTML = `
+      ${headerHtml}
+      <div class="model-dropdown-empty">ไม่พบ S/N ของรุ่น "${escapeHtml(row.model)}" ที่ตรงกับ "${escapeHtml(query)}" (กด Enter เพื่อใช้ค่านี้)</div>
+    `;
   } else {
     let itemsHtml = '';
     filtered.forEach(a => {
@@ -3151,6 +3168,7 @@ function renderSnDropdown(slotIdx, query = '') {
     });
 
     dropdown.innerHTML = `
+      ${headerHtml}
       <div class="dropdown-scroll-arrow top-arrow hidden" title="เลื่อนขึ้น">▲</div>
       <div class="dropdown-scroll-list">
         ${itemsHtml}
@@ -3158,7 +3176,13 @@ function renderSnDropdown(slotIdx, query = '') {
       <div class="dropdown-scroll-arrow bottom-arrow" title="เลื่อนลง">▼</div>
     `;
     setupDropdownScrollArrows(dropdown);
+    setupDropdownScrollArrows(dropdown);
   }
+
+  dropdown.querySelector('#btnCloseSnModalDropdown')?.addEventListener('click', e => {
+    e.stopPropagation();
+    closeSnDropdown();
+  });
 
   // Position dropdown relative to snModalDialog (Always downwards below the slot)
   const dialog = document.getElementById('snModalDialog');
@@ -4301,10 +4325,13 @@ function renderSourceDropdown(rowIdx) {
 
   dropdown.innerHTML = `
     ${headerHtml}
+    <div class="dropdown-scroll-arrow top-arrow hidden" title="เลื่อนขึ้น">▲</div>
     <div class="dropdown-scroll-list source-options-list">
       ${itemsHtml}
     </div>
+    <div class="dropdown-scroll-arrow bottom-arrow" title="เลื่อนลง">▼</div>
   `;
+  setupDropdownScrollArrows(dropdown);
 
   // Calculate viewport coordinates of targetBtn
   const btnRect = targetBtn.getBoundingClientRect();
@@ -4422,10 +4449,13 @@ function renderBrandDropdown(rowIdx, query = '') {
 
   dropdown.innerHTML = `
     ${headerHtml}
+    <div class="dropdown-scroll-arrow top-arrow hidden" title="เลื่อนขึ้น">▲</div>
     <div class="dropdown-scroll-list brand-options-list">
       ${itemsHtml}
     </div>
+    <div class="dropdown-scroll-arrow bottom-arrow" title="เลื่อนลง">▼</div>
   `;
+  setupDropdownScrollArrows(dropdown);
 
   const inputRect = targetInput.getBoundingClientRect();
   const isMobile = window.innerWidth <= 640;
@@ -6033,7 +6063,7 @@ function useLivePhoto() {
   closeLiveCamera();
 }
 
-function renderDispatchSnDropdown(rowIdx, query = '') {
+function renderDispatchSnDropdown(rowIdx, query = '', forceOpen = false) {
   const dropdown = document.getElementById('dispatchSnDropdownMenu');
   if (!dropdown) return;
 
@@ -6057,6 +6087,11 @@ function renderDispatchSnDropdown(rowIdx, query = '') {
   );
 
   const q = String(query || '').trim().toLowerCase();
+  if (!q && !forceOpen) {
+    dropdown.classList.add('hidden');
+    return;
+  }
+
   let filtered = pool;
   if (q) {
     filtered = pool.filter(a => {
@@ -6090,25 +6125,33 @@ function renderDispatchSnDropdown(rowIdx, query = '') {
     `
     : '';
 
+  const headerHtml = `
+    <div class="dropdown-header-bar">
+      <div class="dropdown-header-title">
+        ${APP_ICONS.tag}
+        <span>เลือก S/N: ${escapeHtml(modelTitle)}</span>
+        <span class="dropdown-count-badge">ว่าง ${pool.length} เครื่อง</span>
+      </div>
+      <button type="button" class="btn-close-dropdown" data-close-dispatch-sn title="ปิด (✕)">✕</button>
+    </div>
+  `;
+
   if (pool.length === 0 && !q) {
     dropdown.innerHTML = `
-      <div class="dropdown-header-bar">
-        <span class="dropdown-header-title" style="display:inline-flex; align-items:center; gap:6px;">${APP_ICONS.tag} <span>เลือก S/N: ${escapeHtml(modelTitle)}</span></span>
-        <button type="button" class="btn-close-dropdown" data-close-dispatch-sn title="ปิด">✕</button>
-      </div>
+      ${headerHtml}
       <div class="model-dropdown-empty">ไม่มีเครื่องว่างในคลังสำหรับรุ่นนี้</div>
     `;
   } else if (filtered.length === 0) {
     dropdown.innerHTML = `
-      <div class="dropdown-header-bar">
-        <span class="dropdown-header-title" style="display:inline-flex; align-items:center; gap:6px;">${APP_ICONS.tag} <span>เลือก S/N: ${escapeHtml(modelTitle)} (${pool.length} เครื่อง)</span></span>
-        <button type="button" class="btn-close-dropdown" data-close-dispatch-sn title="ปิด">✕</button>
-      </div>
+      ${headerHtml}
+      <div class="dropdown-scroll-arrow top-arrow hidden" title="เลื่อนขึ้น">▲</div>
       <div class="dropdown-scroll-list">
         <div class="model-dropdown-empty" style="padding:10px 14px; font-size:12.5px;">ไม่พบ S/N ในคลังที่ตรงกับ "${escapeHtml(query)}"</div>
         ${customItemHtml}
       </div>
+      <div class="dropdown-scroll-arrow bottom-arrow hidden" title="เลื่อนลง">▼</div>
     `;
+    setupDropdownScrollArrows(dropdown);
   } else {
     const itemsHtml = filtered
       .map(a => {
@@ -6137,15 +6180,15 @@ function renderDispatchSnDropdown(rowIdx, query = '') {
       .join('');
 
     dropdown.innerHTML = `
-      <div class="dropdown-header-bar">
-        <span class="dropdown-header-title" style="display:inline-flex; align-items:center; gap:6px;">${APP_ICONS.tag} <span>เลือกรหัส S/N: ${escapeHtml(modelTitle)} (ว่าง ${pool.length} เครื่อง)</span></span>
-        <button type="button" class="btn-close-dropdown" data-close-dispatch-sn title="ปิด">✕</button>
-      </div>
+      ${headerHtml}
+      <div class="dropdown-scroll-arrow top-arrow hidden" title="เลื่อนขึ้น">▲</div>
       <div class="dropdown-scroll-list">
         ${itemsHtml}
         ${customItemHtml}
       </div>
+      <div class="dropdown-scroll-arrow bottom-arrow" title="เลื่อนลง">▼</div>
     `;
+    setupDropdownScrollArrows(dropdown);
   }
 
   // Positioning relative to targetInput
@@ -6172,7 +6215,8 @@ function renderDispatchSnDropdown(rowIdx, query = '') {
   dropdown.classList.remove('hidden');
 }
 
-function renderDispatchAccDropdown(rowIdx, query = '') {
+
+function renderDispatchAccDropdown(rowIdx, query = '', forceOpen = false) {
   const dropdown = document.getElementById('dispatchAccDropdownMenu');
   if (!dropdown) return;
 
@@ -6190,6 +6234,11 @@ function renderDispatchAccDropdown(rowIdx, query = '') {
     .filter(name => !currentAccs.has(name));
 
   const q = String(query || '').trim().toLowerCase();
+  if (!q && !forceOpen) {
+    dropdown.classList.add('hidden');
+    return;
+  }
+
   let filtered = allCandidates;
   if (q) {
     filtered = allCandidates.filter(name => name.toLowerCase().includes(q));
@@ -6239,8 +6288,12 @@ function renderDispatchAccDropdown(rowIdx, query = '') {
 
   const headerHtml = `
     <div class="dropdown-header-bar">
-      <span class="dropdown-header-title" style="display:inline-flex; align-items:center; gap:6px;">${APP_ICONS.plug} <span>เลือกอุปกรณ์เสริม (${filtered.length} รายการ)</span></span>
-      <button type="button" class="btn-close-dropdown" data-close-dispatch-acc title="ปิด">✕</button>
+      <div class="dropdown-header-title">
+        ${APP_ICONS.plug}
+        <span>เลือกอุปกรณ์เสริม</span>
+        <span class="dropdown-count-badge">${filtered.length} รายการ</span>
+      </div>
+      <button type="button" class="btn-close-dropdown" data-close-dispatch-acc title="ปิด (✕)">✕</button>
     </div>
   `;
 
@@ -6252,11 +6305,14 @@ function renderDispatchAccDropdown(rowIdx, query = '') {
   } else {
     dropdown.innerHTML = `
       ${headerHtml}
+      <div class="dropdown-scroll-arrow top-arrow hidden" title="เลื่อนขึ้น">▲</div>
       <div class="dropdown-scroll-list">
         ${customItemHtml}
         ${itemsHtml}
       </div>
+      <div class="dropdown-scroll-arrow bottom-arrow" title="เลื่อนลง">▼</div>
     `;
+    setupDropdownScrollArrows(dropdown);
   }
 
   // Positioning relative to targetInput
@@ -6277,11 +6333,12 @@ function renderDispatchAccDropdown(rowIdx, query = '') {
   } else {
     dropdown.style.setProperty('top', `${inputRect.bottom + 6}px`, 'important');
     dropdown.style.setProperty('bottom', 'auto', 'important');
-    dropdown.style.setProperty('max-height', `${Math.max(160, Math.min(300, spaceBelow))}px`, 'important');
+    dropdown.style.setProperty('max-height', `${Math.max(180, Math.min(300, spaceBelow))}px`, 'important');
   }
 
   dropdown.classList.remove('hidden');
 }
+
 
 function renderDispatchTable() {
   const tbody = document.getElementById('dispatchTableBody');
@@ -9801,7 +9858,7 @@ function setupCompanySettingsModal() {
     const headerHtml = `
       <div class="model-dropdown-header">
         <span>เลือกบทบาท (${cachedRoles.length})</span>
-        <button type="button" class="btn-close-dropdown" id="btnCloseUserRoleSelectDd" title="ปิด">✕</button>
+        <button type="button" class="btn-close-dropdown" id="btnCloseUserRoleSelectDd" title="ปิด (✕)">✕</button>
       </div>
     `;
 
@@ -9825,10 +9882,14 @@ function setupCompanySettingsModal() {
 
     dropdown.innerHTML = `
       ${headerHtml}
+      <div class="dropdown-scroll-arrow top-arrow hidden" title="เลื่อนขึ้น">▲</div>
       <div class="dropdown-scroll-list">
         ${itemsHtml}
       </div>
+      <div class="dropdown-scroll-arrow bottom-arrow" title="เลื่อนลง">▼</div>
     `;
+    setupDropdownScrollArrows(dropdown);
+    setupDropdownScrollArrows(dropdown);
 
     positionRoleDropdown(dropdown, triggerBtn);
   }
@@ -16166,7 +16227,7 @@ function setupEventListeners() {
         closeDispatchSnDropdown();
       } else {
         const inp = document.getElementById(`dispatchSnInput_${rowIdx}`);
-        renderDispatchSnDropdown(rowIdx, inp ? inp.value : '');
+        renderDispatchSnDropdown(rowIdx, inp ? inp.value : '', true);
         inp?.focus();
       }
       return;
@@ -16183,7 +16244,7 @@ function setupEventListeners() {
         closeDispatchAccDropdown();
       } else {
         const inp = document.getElementById(`dispatchAccInput_${rowIdx}`);
-        renderDispatchAccDropdown(rowIdx, inp ? inp.value : '');
+        renderDispatchAccDropdown(rowIdx, inp ? inp.value : '', true);
         inp?.focus();
       }
       return;
@@ -16274,8 +16335,12 @@ function setupEventListeners() {
   dispatchTableBody?.addEventListener('focusin', e => {
     const input = e.target.closest('[data-dispatch-sn-input]');
     if (input) {
-      const rowIdx = Number(input.getAttribute('data-dispatch-sn-input'));
-      renderDispatchSnDropdown(rowIdx, input.value);
+      closeDispatchAccDropdown();
+      const val = (input.value || '').trim();
+      if (val) {
+        const rowIdx = Number(input.getAttribute('data-dispatch-sn-input'));
+        renderDispatchSnDropdown(rowIdx, val);
+      }
     }
   });
 
@@ -16284,10 +16349,15 @@ function setupEventListeners() {
     if (input) {
       const rowIdx = Number(input.getAttribute('data-dispatch-sn-input'));
       const clearBtn = input.parentElement?.querySelector('[data-clear-dispatch-sn]');
+      const val = (input.value || '').trim();
       if (clearBtn) {
-        clearBtn.classList.toggle('hidden', !input.value.trim());
+        clearBtn.classList.toggle('hidden', !val);
       }
-      renderDispatchSnDropdown(rowIdx, input.value);
+      if (val) {
+        renderDispatchSnDropdown(rowIdx, input.value);
+      } else {
+        closeDispatchSnDropdown();
+      }
     }
   });
 
@@ -16380,8 +16450,11 @@ function setupEventListeners() {
     if (input) {
       closeDispatchSnDropdown();
       if (suppressNextAccFocus) return;
-      const rowIdx = Number(input.getAttribute('data-dispatch-acc-input'));
-      renderDispatchAccDropdown(rowIdx, input.value);
+      const val = (input.value || '').trim();
+      if (val) {
+        const rowIdx = Number(input.getAttribute('data-dispatch-acc-input'));
+        renderDispatchAccDropdown(rowIdx, val);
+      }
     }
   });
 
@@ -16390,10 +16463,15 @@ function setupEventListeners() {
     if (input) {
       const rowIdx = Number(input.getAttribute('data-dispatch-acc-input'));
       const clearBtn = input.parentElement?.querySelector('[data-clear-dispatch-acc]');
+      const val = (input.value || '').trim();
       if (clearBtn) {
-        clearBtn.classList.toggle('hidden', !input.value.trim());
+        clearBtn.classList.toggle('hidden', !val);
       }
-      renderDispatchAccDropdown(rowIdx, input.value);
+      if (val) {
+        renderDispatchAccDropdown(rowIdx, input.value);
+      } else {
+        closeDispatchAccDropdown();
+      }
     }
   });
 
@@ -18299,6 +18377,7 @@ function setupEventListeners() {
       <div class="dropdown-scroll-arrow bottom-arrow" title="เลื่อนลง">▼</div>
     `;
     setupDropdownScrollArrows(dropdown);
+    setupDropdownScrollArrows(dropdown);
 
     positionAddDemoDropdown(dropdown, targetInput);
   }
@@ -18510,9 +18589,9 @@ function setupEventListeners() {
       : DISPOSE_REASONS;
 
     const headerHtml = `
-      <div class="model-dropdown-header">
-        <span>เลือกสาเหตุการจำหน่าย (${filtered.length})</span>
-        <button type="button" class="btn-close-dropdown" id="btnCloseDisposeReasonDd" title="ปิด">✕</button>
+      <div class="dropdown-header-bar">
+        <div class="dropdown-header-title">เลือกสาเหตุการจำหน่าย (${filtered.length})</span>
+        <button type="button" class="btn-close-dropdown" id="btnCloseDisposeReasonDd" title="ปิด (✕)">✕</button>
       </div>
     `;
 
@@ -18560,6 +18639,7 @@ function setupEventListeners() {
       <div class="dropdown-scroll-arrow bottom-arrow" title="เลื่อนลง">▼</div>
     `;
     setupDropdownScrollArrows(dropdown);
+    setupDropdownScrollArrows(dropdown);
     positionAddDemoDropdown(dropdown, targetInput);
     dropdown.classList.remove('hidden');
   }
@@ -18579,9 +18659,9 @@ function setupEventListeners() {
     const filtered = q ? allLocs.filter(l => l.toLowerCase().includes(q)) : allLocs;
 
     const headerHtml = `
-      <div class="model-dropdown-header">
-        <span>เลือกสถานที่จัดเก็บ (${filtered.length})</span>
-        <button type="button" class="btn-close-dropdown" id="btnCloseReactivateLocDd" title="ปิด">✕</button>
+      <div class="dropdown-header-bar">
+        <div class="dropdown-header-title">เลือกสถานที่จัดเก็บ (${filtered.length})</span>
+        <button type="button" class="btn-close-dropdown" id="btnCloseReactivateLocDd" title="ปิด (✕)">✕</button>
       </div>
     `;
 
@@ -18631,6 +18711,7 @@ function setupEventListeners() {
       </div>
       <div class="dropdown-scroll-arrow bottom-arrow" title="เลื่อนลง">▼</div>
     `;
+    setupDropdownScrollArrows(dropdown);
     setupDropdownScrollArrows(dropdown);
     positionAddDemoDropdown(dropdown, targetInput);
     dropdown.classList.remove('hidden');
@@ -19976,6 +20057,7 @@ function setupEventListeners() {
       <div class="dropdown-scroll-arrow bottom-arrow" title="เลื่อนลง">▼</div>
     `;
     setupDropdownScrollArrows(dropdown);
+    setupDropdownScrollArrows(dropdown);
 
     positionAddDemoDropdown(dropdown, targetInput);
   }
@@ -20169,6 +20251,7 @@ function setupEventListeners() {
       <div class="dropdown-scroll-arrow bottom-arrow" title="เลื่อนลง">▼</div>
     `;
     setupDropdownScrollArrows(dropdown);
+    setupDropdownScrollArrows(dropdown);
 
     positionAddDemoDropdown(dropdown, targetInput);
   }
@@ -20233,6 +20316,7 @@ function setupEventListeners() {
       </div>
       <div class="dropdown-scroll-arrow bottom-arrow" title="เลื่อนลง">▼</div>
     `;
+    setupDropdownScrollArrows(dropdown);
     setupDropdownScrollArrows(dropdown);
 
     positionAddDemoDropdown(dropdown, targetInput);
@@ -20327,6 +20411,7 @@ function setupEventListeners() {
       </div>
       <div class="dropdown-scroll-arrow bottom-arrow" title="เลื่อนลง">▼</div>
     `;
+    setupDropdownScrollArrows(dropdown);
     setupDropdownScrollArrows(dropdown);
 
     positionAddDemoDropdown(dropdown, targetInput);

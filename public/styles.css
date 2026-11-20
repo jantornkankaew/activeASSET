@@ -18859,12 +18859,12 @@ dialog .mobile-keyboard-pill,
   width: 100% !important;
   display: block !important;
   height: 36px !important;
-  font-size: 13px !important;
+  font-size: 13.5px !important;
   background: #ffffff !important;
   border: 1px solid #cbd5e1 !important;
   border-radius: 8px !important;
   padding-left: 12px !important;
-  padding-right: 48px !important;
+  padding-right: 52px !important;
   cursor: pointer;
   transition: all 0.15s ease;
   font-family: inherit;
@@ -18872,8 +18872,9 @@ dialog .mobile-keyboard-pill,
 }
 
 .inline-sn-picker-input:focus {
-  border-color: #6366f1 !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+  border-color: #007aff !important;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15) !important;
+  outline: none !important;
 }
 
 .sn-matched-card {
@@ -19232,21 +19233,22 @@ dialog.modal-camera-dialog::backdrop {
 .inline-acc-picker-input {
   width: 100% !important;
   display: block !important;
-  height: 33px !important;
-  font-size: 12.5px !important;
+  height: 36px !important;
+  font-size: 13.5px !important;
   background: #ffffff !important;
   border: 1px solid #cbd5e1 !important;
-  border-radius: 7px !important;
-  padding-left: 10px !important;
-  padding-right: 48px !important;
+  border-radius: 8px !important;
+  padding-left: 12px !important;
+  padding-right: 52px !important;
+  cursor: pointer;
   transition: all 0.15s ease;
   font-family: inherit;
   box-sizing: border-box !important;
 }
 
 .inline-acc-picker-input:focus {
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12) !important;
+  border-color: #007aff !important;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15) !important;
   outline: none !important;
 }
 
