@@ -1914,6 +1914,118 @@ function getSourceClass(src) {
   return 'src-demo';
 }
 
+function getAssetWorkflowStatus(asset) {
+  if (!asset) {
+    return {
+      text: 'ว่าง',
+      pillCls: 'avail',
+      dotCls: 'green',
+      indicatorCls: 'avail',
+      badgeIcon: '🟢',
+      calloutBadge: '🟢 ว่างพร้อมยืม'
+    };
+  }
+  if (asset.status === 'Available') {
+    return {
+      text: 'ว่าง',
+      pillCls: 'avail',
+      dotCls: 'green',
+      indicatorCls: 'avail',
+      badgeIcon: '🟢',
+      calloutBadge: '🟢 ว่างพร้อมยืม'
+    };
+  }
+  if (asset.status === 'Disposed') {
+    return {
+      text: 'จำหน่ายแล้ว',
+      pillCls: 'disposed',
+      dotCls: 'gray',
+      indicatorCls: 'gray',
+      badgeIcon: '⚪',
+      calloutBadge: '📦 จำหน่ายออกจากระบบแล้ว'
+    };
+  }
+
+  const activeLoan = asset.active_loan || (asset.current_loan_id && Array.isArray(state.loans) ? state.loans.find(l => l.id === asset.current_loan_id) : null);
+  const loanStatus = activeLoan?.status || '';
+  const src = String(asset.source || '').replace(/^[0-9]+\.\s*/, '').trim().toLowerCase();
+  const isSupplier = src.includes('supplier');
+  const isSale = src.includes('ขาย') || src.includes('sale');
+
+  if (loanStatus === 'Pending_Return_Supplier_Sale') {
+    if (isSupplier) {
+      return {
+        text: 'รอคืน Supplier',
+        pillCls: 'purple',
+        dotCls: 'purple',
+        indicatorCls: 'purple',
+        badgeIcon: '🚚',
+        calloutBadge: '🚚 รอคืน Supplier (ภายนอก)'
+      };
+    }
+    if (isSale) {
+      return {
+        text: 'รอคืนคลังขาย',
+        pillCls: 'amber',
+        dotCls: 'amber',
+        indicatorCls: 'amber',
+        badgeIcon: '🏢',
+        calloutBadge: '🏢 รอส่งคืนคลังขาย'
+      };
+    }
+    return {
+      text: 'รอคืน Supp/ขาย',
+      pillCls: 'purple',
+      dotCls: 'purple',
+      indicatorCls: 'purple',
+      badgeIcon: '🚚',
+      calloutBadge: '🚚 รอคืน Supplier, คลังขาย'
+    };
+  }
+
+  if (loanStatus === 'Pending_QC' || asset.status === 'In_QC') {
+    return {
+      text: 'รอตรวจ QC',
+      pillCls: 'amber',
+      dotCls: 'amber',
+      indicatorCls: 'amber',
+      badgeIcon: '🔍',
+      calloutBadge: '🔍 รอตรวจสภาพ QC'
+    };
+  }
+
+  if (loanStatus === 'Dispatching') {
+    return {
+      text: 'รอจัดของ',
+      pillCls: 'loaned',
+      dotCls: 'blue',
+      indicatorCls: 'loaned',
+      badgeIcon: '📦',
+      calloutBadge: '📦 อยู่ระหว่างจัดของ'
+    };
+  }
+
+  if (loanStatus === 'Dispatched') {
+    return {
+      text: 'รอส่งมอบ',
+      pillCls: 'loaned',
+      dotCls: 'blue',
+      indicatorCls: 'loaned',
+      badgeIcon: '🚚',
+      calloutBadge: '🚚 จัดของเสร็จแล้ว รอส่งมอบ'
+    };
+  }
+
+  return {
+    text: 'ถูกยืม',
+    pillCls: 'loaned',
+    dotCls: 'blue',
+    indicatorCls: 'loaned',
+    badgeIcon: '🔵',
+    calloutBadge: '📄 กำลังอยู่ระหว่างการยืม'
+  };
+}
+
 function renderStockView() {
   const container = document.getElementById('stockCardsContainer');
   const countBadge = document.getElementById('stockFilteredCountBadge');
@@ -2015,6 +2127,7 @@ function renderStockView() {
       const cardsHtml = groupAssets.map(a => {
         const isAvailable = a.status === 'Available';
         const isDisposed = a.status === 'Disposed';
+        const wf = getAssetWorkflowStatus(a);
         const sourceClass = getSourceClass(a.source);
         const accessories = a.accessories || [];
         const hasLoan = !isAvailable && !isDisposed && a.active_loan;
@@ -2051,8 +2164,8 @@ function renderStockView() {
                     <span class="status-dot gray"></span>จำหน่ายแล้ว
                   </span>
                 ` : `
-                  <span class="asset-status-badge loaned" title="ยืมโดย: ${escapeHtml(a.active_loan?.borrower_name || '')}">
-                    <span class="status-dot blue"></span>ถูกยืม
+                  <span class="asset-status-badge ${wf.pillCls}" title="${escapeHtml(wf.text)}: ${escapeHtml(a.active_loan?.borrower_name || '')}">
+                    <span class="status-dot ${wf.dotCls}"></span>${escapeHtml(wf.text)}
                   </span>
                 `}
               </div>
@@ -17423,6 +17536,7 @@ function setupEventListeners() {
 
     const isAvailable = asset.status === 'Available';
     const isDisposed = asset.status === 'Disposed';
+    const wf = getAssetWorkflowStatus(asset);
     if (libCardCurrStatus) {
       if (isAvailable) {
         libCardCurrStatus.innerHTML = '<span class="lib-status-pill avail">🟢 ว่างพร้อมยืม</span>';
@@ -17431,8 +17545,8 @@ function setupEventListeners() {
       } else {
         const curLoanId = asset.current_loan_id || '';
         libCardCurrStatus.innerHTML = curLoanId
-          ? `<button type="button" class="doc-link-pill lib-status-pill loaned" data-open-loan="${escapeHtml(curLoanId)}" title="คลิกเพื่อเปิดดูใบยืมจริง ${escapeHtml(curLoanId)}"><span>🔵 ถูกยืม (${escapeHtml(curLoanId)})</span><svg class="doc-link-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></button>`
-          : '<span class="lib-status-pill loaned">🔵 ถูกยืม</span>';
+          ? `<button type="button" class="doc-link-pill lib-status-pill ${wf.pillCls}" data-open-loan="${escapeHtml(curLoanId)}" title="คลิกเพื่อเปิดดูใบยืมจริง ${escapeHtml(curLoanId)}"><span>${wf.badgeIcon} ${escapeHtml(wf.text)} (${escapeHtml(curLoanId)})</span><svg class="doc-link-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></button>`
+          : `<span class="lib-status-pill ${wf.pillCls}">${wf.badgeIcon} ${escapeHtml(wf.text)}</span>`;
       }
     }
 
@@ -17871,6 +17985,7 @@ function setupEventListeners() {
     const statusPill = document.getElementById('assetDetailStatusPill');
     const isAvailable = asset.status === 'Available';
     const isDisposed = asset.status === 'Disposed';
+    const wf = getAssetWorkflowStatus(asset);
     if (statusPill) {
       if (isAvailable) {
         statusPill.className = 'asset-status-pill avail';
@@ -17879,8 +17994,8 @@ function setupEventListeners() {
         statusPill.className = 'asset-status-pill disposed';
         statusPill.innerHTML = '<span class="status-indicator-dot gray"></span>จำหน่ายแล้ว';
       } else {
-        statusPill.className = 'asset-status-pill loaned';
-        statusPill.innerHTML = '<span class="status-indicator-dot loaned"></span>ถูกยืม';
+        statusPill.className = `asset-status-pill ${wf.pillCls}`;
+        statusPill.innerHTML = `<span class="status-indicator-dot ${wf.indicatorCls}"></span>${escapeHtml(wf.text)}`;
       }
     }
 
@@ -17939,6 +18054,10 @@ function setupEventListeners() {
     if (loanBox) {
       if (!isAvailable && !isDisposed && asset.active_loan) {
         loanBox.classList.remove('hidden');
+        const loanBadgeEl = document.getElementById('assetDetailLoanBadge');
+        if (loanBadgeEl) {
+          loanBadgeEl.textContent = wf.calloutBadge;
+        }
         const activeLoanId = asset.active_loan.id || asset.current_loan_id || 'ใบยืม';
         const loanIdBtn = document.getElementById('assetDetailLoanId');
         if (loanIdBtn) {
