@@ -2374,9 +2374,8 @@ function renderStockView() {
           <div class="excel-brand-line-header" role="button" tabindex="0" title="คลิกเพื่อย่อ/ขยายกลุ่ม ${escapeHtml(brand)}">
             <div class="excel-outline-btn">
               <span class="excel-box-icon">
-                <svg class="excel-minus-plus-svg" width="12" height="12" viewBox="0 0 12 12">
-                  <line class="svg-h-bar" x1="2.5" y1="6" x2="9.5" y2="6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></line>
-                  <line class="svg-v-bar" x1="6" y1="2.5" x2="6" y2="9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></line>
+                <svg class="apple-disclosure-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
               </span>
             </div>

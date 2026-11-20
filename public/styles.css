@@ -12819,17 +12819,17 @@ dialog.modal-send-email {
   gap: 0;
   width: 100%;
   background: #ffffff;
-  border: 1px solid #cbd5e1;
+  border: 1px solid rgba(226, 232, 240, 0.85);
   border-top: none;
-  border-radius: 0 0 12px 12px;
+  border-radius: 0 0 14px 14px;
   flex-shrink: 0;
   min-height: min-content;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
 }
 
 .brand-group-block:last-child {
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
 }
 
 .stock-cards-grid {
@@ -14443,9 +14443,9 @@ dialog.modal-send-email {
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid #cbd5e1;
-  border-radius: 12px 12px 0 0;
-  border-bottom: 1px solid #cbd5e1;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 14px 14px 0 0;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.85);
   padding: 8px 14px;
   margin-bottom: 0;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
@@ -14602,32 +14602,39 @@ dialog.modal-send-email {
 }
 
 /* ==========================================================================
-   SHEET-STYLE TABULAR OUTLINE GROUPING FOR BRAND CATALOG
+   APPLLAMA / APPLE HIG GROUPED ACCORDION LIST FOR BRAND CATALOG
    ========================================================================== */
 
 /* Sheet Column Header Bar */
 .stock-sheet-header {
   display: grid;
-  grid-template-columns: 24px minmax(140px, 1fr) 60px 64px 64px;
-  gap: 10px;
+  grid-template-columns: 28px minmax(140px, 1fr) 72px 72px 72px;
+  gap: 12px;
   align-items: center;
-  padding: 9px 14px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  font-size: 13px;
-  font-weight: 700;
-  color: #475569;
+  padding: 10px 16px;
+  background: rgba(248, 250, 252, 0.96);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
   letter-spacing: 0.2px;
   user-select: none;
   position: sticky;
   top: var(--stock-filter-h, 52px);
   z-index: 28;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
 }
 
 .stock-sheet-header .sheet-th {
   display: flex;
   align-items: center;
+}
+
+.stock-sheet-header .sheet-th.col-brand {
+  font-weight: 600;
+  color: #475569;
 }
 
 .stock-sheet-header .sheet-th.col-total,
@@ -14636,31 +14643,37 @@ dialog.modal-send-email {
   justify-content: center;
 }
 
-/* Header line: compact sheet row with aligned columns */
+/* Header line: Apple-style list row with aligned columns */
 .excel-brand-line-header {
   display: grid;
-  grid-template-columns: 24px minmax(140px, 1fr) 60px 64px 64px;
-  gap: 10px;
+  grid-template-columns: 28px minmax(140px, 1fr) 72px 72px 72px;
+  gap: 12px;
   align-items: center;
-  padding: 8px 14px;
-  min-height: 44px;
+  padding: 10px 16px;
+  min-height: 52px;
   cursor: pointer;
   user-select: none;
   background: #ffffff;
-  transition: background-color 0.12s ease;
+  transition: background-color 0.15s ease;
+  border-bottom: 1px solid rgba(241, 245, 249, 0.95);
+  box-sizing: border-box;
 }
 
 .excel-brand-line-header:hover {
-  background: #f1f5f9;
+  background: #f8fafc;
+}
+
+.brand-group-block:last-child > .excel-brand-line-header {
+  border-bottom: none;
 }
 
 .brand-group-block:not(.is-collapsed) .excel-brand-line-header {
   background: #ffffff;
-  border-bottom: 1.5px solid #cbd5e1;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.85);
   position: sticky;
   top: calc(var(--stock-filter-h, 52px) + var(--stock-sheet-th-h, 38px));
   z-index: 26;
-  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
 }
 
 .excel-brand-line-header:focus-visible {
@@ -14668,7 +14681,7 @@ dialog.modal-send-email {
   outline-offset: -2px;
 }
 
-/* Excel square outline button: [-] or [+] */
+/* Apple HIG circular disclosure button: smoothly rotating chevron */
 .excel-outline-btn {
   display: inline-flex;
   align-items: center;
@@ -14677,69 +14690,65 @@ dialog.modal-send-email {
 }
 
 .excel-box-icon {
-  width: 19px;
-  height: 19px;
+  width: 26px;
+  height: 26px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
-  border: 1px solid #94a3b8;
-  border-radius: 4px;
-  color: #334155;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  transition: all 0.15s ease;
+  background: #f1f5f9;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 50%;
+  color: #64748b;
+  box-shadow: none;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .excel-brand-line-header:hover .excel-box-icon {
-  border-color: #2563eb;
+  border-color: rgba(191, 219, 254, 0.9);
   color: #2563eb;
-  background: #f8fafc;
+  background: #eff6ff;
+  transform: scale(1.06);
 }
 
-/* SVG minus / plus */
-.excel-minus-plus-svg {
+/* Rotating Apple chevron */
+.apple-disclosure-chevron {
   display: block;
+  transform: rotate(90deg);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* When expanded: show minus [-] by hiding vertical bar */
-.excel-minus-plus-svg .svg-v-bar {
-  opacity: 0;
-  transition: opacity 0.12s ease;
-}
-
-/* When collapsed: show plus [+] by making vertical bar visible */
-.brand-group-block.is-collapsed .excel-minus-plus-svg .svg-v-bar {
-  opacity: 1;
+.brand-group-block.is-collapsed .apple-disclosure-chevron {
+  transform: rotate(0deg);
 }
 
 /* Brand Identity */
 .brand-line-identity {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
   overflow: hidden;
 }
 
 .brand-avatar-mini {
-  width: 26px;
-  height: 26px;
-  border-radius: 5px;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
   flex-shrink: 0;
 }
 
 .brand-line-name {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 15.5px;
+  font-weight: 600;
   color: #0f172a;
-  letter-spacing: -0.2px;
+  letter-spacing: -0.01em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -14752,50 +14761,58 @@ dialog.modal-send-email {
   width: 100%;
 }
 
+/* Appllama Soft Capsule Pills */
 .brand-pill-mini {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "SF Mono", monospace;
-  font-size: 14.5px;
-  font-weight: 700;
-  padding: 3px 6px;
-  border-radius: 5px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 9999px;
   line-height: 1.25;
   white-space: nowrap;
   text-align: center;
-  width: 100%;
-  display: block;
+  min-width: 38px;
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-variant-numeric: tabular-nums;
+  box-sizing: border-box;
 }
 
 .brand-pill-mini.total {
   background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #e2e8f0;
+  color: #334155;
+  border: 1px solid rgba(226, 232, 240, 0.9);
 }
 
 .brand-pill-mini.avail {
-  background: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid rgba(34, 197, 94, 0.25);
 }
 
 .brand-pill-mini.loaned {
   background: #eff6ff;
-  color: #2563eb;
-  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.25);
 }
 
 .brand-pill-mini.loaned.is-zero {
-  background: #f8fafc;
-  color: #94a3b8;
-  border: 1px dashed #cbd5e1;
+  background: transparent;
+  color: #cbd5e1;
+  border: 1px solid transparent;
+  box-shadow: none;
 }
 
-/* Excel tree guide rail & body */
+/* Inset canvas for expanded cards */
 .excel-group-body {
   display: flex;
   position: relative;
-  padding-left: 8px; /* Centered with the 17px outline icon (8.5px center) */
-  margin-top: 10px;
+  padding: 16px 18px 20px 18px;
+  background: #f8fafc;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+  box-sizing: border-box;
 }
 
 .excel-group-body .stock-cards-grid {
@@ -14804,32 +14821,7 @@ dialog.modal-send-email {
 }
 
 .excel-tree-rail {
-  width: 16px;
-  margin-right: 12px;
-  flex-shrink: 0;
-  position: relative;
-}
-
-/* The vertical guideline like Excel group margin */
-.excel-tree-rail::before {
-  content: '';
-  position: absolute;
-  top: -8px;
-  bottom: 20px;
-  left: 0;
-  width: 1px;
-  background: #94a3b8;
-}
-
-/* The bottom elbow bracket └── connecting to the bottom edge */
-.excel-tree-rail::after {
-  content: '';
-  position: absolute;
-  bottom: 20px;
-  left: 0;
-  width: 14px;
-  height: 1px;
-  background: #94a3b8;
+  display: none !important;
 }
 
 /* When collapsed, hide the cards body completely */
@@ -14844,41 +14836,33 @@ dialog.modal-send-email {
 @media (max-width: 768px) {
   .stock-sheet-header,
   .excel-brand-line-header {
-    grid-template-columns: 20px minmax(85px, 1fr) 48px 52px 52px !important;
-    gap: 6px !important;
-    padding: 7px 10px !important;
-    min-height: 40px !important;
+    grid-template-columns: 24px minmax(90px, 1fr) 52px 52px 52px !important;
+    gap: 8px !important;
+    padding: 8px 12px !important;
+    min-height: 44px !important;
   }
   .stock-sheet-header {
-    font-size: 12px !important;
-    font-weight: 700 !important;
-    padding: 8px 10px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 8px 12px !important;
   }
   .brand-line-name {
-    font-size: 15px !important;
-    font-weight: 700 !important;
+    font-size: 14.5px !important;
+    font-weight: 600 !important;
   }
   .brand-avatar-mini {
-    width: 22px !important;
-    height: 22px !important;
-    font-size: 11.5px !important;
-    border-radius: 4px !important;
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 12px !important;
+    border-radius: 7px !important;
   }
   .brand-pill-mini {
-    font-size: 14px !important;
-    font-weight: 700 !important;
-    padding: 2px 4px !important;
-    border-radius: 4px !important;
+    font-size: 12px !important;
+    padding: 2px 6px !important;
+    min-width: 32px !important;
   }
   .excel-group-body {
-    padding-left: 2px;
-  }
-  .excel-tree-rail {
-    width: 10px;
-    margin-right: 8px;
-  }
-  .excel-tree-rail::after {
-    width: 8px;
+    padding: 12px 10px 16px 10px !important;
   }
 }
 
