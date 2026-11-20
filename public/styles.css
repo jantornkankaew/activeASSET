@@ -4796,6 +4796,36 @@ dialog.modal-confirm.dialog-closing::backdrop {
   color: #0f172a;
 }
 
+.confirm-icon-bubble.bubble-warning,
+.confirm-icon-bubble.bubble-amber {
+  background: #fffbeb !important;
+  border-color: #fef3c7 !important;
+  color: #d97706 !important;
+  box-shadow: 0 0 0 6px rgba(217, 119, 6, 0.08) !important;
+}
+
+.confirm-icon-bubble.bubble-danger {
+  background: #fff1f2 !important;
+  border-color: #ffe4e6 !important;
+  color: #e11d48 !important;
+  box-shadow: 0 0 0 6px rgba(244, 63, 94, 0.06) !important;
+}
+
+.btn.btn-warning,
+.btn.btn-amber {
+  background: #d97706 !important;
+  color: #ffffff !important;
+  border: 1px solid #b45309 !important;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.22) !important;
+}
+
+.btn.btn-warning:hover,
+.btn.btn-amber:hover {
+  background: #b45309 !important;
+  border-color: #92400e !important;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3) !important;
+}
+
 .confirm-icon-bubble {
   width: 58px;
   height: 58px;

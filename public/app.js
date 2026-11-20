@@ -855,7 +855,8 @@ function showConfirmDialog({
   confirmText = 'ยืนยันลบ',
   cancelText = 'ยกเลิก',
   icon = APP_ICONS.trash,
-  confirmBtnClass = 'btn-danger'
+  confirmBtnClass = 'btn-danger',
+  tone = 'danger'
 } = {}) {
   return new Promise(resolve => {
     const dlg = document.getElementById('confirmModalDialog');
@@ -875,6 +876,7 @@ function showConfirmDialog({
     if (titleEl) titleEl.textContent = title;
     if (msgEl) msgEl.textContent = message;
     if (iconEl) {
+      iconEl.className = `confirm-icon-bubble bubble-${tone}`;
       if (typeof icon === 'string' && icon.includes('<svg')) {
         iconEl.innerHTML = icon;
       } else {
@@ -937,6 +939,81 @@ function showConfirmDialog({
     dlg.showModal();
   });
 }
+
+async function confirmAndRevertLoanStatus(loan, currentStageName = 'รอตรวจ QC / คืนสินค้า') {
+  if (!loan) return false;
+  const loanId = loan.id;
+
+  const company = loan.customer_company || loan.customer_name || '-';
+  const borrower = loan.borrower_name || '-';
+  const itemsSummary = (loan.items || [])
+    .map(it => {
+      const snStr = it.serial_no ? ` (S/N: ${it.serial_no})` : '';
+      return `${it.brand || ''} ${it.model || ''}${snStr}`.trim();
+    })
+    .filter(Boolean)
+    .join(', ');
+
+  const itemHtml = `
+    <div class="confirm-loan-card">
+      <div class="confirm-loan-header">
+        <span class="confirm-loan-id">${escapeHtml(loanId)}</span>
+        <span class="confirm-loan-badge badge-warning" style="background:#fef3c7; color:#d97706; border:1px solid #fde68a;">
+          ${escapeHtml(currentStageName)} ➔ กำลังยืม
+        </span>
+      </div>
+      <div class="confirm-loan-details">
+        <div class="confirm-loan-row">
+          <span class="confirm-loan-label">ลูกค้า:</span>
+          <strong class="confirm-loan-val">${escapeHtml(company)}</strong>
+        </div>
+        ${loan.borrower_name ? `
+        <div class="confirm-loan-row">
+          <span class="confirm-loan-label">ผู้ยืม:</span>
+          <span class="confirm-loan-val">${escapeHtml(borrower)}</span>
+        </div>` : ''}
+        ${itemsSummary ? `
+        <div class="confirm-loan-row">
+          <span class="confirm-loan-label">สินค้า:</span>
+          <span class="confirm-loan-val font-medium">${escapeHtml(itemsSummary)}</span>
+        </div>` : ''}
+      </div>
+      <div style="font-size:12.5px; line-height:1.45; color:#92400e; background:#fffbeb; border:1px solid #fef3c7; border-radius:8px; padding:8px 12px; margin-top:4px;">
+        💡 <strong>คำอธิบาย:</strong> ใบยืมนี้จะถูกย้อนสถานะกลับไปอยู่ในคอลัมน์ <strong>"กำลังยืม"</strong> เพื่อให้สามารถจัดส่งมอบใหม่ หรือบันทึกการรับคืนอีกครั้งได้อย่างถูกต้อง
+      </div>
+    </div>
+  `;
+
+  const confirmed = await showConfirmDialog({
+    title: 'ยืนยันการย้อนสถานะใบยืม',
+    message: `คุณต้องการย้อนสถานะใบยืม "${loanId}" กลับเป็น "กำลังยืม" ใช่หรือไม่?`,
+    itemHtml: itemHtml,
+    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:#d97706;"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>`,
+    confirmText: 'ย้อนสถานะกลับเป็นกำลังยืม',
+    cancelText: 'ยกเลิก (คงสถานะเดิม)',
+    confirmBtnClass: 'btn-warning',
+    tone: 'warning'
+  });
+
+  if (!confirmed) return false;
+
+  try {
+    const res = await fetch(`/api/loans/${encodeURIComponent(loanId)}/revert-qc`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'ไม่สามารถย้อนสถานะได้');
+    applyServerState(data);
+    showToast(`↩️ ย้อนสถานะใบยืม "${loanId}" กลับเป็นกำลังยืมเรียบร้อย`);
+    return true;
+  } catch (err) {
+    showToast(`❌ ${err.message}`);
+    return false;
+  }
+}
+
+
 
 async function fetchFullState() {
   try {
@@ -5531,9 +5608,9 @@ function updateDispatchSummary() {
       const isEnabled = currentSelected > 0;
       rightBtnsEl.innerHTML = `
         ${isPendingQc ? `
-          <button type="button" class="btn btn-ghost text-muted" id="btnRevertQcToDelivered" style="font-size:12px; margin-right:auto; display:inline-flex; align-items:center; gap:4px;" title="ย้อนกลับไปสถานะกำลังยืม">
-            ${APP_ICONS.undo}
-            <span>ย้อนกลับเป็นกำลังยืม</span>
+          <button type="button" class="btn btn-sup-revert" id="btnRevertQcToDelivered" style="font-size:13px; margin-right:auto; display:inline-flex; align-items:center; gap:5px;" title="ย้อนสถานะกลับเป็นกำลังยืม">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
+            <span>ย้อนสถานะ</span>
           </button>
         ` : `
           <button type="button" class="btn btn-ghost" id="btnCancelReturnMode">
@@ -12433,20 +12510,10 @@ function setupSupplierSaleReturnModal() {
 
   btnRevert?.addEventListener('click', async () => {
     if (!state.activeSupplierSaleLoan) return;
-    const loanId = state.activeSupplierSaleLoan.id;
-    if (!confirm(`ต้องการย้อนสถานะใบยืม "${loanId}" กลับเป็นกำลังยืมหรือไม่?`)) return;
-    try {
-      const res = await fetch(`/api/loans/${encodeURIComponent(loanId)}/revert-qc`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'ไม่สามารถย้อนสถานะได้');
-      applyServerState(data);
+    const loan = state.activeSupplierSaleLoan;
+    const ok = await confirmAndRevertLoanStatus(loan, 'รอคืน Supplier/ขาย');
+    if (ok) {
       dialog?.close();
-      showToast(`↩️ ย้อนสถานะใบยืม "${loanId}" เรียบร้อย`);
-    } catch (err) {
-      showToast(`❌ ${err.message}`);
     }
   });
 
@@ -16887,20 +16954,11 @@ function setupEventListeners() {
     if (btnRevertQc) {
       e.preventDefault();
       if (!state.activeDispatchLoan) return;
-      const loanId = state.activeDispatchLoan.id;
+      const loan = state.activeDispatchLoan;
       (async () => {
-        try {
-          const res = await fetch(`/api/loans/${encodeURIComponent(loanId)}/revert-qc`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error || 'ไม่สามารถย้อนสถานะได้');
-          applyServerState(data);
+        const ok = await confirmAndRevertLoanStatus(loan, 'รอตรวจสภาพ QC');
+        if (ok) {
           document.getElementById('dispatchDialog')?.close();
-          showToast(`↩️ ย้อนสถานะใบยืม "${loanId}" กลับเป็นกำลังยืมเรียบร้อย`);
-        } catch (err) {
-          showToast(`❌ ${err.message}`);
         }
       })();
       return;
