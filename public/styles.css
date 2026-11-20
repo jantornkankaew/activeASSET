@@ -9925,19 +9925,22 @@ dialog.modal-send-email {
     font-size: 16px !important;
   }
 
-  /* 0.2 Mobile Kanban Segmented Navigation Bar (แถบสลับคอลัมน์บนมือถือ Appllama Apple HIG Benchmark) */
+  /* 0.2 Mobile Kanban Segmented Navigation Bar (Apple HIG Minimal Segmented Track) */
   .kanban-mobile-col-bar {
     display: flex !important;
     align-items: center;
-    gap: 8px;
-    padding: 4px 14px 10px 14px;
-    background: transparent;
+    gap: 3px;
+    padding: 3px;
+    background: #f1f5f9;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 9999px;
+    margin: 2px 12px 10px 12px;
+    width: calc(100% - 24px);
+    box-sizing: border-box;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     flex-shrink: 0;
     scrollbar-width: none;
-    width: 100%;
-    box-sizing: border-box;
   }
   .kanban-mobile-col-bar::-webkit-scrollbar {
     display: none;
@@ -9948,43 +9951,44 @@ dialog.modal-send-email {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 7px;
-    padding: 6.5px 13px 6.5px 11px;
-    background: #ffffff;
-    border: 1px solid rgba(226, 232, 240, 0.9);
+    gap: 5px;
+    padding: 4.5px 10px;
+    background: transparent;
+    border: none;
     border-radius: 9999px;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    color: #475569;
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
     cursor: pointer;
-    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.15s ease;
     white-space: nowrap;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    box-shadow: none;
     user-select: none;
   }
   .col-pill-btn:hover {
-    background: #f8fafc;
-    border-color: #cbd5e1;
     color: #0f172a;
   }
   .col-pill-btn:active {
-    transform: scale(0.96);
+    transform: scale(0.97);
   }
   .col-pill-btn.active {
-    background: #0f172a;
-    color: #ffffff;
-    border-color: #0f172a;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+    background: #ffffff;
+    color: #0f172a;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
   }
   .col-pill-btn .col-pill-dot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     flex-shrink: 0;
+    opacity: 0.65;
+    transition: opacity 0.15s ease;
   }
   .col-pill-btn.active .col-pill-dot {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+    opacity: 1;
+    box-shadow: none;
   }
   .dot-blue { background: #3b82f6; }
   .dot-purple { background: #8b5cf6; }
@@ -9995,20 +9999,19 @@ dialog.modal-send-email {
   .col-pill-badge {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", sans-serif;
     font-size: 11px;
-    font-weight: 700;
-    padding: 1.5px 7px;
-    border-radius: 9999px;
-    background: #f1f5f9;
-    color: #334155;
-    line-height: 1.25;
-    min-width: 18px;
-    text-align: center;
+    font-weight: 500;
+    padding: 0;
+    background: transparent;
+    color: #94a3b8;
+    line-height: 1.2;
     font-variant-numeric: tabular-nums;
-    box-sizing: border-box;
   }
   .col-pill-btn.active .col-pill-badge {
-    background: rgba(255, 255, 255, 0.22);
-    color: #ffffff;
+    background: #f1f5f9;
+    color: #0f172a;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 9999px;
   }
 
   /* 0.3 Responsive Mobile Kanban Board (Swipeable & Fitted to Screen) */
