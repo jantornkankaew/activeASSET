@@ -5436,10 +5436,11 @@ function updateDispatchSummary() {
           <button type="button" class="btn btn-ghost text-muted" id="btnRevertQcToDelivered" style="font-size:12px; margin-right:auto;" title="ย้อนกลับไปสถานะกำลังยืม">
             ↩️ ย้อนกลับเป็นกำลังยืม
           </button>
-        ` : ''}
-        <button type="button" class="btn btn-ghost" id="btnCancelReturnMode">
-          ${isPendingQc ? 'ปิด' : 'ยกเลิก'}
-        </button>
+        ` : `
+          <button type="button" class="btn btn-ghost" id="btnCancelReturnMode">
+            ยกเลิก
+          </button>
+        `}
         <button 
           type="button" 
           class="btn ${isEnabled ? 'btn-success' : 'btn-secondary is-disabled'} btn-submit-return" 
