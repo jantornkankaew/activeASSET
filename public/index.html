@@ -2776,13 +2776,29 @@
   <dialog id="assetDetailModalDialog" class="modal-dialog modal-fullscreen no-print" closedby="any" aria-labelledby="assetDetailModalTitle">
     <div class="modal-inner asset-detail-modal-inner">
       <header class="modal-header asset-modal-header-v2">
-        <div class="fullscreen-header-left">
+        <div class="fullscreen-header-top-bar">
           <button type="button" class="btn-back-nav" data-close-dialog="assetDetailModalDialog" id="btnBackAssetDetailModal" title="ย้อนกลับ">
             <svg class="back-arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="15 18 9 12 15 6"></polyline>
             </svg>
             <span class="back-text">กลับ</span>
           </button>
+          <div class="fullscreen-header-right">
+            <button type="button" class="btn btn-sm btn-outline-danger" id="btnDeleteAssetDirect" title="ลบเครื่องนี้ออกจากระบบ">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <span>ลบเครื่อง</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger hidden" id="btnOpenDisposeModal" title="บันทึกจำหน่ายเครื่องออกจากระบบ">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <span>จำหน่ายออก</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-primary hidden" id="btnOpenReactivateModal" title="นำเครื่องกลับเข้าคลังเพื่อใช้งานต่อ">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg>
+              <span>นำกลับเข้าคลัง</span>
+            </button>
+          </div>
+        </div>
+        <div class="asset-header-hero-row">
           <div class="asset-device-avatar" id="assetDetailCatIcon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
           </div>
@@ -2805,20 +2821,6 @@
             </div>
           </div>
         </div>
-        <div class="fullscreen-header-right">
-          <button type="button" class="btn btn-sm btn-outline-danger" id="btnDeleteAssetDirect" title="ลบเครื่องนี้ออกจากระบบ" style="display:inline-flex; align-items:center; gap:4px;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            <span>ลบเครื่อง</span>
-          </button>
-          <button type="button" class="btn btn-sm btn-outline-danger hidden" id="btnOpenDisposeModal" title="บันทึกจำหน่ายเครื่องออกจากระบบ" style="display:inline-flex; align-items:center; gap:4px;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            <span>จำหน่ายออก</span>
-          </button>
-          <button type="button" class="btn btn-sm btn-primary hidden" id="btnOpenReactivateModal" title="นำเครื่องกลับเข้าคลังเพื่อใช้งานต่อ" style="display:inline-flex; align-items:center; gap:4px;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg>
-            <span>นำกลับเข้าคลัง</span>
-          </button>
-        </div>
       </header>
 
       <!-- Tab Navigation Bar: ข้อมูลเครื่อง vs ประวัติการยืม -->
@@ -2840,7 +2842,10 @@
           <span class="tab-icon">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
           </span>
-          <span class="tab-title">ประวัติกิจกรรม (Audit Log)</span>
+          <span class="tab-title">
+            <span class="tab-title-full">ประวัติกิจกรรม (Audit Log)</span>
+            <span class="tab-title-short">Audit Log</span>
+          </span>
           <span class="history-count-badge" id="assetAuditLogTabBadge">0</span>
         </button>
       </div>
