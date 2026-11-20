@@ -1503,28 +1503,17 @@ function renderKanbanCard(loan) {
       <div class="card-top-row">
         <div class="card-top-left">
           ${isStatusChanged ? `<span class="badge-status-changed-pill">🔄 เพิ่งเปลี่ยนสถานะ</span>` : ''}
-          ${isSupplierReturnStage ? `
-            <!-- เฉพาะสถานะคืน Supplier: บรรทัดที่ 1 เป็น ยี่ห้อ รุ่น -->
-            <div class="card-company-headline" title="${escapeHtml(supplierBrandModelHeadline)}">
-              ${escapeHtml(supplierBrandModelHeadline)}
-            </div>
-            <!-- เฉพาะสถานะคืน Supplier: เอาชื่อบริษัทออก และขยายชื่อคนยืมเต็มบรรทัด -->
-            <div class="card-sub-meta">
-              <span class="card-borrower-name" title="ผู้ยืม: ${escapeHtml(loan.borrower_name)}">${escapeHtml(loan.borrower_name)}</span>
-              ${loan.customer_phone ? `<span>·</span><span class="card-phone-meta" title="เบอร์โทรผู้ติดต่อ">📞 ${escapeHtml(loan.customer_phone)}</span>` : ''}
-            </div>
-          ` : `
-            <!-- สถานะอื่นทั้งหมด: แสดงชื่อบริษัท และผู้ยืม ตามปกติเดิม 100% -->
-            <div class="card-company-headline" title="${escapeHtml(companyHeadline)}">
-              ${escapeHtml(companyHeadline)}
-            </div>
-            <div class="card-sub-meta">
-              <span>${escapeHtml(loan.borrower_name)}</span>
-              ${loan.customer_phone ? `<span>·</span><span class="card-phone-meta" title="เบอร์โทรผู้ติดต่อ">📞 ${escapeHtml(loan.customer_phone)}</span>` : ''}
-            </div>
-          `}
+          <div class="card-company-headline" title="${escapeHtml(isSupplierReturnStage ? supplierBrandModelHeadline : companyHeadline)}">
+            ${escapeHtml(isSupplierReturnStage ? supplierBrandModelHeadline : companyHeadline)}
+          </div>
         </div>
         ${miniCalHtml}
+      </div>
+
+      <!-- Line 2: Borrower Name (Left) + Phone Number (Far Right Edge) -->
+      <div class="card-sub-meta">
+        <span class="card-borrower-name" title="ผู้ยืม: ${escapeHtml(loan.borrower_name)}">${escapeHtml(loan.borrower_name)}</span>
+        ${loan.customer_phone ? `<span class="card-phone-meta" title="เบอร์โทรผู้ติดต่อ">📞 ${escapeHtml(loan.customer_phone)}</span>` : ''}
       </div>
 
       <!-- Line 3: เฉพาะสถานะคืน Supplier ให้แสดงหมายเหตุ / สถานะอื่นแสดง Brand & Model ปกติเดิม 100% -->
