@@ -5517,14 +5517,14 @@ function updateDispatchSummary() {
   }
 }
 
-function openDispatchModal(loanId, updateHash = true) {
+function openDispatchModal(loanId, updateHash = true, forceReturnMode = false) {
   const loan = state.loans.find(l => l.id === loanId);
   if (!loan) return;
 
   if (updateHash) updateUrlHash('modal', `dispatch-${loan.id}`);
   state.activeDispatchLoan = loan;
   const isPendingQc = loan.status === 'Pending_QC';
-  state.dispatchReturnMode = isPendingQc;
+  state.dispatchReturnMode = forceReturnMode || isPendingQc;
   state.dispatchReturnPhotos = [];
 
   // Initialize draft items with their photos
@@ -7216,6 +7216,60 @@ function renderReturnChecklistItems() {
 function openPrintModal(loanId, updateHash = true) {
   const loan = state.loans.find(l => l.id === loanId);
   if (!loan) return;
+
+  // Auto-detect open dialog source if not already tracked
+  if (!state.printReturnTo) {
+    const dispatchDlg = document.getElementById('dispatchDialog');
+    if (dispatchDlg && dispatchDlg.hasAttribute('open')) {
+      state.printReturnTo = {
+        type: 'dispatch',
+        loanId: state.activeDispatchLoan?.id || loanId,
+        returnMode: !!state.dispatchReturnMode
+      };
+      dispatchDlg.close();
+    } else {
+      const assetDlg = document.getElementById('assetDetailModalDialog');
+      if (assetDlg && assetDlg.hasAttribute('open')) {
+        const activeTabBtn = document.querySelector('.asset-nav-tab-btn.active');
+        state.printReturnTo = {
+          type: 'assetDetail',
+          tagId: state.currentDetailTagId,
+          tab: activeTabBtn ? activeTabBtn.getAttribute('data-tab-target') : 'info'
+        };
+        assetDlg.close();
+      } else {
+        const loanDlg = document.getElementById('loanDialog');
+        if (loanDlg && loanDlg.hasAttribute('open')) {
+          state.printReturnTo = {
+            type: 'loan',
+            loanId: state.editingLoanId || loanId
+          };
+          loanDlg.close();
+        } else {
+          const deliveryDlg = document.getElementById('deliveryModalDialog');
+          if (deliveryDlg && deliveryDlg.hasAttribute('open')) {
+            const delLoanId = document.getElementById('deliveryLoanId')?.value;
+            state.printReturnTo = {
+              type: 'delivery',
+              loanId: delLoanId || loanId
+            };
+            deliveryDlg.close();
+          } else {
+            const supSaleDlg = document.getElementById('supplierSaleReturnDialog');
+            if (supSaleDlg && supSaleDlg.hasAttribute('open')) {
+              const supLoanId = document.getElementById('supSaleLoanId')?.value;
+              state.printReturnTo = {
+                type: 'supplierSaleReturn',
+                loanId: supLoanId || loanId
+              };
+              supSaleDlg.close();
+            }
+          }
+        }
+      }
+    }
+  }
+
   if (updateHash) updateUrlHash('modal', `print-${loan.id}`);
   state.activePrintLoanId = loanId;
   state.printZoomMode = '100'; // Default always to 100%
@@ -13945,11 +13999,24 @@ function setupEventListeners() {
     if (prtBtn) {
       const loanId = prtBtn.getAttribute('data-open-print') || prtBtn.getAttribute('data-open-loan');
       if (loanId) {
+        const dispatchDlg = document.getElementById('dispatchDialog');
+        if (dispatchDlg && dispatchDlg.hasAttribute('open')) {
+          state.printReturnTo = {
+            type: 'dispatch',
+            loanId: state.activeDispatchLoan?.id || loanId,
+            returnMode: !!state.dispatchReturnMode
+          };
+          dispatchDlg.close();
+        }
         const assetDlg = document.getElementById('assetDetailModalDialog');
         if (assetDlg && assetDlg.hasAttribute('open')) {
-          state.returnToAssetDetailTagId = state.currentDetailTagId;
           const activeTabBtn = document.querySelector('.asset-nav-tab-btn.active');
-          state.returnToAssetDetailTab = activeTabBtn ? activeTabBtn.getAttribute('data-tab-target') : 'info';
+          state.printReturnTo = {
+            type: 'assetDetail',
+            tagId: state.currentDetailTagId,
+            tab: activeTabBtn ? activeTabBtn.getAttribute('data-tab-target') : 'info'
+          };
+          assetDlg.close();
         }
         openPrintModal(loanId);
       }
@@ -16495,6 +16562,11 @@ function setupEventListeners() {
   const btnViewPrint = document.getElementById('btnDispatchViewPrintPass');
   btnViewPrint?.addEventListener('click', () => {
     if (state.activeDispatchLoan) {
+      state.printReturnTo = {
+        type: 'dispatch',
+        loanId: state.activeDispatchLoan.id,
+        returnMode: !!state.dispatchReturnMode
+      };
       document.getElementById('dispatchDialog')?.close();
       openPrintModal(state.activeDispatchLoan.id);
     }
@@ -16515,6 +16587,10 @@ function setupEventListeners() {
   const btnReturnPrint = document.getElementById('btnReturnViewPrintPass');
   btnReturnPrint?.addEventListener('click', () => {
     if (state.activeReturnLoan) {
+      state.printReturnTo = {
+        type: 'return',
+        loanId: state.activeReturnLoan.id
+      };
       document.getElementById('returnDialog')?.close();
       openPrintModal(state.activeReturnLoan.id);
     }
@@ -16524,6 +16600,10 @@ function setupEventListeners() {
   const btnLoanPrint = document.getElementById('btnLoanEditPrintPass');
   btnLoanPrint?.addEventListener('click', () => {
     if (state.editingLoanId) {
+      state.printReturnTo = {
+        type: 'loan',
+        loanId: state.editingLoanId
+      };
       document.getElementById('loanDialog')?.close();
       openPrintModal(state.editingLoanId);
     }
@@ -19400,16 +19480,31 @@ function setupEventListeners() {
     closeModalAccDropdown('edit');
   });
 
-  // When closing printDialog, if opened from asset detail modal, return smoothly back to previous tab
+  // When closing printDialog, if opened from any previous modal, return smoothly back to that modal
   document.getElementById('printDialog')?.addEventListener('close', () => {
-    if (state.returnToAssetDetailTagId) {
-      const tagId = state.returnToAssetDetailTagId;
-      const tabTarget = state.returnToAssetDetailTab || 'info';
-      state.returnToAssetDetailTagId = null;
-      state.returnToAssetDetailTab = null;
-      openAssetDetailModal(tagId);
-      switchAssetDetailTab(tabTarget);
-    }
+    const returnTo = state.printReturnTo;
+    state.printReturnTo = null;
+    state.returnToAssetDetailTagId = null;
+    state.returnToAssetDetailTab = null;
+
+    if (!returnTo) return;
+
+    setTimeout(() => {
+      if (returnTo.type === 'dispatch' && returnTo.loanId) {
+        openDispatchModal(returnTo.loanId, true, returnTo.returnMode || false);
+      } else if (returnTo.type === 'loan' && returnTo.loanId) {
+        openEditLoanModal(returnTo.loanId);
+      } else if (returnTo.type === 'return' && returnTo.loanId) {
+        openReturnModal(returnTo.loanId);
+      } else if (returnTo.type === 'assetDetail' && returnTo.tagId) {
+        openAssetDetailModal(returnTo.tagId);
+        switchAssetDetailTab(returnTo.tab || 'info');
+      } else if (returnTo.type === 'delivery' && returnTo.loanId) {
+        openDeliveryModal(returnTo.loanId);
+      } else if (returnTo.type === 'supplierSaleReturn' && returnTo.loanId) {
+        openSupplierSaleReturnModal(returnTo.loanId);
+      }
+    }, 60);
   });
 
   // --------------------------------------------------------------------------
