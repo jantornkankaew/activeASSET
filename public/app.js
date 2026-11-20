@@ -1,11 +1,38 @@
 // activeASSET v2 — Kanban Board (v1 Column Layout) + Excel-like Loan & Tag Editor
 
+const APP_ICONS = {
+  box: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`,
+  truck: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1.5"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>`,
+  clock: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
+  alert: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
+  qc: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="m9 14 2 2 4-4"></path></svg>`,
+  returnInbound: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg>`,
+  search: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`,
+  edit: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`,
+  note: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`,
+  trash: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`,
+  building: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="22.01"></line><line x1="15" y1="22" x2="15" y2="22.01"></line><line x1="9" y1="6" x2="9" y2="6.01"></line><line x1="15" y1="6" x2="15" y2="6.01"></line><line x1="9" y1="10" x2="9" y2="10.01"></line><line x1="15" y1="10" x2="15" y2="10.01"></line><line x1="9" y1="14" x2="9" y2="14.01"></line><line x1="15" y1="14" x2="15" y2="14.01"></line><line x1="9" y1="18" x2="9" y2="18.01"></line><line x1="15" y1="18" x2="15" y2="18.01"></line></svg>`,
+  zap: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`,
+  sparkle: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>`,
+  user: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
+  pin: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`,
+  camera: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`,
+  gallery: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`,
+  pen: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>`,
+  undo: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>`,
+  printer: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>`,
+  chevronDown: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`,
+  chevronUp: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`,
+  check: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
+  activity: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>`
+};
+
 const MAIN_COLUMNS = [
   {
     id: 'requesting',
     label: 'รอจัดของ',
     theme: 'theme-blue',
-    icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`,
+    icon: APP_ICONS.box,
     sortableByDocNo: true,
     subGroups: [
       { key: 'Requested', label: 'รอจัด' },
@@ -16,7 +43,7 @@ const MAIN_COLUMNS = [
     id: 'dispatched',
     label: 'รอส่งมอบ',
     theme: 'theme-purple',
-    icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1.5"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>`,
+    icon: APP_ICONS.truck,
     sortableByDocNo: true,
     subGroups: [
       { key: 'Dispatched', label: 'รอส่งมอบ' }
@@ -26,7 +53,7 @@ const MAIN_COLUMNS = [
     id: 'in-use',
     label: 'กำลังยืม',
     theme: 'theme-emerald',
-    icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
+    icon: APP_ICONS.clock,
     sortableByDocNo: true,
     subGroups: [
       { key: 'Delivered', label: 'กำลังยืม' }
@@ -36,7 +63,7 @@ const MAIN_COLUMNS = [
     id: 'overdue-and-partial',
     label: 'เกินกำหนด / คืนไม่ครบ',
     theme: 'theme-rose',
-    icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
+    icon: APP_ICONS.alert,
     sortableByDocNo: false,
     subGroups: [
       { key: 'Overdue', label: 'เกินกำหนด' },
@@ -47,7 +74,7 @@ const MAIN_COLUMNS = [
     id: 'qc',
     label: 'รอตรวจ QC',
     theme: 'theme-amber',
-    icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="m9 14 2 2 4-4"></path></svg>`,
+    icon: APP_ICONS.qc,
     sortableByDocNo: true,
     subGroups: [
       { key: 'Pending_QC', label: 'รอตรวจสภาพ' },
@@ -1618,7 +1645,7 @@ function renderListView() {
   const activeLoans = getFilteredLoans().filter(l => l.status !== 'Returned');
 
   if (activeLoans.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="min-empty-cell"><div class="min-empty-wrap"><span>📦</span><span>ไม่พบรายการใบยืม</span></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="min-empty-cell"><div class="min-empty-wrap"><span class="empty-icon-svg" style="display:inline-flex; align-items:center; justify-content:center; color:#94a3b8;">${APP_ICONS.box}</span><span>ไม่พบรายการใบยืม</span></div></td></tr>`;
     return;
   }
 
@@ -1697,7 +1724,7 @@ function renderListView() {
             <div class="min-due-cell">
               <div class="min-due-date-row">
                 ${isOverdue ? `
-                  <span class="due-tag overdue">⚠️ เกิน ${l.overdue_days} วัน</span>
+                  <span class="due-tag overdue" style="display:inline-flex; align-items:center; gap:3px;">${APP_ICONS.alert} เกิน ${l.overdue_days} วัน</span>
                 ` : `
                   <span class="due-date-text">คืน <strong>${formatShortDate(l.due_date)}</strong></span>
                 `}
@@ -1716,25 +1743,28 @@ function renderListView() {
             <div class="min-actions-toolbar">
               ${(isEditable || isDeliveredStage) && can('edit_loan') ? `
                 <button type="button" class="btn-min-tool" data-edit-loan="${escapeHtml(l.id)}" title="${isDeliveredStage ? 'แก้ไขหมายเหตุใบยืม' : 'แก้ไขใบยืม'}">
-                  ${isDeliveredStage ? '📝' : '✏️'}
+                  ${isDeliveredStage ? APP_ICONS.note : APP_ICONS.edit}
                 </button>
               ` : ''}
               ${l.status === 'Requested' && can('cancel_loan') ? `
-                <button type="button" class="btn-min-tool danger" data-cancel-loan="${escapeHtml(l.id)}" title="ยกเลิกใบยืม">🗑️</button>
+                <button type="button" class="btn-min-tool danger" data-cancel-loan="${escapeHtml(l.id)}" title="ยกเลิกใบยืม">${APP_ICONS.trash}</button>
               ` : ''}
               ${isDispatched && can('deliver_loan') ? `
-                <button type="button" class="btn-min-deliver" data-open-delivery="${escapeHtml(l.id)}" title="ส่งมอบสินค้าให้ลูกค้า">
-                  <span>🚚 ส่งมอบ</span>
+                <button type="button" class="btn-min-deliver" data-open-delivery="${escapeHtml(l.id)}" title="ส่งมอบสินค้าให้ลูกค้า" style="display:inline-flex; align-items:center; gap:4px;">
+                  ${APP_ICONS.truck}
+                  <span>ส่งมอบ</span>
                 </button>
               ` : ''}
               ${isReturnable && can('return_loan') ? `
-                <button type="button" class="btn-min-return" data-open-return="${escapeHtml(l.id)}" title="รับคืนจากลูกค้า / ส่งตรวจ QC">
-                  <span>📥 รับคืน</span>
+                <button type="button" class="btn-min-return" data-open-return="${escapeHtml(l.id)}" title="รับคืนจากลูกค้า / ส่งตรวจ QC" style="display:inline-flex; align-items:center; gap:4px;">
+                  ${APP_ICONS.returnInbound}
+                  <span>รับคืน</span>
                 </button>
               ` : ''}
               ${l.status === 'Pending_QC' && can('return_loan') ? `
-                <button type="button" class="btn-min-return btn-min-qc" data-open-return="${escapeHtml(l.id)}" title="ตรวจสภาพ QC และรับเข้าคลัง">
-                  <span>🔍 ตรวจ QC</span>
+                <button type="button" class="btn-min-return btn-min-qc" data-open-return="${escapeHtml(l.id)}" title="ตรวจสภาพ QC และรับเข้าคลัง" style="display:inline-flex; align-items:center; gap:4px;">
+                  ${APP_ICONS.qc}
+                  <span>ตรวจ QC</span>
                 </button>
               ` : ''}
             </div>
@@ -1750,7 +1780,7 @@ function renderReturnedView() {
   const returnedLoans = getFilteredLoans().filter(l => l.status === 'Returned');
 
   if (returnedLoans.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="min-empty-cell"><div class="min-empty-wrap"><span>📦</span><span>ยังไม่มีรายการที่รับคืนครบแล้ว</span></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="min-empty-cell"><div class="min-empty-wrap"><span class="empty-icon-svg" style="display:inline-flex; align-items:center; justify-content:center; color:#94a3b8;">${APP_ICONS.box}</span><span>ยังไม่มีรายการที่รับคืนครบแล้ว</span></div></td></tr>`;
     return;
   }
 
@@ -1797,14 +1827,16 @@ function renderReturnedView() {
             </div>
           </td>
           <td>
-            <div style="font-size:12.5px; font-weight:600; color:#334155;">
-              👤 ${escapeHtml(l.return_receiver || 'เจ้าหน้าที่คลัง')}
+            <div style="font-size:12.5px; font-weight:600; color:#334155; display:inline-flex; align-items:center; gap:5px;">
+              ${APP_ICONS.user}
+              <span>${escapeHtml(l.return_receiver || 'เจ้าหน้าที่คลัง')}</span>
             </div>
           </td>
           <td style="text-align:right;">
             <div style="display:flex; justify-content:flex-end; gap:6px; align-items:center;">
-              <button type="button" class="btn btn-sm btn-outline" data-open-return-slip="${escapeHtml(l.id)}" title="คลิกเพื่อเปิดพิมพ์ใบคืนสินค้า" style="font-size:11px; padding:2px 7px; color:#0f766e; border-color:#99f6e4; background:#f0fdfa;">
-                🖨️ ใบคืน
+              <button type="button" class="btn btn-sm btn-outline" data-open-return-slip="${escapeHtml(l.id)}" title="คลิกเพื่อเปิดพิมพ์ใบคืนสินค้า" style="font-size:11px; padding:2px 7px; color:#0f766e; border-color:#99f6e4; background:#f0fdfa; display:inline-flex; align-items:center; gap:4px;">
+                ${APP_ICONS.printer}
+                <span>ใบคืน</span>
               </button>
               <span style="display:inline-block; font-size:11.5px; font-weight:600; color:#15803d; background:#f0fdf4; border:1px solid #bbf7d0; padding:2px 8px; border-radius:6px;">✓ คืนครบแล้ว</span>
             </div>
@@ -2062,7 +2094,7 @@ function renderStockView() {
   if (rows.length === 0) {
     container.innerHTML = `
       <div class="stock-empty-state">
-        <div class="empty-icon">📦</div>
+        <div class="empty-icon">${APP_ICONS.box}</div>
         <div class="empty-title">ไม่พบเครื่องในเงื่อนไขที่เลือก</div>
         <div class="empty-desc">ลองค้นหาด้วยคำอื่น หรือกดตัวกรอง Source ด้านบน</div>
         <button type="button" class="btn btn-outline btn-sm" id="btnEmptyAddDemo">+ เพิ่มเครื่อง Demo ใหม่</button>
@@ -2091,15 +2123,15 @@ function renderStockView() {
   // Update Toggle All Brands button
   const allCollapsed = sortedBrands.length > 0 && sortedBrands.every(b => !state.expandedBrands.has(b));
   if (toggleAllText) toggleAllText.textContent = allCollapsed ? 'ขยายทั้งหมด' : 'ย่อทั้งหมด';
-  if (toggleAllIcon) toggleAllIcon.textContent = allCollapsed ? '⬇️' : '⬆️';
+  if (toggleAllIcon) toggleAllIcon.innerHTML = allCollapsed ? APP_ICONS.chevronDown : APP_ICONS.chevronUp;
 
   const sheetHeaderHtml = `
     <div class="stock-sheet-header">
       <div class="sheet-th col-toggle"></div>
       <div class="sheet-th col-brand">ยี่ห้อ (Brand)</div>
       <div class="sheet-th col-total">ทั้งหมด</div>
-      <div class="sheet-th col-avail">🟢 ว่าง</div>
-      <div class="sheet-th col-loaned">🔵 ถูกยืม</div>
+      <div class="sheet-th col-avail"><span class="status-indicator-dot avail"></span> ว่าง</div>
+      <div class="sheet-th col-loaned"><span class="status-indicator-dot loaned"></span> ถูกยืม</div>
     </div>
   `;
 
@@ -2141,7 +2173,7 @@ function renderStockView() {
               <div class="asset-top-tags">
                 <span class="asset-tag-code font-mono">${escapeHtml(a.tag_id)}</span>
                 ${a.source && a.source !== 'Demo' ? `<span class="asset-source-badge ${sourceClass}">${escapeHtml(a.source)}</span>` : ''}
-                ${displayLoc ? `<span class="asset-loc-pill" title="ที่เก็บ: ${escapeHtml(displayLoc)}">📍 ${escapeHtml(displayLoc)}</span>` : ''}
+                ${displayLoc ? `<span class="asset-loc-pill" title="ที่เก็บ: ${escapeHtml(displayLoc)}" style="display:inline-flex; align-items:center; gap:3px;">${APP_ICONS.pin} ${escapeHtml(displayLoc)}</span>` : ''}
               </div>
               <div class="asset-top-status">
                 ${isAvailable ? `
@@ -2175,7 +2207,7 @@ function renderStockView() {
             ${hasLoan ? `
               <div class="asset-loan-minimal-bar">
                 <div class="loan-min-row-1">
-                  <span class="loan-min-icon">👤</span>
+                  <span class="loan-min-icon" style="display:inline-flex; align-items:center; justify-content:center;">${APP_ICONS.user}</span>
                   <strong class="loan-min-borrower">${escapeHtml(a.active_loan.borrower_name || '-')}</strong>
                   <span class="loan-min-sep">·</span>
                   <span class="loan-min-customer">${escapeHtml(a.active_loan.customer_company || a.active_loan.customer_name || '-')}</span>
@@ -2198,7 +2230,7 @@ function renderStockView() {
             ${isDisposed ? `
               <div class="asset-disposed-minimal-bar">
                 <div class="disposed-min-row">
-                  <span class="disposed-min-icon">📦</span>
+                  <span class="disposed-min-icon" style="display:inline-flex; align-items:center; justify-content:center;">${APP_ICONS.box}</span>
                   <span class="disposed-min-text">จำหน่าย: <strong>${formatShortDate(a.disposed_at)}</strong> · ${escapeHtml(a.disposed_reason || 'จำหน่ายออก')}</span>
                 </div>
               </div>
@@ -2208,8 +2240,8 @@ function renderStockView() {
             ${!hasLoan && !isDisposed && (accessories.length > 0 || a.free_note) ? `
               <div class="asset-acc-mini-line">
                 ${accessories.length > 0 ? `
-                  <span class="acc-mini-text" title="${escapeHtml(accessories.join(', '))}">
-                    ⚡ ${escapeHtml(accessories.slice(0, 2).join(' · '))}${accessories.length > 2 ? ` +${accessories.length - 2}` : ''}
+                  <span class="acc-mini-text" title="${escapeHtml(accessories.join(', '))}" style="display:inline-flex; align-items:center; gap:3px;">
+                    ${APP_ICONS.zap} ${escapeHtml(accessories.slice(0, 2).join(' · '))}${accessories.length > 2 ? ` +${accessories.length - 2}` : ''}
                   </span>
                 ` : ''}
                 ${a.free_note ? `
@@ -5591,15 +5623,20 @@ function openDispatchModal(loanId, updateHash = true, forceReturnMode = false) {
   const titleTextEl = document.querySelector('#dispatchDialogTitle .dispatch-title-text');
   if (titleIconEl) {
     if (isPendingQc) {
-      titleIconEl.textContent = '🔍';
+      titleIconEl.className = 'dispatch-title-icon theme-qc';
+      titleIconEl.innerHTML = APP_ICONS.qc;
     } else if (state.dispatchReturnMode) {
-      titleIconEl.textContent = '📥';
+      titleIconEl.className = 'dispatch-title-icon theme-return';
+      titleIconEl.innerHTML = APP_ICONS.returnInbound;
     } else if (isDelivered || isPartial) {
-      titleIconEl.textContent = '📦';
+      titleIconEl.className = 'dispatch-title-icon theme-deliver';
+      titleIconEl.innerHTML = APP_ICONS.clock;
     } else if (isDispatched) {
-      titleIconEl.textContent = '🚚';
+      titleIconEl.className = 'dispatch-title-icon theme-dispatch';
+      titleIconEl.innerHTML = APP_ICONS.truck;
     } else {
-      titleIconEl.textContent = '📦';
+      titleIconEl.className = 'dispatch-title-icon';
+      titleIconEl.innerHTML = APP_ICONS.box;
     }
   }
   if (titleTextEl) {
@@ -12622,14 +12659,14 @@ function openSupplierSaleReturnModal(loanId) {
       <div class="return-section-block" style="margin-bottom:14px;">
         <div class="return-section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <div class="return-section-title-wrap" style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:18px;">🚚</span>
+            <span style="display:inline-flex; align-items:center; color:#4338ca;">${APP_ICONS.truck}</span>
             <h4 class="return-section-title" style="margin:0; font-size:14px; font-weight:700; color:#1e293b;">1. รายการคืน Supplier</h4>
             <span class="badge" style="background:#e0e7ff; color:#4338ca; border:1px solid #c7d2fe; font-size:12px; padding:2px 8px; border-radius:999px;">
               ${supplierItems.length} เครื่อง
             </span>
           </div>
-          <div class="return-flow-notice supplier-flow" style="padding:3px 8px; font-size:11.5px; border-radius:6px; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe;">
-            ⚡ ไม่ต้องผ่าน QC (ส่งคืน Supplier ภายนอก)
+          <div class="return-flow-notice supplier-flow" style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; font-size:11.5px; border-radius:6px; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe;">
+            ${APP_ICONS.zap} <span>ไม่ต้องผ่าน QC (ส่งคืน Supplier ภายนอก)</span>
           </div>
         </div>
 
@@ -12670,14 +12707,14 @@ function openSupplierSaleReturnModal(loanId) {
       <div class="return-section-block" style="margin-bottom:14px;">
         <div class="return-section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <div class="return-section-title-wrap" style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:18px;">🏢</span>
+            <span style="display:inline-flex; align-items:center; color:#b45309;">${APP_ICONS.building}</span>
             <h4 class="return-section-title" style="margin:0; font-size:14px; font-weight:700; color:#1e293b;">2. รายการคืนคลังขาย</h4>
             <span class="badge" style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-size:12px; padding:2px 8px; border-radius:999px;">
               ${saleItems.length} เครื่อง
             </span>
           </div>
-          <div class="return-flow-notice" style="padding:3px 8px; font-size:11.5px; border-radius:6px; background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0;">
-            ✅ ผ่านการตรวจสภาพ QC เรียบร้อยแล้ว
+          <div class="return-flow-notice" style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; font-size:11.5px; border-radius:6px; background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0;">
+            ${APP_ICONS.check} <span>ผ่านการตรวจสภาพ QC เรียบร้อยแล้ว</span>
           </div>
         </div>
 
@@ -12705,11 +12742,11 @@ function openSupplierSaleReturnModal(loanId) {
                   </td>
                   <td>
                     <div class="sale-action-switcher" data-sale-tag="${escapeHtml(it.tag_id)}">
-                      <div class="sale-action-option ${currentAction === 'return_to_sale' ? 'active-sale' : ''}" data-action-val="return_to_sale">
-                        <span>🏢 คืนคลังขายปกติ</span>
+                      <div class="sale-action-option ${currentAction === 'return_to_sale' ? 'active-sale' : ''}" data-action-val="return_to_sale" style="display:inline-flex; align-items:center; gap:4px;">
+                        ${APP_ICONS.building} <span>คืนคลังขายปกติ</span>
                       </div>
-                      <div class="sale-action-option ${currentAction === 'convert_to_demo' ? 'active-demo' : ''}" data-action-val="convert_to_demo">
-                        <span>📦 ตีเป็น Demo</span>
+                      <div class="sale-action-option ${currentAction === 'convert_to_demo' ? 'active-demo' : ''}" data-action-val="convert_to_demo" style="display:inline-flex; align-items:center; gap:4px;">
+                        ${APP_ICONS.box} <span>ตีเป็น Demo</span>
                       </div>
                     </div>
                   </td>
@@ -12746,7 +12783,7 @@ function openSupplierSaleReturnModal(loanId) {
     <div class="form-group" style="margin-bottom:14px;">
       <div id="supSigEmptyWrap" class="${currentSupplierReturnSignature ? 'hidden' : ''}">
         <button type="button" class="btn btn-outline" id="btnOpenSupRetSignature" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:10px 16px; border:1.5px dashed #93c5fd; background:#f0f7ff; color:#1d4ed8; font-weight:700; font-size:13px; border-radius:10px; cursor:pointer; transition:all 0.15s ease;">
-          <span style="font-size:16px;">✍️</span>
+          <span style="display:inline-flex; align-items:center;">${APP_ICONS.pen}</span>
           <span>เซ็นรับของคืน</span>
         </button>
       </div>
@@ -16755,7 +16792,10 @@ function setupEventListeners() {
       });
       const titleIconEl = document.querySelector('#dispatchDialogTitle .dispatch-title-icon');
       const titleTextEl = document.querySelector('#dispatchDialogTitle .dispatch-title-text');
-      if (titleIconEl) titleIconEl.textContent = '📥';
+      if (titleIconEl) {
+        titleIconEl.className = 'dispatch-title-icon theme-return';
+        titleIconEl.innerHTML = APP_ICONS.returnInbound;
+      }
       if (titleTextEl) titleTextEl.textContent = 'ตรวจรับคืนสินค้า';
       const stageBadge = document.getElementById('dispatchStageBadge');
       if (stageBadge) {
@@ -17866,7 +17906,7 @@ function setupEventListeners() {
     if (!logs || logs.length === 0) {
       timeline.innerHTML = `
         <div class="audit-log-empty">
-          <div class="audit-log-empty-icon">📜</div>
+          <div class="audit-log-empty-icon">${APP_ICONS.activity}</div>
           <div style="font-weight:600; font-size:14px; color:#334155; margin-bottom:4px;">ยังไม่มีบันทึกประวัติกิจกรรม</div>
           <div style="font-size:12px;">เมื่อเครื่องนี้มีการยืม ส่งมอบ ตรวจ QC หรือแก้ไขข้อมูล ระบบจะบันทึกประวัติไว้ที่นี่อัตโนมัติ</div>
         </div>
@@ -17875,17 +17915,17 @@ function setupEventListeners() {
     }
 
     const typeConfig = {
-      CREATE: { icon: '✨', pointCls: 'type-create', badgeCls: 'type-create', badgeText: 'เพิ่มเข้าระบบ' },
-      UPDATE: { icon: '✏️', pointCls: 'type-update', badgeCls: 'type-update', badgeText: 'แก้ไขข้อมูล' },
-      LOAN_RESERVED: { icon: '📄', pointCls: 'type-loan', badgeCls: 'type-loan', badgeText: 'ระบุในใบยืม' },
-      DISPATCH: { icon: '🚚', pointCls: 'type-dispatch', badgeCls: 'type-dispatch', badgeText: 'จ่ายสินค้า' },
-      DELIVER: { icon: '📍', pointCls: 'type-deliver', badgeCls: 'type-deliver', badgeText: 'ส่งมอบสินค้า' },
-      QC: { icon: '🔍', pointCls: 'type-qc', badgeCls: 'type-qc', badgeText: 'ตรวจสภาพ QC' },
-      RETURN: { icon: '↩️', pointCls: 'type-return', badgeCls: 'type-return', badgeText: 'คืนคลัง Demo' },
-      RETURN_SUPPLIER: { icon: '🚚', pointCls: 'type-return', badgeCls: 'type-return', badgeText: 'คืน Supplier' },
-      RETURN_SALE: { icon: '🏢', pointCls: 'type-return', badgeCls: 'type-return', badgeText: 'คืนคลังขาย' },
-      DISPOSE: { icon: '📦', pointCls: 'type-dispose', badgeCls: 'type-dispose', badgeText: 'จำหน่ายออก' },
-      REACTIVATE: { icon: '📥', pointCls: 'type-reactivate', badgeCls: 'type-reactivate', badgeText: 'นำกลับเข้าคลัง' }
+      CREATE: { icon: APP_ICONS.sparkle, pointCls: 'type-create', badgeCls: 'type-create', badgeText: 'เพิ่มเข้าระบบ' },
+      UPDATE: { icon: APP_ICONS.edit, pointCls: 'type-update', badgeCls: 'type-update', badgeText: 'แก้ไขข้อมูล' },
+      LOAN_RESERVED: { icon: APP_ICONS.note, pointCls: 'type-loan', badgeCls: 'type-loan', badgeText: 'ระบุในใบยืม' },
+      DISPATCH: { icon: APP_ICONS.truck, pointCls: 'type-dispatch', badgeCls: 'type-dispatch', badgeText: 'จ่ายสินค้า' },
+      DELIVER: { icon: APP_ICONS.pin, pointCls: 'type-deliver', badgeCls: 'type-deliver', badgeText: 'ส่งมอบสินค้า' },
+      QC: { icon: APP_ICONS.qc, pointCls: 'type-qc', badgeCls: 'type-qc', badgeText: 'ตรวจสภาพ QC' },
+      RETURN: { icon: APP_ICONS.returnInbound, pointCls: 'type-return', badgeCls: 'type-return', badgeText: 'คืนคลัง Demo' },
+      RETURN_SUPPLIER: { icon: APP_ICONS.truck, pointCls: 'type-return', badgeCls: 'type-return', badgeText: 'คืน Supplier' },
+      RETURN_SALE: { icon: APP_ICONS.building, pointCls: 'type-return', badgeCls: 'type-return', badgeText: 'คืนคลังขาย' },
+      DISPOSE: { icon: APP_ICONS.trash, pointCls: 'type-dispose', badgeCls: 'type-dispose', badgeText: 'จำหน่ายออก' },
+      REACTIVATE: { icon: APP_ICONS.returnInbound, pointCls: 'type-reactivate', badgeCls: 'type-reactivate', badgeText: 'นำกลับเข้าคลัง' }
     };
 
     // Sort strictly by Date & Time (เรียงลำดับตามวันที่เวลา)
@@ -17896,7 +17936,7 @@ function setupEventListeners() {
     });
 
     timeline.innerHTML = sorted.map(item => {
-      const cfg = typeConfig[item.action_type] || { icon: '📋', pointCls: 'type-update', badgeCls: 'type-update', badgeText: item.action_type || 'กิจกรรม' };
+      const cfg = typeConfig[item.action_type] || { icon: APP_ICONS.activity, pointCls: 'type-update', badgeCls: 'type-update', badgeText: item.action_type || 'กิจกรรม' };
       const meta = item.metadata || {};
       const loanId = meta.loanId || '';
       const timeStr = item.created_at ? formatDateTimeThai(item.created_at) : '-';
@@ -17966,14 +18006,14 @@ function setupEventListeners() {
           <div class="audit-log-row">
             <div class="audit-row-header">
               <div class="audit-primary-timestamp">
-                <span class="audit-time-clock">🕒</span>
+                <span class="audit-time-clock">${APP_ICONS.clock}</span>
                 <span class="audit-time-val">${escapeHtml(timeStr)}</span>
               </div>
               <span class="audit-log-badge ${cfg.badgeCls}">${cfg.badgeText}</span>
             </div>
             ${bodyHtml}
             <div class="audit-row-footer">
-              <span class="audit-actor-name">👤 โดย <strong>${escapeHtml(actorName)}</strong></span>
+              <span class="audit-actor-name" style="display:inline-flex; align-items:center; gap:4px;">${APP_ICONS.user} โดย <strong>${escapeHtml(actorName)}</strong></span>
               ${extraBadgesHtml ? `<div class="audit-row-badges">${extraBadgesHtml}</div>` : ''}
             </div>
           </div>
@@ -19398,7 +19438,7 @@ function setupEventListeners() {
     state.auditLogSortOrder = state.auditLogSortOrder === 'asc' ? 'desc' : 'asc';
     const label = document.getElementById('auditSortLabel');
     if (label) {
-      label.textContent = state.auditLogSortOrder === 'asc' ? '🕒 เก่าสุดก่อน ▴' : '🕒 ล่าสุดขึ้นก่อน ▾';
+      label.innerHTML = `${APP_ICONS.clock} <span>${state.auditLogSortOrder === 'asc' ? 'เก่าสุดก่อน ▴' : 'ล่าสุดขึ้นก่อน ▾'}</span>`;
     }
     const q = (document.getElementById('auditLogSearchInput')?.value || '').trim().toLowerCase();
     if (q) {

@@ -46,7 +46,12 @@
         <!-- Zone 3: Fluid Search & Sort -->
         <div class="header-center">
           <div class="search-wrap input-clearable-wrap">
-            <span class="search-icon">🔍</span>
+            <span class="search-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </span>
             <input
               type="text"
               id="searchInput"
@@ -100,13 +105,17 @@
           <!-- Logged-in User Profile Pill & Dropdown -->
           <div class="user-profile-menu-wrap" id="userProfileMenuWrap">
             <button type="button" class="btn-user-profile-pill" id="btnUserProfilePill" title="ข้อมูลผู้ใช้งานและออกจากระบบ" aria-expanded="false" aria-haspopup="true">
-              <span class="user-avatar-circle" id="userNavAvatar">👤</span>
+              <span class="user-avatar-circle" id="userNavAvatar">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              </span>
               <span class="user-nav-name" id="userNavName">พนักงาน</span>
               <span class="user-nav-caret">▾</span>
             </button>
             <div class="user-dropdown-card hidden" id="userDropdownCard" role="menu">
               <div class="user-dropdown-header">
-                <div class="user-dropdown-avatar" id="userDropdownAvatar">👤</div>
+                <div class="user-dropdown-avatar" id="userDropdownAvatar">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
                 <div class="user-dropdown-info">
                   <div class="user-dropdown-name" id="userDropdownName">พนักงานบริษัท</div>
                   <div class="user-dropdown-email" id="userDropdownEmail">staff@active5.co.th</div>
@@ -657,7 +666,9 @@
     <div class="acc-modal-content">
       <header class="acc-modal-header">
         <div class="acc-modal-header-left">
-          <div class="acc-modal-icon">📦</div>
+          <div class="acc-modal-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          </div>
           <div>
             <h3 class="acc-modal-title" id="accModalTitle">อุปกรณ์เสริม</h3>
             <p class="acc-modal-sub" id="accModalSubtitle"></p>
@@ -1349,7 +1360,7 @@
           <div class="form-group" style="margin-bottom:14px;">
             <div id="deliverySigEmptyWrap">
               <button type="button" class="btn btn-outline" id="btnOpenDeliverySignature" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:10px 16px; border:1.5px dashed #93c5fd; background:#f0f7ff; color:#1d4ed8; font-weight:700; font-size:13px; border-radius:10px; cursor:pointer; transition:all 0.15s ease;">
-                <span style="font-size:16px;">✍️</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>
                 <span>เซ็นรับของ</span>
               </button>
             </div>
@@ -1379,11 +1390,13 @@
             <div class="delivery-photo-actions">
               <input type="file" id="deliveryCameraInput" accept="image/*" capture="environment" class="hidden" />
               <input type="file" id="deliveryFileInput" accept="image/*" multiple class="hidden" />
-              <button type="button" class="btn btn-outline btn-photo-snap" id="btnSnapDeliveryCamera">
-                📷 ถ่ายรูปด้วยกล้อง
+              <button type="button" class="btn btn-outline btn-photo-snap" id="btnSnapDeliveryCamera" style="display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                <span>ถ่ายรูปด้วยกล้อง</span>
               </button>
-              <button type="button" class="btn btn-outline btn-photo-pick" id="btnPickDeliveryFile">
-                📁 เลือกจากคลังรูปภาพ
+              <button type="button" class="btn btn-outline btn-photo-pick" id="btnPickDeliveryFile" style="display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <span>เลือกจากคลังรูปภาพ</span>
               </button>
             </div>
             <!-- Grid of uploaded photo previews -->
@@ -1393,19 +1406,24 @@
           <!-- Row 3: GPS & Timestamp Card -->
           <div class="delivery-meta-card">
             <div class="delivery-meta-row">
-              <div class="delivery-meta-icon">📍</div>
+              <div class="delivery-meta-icon" style="display:inline-flex; align-items:center; justify-content:center; color:#0e7490;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              </div>
               <div class="delivery-meta-info">
                 <div class="delivery-meta-label">พิกัดสถานที่ส่งมอบ (GPS)</div>
                 <div class="delivery-meta-value" id="deliveryGpsDisplay">กำลังค้นหาพิกัด...</div>
                 <input type="hidden" id="deliveryGpsVal" name="deliveryGps" />
               </div>
-              <button type="button" class="btn btn-sm btn-outline btn-refresh-gps" id="btnRefreshDeliveryGps" title="ดึงพิกัดใหม่">
-                🔄 ดึงพิกัดใหม่
+              <button type="button" class="btn btn-sm btn-outline btn-refresh-gps" id="btnRefreshDeliveryGps" title="ดึงพิกัดใหม่" style="display:inline-flex; align-items:center; gap:4px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
+                <span>ดึงพิกัดใหม่</span>
               </button>
             </div>
             <div class="delivery-meta-divider"></div>
             <div class="delivery-meta-row">
-              <div class="delivery-meta-icon">🕒</div>
+              <div class="delivery-meta-icon" style="display:inline-flex; align-items:center; justify-content:center; color:#2563eb;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              </div>
               <div class="delivery-meta-info">
                 <div class="delivery-meta-label">วันเวลาที่ส่งมอบ (Timestamp)</div>
                 <div class="delivery-meta-value" id="deliveryTimestampDisplay">-</div>
@@ -1426,8 +1444,9 @@
 
         <footer class="modal-footer delivery-modal-footer">
           <button type="button" class="btn btn-outline" data-close-dialog="deliveryModalDialog">ยกเลิก</button>
-          <button type="submit" class="btn btn-primary btn-confirm-delivery" id="btnSubmitDelivery">
-            🚚 ยืนยันการส่งมอบสินค้า
+          <button type="submit" class="btn btn-primary btn-confirm-delivery" id="btnSubmitDelivery" style="display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1.5"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+            <span>ยืนยันการส่งมอบสินค้า</span>
           </button>
         </footer>
       </form>
@@ -1461,13 +1480,15 @@
       <footer class="modal-footer sup-sale-footer">
         <div class="sup-sale-footer-secondary">
           <button type="button" class="btn btn-sup-cancel" data-close-dialog="supplierSaleReturnDialog">ยกเลิก</button>
-          <button type="button" class="btn btn-sup-revert" id="btnRevertSupSaleReturn" title="ย้อนสถานะกลับไปก่อนหน้า">
-            ↩️ ย้อนสถานะ
+          <button type="button" class="btn btn-sup-revert" id="btnRevertSupSaleReturn" title="ย้อนสถานะกลับไปก่อนหน้า" style="display:inline-flex; align-items:center; gap:4px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+            <span>ย้อนสถานะ</span>
           </button>
         </div>
         <div class="sup-sale-footer-primary">
-          <button type="button" class="btn btn-primary btn-sup-submit" id="btnSubmitSupSaleReturn">
-            📄 บันทึกและออกใบคืน
+          <button type="button" class="btn btn-primary btn-sup-submit" id="btnSubmitSupSaleReturn" style="display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            <span>บันทึกและออกใบคืน</span>
           </button>
         </div>
       </footer>
@@ -2464,7 +2485,12 @@
       <div class="sheet-drag-handle"></div>
       <header class="modal-header">
         <div>
-          <h2 id="addDemoModalTitle" class="modal-title">📦 เพิ่มเครื่อง Demo เข้าคลัง</h2>
+          <h2 id="addDemoModalTitle" class="modal-title" style="display:flex; align-items:center; gap:8px;">
+            <span class="modal-title-icon" style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:7px; background:#eff6ff; color:#2563eb;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            </span>
+            <span>เพิ่มเครื่อง Demo เข้าคลัง</span>
+          </h2>
         </div>
         <button type="button" class="btn-close-icon" id="btnCloseAddDemoModal" title="ปิด">✕</button>
       </header>
@@ -2476,7 +2502,10 @@
           <!-- Section 1: ข้อมูลทรัพย์สิน -->
           <div class="form-section-card">
             <div class="section-card-header">
-              <span class="section-card-title">📦 ข้อมูลทรัพย์สิน</span>
+              <span class="section-card-title" style="display:inline-flex; align-items:center; gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                <span>ข้อมูลทรัพย์สิน</span>
+              </span>
             </div>
             <div class="form-grid-2">
               <div class="form-group">
@@ -2668,14 +2697,17 @@
           </div>
         </div>
         <div class="fullscreen-header-right">
-          <button type="button" class="btn btn-sm btn-outline-danger" id="btnDeleteAssetDirect" title="ลบเครื่องนี้ออกจากระบบ">
-            <span>🗑️ ลบเครื่อง</span>
+          <button type="button" class="btn btn-sm btn-outline-danger" id="btnDeleteAssetDirect" title="ลบเครื่องนี้ออกจากระบบ" style="display:inline-flex; align-items:center; gap:4px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            <span>ลบเครื่อง</span>
           </button>
-          <button type="button" class="btn btn-sm btn-outline-danger hidden" id="btnOpenDisposeModal" title="บันทึกจำหน่ายเครื่องออกจากระบบ">
-            <span>📤 จำหน่ายออก</span>
+          <button type="button" class="btn btn-sm btn-outline-danger hidden" id="btnOpenDisposeModal" title="บันทึกจำหน่ายเครื่องออกจากระบบ" style="display:inline-flex; align-items:center; gap:4px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            <span>จำหน่ายออก</span>
           </button>
-          <button type="button" class="btn btn-sm btn-primary hidden" id="btnOpenReactivateModal" title="นำเครื่องกลับเข้าคลังเพื่อใช้งานต่อ">
-            <span>📥 นำกลับเข้าคลัง</span>
+          <button type="button" class="btn btn-sm btn-primary hidden" id="btnOpenReactivateModal" title="นำเครื่องกลับเข้าคลังเพื่อใช้งานต่อ" style="display:inline-flex; align-items:center; gap:4px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg>
+            <span>นำกลับเข้าคลัง</span>
           </button>
         </div>
       </header>
@@ -2683,16 +2715,22 @@
       <!-- Tab Navigation Bar: ข้อมูลเครื่อง vs ประวัติการยืม -->
       <div class="asset-detail-nav-tabs" role="tablist">
         <button type="button" class="asset-nav-tab-btn active" id="btnTabAssetInfo" data-tab-target="info" role="tab" aria-selected="true">
-          <span class="tab-icon">⚙️</span>
+          <span class="tab-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </span>
           <span class="tab-title">ข้อมูลเครื่อง</span>
         </button>
         <button type="button" class="asset-nav-tab-btn" id="btnTabAssetHistory" data-tab-target="history" role="tab" aria-selected="false">
-          <span class="tab-icon">🕒</span>
+          <span class="tab-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          </span>
           <span class="tab-title">ประวัติการยืม</span>
           <span class="history-count-badge" id="assetHistoryTabBadge">0</span>
         </button>
         <button type="button" class="asset-nav-tab-btn" id="btnTabAssetAuditLogs" data-tab-target="logs" role="tab" aria-selected="false">
-          <span class="tab-icon">📜</span>
+          <span class="tab-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          </span>
           <span class="tab-title">ประวัติกิจกรรม (Audit Log)</span>
           <span class="history-count-badge" id="assetAuditLogTabBadge">0</span>
         </button>
@@ -2987,15 +3025,20 @@
             <!-- Header bar with summary & search -->
             <div class="audit-log-header">
               <div class="audit-log-title-wrap">
-                <span class="audit-log-title-icon">📜</span>
+                <span class="audit-log-title-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                </span>
                 <span class="audit-log-title-text">ประวัติกิจกรรม (Audit Log)</span>
                 <span class="badge badge-purple" id="auditLogTotalBadge">0 รายการ</span>
               </div>
               <div class="audit-log-filter-wrap">
                 <button type="button" class="btn-audit-sort" id="btnToggleAuditSort" title="สลับการเรียงลำดับเวลา">
-                  <span id="auditSortLabel">🕒 ล่าสุดขึ้นก่อน ▾</span>
+                  <span id="auditSortLabel" style="display:inline-flex; align-items:center; gap:4px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span>ล่าสุดขึ้นก่อน ▾</span>
+                  </span>
                 </button>
-                <input type="text" id="auditLogSearchInput" class="form-control form-control-sm" placeholder="🔍 ค้นหากิจกรรม, ผู้บันทึก..." autocomplete="off" />
+                <input type="text" id="auditLogSearchInput" class="form-control form-control-sm" placeholder="ค้นหากิจกรรม, ผู้บันทึก..." autocomplete="off" />
               </div>
             </div>
 
@@ -3022,7 +3065,12 @@
     <div class="modal-card dispose-asset-card">
       <header class="modal-header">
         <div class="modal-title-group">
-          <h3 id="disposeAssetTitle" class="modal-title">📤 จำหน่ายเครื่องออกจากระบบ</h3>
+          <h3 id="disposeAssetTitle" class="modal-title" style="display:flex; align-items:center; gap:8px;">
+            <span class="modal-title-icon" style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:7px; background:#fef2f2; color:#dc2626;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </span>
+            <span>จำหน่ายเครื่องออกจากระบบ</span>
+          </h3>
         </div>
         <button type="button" class="btn-modal-close" data-close-dialog="disposeAssetModalDialog" title="ปิด">✕</button>
       </header>
@@ -3100,7 +3148,12 @@
     <div class="modal-card reactivate-asset-card">
       <header class="modal-header">
         <div class="modal-title-group">
-          <h3 id="reactivateAssetTitle" class="modal-title">📥 นำเครื่องกลับเข้าคลัง / เปิดใช้งานต่อ</h3>
+          <h3 id="reactivateAssetTitle" class="modal-title" style="display:flex; align-items:center; gap:8px;">
+            <span class="modal-title-icon" style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:7px; background:#ecfdf5; color:#059669;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg>
+            </span>
+            <span>นำเครื่องกลับเข้าคลัง / เปิดใช้งานต่อ</span>
+          </h3>
         </div>
         <button type="button" class="btn-modal-close" data-close-dialog="reactivateAssetModalDialog" title="ปิด">✕</button>
       </header>
@@ -3178,7 +3231,9 @@
     <div class="scanner-modal-inner">
       <header class="scanner-modal-header">
         <div class="scanner-header-left">
-          <div class="scanner-header-icon-badge">📷</div>
+          <div class="scanner-header-icon-badge">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+          </div>
           <div class="scanner-header-text">
             <h3 id="searchBarcodeModalTitle">สแกนบาร์โค้ด / QR Code</h3>
             <span class="scanner-header-sub">ส่องกล้องไปที่ S/N, Tag ID หรือบาร์โค้ด</span>
