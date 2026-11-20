@@ -11691,10 +11691,12 @@ dialog.modal-send-email {
   .gate-pass-dual-wrapper {
     display: flex !important;
     flex-direction: column !important;
+    justify-content: space-between !important;
     width: 210mm !important;
-    max-width: 100% !important;
-    height: 280mm !important;
-    max-height: 280mm !important;
+    max-width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
     position: relative !important;
     margin: 0 auto !important;
     padding: 0 !important;
@@ -11710,13 +11712,13 @@ dialog.modal-send-email {
 
   .gp-half-slot {
     width: 210mm !important;
-    max-width: 100% !important;
-    height: 139mm !important;
-    min-height: 139mm !important;
-    max-height: 139mm !important;
+    max-width: 210mm !important;
+    height: 148.5mm !important;
+    min-height: 148.5mm !important;
+    max-height: 148.5mm !important;
     display: flex !important;
     flex-direction: column !important;
-    justify-content: flex-start !important;
+    justify-content: space-between !important;
     align-items: stretch !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
@@ -11725,21 +11727,21 @@ dialog.modal-send-email {
   }
 
   .gp-half-slot.gp-half-top {
-    padding: 3mm 8mm 3.5mm 8mm !important;
+    padding: 6mm 10mm 4mm 10mm !important;
   }
 
   .gp-half-slot.gp-half-bottom {
-    padding: 3.5mm 8mm 3mm 8mm !important;
+    padding: 4mm 10mm 6mm 10mm !important;
   }
 
   .gate-pass-dual-wrapper .gp-perforation-divider {
     position: absolute !important;
-    top: 50% !important;
+    top: 148.5mm !important;
     left: 0 !important;
     right: 0 !important;
     transform: translateY(-50%) !important;
     width: 210mm !important;
-    padding: 0 8mm !important;
+    padding: 0 10mm !important;
     margin: 0 !important;
     box-sizing: border-box !important;
     z-index: 10 !important;
@@ -11753,7 +11755,7 @@ dialog.modal-send-email {
     display: flex !important;
     flex-direction: column !important;
     width: 210mm !important;
-    max-width: 100% !important;
+    max-width: 210mm !important;
     height: 148.5mm !important;
     max-height: 148.5mm !important;
     position: relative !important;
@@ -11769,18 +11771,23 @@ dialog.modal-send-email {
 
   .gate-pass-half-wrapper .gp-half-slot {
     width: 210mm !important;
-    max-width: 100% !important;
-    height: 139mm !important;
-    min-height: 139mm !important;
-    max-height: 139mm !important;
-    padding: 3mm 8mm 3mm 8mm !important;
+    max-width: 210mm !important;
+    height: 148.5mm !important;
+    min-height: 148.5mm !important;
+    max-height: 148.5mm !important;
+    padding: 6mm 10mm 4mm 10mm !important;
     box-sizing: border-box !important;
   }
 
   .gate-pass-half-wrapper .gp-perforation-divider {
+    position: absolute !important;
+    top: 148.5mm !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: translateY(-50%) !important;
     width: 210mm !important;
-    padding: 0 8mm !important;
-    margin: 1mm 0 0 0 !important;
+    padding: 0 10mm !important;
+    margin: 0 !important;
     box-sizing: border-box !important;
     display: flex !important;
     align-items: center !important;
@@ -11860,10 +11867,10 @@ dialog.modal-send-email {
   .gate-pass-sheet.size-dual,
   .gate-pass-sheet.size-half {
     width: 100% !important;
-    height: 132.5mm !important;
-    min-height: 132.5mm !important;
-    max-height: 132.5mm !important;
-    padding: 2.5mm 0 2.5mm 0 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    padding: 0 !important;
     font-size: 12px !important;
     line-height: 1.35 !important;
     border: none !important;
@@ -11875,7 +11882,7 @@ dialog.modal-send-email {
     margin: 0 !important;
     display: flex !important;
     flex-direction: column !important;
-    justify-content: flex-start !important;
+    justify-content: space-between !important;
   }
 
   .gate-pass-sheet.size-a4 {
