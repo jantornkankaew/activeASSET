@@ -8536,7 +8536,6 @@ function setupCompanySettingsModal() {
   const modal = document.getElementById('companySettingsModal');
   const btnOpen = document.getElementById('btnOpenCompanySettings');
   const btnClose = document.getElementById('btnCloseCompanySettings');
-  const btnCancel = document.getElementById('btnCancelCompanySettings');
   const btnSave = document.getElementById('btnSaveCompanySettings');
   if (!modal) return;
 
