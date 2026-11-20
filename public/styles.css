@@ -17125,18 +17125,23 @@ dialog.modal-company-settings.modal-fullscreen {
 
 .btn-header-printpass,
 .btn-header-editloan {
-  font-size: 12px;
-  font-weight: 550;
-  padding: 5px 12px;
-  border-radius: 7px;
+  height: 34px;
+  min-height: 34px;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 0 15px;
+  border-radius: 8px;
   border: 1px solid #cbd5e1;
   color: #334155;
   background: #ffffff;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
+  gap: 6px;
   transition: all 0.15s ease;
   cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
 }
 
 .btn-header-printpass:hover,
@@ -17144,6 +17149,34 @@ dialog.modal-company-settings.modal-fullscreen {
   background: #f8fafc;
   border-color: #94a3b8;
   color: #0f172a;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.08);
+}
+
+.btn-header-printpass:active,
+.btn-header-editloan:active {
+  transform: scale(0.97);
+}
+
+.btn-header-printpass svg,
+.btn-header-editloan svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2.2;
+  flex-shrink: 0;
+}
+
+.btn-header-save-settings {
+  height: 34px;
+  min-height: 34px;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 0 16px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 .dispatch-modal-body {
