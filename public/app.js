@@ -17776,6 +17776,8 @@ function setupEventListeners() {
     }
   }
 
+  state.auditLogSortOrder = 'desc';
+
   function renderAssetAuditLogs(logs) {
     const timeline = document.getElementById('assetAuditLogTimeline');
     if (!timeline) return;
@@ -17805,96 +17807,93 @@ function setupEventListeners() {
       REACTIVATE: { icon: '📥', pointCls: 'type-reactivate', badgeCls: 'type-reactivate', badgeText: 'นำกลับเข้าคลัง' }
     };
 
-    timeline.innerHTML = logs.map(item => {
+    // Sort strictly by Date & Time (เรียงลำดับตามวันที่เวลา)
+    const sorted = [...logs].sort((a, b) => {
+      const tA = new Date((a.created_at || '').replace(' ', 'T')).getTime() || 0;
+      const tB = new Date((b.created_at || '').replace(' ', 'T')).getTime() || 0;
+      return state.auditLogSortOrder === 'asc' ? tA - tB : tB - tA;
+    });
+
+    timeline.innerHTML = sorted.map(item => {
       const cfg = typeConfig[item.action_type] || { icon: '📋', pointCls: 'type-update', badgeCls: 'type-update', badgeText: item.action_type || 'กิจกรรม' };
       const meta = item.metadata || {};
       const loanId = meta.loanId || '';
       const timeStr = item.created_at ? formatDateTimeThai(item.created_at) : '-';
 
-      // 1. Structured changes box (บอกว่ามีการเปลี่ยนค่าอะไร อย่างชัดเจน)
-      let changesHtml = '';
+      // Minimal inline diffs (ไม่ใส่กรอบการ์ดซ้ำซ้อน)
+      let bodyHtml = '';
       if (Array.isArray(meta.changesList) && meta.changesList.length > 0) {
-        changesHtml = `
-          <div class="audit-changes-box">
-            <div class="audit-changes-title">
-              <span>🔄</span>
-              <span>รายละเอียดการเปลี่ยนค่า (${meta.changesList.length} รายการ):</span>
-            </div>
-            <div class="audit-changes-list">
-              ${meta.changesList.map(ch => `
-                <div class="audit-change-chip">
-                  <span class="change-field">${escapeHtml(ch.field)}:</span>
-                  <span class="change-from" title="ค่าเดิม">${escapeHtml(ch.from || '-')}</span>
-                  <span class="change-sep">➔</span>
-                  <span class="change-to" title="ค่าใหม่">${escapeHtml(ch.to || '-')}</span>
-                </div>
-              `).join('')}
-            </div>
+        bodyHtml = `
+          <div class="audit-diff-inline">
+            ${meta.changesList.map(ch => `
+              <span class="diff-field">${escapeHtml(ch.field)}:</span>
+              <span class="diff-from" title="ค่าเดิม">${escapeHtml(ch.from || '-')}</span>
+              <span class="diff-arrow">➔</span>
+              <span class="diff-to" title="ค่าใหม่">${escapeHtml(ch.to || '-')}</span>
+            `).join(' • ')}
           </div>
         `;
       } else if (item.action_type === 'UPDATE' && Array.isArray(meta.diffParts) && meta.diffParts.length > 0) {
-        changesHtml = `
-          <div class="audit-changes-box">
-            <div class="audit-changes-title">
-              <span>🔄</span>
-              <span>รายละเอียดการเปลี่ยนค่า:</span>
+        bodyHtml = `
+          <div class="audit-diff-inline">
+            ${meta.diffParts.map(part => `<span class="diff-to">${escapeHtml(part)}</span>`).join(' • ')}
+          </div>
+        `;
+      } else {
+        let detailsText = item.details || '';
+        // If details already repeats action_title, clean it up
+        if (item.action_title && detailsText.startsWith(item.action_title)) {
+          detailsText = detailsText.substring(item.action_title.length).replace(/^[ •\-]+/, '');
+        }
+
+        bodyHtml = `
+          <div class="audit-action-body">
+            <div class="audit-action-lead">
+              <span class="audit-action-title">${escapeHtml(item.action_title || '')}</span>
+              ${loanId ? `
+                <button type="button" class="doc-link-pill" data-open-loan="${escapeHtml(loanId)}" style="font-size:11px; padding:1px 7px;" title="เปิดดูใบยืม ${escapeHtml(loanId)}">
+                  <span>${escapeHtml(loanId)}</span>
+                  <svg class="doc-link-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
+                </button>
+              ` : ''}
             </div>
-            <div class="audit-changes-list">
-              ${meta.diffParts.map(part => `
-                <div class="audit-change-chip">
-                  <span class="change-field">•</span>
-                  <span class="change-to">${escapeHtml(part)}</span>
-                </div>
-              `).join('')}
-            </div>
+            ${detailsText ? `<div class="audit-action-desc">${escapeHtml(detailsText)}</div>` : ''}
           </div>
         `;
       }
 
-      let pillsHtml = '';
-      if (loanId) {
-        pillsHtml += `
-          <button type="button" class="doc-link-pill" data-open-loan="${escapeHtml(loanId)}" style="font-size:11.5px; padding:2px 8px;" title="เปิดดูใบยืม ${escapeHtml(loanId)}">
-            <span>${escapeHtml(loanId)}</span>
-            <svg class="doc-link-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-              <polyline points="15 3 21 3 21 9"></polyline>
-              <line x1="10" y1="14" x2="21" y2="3"></line>
-            </svg>
-          </button>
-        `;
-      }
+      let extraBadgesHtml = '';
       if (meta.delivery_gps || meta.supplierGps) {
         const gps = meta.delivery_gps || meta.supplierGps;
-        pillsHtml += `<span class="badge" style="background:#ecfeff; color:#0e7490; border:1px solid #cffafe; font-size:11px;">📍 GPS: ${escapeHtml(gps)}</span>`;
+        extraBadgesHtml += `<span class="badge" style="background:#ecfeff; color:#0e7490; border:1px solid #cffafe; font-size:10.5px; padding:1px 6px;">📍 GPS: ${escapeHtml(gps)}</span>`;
       }
       if (meta.qc_status) {
         const isPass = meta.qc_status === 'Pass';
-        pillsHtml += `<span class="badge" style="background:${isPass ? '#dcfce7' : '#fee2e2'}; color:${isPass ? '#15803d' : '#b91c1c'}; border:1px solid ${isPass ? '#bbf7d0' : '#fecaca'}; font-size:11px;">${isPass ? 'QC: ผ่าน' : 'QC: มีตำหนิ'}</span>`;
+        extraBadgesHtml += `<span class="badge" style="background:${isPass ? '#dcfce7' : '#fee2e2'}; color:${isPass ? '#15803d' : '#b91c1c'}; border:1px solid ${isPass ? '#bbf7d0' : '#fecaca'}; font-size:10.5px; padding:1px 6px;">${isPass ? 'QC: ผ่าน' : 'QC: มีตำหนิ'}</span>`;
       }
 
-      // Who made the change (บอกชัดเจนว่าใครเป็นคนเปลี่ยน)
+      // Who made the change (บอกชัดเจน กระชับ ไม่กินพื้นที่)
       const actorName = (item.actor_name || '').trim() || 'จันทร ก้านแก้ว';
 
       return `
         <div class="audit-log-item">
           <div class="audit-log-point ${cfg.pointCls}">${cfg.icon}</div>
-          <div class="audit-log-card">
-            <div class="audit-log-card-header">
-              <div class="audit-log-card-title-group">
-                <span class="audit-log-badge ${cfg.badgeCls}">${cfg.badgeText}</span>
-                <span class="audit-log-card-title">${escapeHtml(item.action_title || '')}</span>
+          <div class="audit-log-row">
+            <div class="audit-row-header">
+              <div class="audit-primary-timestamp">
+                <span class="audit-time-clock">🕒</span>
+                <span class="audit-time-val">${escapeHtml(timeStr)}</span>
               </div>
-              <div class="audit-log-timestamp">🕒 ${escapeHtml(timeStr)}</div>
+              <span class="audit-log-badge ${cfg.badgeCls}">${cfg.badgeText}</span>
             </div>
-            ${item.details ? `<div class="audit-log-details">${escapeHtml(item.details)}</div>` : ''}
-            ${changesHtml}
-            <div class="audit-log-footer">
-              <div class="audit-log-actor">
-                <span class="audit-actor-label">👤 ผู้ดำเนินการ / ผู้เปลี่ยน:</span>
-                <span class="audit-actor-badge">${escapeHtml(actorName)}</span>
-              </div>
-              ${pillsHtml ? `<div class="audit-log-meta-pills">${pillsHtml}</div>` : ''}
+            ${bodyHtml}
+            <div class="audit-row-footer">
+              <span class="audit-actor-name">👤 โดย <strong>${escapeHtml(actorName)}</strong></span>
+              ${extraBadgesHtml ? `<div class="audit-row-badges">${extraBadgesHtml}</div>` : ''}
             </div>
           </div>
         </div>
@@ -19311,6 +19310,29 @@ function setupEventListeners() {
   });
   document.getElementById('btnJumpToAssetHistory')?.addEventListener('click', () => {
     switchAssetDetailTab('history');
+  });
+
+  // Sort order toggle in Asset Audit Logs
+  document.getElementById('btnToggleAuditSort')?.addEventListener('click', () => {
+    state.auditLogSortOrder = state.auditLogSortOrder === 'asc' ? 'desc' : 'asc';
+    const label = document.getElementById('auditSortLabel');
+    if (label) {
+      label.textContent = state.auditLogSortOrder === 'asc' ? '🕒 เก่าสุดก่อน ▴' : '🕒 ล่าสุดขึ้นก่อน ▾';
+    }
+    const q = (document.getElementById('auditLogSearchInput')?.value || '').trim().toLowerCase();
+    if (q) {
+      const filtered = state.currentAssetAuditLogs.filter(it => {
+        const title = (it.action_title || '').toLowerCase();
+        const details = (it.details || '').toLowerCase();
+        const actor = (it.actor_name || '').toLowerCase();
+        const date = (it.created_at || '').toLowerCase();
+        const loan = (it.metadata?.loanId || '').toLowerCase();
+        return title.includes(q) || details.includes(q) || actor.includes(q) || date.includes(q) || loan.includes(q);
+      });
+      renderAssetAuditLogs(filtered);
+    } else {
+      renderAssetAuditLogs(state.currentAssetAuditLogs);
+    }
   });
 
   // Search filter in Asset Audit Logs

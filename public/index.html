@@ -2994,11 +2994,14 @@
             <div class="audit-log-header">
               <div class="audit-log-title-wrap">
                 <span class="audit-log-title-icon">📜</span>
-                <span class="audit-log-title-text">ประวัติกิจกรรมทั้งหมด (Audit Log)</span>
+                <span class="audit-log-title-text">ประวัติกิจกรรม (Audit Log)</span>
                 <span class="badge badge-purple" id="auditLogTotalBadge">0 รายการ</span>
               </div>
               <div class="audit-log-filter-wrap">
-                <input type="text" id="auditLogSearchInput" class="form-control form-control-sm" placeholder="🔍 ค้นหากิจกรรม, ผู้บันทึก, เอกสาร..." autocomplete="off" />
+                <button type="button" class="btn-audit-sort" id="btnToggleAuditSort" title="สลับการเรียงลำดับเวลา">
+                  <span id="auditSortLabel">🕒 ล่าสุดขึ้นก่อน ▾</span>
+                </button>
+                <input type="text" id="auditLogSearchInput" class="form-control form-control-sm" placeholder="🔍 ค้นหากิจกรรม, ผู้บันทึก..." autocomplete="off" />
               </div>
             </div>
 

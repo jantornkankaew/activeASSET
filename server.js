@@ -4479,8 +4479,24 @@ const server = http.createServer(async (req, res) => {
 
         const creator = (firstLoan && firstLoan.borrower_name) ? firstLoan.borrower_name : 'จันทร ก้านแก้ว';
 
-        // 1. Initial creation
-        const createdAt = asset.updated_at || '2026-11-01 09:00:00';
+        // 1. Initial creation (must be prior to earliest loan or initial setup)
+        let createdAt = '2026-11-01 09:00:00';
+        if (firstLoan && firstLoan.created_at) {
+          const d = new Date(firstLoan.created_at.replace(' ', 'T'));
+          if (!isNaN(d.getTime())) {
+            d.setMinutes(d.getMinutes() - 30);
+            const yr = d.getFullYear();
+            const mo = String(d.getMonth() + 1).padStart(2, '0');
+            const da = String(d.getDate()).padStart(2, '0');
+            const ho = String(d.getHours()).padStart(2, '0');
+            const mi = String(d.getMinutes()).padStart(2, '0');
+            const se = String(d.getSeconds()).padStart(2, '0');
+            createdAt = `${yr}-${mo}-${da} ${ho}:${mi}:${se}`;
+          }
+        } else if (asset.created_at) {
+          createdAt = asset.created_at;
+        }
+
         logAssetActivity(db, tagId, 'CREATE', 'เพิ่มเข้าสู่ระบบ', `เพิ่มเครื่อง ${asset.brand || ''} ${asset.model || ''} (S/N: ${asset.serial_no || '-'}) เข้าสู่คลัง ${asset.source || 'Demo'} (${asset.location || 'คลังกลาง'})`, creator, {
           source: asset.source,
           location: asset.location,
@@ -4606,6 +4622,34 @@ const server = http.createServer(async (req, res) => {
           db.prepare('UPDATE asset_audit_logs SET actor_name = ? WHERE id = ?').run(defaultActor, el.id);
           el.actor_name = defaultActor;
         }
+      }
+
+      // Self-heal: ensure CREATE is strictly earlier than any subsequent loans or activities
+      try {
+        db.prepare(`
+          UPDATE asset_audit_logs
+          SET created_at = (
+            SELECT datetime(min(created_at), '-10 minutes')
+            FROM asset_audit_logs sub
+            WHERE sub.tag_id = asset_audit_logs.tag_id AND sub.action_type != 'CREATE'
+          )
+          WHERE action_type = 'CREATE'
+            AND tag_id = ?
+            AND created_at >= (
+              SELECT coalesce(min(created_at), '9999-12-31')
+              FROM asset_audit_logs sub
+              WHERE sub.tag_id = asset_audit_logs.tag_id AND sub.action_type != 'CREATE'
+            )
+        `).run(tagId);
+
+        // Re-query with strict chronological sort
+        existingLogs = db.prepare(`
+          SELECT * FROM asset_audit_logs
+          WHERE tag_id = ?
+          ORDER BY created_at DESC, id DESC
+        `).all(tagId);
+      } catch (e) {
+        console.warn('Audit logs self-heal warning:', e.message);
       }
 
       const logs = existingLogs.map(l => ({
