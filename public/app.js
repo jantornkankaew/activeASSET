@@ -13631,6 +13631,33 @@ function setupEventListeners() {
     renderActiveView();
   });
 
+  // Brand Logo & Title: คลิกที่ Icon หรือ activeASSET เพื่อกลับสู่หน้ากระดาน Kanban
+  const brandHomeBtn = document.getElementById('brandHomeBtn') || document.querySelector('.brand-group');
+  if (brandHomeBtn) {
+    const goToKanban = (e) => {
+      e?.preventDefault?.();
+      // ปิด modal dialog ที่เปิดอยู่ถ้ามี
+      document.querySelectorAll('dialog[open]').forEach(d => {
+        try { d.close(); } catch (_) {}
+      });
+      // สลับไปหน้า Kanban
+      state.viewMode = 'kanban';
+      document.querySelectorAll('.view-btn').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-view') === 'kanban');
+      });
+      updateUrlHash('kanban');
+      renderActiveView();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    brandHomeBtn.addEventListener('click', goToKanban);
+    brandHomeBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        goToKanban(e);
+      }
+    });
+  }
+
   // Listen to popstate / hashchange for browser back/forward buttons
   window.addEventListener('hashchange', () => {
     syncNavigationFromHash();

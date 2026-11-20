@@ -178,6 +178,21 @@ body {
   gap: 7px;
   user-select: none;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.brand-group:hover {
+  opacity: 0.92;
+}
+
+.brand-group:hover .brand-logo {
+  transform: scale(1.05);
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.38);
+}
+
+.brand-group:active {
+  transform: scale(0.97);
 }
 
 .brand-logo {
@@ -192,6 +207,7 @@ body {
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 5px rgba(37, 99, 235, 0.28);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .brand-title {
