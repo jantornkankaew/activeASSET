@@ -5479,25 +5479,7 @@ function updateDispatchSummary() {
           </svg>
           <span>แก้ไขใบยืม</span>
         </button>
-        <button type="button" class="btn btn-outline btn-borrower-sig ${hasBorrowerSig ? 'is-signed' : ''}" id="btnDispatchSignBorrower" title="ลงลายเซ็นดิจิทัลผู้ยืม / ผู้รับเครื่อง">
-          ${
-            hasBorrowerSig
-              ? `
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>เซ็นต์รับแล้ว</span>
-          `
-              : `
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 20h9"></path>
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-            </svg>
-            <span>เซ็นต์รับของ</span>
-          `
-          }
-        </button>
-        <button type="button" class="btn btn-primary btn-dispatch-deliver" id="btnDispatchDeliver" title="บันทึกการส่งมอบสินค้า (ถ่ายรูป + GPS)">
+        <button type="button" class="btn btn-primary btn-dispatch-deliver" id="btnDispatchDeliver" title="บันทึกการส่งมอบสินค้า (ถ่ายรูป + GPS + เซ็นรับของ)">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="1" y="3" width="15" height="13"></rect>
             <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
@@ -11805,6 +11787,7 @@ function setupSendEmailModal() {
 // DELIVERY / PROOF OF DELIVERY (ส่งมอบสินค้าหน้างาน - FAB & Modal)
 // ============================================================================
 let currentDeliveryPhotos = [];
+let currentDeliverySignature = '';
 
 function setupDeliveryModal() {
   const dialog = document.getElementById('deliveryModalDialog');
@@ -11815,6 +11798,36 @@ function setupDeliveryModal() {
   const camInput = document.getElementById('deliveryCameraInput');
   const fileInput = document.getElementById('deliveryFileInput');
   const refreshGpsBtn = document.getElementById('btnRefreshDeliveryGps');
+
+  // Signature events for Delivery Modal (เซ็นรับของ)
+  const btnOpenDeliverySig = document.getElementById('btnOpenDeliverySignature');
+  const btnEditDeliverySig = document.getElementById('btnEditDeliverySig');
+  const btnClearDeliverySig = document.getElementById('btnClearDeliverySig');
+
+  const triggerDeliverySigModal = () => {
+    const receiverName = (document.getElementById('deliveryReceiver')?.value || '').trim() || 'ผู้รับสินค้า / ลูกค้า';
+    openDigitalSigModalForRole('borrower', {
+      title: 'เซ็นรับของ',
+      subtitle: `ผู้รับสินค้า • ${receiverName}`,
+      onSave: (sigData) => {
+        currentDeliverySignature = sigData;
+        const previewEl = document.getElementById('deliverySigImgPreview');
+        if (previewEl) previewEl.src = sigData;
+        document.getElementById('deliverySigEmptyWrap')?.classList.add('hidden');
+        document.getElementById('deliverySigPreviewWrap')?.classList.remove('hidden');
+      }
+    });
+  };
+
+  btnOpenDeliverySig?.addEventListener('click', triggerDeliverySigModal);
+  btnEditDeliverySig?.addEventListener('click', triggerDeliverySigModal);
+  btnClearDeliverySig?.addEventListener('click', () => {
+    currentDeliverySignature = '';
+    const previewEl = document.getElementById('deliverySigImgPreview');
+    if (previewEl) previewEl.src = '';
+    document.getElementById('deliverySigPreviewWrap')?.classList.add('hidden');
+    document.getElementById('deliverySigEmptyWrap')?.classList.remove('hidden');
+  });
 
   // FAB button in printDialog
   fabBtn?.addEventListener('click', (e) => {
@@ -11931,6 +11944,21 @@ function openDeliveryModal(loanId) {
   if (receiverInput) {
     receiverInput.value = loan.delivery_receiver || loan.customer_name || '';
     syncInp(receiverInput);
+  }
+
+  // Digital Signature (เซ็นรับของ)
+  currentDeliverySignature = loan.borrower_signature || (loan.signatures && loan.signatures.borrower && loan.signatures.borrower.signature) || '';
+  const emptySigWrap = document.getElementById('deliverySigEmptyWrap');
+  const prevSigWrap = document.getElementById('deliverySigPreviewWrap');
+  const previewSigEl = document.getElementById('deliverySigImgPreview');
+  if (currentDeliverySignature) {
+    if (previewSigEl) previewSigEl.src = currentDeliverySignature;
+    emptySigWrap?.classList.add('hidden');
+    prevSigWrap?.classList.remove('hidden');
+  } else {
+    if (previewSigEl) previewSigEl.src = '';
+    emptySigWrap?.classList.remove('hidden');
+    prevSigWrap?.classList.add('hidden');
   }
 
   // Delivery Note
@@ -12083,7 +12111,9 @@ async function submitDeliveryForm(e) {
         photos: currentDeliveryPhotos,
         gps,
         timestamp,
-        note
+        note,
+        borrower_signature: currentDeliverySignature,
+        signature: currentDeliverySignature
       })
     });
     const data = await res.json();

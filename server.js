@@ -3469,6 +3469,10 @@ const server = http.createServer(async (req, res) => {
       const existingPhotos = JSON.parse(loan.delivery_photos_json || '[]');
       const finalPhotos = body.photos !== undefined ? newDeliveryPhotos : existingPhotos;
 
+      const sigData = String(body.borrower_signature || body.signature || '').trim();
+      const sigUrl = sigData ? saveBase64Image(sigData, `sig-deliv-${loanId}`) : loan.borrower_signature;
+      const signedAt = sigUrl ? (body.timestamp || new Date().toISOString()) : loan.borrower_signed_at;
+
       db.prepare(`
         UPDATE loans
         SET status = 'Delivered',
@@ -3477,7 +3481,9 @@ const server = http.createServer(async (req, res) => {
             delivery_photos_json = ?,
             delivery_gps = ?,
             delivery_timestamp = ?,
-            delivery_note = ?
+            delivery_note = ?,
+            borrower_signature = COALESCE(NULLIF(?, ''), borrower_signature),
+            borrower_signed_at = COALESCE(NULLIF(?, ''), borrower_signed_at)
         WHERE id = ?
       `).run(
         sender,
@@ -3486,6 +3492,8 @@ const server = http.createServer(async (req, res) => {
         gps,
         timestamp,
         note,
+        sigUrl,
+        signedAt,
         loanId
       );
 
