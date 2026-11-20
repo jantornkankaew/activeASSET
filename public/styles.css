@@ -1033,46 +1033,56 @@ input[type="search"]::-webkit-search-results-decoration {
   border-color: #c7d2fe;
 }
 
-/* Sub-Status Stack (Collapsible like v1 SubStatusStack) */
+/* Sub-Status Stack (Appllama Clean & Borderless Hairline Dividers) */
 .sub-stack {
-  background: rgba(241, 245, 249, 0.7);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  overflow: hidden;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+  margin-bottom: 8px;
 }
 
 .sub-stack-header {
   width: 100%;
   border: none;
   background: transparent;
-  padding: 8px 12px;
+  padding: 6px 4px 6px 2px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
   font-family: inherit;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.75);
+  margin-bottom: 7px;
+  border-radius: 4px;
+  transition: background 0.15s ease;
 }
 
 .sub-stack-header:hover {
-  background: rgba(226, 232, 240, 0.45);
+  background: rgba(241, 245, 249, 0.7);
 }
 
 .sub-header-left {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .sub-chevron {
-  font-size: 11px;
   color: var(--text-muted);
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+}
+
+.sub-chevron.is-collapsed {
+  transform: rotate(-90deg);
 }
 
 .sub-label {
   font-size: 11.5px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
 }
 
 .sub-count {
@@ -1081,10 +1091,11 @@ input[type="search"]::-webkit-search-results-decoration {
   font-weight: 700;
   padding: 1px 7px;
   border-radius: 99px;
+  line-height: 1.3;
 }
 
 .sub-stack-cards {
-  padding: 0 8px 8px;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1124,31 +1135,10 @@ input[type="search"]::-webkit-search-results-decoration {
   z-index: 1;
 }
 
-/* Card Background Watermark (ลายน้ำสถานะปกติบนการ์ด) */
+/* Card Background Watermark (ซ่อนทั้งหมดตามมาตรฐาน Appllama เพื่อความ Minimal ไม่กวนสายตา) */
 .card-watermark {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-  pointer-events: none;
-  user-select: none;
-  line-height: 1;
-  z-index: 0;
-  opacity: 0.12;
-  text-transform: uppercase;
+  display: none !important;
 }
-
-.card-watermark.wm-requested { color: #3b82f6; }
-.card-watermark.wm-dispatching { color: #3b82f6; }
-.card-watermark.wm-dispatched { color: #7c3aed; }
-.card-watermark.wm-delivered { color: #10b981; }
-.card-watermark.wm-overdue { color: #e11d48; }
-.card-watermark.wm-partial { color: #f59e0b; }
-.card-watermark.wm-qc { color: #d97706; }
-.card-watermark.wm-returned { color: #64748b; }
 
 .loan-card:hover {
   transform: translateY(-2px);
@@ -1283,10 +1273,32 @@ input[type="search"]::-webkit-search-results-decoration {
   flex-shrink: 0;
   text-align: right;
   font-family: 'Inter', sans-serif;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 500;
-  color: #475569;
-  letter-spacing: 0.2px;
+  color: #64748b;
+  letter-spacing: 0.1px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3.5px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.card-phone-meta:hover {
+  background: #f1f5f9;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.card-phone-meta svg {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.card-phone-meta:hover svg {
+  color: var(--primary);
 }
 
 .doc-no {
@@ -1296,7 +1308,46 @@ input[type="search"]::-webkit-search-results-decoration {
   color: var(--text-secondary);
 }
 
-/* Mini Calendar Widget on Kanban Card */
+/* Sleek Mini Date Badge (Appllama / Linear style) */
+.mini-date-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2.5px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
+  transition: all 0.15s ease;
+}
+
+.mini-date-badge.date-normal {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.mini-date-badge.date-soon {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.mini-date-badge.date-overdue {
+  background: #fee2e2;
+  color: #e11d48;
+  border: 1px solid #fecaca;
+  font-weight: 700;
+}
+
+.mini-date-badge svg {
+  flex-shrink: 0;
+}
+
+/* Legacy Mini Calendar compatibility if called elsewhere */
 .mini-cal-group {
   display: flex;
   align-items: center;
@@ -1455,26 +1506,28 @@ input[type="search"]::-webkit-search-results-decoration {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   color: #0f172a;
-  font-size: 12.5px;
-  padding: 4px 10px;
-  border-radius: 7px;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  line-height: 1.3;
 }
 
 .card-model-pill strong {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .model-qty {
   font-family: 'Inter', sans-serif;
-  font-size: 11.5px;
+  font-size: 10.5px;
   font-weight: 700;
   background: var(--primary);
   color: #fff;
-  padding: 0 6px;
+  padding: 0 5px;
   border-radius: 99px;
+  line-height: 1.4;
 }
 
 .mini-tag-code {
@@ -1529,7 +1582,19 @@ input[type="search"]::-webkit-search-results-decoration {
 .card-footer-doc-pill {
   margin-left: auto !important;
   font-weight: 600;
-  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.08);
+  font-size: 11px;
+  padding: 2.5px 7px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: var(--primary);
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.05);
+  transition: all 0.15s ease;
+}
+
+.card-footer-doc-pill:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
 }
 
 .card-actions {

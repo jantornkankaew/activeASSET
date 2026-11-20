@@ -24,7 +24,9 @@ const APP_ICONS = {
   chevronDown: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`,
   chevronUp: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`,
   check: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
-  activity: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>`
+  activity: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>`,
+  phone: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>`,
+  calendar: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`
 };
 
 const MAIN_COLUMNS = [
@@ -1322,7 +1324,9 @@ function renderKanbanBoard() {
           <div class="sub-stack">
             <button type="button" class="sub-stack-header" data-toggle-substack="${stackKey}">
               <div class="sub-header-left">
-                <span class="sub-chevron">${isCollapsed ? '▸' : '▾'}</span>
+                <svg class="sub-chevron ${isCollapsed ? 'is-collapsed' : ''}" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
                 <span class="sub-label">${escapeHtml(sg.label)}</span>
               </div>
               <span class="sub-count">${sgItems.length}</span>
@@ -1388,7 +1392,12 @@ const THAI_SHORT_MONTHS = [
 
 function renderMiniCalendar(dateStr, isOverdue, isDueSoon, overdueDays) {
   if (isOverdue) {
-    return `<span class="due-pill overdue" title="กำหนดคืน: ${formatShortDate(dateStr)}">เกิน ${overdueDays}d</span>`;
+    return `
+      <span class="mini-date-badge date-overdue" title="กำหนดคืน: ${formatShortDate(dateStr)}">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        <span>เกิน ${overdueDays}d</span>
+      </span>
+    `;
   }
   if (!dateStr) return '';
   const parts = dateStr.slice(0, 10).split('-');
@@ -1397,15 +1406,14 @@ function renderMiniCalendar(dateStr, isOverdue, isDueSoon, overdueDays) {
   const dayNum = parseInt(parts[2], 10);
   const monthLabel = THAI_SHORT_MONTHS[monthIdx] || parts[1];
 
-  const toneClass = isDueSoon ? 'cal-soon' : 'cal-normal';
+  const toneClass = isDueSoon ? 'date-soon' : 'date-normal';
+  const icon = isDueSoon ? APP_ICONS.clock : APP_ICONS.calendar;
 
   return `
-    <div class="mini-cal-group" title="กำหนดคืน: ${formatShortDate(dateStr)}">
-      <div class="mini-cal ${toneClass}">
-        <div class="mini-cal-month">${monthLabel}</div>
-        <div class="mini-cal-day">${dayNum}</div>
-      </div>
-    </div>
+    <span class="mini-date-badge ${toneClass}" title="กำหนดคืน: ${formatShortDate(dateStr)}">
+      ${icon}
+      <span>${dayNum} ${monthLabel}</span>
+    </span>
   `;
 }
 
@@ -1523,13 +1531,10 @@ function renderKanbanCard(loan) {
       data-card-loan="${escapeHtml(loan.id)}"
       title="${isEditable ? 'คลิกเพื่อเปิดหน้าจัดของ & Match S/N' : loan.status === 'Pending_QC' ? 'คลิกเพื่อเปิดหน้าตรวจสภาพ QC & รับเข้าคลัง' : loan.status === 'Pending_Return_Supplier_Sale' ? 'คลิกเพื่อเปิดหน้าคืน Supplier, คลังขาย' : 'คลิกเพื่อเปิดดูใบยืมแบบเต็มหน้าจอ'}"
     >
-      <!-- Background Watermark (ลายน้ำสถานะ) -->
-      <div class="card-watermark ${wmClass}" aria-hidden="true">${wmText}</div>
-
       <!-- Line 1: Prominent Company Name / Model + Mini Calendar -->
       <div class="card-top-row">
         <div class="card-top-left">
-          ${isStatusChanged ? `<span class="badge-status-changed-pill">🔄 เพิ่งเปลี่ยนสถานะ</span>` : ''}
+          ${isStatusChanged ? `<span class="badge-status-changed-pill">${APP_ICONS.sparkle}<span>เพิ่งเปลี่ยนสถานะ</span></span>` : ''}
           <div class="card-company-headline" title="${escapeHtml(isSupplierReturnStage ? supplierBrandModelHeadline : companyHeadline)}">
             ${escapeHtml(isSupplierReturnStage ? supplierBrandModelHeadline : companyHeadline)}
           </div>
@@ -1540,7 +1545,7 @@ function renderKanbanCard(loan) {
       <!-- Line 2: Borrower Name (Left) + Phone Number (Far Right Edge) -->
       <div class="card-sub-meta">
         <span class="card-borrower-name" title="ผู้ยืม: ${escapeHtml(loan.borrower_name)}">${escapeHtml(loan.borrower_name)}</span>
-        ${loan.customer_phone ? `<span class="card-phone-meta" title="เบอร์โทรผู้ติดต่อ">📞 ${escapeHtml(loan.customer_phone)}</span>` : ''}
+        ${loan.customer_phone ? `<a href="tel:${escapeHtml(loan.customer_phone)}" class="card-phone-meta" title="โทร ${escapeHtml(loan.customer_phone)}" onclick="event.stopPropagation();">${APP_ICONS.phone}<span>${escapeHtml(loan.customer_phone)}</span></a>` : ''}
       </div>
 
       <!-- Line 3: เฉพาะสถานะคืน Supplier ให้แสดงหมายเหตุ / สถานะอื่นแสดง Brand & Model ปกติเดิม 100% -->
@@ -1548,7 +1553,7 @@ function renderKanbanCard(loan) {
         <div class="card-notes-row">
           ${supplierNotesText ? `
             <div class="card-note-item" title="${escapeHtml(supplierNotesText)}">
-              <span class="note-quote-icon">📝</span>
+              <span class="note-quote-icon">${APP_ICONS.note}</span>
               <span class="card-note-text">${escapeHtml(supplierNotesText)}</span>
             </div>
           ` : `
@@ -1579,19 +1584,13 @@ function renderKanbanCard(loan) {
           <div class="card-actions">
             ${can('edit_loan') ? `
             <button type="button" class="btn-card-edit-minimal" data-edit-loan="${escapeHtml(loan.id)}" title="${isDeliveredStage ? 'แก้ไขหมายเหตุใบยืม' : 'แก้ไขรายการใบยืม'}">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
+              ${APP_ICONS.edit}
               <span>${isDeliveredStage ? 'หมายเหตุ' : 'แก้ไข'}</span>
             </button>` : ''}
             ${loan.status === 'Requested' && can('cancel_loan') ? `
             <button type="button" class="btn-card-cancel-minimal" data-cancel-loan="${escapeHtml(loan.id)}" title="ยกเลิกใบยืมนี้">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#ef4444; margin-right:2px; vertical-align:-1px;">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              </svg>
-              <span style="color:#ef4444;">ยกเลิก</span>
+              ${APP_ICONS.trash}
+              <span>ยกเลิก</span>
             </button>` : ''}
           </div>
         `
