@@ -1454,6 +1454,42 @@ function renderKanbanCard(loan) {
 
   const companyHeadline = loan.customer_company || loan.customer_name || loan.borrower_name;
 
+  const isSupplierReturnStage = loan.status === 'Pending_Return_Supplier_Sale' || loan.sub_group === 'Pending_Supplier_Return';
+
+  // For supplier return stage: Brand & Model as Headline, and Notes as Line 3
+  let supplierBrandModelHeadline = '';
+  let supplierNotesText = '';
+  if (isSupplierReturnStage) {
+    if (modelCounts.size > 0) {
+      supplierBrandModelHeadline = [...modelCounts.entries()]
+        .map(([brandModel, qty]) => (qty > 1 ? `${brandModel} (×${qty})` : brandModel))
+        .join(', ');
+    } else if (loan.items && loan.items.length > 0 && loan.items[0].model) {
+      supplierBrandModelHeadline = `${loan.items[0].brand || ''} ${loan.items[0].model}`.trim();
+    } else {
+      supplierBrandModelHeadline = 'ไม่ได้ระบุรุ่น';
+    }
+
+    const allNotes = [];
+    for (const it of loan.items || []) {
+      const n = String(it.loan_free_note || it.free_note || '').trim();
+      if (n && n !== '-' && !allNotes.includes(n)) allNotes.push(n);
+    }
+    if (loan.supplier_return_note && loan.supplier_return_note.trim() && loan.supplier_return_note.trim() !== '-' && !allNotes.includes(loan.supplier_return_note.trim())) {
+      allNotes.push(loan.supplier_return_note.trim());
+    }
+    if (loan.sale_return_note && loan.sale_return_note.trim() && loan.sale_return_note.trim() !== '-' && !allNotes.includes(loan.sale_return_note.trim())) {
+      allNotes.push(loan.sale_return_note.trim());
+    }
+    if (loan.delivery_note && loan.delivery_note.trim() && loan.delivery_note.trim() !== '-' && !allNotes.includes(loan.delivery_note.trim())) {
+      allNotes.push(loan.delivery_note.trim());
+    }
+    if (loan.note && loan.note.trim() && loan.note.trim() !== '-' && !allNotes.includes(loan.note.trim())) {
+      allNotes.push(loan.note.trim());
+    }
+    supplierNotesText = allNotes.join(' · ');
+  }
+
   return `
     <article
       class="loan-card clickable-card ${isHighlight ? 'card-highlight card-status-changed' : ''} ${statusClass} ${loan.is_overdue ? 'card-overdue' : ''}"
@@ -1463,25 +1499,54 @@ function renderKanbanCard(loan) {
       <!-- Background Watermark (ลายน้ำสถานะ) -->
       <div class="card-watermark ${wmClass}" aria-hidden="true">${wmText}</div>
 
-      <!-- Line 1: Prominent Company Name + Mini Calendar -->
+      <!-- Line 1: Prominent Company Name / Model + Mini Calendar -->
       <div class="card-top-row">
         <div class="card-top-left">
           ${isStatusChanged ? `<span class="badge-status-changed-pill">🔄 เพิ่งเปลี่ยนสถานะ</span>` : ''}
-          <div class="card-company-headline" title="${escapeHtml(companyHeadline)}">
-            ${escapeHtml(companyHeadline)}
-          </div>
-          <div class="card-sub-meta">
-            <span>${escapeHtml(loan.borrower_name)}</span>
-            ${loan.customer_phone ? `<span>·</span><span class="card-phone-meta" title="เบอร์โทรผู้ติดต่อ">📞 ${escapeHtml(loan.customer_phone)}</span>` : ''}
-          </div>
+          ${isSupplierReturnStage ? `
+            <!-- เฉพาะสถานะคืน Supplier: บรรทัดที่ 1 เป็น ยี่ห้อ รุ่น -->
+            <div class="card-company-headline" title="${escapeHtml(supplierBrandModelHeadline)}">
+              ${escapeHtml(supplierBrandModelHeadline)}
+            </div>
+            <!-- เฉพาะสถานะคืน Supplier: เอาชื่อบริษัทออก และขยายชื่อคนยืมเต็มบรรทัด -->
+            <div class="card-sub-meta">
+              <span class="card-borrower-name" title="ผู้ยืม: ${escapeHtml(loan.borrower_name)}">${escapeHtml(loan.borrower_name)}</span>
+              ${loan.customer_phone ? `<span>·</span><span class="card-phone-meta" title="เบอร์โทรผู้ติดต่อ">📞 ${escapeHtml(loan.customer_phone)}</span>` : ''}
+            </div>
+          ` : `
+            <!-- สถานะอื่นทั้งหมด: แสดงชื่อบริษัท และผู้ยืม ตามปกติเดิม 100% -->
+            <div class="card-company-headline" title="${escapeHtml(companyHeadline)}">
+              ${escapeHtml(companyHeadline)}
+            </div>
+            <div class="card-sub-meta">
+              <span>${escapeHtml(loan.borrower_name)}</span>
+              ${loan.customer_phone ? `<span>·</span><span class="card-phone-meta" title="เบอร์โทรผู้ติดต่อ">📞 ${escapeHtml(loan.customer_phone)}</span>` : ''}
+            </div>
+          `}
         </div>
         ${miniCalHtml}
       </div>
 
-      <!-- Emphasize Brand & Model ONLY (No Tag ID, No extra details) -->
-      <div class="card-models-wrap">
-        ${modelsHtml}
-      </div>
+      <!-- Line 3: เฉพาะสถานะคืน Supplier ให้แสดงหมายเหตุ / สถานะอื่นแสดง Brand & Model ปกติเดิม 100% -->
+      ${isSupplierReturnStage ? `
+        <div class="card-notes-row">
+          ${supplierNotesText ? `
+            <div class="card-note-item" title="${escapeHtml(supplierNotesText)}">
+              <span class="note-quote-icon">📝</span>
+              <span class="card-note-text">${escapeHtml(supplierNotesText)}</span>
+            </div>
+          ` : `
+            <div class="card-note-item empty">
+              <span class="muted-hint">-</span>
+            </div>
+          `}
+        </div>
+      ` : `
+        <!-- Emphasize Brand & Model ONLY (No Tag ID, No extra details) -->
+        <div class="card-models-wrap">
+          ${modelsHtml}
+        </div>
+      `}
 
       <div class="card-footer">
         ${
