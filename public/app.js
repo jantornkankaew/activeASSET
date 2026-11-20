@@ -17224,34 +17224,37 @@ function setupEventListeners() {
     const dialog = document.getElementById('assetDetailModalDialog');
     const btnInfo = document.getElementById('btnTabAssetInfo');
     const btnHist = document.getElementById('btnTabAssetHistory');
+    const btnLogs = document.getElementById('btnTabAssetAuditLogs');
     const paneInfo = document.getElementById('assetTabPaneInfo');
     const paneHist = document.getElementById('assetTabPaneHistory');
+    const paneLogs = document.getElementById('assetTabPaneLogs');
     const btnCancel = document.getElementById('btnCancelAssetDetail');
+
+    // Reset all tabs & panes
+    [btnInfo, btnHist, btnLogs].forEach(b => {
+      b?.classList.remove('active');
+      b?.setAttribute('aria-selected', 'false');
+    });
+    [paneInfo, paneHist, paneLogs].forEach(p => p?.classList.add('hidden'));
 
     if (tab === 'history') {
       dialog?.classList.add('tab-history-active');
-      if (btnHist) {
-        btnHist.classList.add('active');
-        btnHist.setAttribute('aria-selected', 'true');
-      }
-      if (btnInfo) {
-        btnInfo.classList.remove('active');
-        btnInfo.setAttribute('aria-selected', 'false');
-      }
-      if (paneHist) paneHist.classList.remove('hidden');
-      if (paneInfo) paneInfo.classList.add('hidden');
+      dialog?.classList.remove('tab-logs-active');
+      btnHist?.classList.add('active');
+      btnHist?.setAttribute('aria-selected', 'true');
+      paneHist?.classList.remove('hidden');
+    } else if (tab === 'logs') {
+      dialog?.classList.remove('tab-history-active');
+      dialog?.classList.add('tab-logs-active');
+      btnLogs?.classList.add('active');
+      btnLogs?.setAttribute('aria-selected', 'true');
+      paneLogs?.classList.remove('hidden');
     } else {
       dialog?.classList.remove('tab-history-active');
-      if (btnInfo) {
-        btnInfo.classList.add('active');
-        btnInfo.setAttribute('aria-selected', 'true');
-      }
-      if (btnHist) {
-        btnHist.classList.remove('active');
-        btnHist.setAttribute('aria-selected', 'false');
-      }
-      if (paneInfo) paneInfo.classList.remove('hidden');
-      if (paneHist) paneHist.classList.add('hidden');
+      dialog?.classList.remove('tab-logs-active');
+      btnInfo?.classList.add('active');
+      btnInfo?.setAttribute('aria-selected', 'true');
+      paneInfo?.classList.remove('hidden');
     }
     if (btnCancel) btnCancel.textContent = 'ปิด';
   }
@@ -17470,6 +17473,129 @@ function setupEventListeners() {
       console.error('Failed to load asset history:', err);
       renderLibraryCardPage();
     }
+  }
+
+  // --------------------------------------------------------------------------
+  // ASSET AUDIT LOG CONTROLLERS & RENDERERS (บันทึกประวัติกิจกรรมสินค้า)
+  // --------------------------------------------------------------------------
+  state.currentAssetAuditLogs = [];
+
+  async function loadAssetAuditLogs(asset) {
+    const badge = document.getElementById('assetAuditLogTabBadge');
+    const totalBadge = document.getElementById('auditLogTotalBadge');
+    const timeline = document.getElementById('assetAuditLogTimeline');
+
+    if (badge) badge.textContent = '...';
+    if (totalBadge) totalBadge.textContent = '...';
+    if (timeline) timeline.innerHTML = `<div style="text-align:center; padding:30px; color:#94a3b8;"><span class="spinner-sm"></span> กำลังโหลดประวัติกิจกรรม...</div>`;
+
+    state.currentAssetAuditLogs = [];
+
+    try {
+      const res = await fetch(`/api/assets/${encodeURIComponent(asset.tag_id)}/audit-logs`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'ไม่สามารถดึงข้อมูล Audit Log ได้');
+
+      state.currentAssetAuditLogs = Array.isArray(data.logs) ? data.logs : [];
+      if (badge) badge.textContent = state.currentAssetAuditLogs.length;
+      if (totalBadge) totalBadge.textContent = `${state.currentAssetAuditLogs.length} รายการ`;
+
+      renderAssetAuditLogs(state.currentAssetAuditLogs);
+    } catch (err) {
+      console.error('Failed to load asset audit logs:', err);
+      if (badge) badge.textContent = '0';
+      if (totalBadge) totalBadge.textContent = '0 รายการ';
+      if (timeline) {
+        timeline.innerHTML = `
+          <div class="audit-log-empty">
+            <div class="audit-log-empty-icon">⚠️</div>
+            <div>ไม่สามารถโหลดบันทึกประวัติได้: ${escapeHtml(err.message)}</div>
+          </div>
+        `;
+      }
+    }
+  }
+
+  function renderAssetAuditLogs(logs) {
+    const timeline = document.getElementById('assetAuditLogTimeline');
+    if (!timeline) return;
+
+    if (!logs || logs.length === 0) {
+      timeline.innerHTML = `
+        <div class="audit-log-empty">
+          <div class="audit-log-empty-icon">📜</div>
+          <div style="font-weight:600; font-size:14px; color:#334155; margin-bottom:4px;">ยังไม่มีบันทึกประวัติกิจกรรม</div>
+          <div style="font-size:12px;">เมื่อเครื่องนี้มีการยืม ส่งมอบ ตรวจ QC หรือแก้ไขข้อมูล ระบบจะบันทึกประวัติไว้ที่นี่อัตโนมัติ</div>
+        </div>
+      `;
+      return;
+    }
+
+    const typeConfig = {
+      CREATE: { icon: '✨', pointCls: 'type-create', badgeCls: 'type-create', badgeText: 'เพิ่มเข้าระบบ' },
+      UPDATE: { icon: '✏️', pointCls: 'type-update', badgeCls: 'type-update', badgeText: 'แก้ไขข้อมูล' },
+      LOAN_RESERVED: { icon: '📄', pointCls: 'type-loan', badgeCls: 'type-loan', badgeText: 'ระบุในใบยืม' },
+      DISPATCH: { icon: '🚚', pointCls: 'type-dispatch', badgeCls: 'type-dispatch', badgeText: 'จ่ายสินค้า' },
+      DELIVER: { icon: '📍', pointCls: 'type-deliver', badgeCls: 'type-deliver', badgeText: 'ส่งมอบสินค้า' },
+      QC: { icon: '🔍', pointCls: 'type-qc', badgeCls: 'type-qc', badgeText: 'ตรวจสภาพ QC' },
+      RETURN: { icon: '↩️', pointCls: 'type-return', badgeCls: 'type-return', badgeText: 'คืนคลัง Demo' },
+      RETURN_SUPPLIER: { icon: '🚚', pointCls: 'type-return', badgeCls: 'type-return', badgeText: 'คืน Supplier' },
+      RETURN_SALE: { icon: '🏢', pointCls: 'type-return', badgeCls: 'type-return', badgeText: 'คืนคลังขาย' },
+      DISPOSE: { icon: '📦', pointCls: 'type-dispose', badgeCls: 'type-dispose', badgeText: 'จำหน่ายออก' },
+      REACTIVATE: { icon: '📥', pointCls: 'type-reactivate', badgeCls: 'type-reactivate', badgeText: 'นำกลับเข้าคลัง' }
+    };
+
+    timeline.innerHTML = logs.map(item => {
+      const cfg = typeConfig[item.action_type] || { icon: '📋', pointCls: 'type-update', badgeCls: 'type-update', badgeText: item.action_type || 'กิจกรรม' };
+      const meta = item.metadata || {};
+      const loanId = meta.loanId || '';
+      const timeStr = item.created_at ? formatDateTimeThai(item.created_at) : '-';
+
+      let pillsHtml = '';
+      if (loanId) {
+        pillsHtml += `
+          <button type="button" class="doc-link-pill" data-open-loan="${escapeHtml(loanId)}" style="font-size:11.5px; padding:2px 8px;" title="เปิดดูใบยืม ${escapeHtml(loanId)}">
+            <span>${escapeHtml(loanId)}</span>
+            <svg class="doc-link-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </button>
+        `;
+      }
+      if (meta.delivery_gps || meta.supplierGps) {
+        const gps = meta.delivery_gps || meta.supplierGps;
+        pillsHtml += `<span class="badge" style="background:#ecfeff; color:#0e7490; border:1px solid #cffafe; font-size:11px;">📍 GPS: ${escapeHtml(gps)}</span>`;
+      }
+      if (meta.qc_status) {
+        const isPass = meta.qc_status === 'Pass';
+        pillsHtml += `<span class="badge" style="background:${isPass ? '#dcfce7' : '#fee2e2'}; color:${isPass ? '#15803d' : '#b91c1c'}; border:1px solid ${isPass ? '#bbf7d0' : '#fecaca'}; font-size:11px;">${isPass ? 'QC: ผ่าน' : 'QC: มีตำหนิ'}</span>`;
+      }
+
+      return `
+        <div class="audit-log-item">
+          <div class="audit-log-point ${cfg.pointCls}">${cfg.icon}</div>
+          <div class="audit-log-card">
+            <div class="audit-log-card-header">
+              <div class="audit-log-card-title-group">
+                <span class="audit-log-badge ${cfg.badgeCls}">${cfg.badgeText}</span>
+                <span class="audit-log-card-title">${escapeHtml(item.action_title || '')}</span>
+              </div>
+              <div class="audit-log-timestamp">🕒 ${escapeHtml(timeStr)}</div>
+            </div>
+            ${item.details ? `<div class="audit-log-details">${escapeHtml(item.details)}</div>` : ''}
+            <div class="audit-log-footer">
+              <div class="audit-log-actor">
+                <span style="color:#94a3b8;">ผู้บันทึก:</span>
+                <strong>${escapeHtml(item.actor_name || 'ระบบ')}</strong>
+              </div>
+              ${pillsHtml ? `<div class="audit-log-meta-pills">${pillsHtml}</div>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
   }
 
   // --------------------------------------------------------------------------
@@ -17714,6 +17840,11 @@ function setupEventListeners() {
     const histCalloutCount = document.getElementById('assetDetailHistoryCount');
     if (histCalloutCount) histCalloutCount.textContent = '...';
     loadAssetLoanHistory(asset);
+
+    // Reset and initiate Audit Log fetch
+    const logTabBadge = document.getElementById('assetAuditLogTabBadge');
+    if (logTabBadge) logTabBadge.textContent = '...';
+    loadAssetAuditLogs(asset);
 
     // Header Info
     const catIconEl = document.getElementById('assetDetailCatIcon');
@@ -18866,8 +18997,29 @@ function setupEventListeners() {
   document.getElementById('btnTabAssetHistory')?.addEventListener('click', () => {
     switchAssetDetailTab('history');
   });
+  document.getElementById('btnTabAssetAuditLogs')?.addEventListener('click', () => {
+    switchAssetDetailTab('logs');
+  });
   document.getElementById('btnJumpToAssetHistory')?.addEventListener('click', () => {
     switchAssetDetailTab('history');
+  });
+
+  // Search filter in Asset Audit Logs
+  document.getElementById('auditLogSearchInput')?.addEventListener('input', (e) => {
+    const q = (e.target.value || '').trim().toLowerCase();
+    if (!q) {
+      renderAssetAuditLogs(state.currentAssetAuditLogs);
+      return;
+    }
+    const filtered = state.currentAssetAuditLogs.filter(it => {
+      const title = (it.action_title || '').toLowerCase();
+      const details = (it.details || '').toLowerCase();
+      const actor = (it.actor_name || '').toLowerCase();
+      const date = (it.created_at || '').toLowerCase();
+      const loan = (it.metadata?.loanId || '').toLowerCase();
+      return title.includes(q) || details.includes(q) || actor.includes(q) || date.includes(q) || loan.includes(q);
+    });
+    renderAssetAuditLogs(filtered);
   });
 
   // Library Card Pagination listeners

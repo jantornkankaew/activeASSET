@@ -231,6 +231,23 @@ try {
   `);
 } catch (e) {}
 
+// Full Asset Activity & Audit Trail Table (เก็บทุกกิจกรรมของสินค้า)
+try {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS asset_audit_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      tag_id TEXT NOT NULL,
+      action_type TEXT NOT NULL,
+      action_title TEXT NOT NULL,
+      details TEXT DEFAULT '',
+      actor_name TEXT DEFAULT '',
+      metadata_json TEXT DEFAULT '{}',
+      created_at TEXT DEFAULT (datetime('now', 'localtime'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_asset_audit_logs_tag ON asset_audit_logs(tag_id, created_at DESC);
+  `);
+} catch (e) {}
+
 // Digital Signature & Timestamps for Loans
 try {
   db.exec(`ALTER TABLE loans ADD COLUMN borrower_signed_at TEXT DEFAULT ''`);
@@ -372,6 +389,27 @@ function notifyStateChange(type, meta = null) {
       customer: meta.customer || meta.customer_company || meta.customer_name || '',
       created_at: Date.now()
     };
+  }
+}
+
+// Audit Log Activity Helper (บันทึกประวัติกิจกรรมสินค้า)
+function logAssetActivity(dbInstance, tagId, actionType, actionTitle, details = '', actorName = '', metadata = {}, customCreatedAt = null) {
+  try {
+    if (!tagId || !dbInstance) return;
+    const metaStr = typeof metadata === 'string' ? metadata : JSON.stringify(metadata || {});
+    if (customCreatedAt) {
+      dbInstance.prepare(`
+        INSERT INTO asset_audit_logs (tag_id, action_type, action_title, details, actor_name, metadata_json, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(tagId, actionType, actionTitle, String(details || ''), String(actorName || ''), metaStr, customCreatedAt);
+    } else {
+      dbInstance.prepare(`
+        INSERT INTO asset_audit_logs (tag_id, action_type, action_title, details, actor_name, metadata_json, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
+      `).run(tagId, actionType, actionTitle, String(details || ''), String(actorName || ''), metaStr);
+    }
+  } catch (err) {
+    console.warn(`[AuditLog] Failed to log activity for ${tagId}:`, err.message);
   }
 }
 
@@ -4003,6 +4041,10 @@ const server = http.createServer(async (req, res) => {
                   WHERE tag_id = ?
                 `).run(issueText, JSON.stringify(missingAcc), ri.tag_id);
               }
+
+              const qcPassText = qcStatus === 'Pass' ? 'ผ่าน (สมบูรณ์)' : 'มีตำหนิ/อุปกรณ์ไม่ครบ';
+              logAssetActivity(db, ri.tag_id, 'QC', 'ตรวจสภาพ QC คืนเครื่อง', `ใบยืม ${loanId} • ผลการตรวจ: ${qcPassText} ${qcNote ? `• ${qcNote}` : ''}`, body.qc_by || 'เจ้าหน้าที่ QC', { loanId, qcStatus, qcNote, missingAcc });
+              logAssetActivity(db, ri.tag_id, 'RETURN', 'รับคืนสินค้าเข้าคลัง Demo', `ใบยืม ${loanId} • รับคืนเข้าคลังเรียบร้อย`, body.received_by || 'เจ้าหน้าที่คลัง', { loanId });
             }
           } else {
             // STEP 1: Receiving from customer -> Send to QC queue or Supplier/Sale Return queue
@@ -4135,6 +4177,8 @@ const server = http.createServer(async (req, res) => {
                     updated_at = datetime('now', 'localtime')
                 WHERE tag_id = ?
               `).run(it.tag_id);
+
+              logAssetActivity(db, it.tag_id, 'RETURN_SUPPLIER', 'ส่งคืนสินค้าให้ Supplier', `ใบยืม ${loanId} • ผู้ส่ง: ${supplierSender} • ผู้รับ: ${supplierReceiver}${supplierGps ? ` • พิกัด: ${supplierGps}` : ''}`, supplierSender, { loanId, supplierSender, supplierReceiver, supplierGps });
             }
           } else if (src === 'คลังขาย') {
             const action = saleActions[it.tag_id] === 'convert_to_demo' ? 'convert_to_demo' : 'return_to_sale';
@@ -4168,6 +4212,8 @@ const server = http.createServer(async (req, res) => {
                   WHERE tag_id = ?
                 `).run(it.tag_id);
               }
+              const isDemo = action === 'convert_to_demo';
+              logAssetActivity(db, it.tag_id, 'RETURN_SALE', isDemo ? 'คืนสต็อกและตีเป็น Demo' : 'คืนสินค้าเข้าคลังขาย', `ใบยืม ${loanId} • ผู้ดำเนินการ: ${saleSender}`, saleSender, { loanId, action, saleSender });
             }
           }
         }
@@ -4292,6 +4338,16 @@ const server = http.createServer(async (req, res) => {
         imagesJson
       );
 
+      logAssetActivity(db, tagId, 'CREATE', 'เพิ่มเข้าสู่ระบบ', `เพิ่มเครื่องใหม่: ${fullName} (S/N: ${serialNo}) เข้าสู่คลัง ${source} (${location})`, body.user_name || 'เจ้าหน้าที่', {
+        tag_id: tagId,
+        model,
+        brand,
+        serial_no: serialNo,
+        source,
+        location,
+        accessories
+      });
+
       return sendJson(res, 201, {
         success: true,
         createdTagId: tagId,
@@ -4352,6 +4408,133 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
+    // Get Asset Full Audit Logs (ประวัติกิจกรรมของสินค้า)
+    if (pathname.startsWith('/api/assets/') && pathname.endsWith('/audit-logs') && req.method === 'GET') {
+      const tagId = pathname.replace('/api/assets/', '').replace('/audit-logs', '');
+      const asset = db.prepare('SELECT * FROM assets WHERE tag_id = ?').get(tagId);
+      if (!asset) return sendJson(res, 404, { error: 'ไม่พบเครื่องนี้' });
+
+      // Check existing audit logs
+      let existingLogs = db.prepare(`
+        SELECT * FROM asset_audit_logs
+        WHERE tag_id = ?
+        ORDER BY created_at DESC, id DESC
+      `).all(tagId);
+
+      // If empty or first time accessed, backfill historical activities from existing tables:
+      if (existingLogs.length === 0) {
+        // 1. Initial creation
+        const createdAt = asset.updated_at || '2026-11-01 09:00:00';
+        logAssetActivity(db, tagId, 'CREATE', 'เพิ่มเข้าสู่ระบบ', `เพิ่มเครื่อง ${asset.brand || ''} ${asset.model || ''} (S/N: ${asset.serial_no || '-'}) เข้าสู่คลัง ${asset.source || 'Demo'} (${asset.location || 'คลังกลาง'})`, 'ระบบ', {
+          source: asset.source,
+          location: asset.location,
+          brand: asset.brand,
+          model: asset.model,
+          serial_no: asset.serial_no
+        }, createdAt);
+
+        // 2. Loans history
+        const loanRows = db.prepare(`
+          SELECT 
+            li.*,
+            l.id AS loan_id,
+            l.borrower_name,
+            l.customer_company,
+            l.customer_name,
+            l.purpose,
+            l.checkout_date,
+            l.due_date,
+            l.return_date,
+            l.delivery_sender,
+            l.delivery_receiver,
+            l.delivery_timestamp,
+            l.supplier_return_sender,
+            l.supplier_return_receiver,
+            l.supplier_return_timestamp,
+            l.sale_return_sender,
+            l.status AS loan_status,
+            l.created_at AS loan_created_at
+          FROM loan_items li
+          JOIN loans l ON li.loan_id = l.id
+          WHERE li.tag_id = ? OR (li.serial_no = ? AND ? != '')
+          ORDER BY l.checkout_date ASC, l.created_at ASC
+        `).all(tagId, asset.serial_no || '', asset.serial_no || '');
+
+        for (const lr of loanRows) {
+          const cust = lr.customer_company ? `${lr.customer_company} (${lr.customer_name})` : (lr.customer_name || 'ลูกค้า');
+          
+          // Loan Reserved
+          logAssetActivity(db, tagId, 'LOAN_RESERVED', `ระบุในใบยืม ${lr.loan_id}`, `ลูกค้า: ${cust} • ผู้ยืม: ${lr.borrower_name} • วัตถุประสงค์: ${lr.purpose || 'ยืมใช้งาน'}`, lr.borrower_name, { loanId: lr.loan_id, customer: cust }, lr.loan_created_at);
+
+          // Dispatched
+          if (lr.loan_status !== 'Requested') {
+            logAssetActivity(db, tagId, 'DISPATCH', `จ่ายเครื่องออกจากคลัง`, `ใบยืม ${lr.loan_id} • จัดของส่งมอบลูกค้า ${cust}`, lr.borrower_name, { loanId: lr.loan_id }, lr.checkout_date ? `${lr.checkout_date} 09:00:00` : lr.loan_created_at);
+          }
+
+          // Delivered
+          if (lr.delivery_timestamp || ['Delivered', 'Pending_QC', 'Pending_Return_Supplier_Sale', 'Returned'].includes(lr.loan_status)) {
+            const sender = lr.delivery_sender || lr.borrower_name;
+            const receiver = lr.delivery_receiver || lr.customer_name || 'ลูกค้า';
+            logAssetActivity(db, tagId, 'DELIVER', `ส่งมอบสินค้าหน้างาน`, `ใบยืม ${lr.loan_id} • ผู้ส่ง: ${sender} • ผู้รับ: ${receiver}`, sender, { loanId: lr.loan_id, delivery_receiver: receiver }, lr.delivery_timestamp || `${lr.checkout_date} 10:30:00`);
+          }
+
+          // QC Inspected
+          if (lr.qc_status || lr.qc_checked_at) {
+            const isPass = lr.qc_status === 'Pass';
+            logAssetActivity(db, tagId, 'QC', `ตรวจสภาพ QC คืนเครื่อง`, `ใบยืม ${lr.loan_id} • ผลการตรวจ: ${isPass ? 'ผ่าน (สมบูรณ์)' : 'มีตำหนิ/อุปกรณ์ไม่ครบ'}`, lr.qc_inspector || 'เจ้าหน้าที่ QC', { loanId: lr.loan_id, qc_status: lr.qc_status }, lr.qc_checked_at || lr.return_date || `${lr.checkout_date} 16:00:00`);
+          }
+
+          // Return
+          if (lr.returned || lr.loan_status === 'Returned') {
+            const retAction = lr.return_action || '';
+            const retTime = lr.returned_at || lr.return_date || `${lr.checkout_date} 17:00:00`;
+            if (retAction === 'return_to_supplier') {
+              logAssetActivity(db, tagId, 'RETURN_SUPPLIER', `ส่งคืนสินค้าให้ Supplier`, `ใบยืม ${lr.loan_id} • ผู้ส่ง: ${lr.supplier_return_sender || lr.borrower_name} • ผู้รับ: ${lr.supplier_return_receiver || 'Supplier'}`, lr.supplier_return_sender || lr.borrower_name, { loanId: lr.loan_id }, lr.supplier_return_timestamp || retTime);
+            } else if (retAction === 'convert_to_demo') {
+              logAssetActivity(db, tagId, 'RETURN_SALE', `คืนสต็อกและตีเป็น Demo`, `ใบยืม ${lr.loan_id} • ตีเข้าคลัง Demo เรียบร้อย`, lr.sale_return_sender || lr.borrower_name, { loanId: lr.loan_id }, retTime);
+            } else if (retAction === 'return_to_sale') {
+              logAssetActivity(db, tagId, 'RETURN_SALE', `คืนสินค้าเข้าคลังขาย`, `ใบยืม ${lr.loan_id} • คืนเข้าคลังขายปกติ`, lr.sale_return_sender || lr.borrower_name, { loanId: lr.loan_id }, retTime);
+            } else {
+              logAssetActivity(db, tagId, 'RETURN', `รับคืนสินค้าเข้าคลัง Demo`, `ใบยืม ${lr.loan_id} • รับคืนเข้าคลังเรียบร้อย`, lr.borrower_name, { loanId: lr.loan_id }, retTime);
+            }
+          }
+        }
+
+        // 3. Disposition logs
+        const dispRows = db.prepare(`
+          SELECT * FROM asset_disposition_logs
+          WHERE tag_id = ?
+          ORDER BY action_date ASC, created_at ASC
+        `).all(tagId);
+
+        for (const dr of dispRows) {
+          if (dr.action === 'dispose') {
+            logAssetActivity(db, tagId, 'DISPOSE', 'จำหน่ายออกจากระบบ', `สาเหตุ: ${dr.reason || 'จำหน่ายออก'} • หมายเหตุ: ${dr.note || '-'}`, dr.user_name || 'เจ้าหน้าที่', { reason: dr.reason, note: dr.note }, dr.created_at || `${dr.action_date} 10:00:00`);
+          } else if (dr.action === 'reactivate') {
+            logAssetActivity(db, tagId, 'REACTIVATE', 'นำเครื่องกลับเข้าคลัง / เปิดใช้งานต่อ', `หมายเหตุ: ${dr.note || 'นำเครื่องกลับมาใช้งานต่อ'}`, dr.user_name || 'เจ้าหน้าที่', { note: dr.note }, dr.created_at || `${dr.action_date} 10:00:00`);
+          }
+        }
+
+        // Re-query newly created logs
+        existingLogs = db.prepare(`
+          SELECT * FROM asset_audit_logs
+          WHERE tag_id = ?
+          ORDER BY created_at DESC, id DESC
+        `).all(tagId);
+      }
+
+      const logs = existingLogs.map(l => ({
+        ...l,
+        metadata: JSON.parse(l.metadata_json || '{}')
+      }));
+
+      return sendJson(res, 200, {
+        tag_id: tagId,
+        total_logs: logs.length,
+        logs
+      });
+    }
+
     // Dispose Asset from system (จำหน่ายเครื่องออกจากระบบ)
     if (pathname.startsWith('/api/assets/') && pathname.endsWith('/dispose') && req.method === 'POST') {
       const tagId = pathname.replace('/api/assets/', '').replace('/dispose', '');
@@ -4383,6 +4566,8 @@ const server = http.createServer(async (req, res) => {
         INSERT INTO asset_disposition_logs (tag_id, action, action_date, reason, note, user_name)
         VALUES (?, 'dispose', ?, ?, ?, ?)
       `).run(tagId, actionDate, reason, note, userName);
+
+      logAssetActivity(db, tagId, 'DISPOSE', 'จำหน่ายออกจากระบบ', `สาเหตุ: ${reason} • เอกสาร/อ้างอิง: ${note || '-'}`, userName || 'เจ้าหน้าที่', { reason, note, actionDate });
 
       return sendJson(res, 200, {
         success: true,
@@ -4419,6 +4604,8 @@ const server = http.createServer(async (req, res) => {
         INSERT INTO asset_disposition_logs (tag_id, action, action_date, reason, note, user_name)
         VALUES (?, 'reactivate', ?, 'นำกลับเข้าคลัง', ?, ?)
       `).run(tagId, actionDate, note, userName);
+
+      logAssetActivity(db, tagId, 'REACTIVATE', 'นำเครื่องกลับเข้าคลัง / เปิดใช้งานต่อ', `นำเครื่องกลับเข้าคลัง ${asset.source || 'Demo'} (${location}) • หมายเหตุ: ${note}`, userName || 'เจ้าหน้าที่', { location, note, actionDate });
 
       return sendJson(res, 200, {
         success: true,
@@ -4465,6 +4652,23 @@ const server = http.createServer(async (req, res) => {
         imagesVal,
         tagId
       );
+
+      const diffParts = [];
+      if (body.source !== undefined && body.source !== asset.source) diffParts.push(`เปลี่ยนคลังจาก "${asset.source}" เป็น "${body.source}"`);
+      if (body.location !== undefined && body.location !== asset.location) diffParts.push(`เปลี่ยนที่เก็บจาก "${asset.location}" เป็น "${body.location}"`);
+      if (body.free_note !== undefined && body.free_note !== asset.free_note) diffParts.push(`แก้ไขหมายเหตุ: "${body.free_note || '-'}"`);
+      if (body.accessories !== undefined) {
+        const oldAcc = JSON.parse(asset.accessories_json || '[]');
+        if (JSON.stringify(oldAcc) !== JSON.stringify(body.accessories)) {
+          diffParts.push(`แก้ไขอุปกรณ์เสริม (${body.accessories.length} ชิ้น)`);
+        }
+      }
+      if (body.images !== undefined || body.image_url !== undefined) {
+        diffParts.push('อัปเดตรูปภาพเครื่อง');
+      }
+      const diffSummary = diffParts.length > 0 ? diffParts.join(' • ') : 'อัปเดตข้อมูลเครื่อง';
+      logAssetActivity(db, tagId, 'UPDATE', 'แก้ไขข้อมูลเครื่อง', diffSummary, body.user_name || 'เจ้าหน้าที่', { diffParts });
+
       return sendJson(res, 200, getFullState());
     }
 

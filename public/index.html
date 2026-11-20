@@ -2672,6 +2672,11 @@
           <span class="tab-title">ประวัติการยืม</span>
           <span class="history-count-badge" id="assetHistoryTabBadge">0</span>
         </button>
+        <button type="button" class="asset-nav-tab-btn" id="btnTabAssetAuditLogs" data-tab-target="logs" role="tab" aria-selected="false">
+          <span class="tab-icon">📜</span>
+          <span class="tab-title">ประวัติกิจกรรม (Audit Log)</span>
+          <span class="history-count-badge" id="assetAuditLogTabBadge">0</span>
+        </button>
       </div>
 
       <div class="modal-body-scroll">
@@ -2953,6 +2958,28 @@
                   แผ่นถัดไป ›
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: บันทึกประวัติกิจกรรม (Audit Log Timeline) -->
+        <div id="assetTabPaneLogs" class="asset-tab-pane hidden">
+          <div class="audit-log-wrapper" id="assetAuditLogWrapper">
+            <!-- Header bar with summary & search -->
+            <div class="audit-log-header">
+              <div class="audit-log-title-wrap">
+                <span class="audit-log-title-icon">📜</span>
+                <span class="audit-log-title-text">ประวัติกิจกรรมทั้งหมด (Audit Log)</span>
+                <span class="badge badge-purple" id="auditLogTotalBadge">0 รายการ</span>
+              </div>
+              <div class="audit-log-filter-wrap">
+                <input type="text" id="auditLogSearchInput" class="form-control form-control-sm" placeholder="🔍 ค้นหากิจกรรม, ผู้บันทึก, เอกสาร..." autocomplete="off" />
+              </div>
+            </div>
+
+            <!-- Timeline List Container -->
+            <div class="audit-log-timeline" id="assetAuditLogTimeline">
+              <!-- Rendered items by app.js -->
             </div>
           </div>
         </div>
