@@ -26,7 +26,9 @@ const APP_ICONS = {
   check: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
   activity: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>`,
   phone: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>`,
-  calendar: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`
+  calendar: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`,
+  tag: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>`,
+  clip: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>`
 };
 
 const MAIN_COLUMNS = [
@@ -2413,7 +2415,7 @@ function initCompanyAutocomplete() {
     if (!trimmedQuery) {
       const headerEl = document.createElement('div');
       headerEl.style.cssText = 'padding:6px 10px; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.02em; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; gap:5px;';
-      headerEl.innerHTML = `<span>🏢 ลูกค้าที่ใช้งานบ่อย / ล่าสุด</span>`;
+      headerEl.innerHTML = `<span>ลูกค้าที่ใช้งานบ่อย / ล่าสุด</span>`;
       dropdown.appendChild(headerEl);
     }
 
@@ -2426,20 +2428,20 @@ function initCompanyAutocomplete() {
 
       let badgeClass = 'badge-custom';
       let badgeText = 'ลูกค้า';
-      let icon = '🏢';
+      let icon = APP_ICONS.building;
 
       if (item.source === 'history') {
         badgeClass = 'badge-history';
         badgeText = 'ลูกค้าเดิม';
-        icon = '🏢';
+        icon = APP_ICONS.building;
       } else if (item.source === 'dbd') {
         badgeClass = 'badge-dbd';
         badgeText = 'DBD นิติบุคคล';
-        icon = '🌐';
+        icon = APP_ICONS.activity;
       } else if (item.source === 'online') {
         badgeClass = 'badge-online';
-        badgeText = '🌐 ภายนอก (Auto-Save)';
-        icon = '🌐';
+        badgeText = 'ภายนอก (Auto-Save)';
+        icon = APP_ICONS.activity;
       }
 
       const subParts = [];
@@ -2454,13 +2456,13 @@ function initCompanyAutocomplete() {
       }
       if (item.contact_name || item.phone) {
         const contactInfo = [item.contact_name, item.phone].filter(Boolean).join(' ');
-        subParts.push(`<span style="color:#64748b;">👤 ${escapeHtml(contactInfo)}</span>`);
+        subParts.push(`<span style="color:#64748b; display:inline-flex; align-items:center; gap:3px;">${APP_ICONS.user} <span>${escapeHtml(contactInfo)}</span></span>`);
       }
       const subInfo = subParts.length > 0 ? `<div class="company-item-sub">${subParts.join(' · ')}</div>` : '';
 
       itemEl.innerHTML = `
         <div class="company-item-main">
-          <span class="company-item-icon">${icon}</span>
+          <span class="company-item-icon" style="display:inline-flex; align-items:center;">${icon}</span>
           <div class="company-item-text-group">
             <span class="company-item-name">${escapeHtml(item.name)}</span>
             ${subInfo}
@@ -2534,7 +2536,7 @@ function initCompanyAutocomplete() {
       addNewEl.className = 'company-add-new-item';
       addNewEl.style.cssText = 'display:flex; align-items:center; gap:8px; padding:10px 12px; background:#eff6ff; border:1px dashed #93c5fd; border-radius:8px; cursor:pointer; color:#1d4ed8; font-size:13px; margin-top:4px;';
       addNewEl.innerHTML = `
-        <span style="font-size:15px;">➕</span>
+        <span style="font-size:15px; font-weight:700;">+</span>
         <div style="min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
           ใช้ชื่อใหม่: <strong>"${escapeHtml(trimmedQuery)}"</strong> <span style="font-size:11px; color:#2563eb; opacity:0.85;">(บันทึกอัตโนมัติ)</span>
         </div>
@@ -3121,7 +3123,7 @@ function renderSnDropdown(slotIdx, query = '') {
           title="${isAlreadyPicked ? 'S/N นี้ถูกเลือกในช่องอื่นแล้ว' : 'แตะเพื่อเลือก S/N นี้'}"
         >
           <div class="model-item-main">
-            <span class="model-item-name">🏷️ ${escapeHtml(snVal)}</span>
+            <span class="model-item-name" style="display:inline-flex; align-items:center; gap:4px;">${APP_ICONS.tag} <span>${escapeHtml(snVal)}</span></span>
             <span class="model-item-sub">${escapeHtml(a.tag_id)} · คลัง: ${escapeHtml(a.source || 'Demo')} · ที่เก็บ: ${escapeHtml(a.location || '-')}</span>
           </div>
           <span class="model-count-box count-full" title="ว่าง พร้อมให้ยืม">ว่าง</span>
@@ -4086,7 +4088,7 @@ function renderAccessoryDropdown(rowIdx, query = '') {
 
   const headerHtml = `
     <div class="dropdown-header-bar">
-      <span class="dropdown-header-title">🔌 เลือกอุปกรณ์เสริม (${filtered.length})</span>
+      <span class="dropdown-header-title">เลือกอุปกรณ์เสริม (${filtered.length})</span>
       <button type="button" class="btn-close-dropdown" data-close-accessory-dropdown title="ปิด (✕)">✕</button>
     </div>
   `;
@@ -4098,7 +4100,7 @@ function renderAccessoryDropdown(rowIdx, query = '') {
         <div class="dropdown-scroll-list">
           <div class="model-dropdown-item" data-select-acc="${escapeHtml(query.trim())}" data-row="${rowIdx}">
             <div class="model-item-main">
-              <span class="model-item-name">➕ เพิ่มป้ายใหม่: "${escapeHtml(query.trim())}"</span>
+              <span class="model-item-name">+ เพิ่มป้ายใหม่: "${escapeHtml(query.trim())}"</span>
               <span class="model-item-sub">กดคลิกหรือกด Enter เพื่อเพิ่ม Tag นี้</span>
             </div>
           </div>
@@ -4118,7 +4120,7 @@ function renderAccessoryDropdown(rowIdx, query = '') {
       html += `
         <div class="model-dropdown-item" data-select-acc="${escapeHtml(query.trim())}" data-row="${rowIdx}" style="background:#f0fdf4;">
           <div class="model-item-main">
-            <span class="model-item-name" style="color:#15803d;">➕ เพิ่ม Tag ใหม่: "${escapeHtml(query.trim())}"</span>
+            <span class="model-item-name" style="color:#15803d;">+ เพิ่ม Tag ใหม่: "${escapeHtml(query.trim())}"</span>
             <span class="model-item-sub">สร้างป้ายอุปกรณ์เสริมตามที่พิมพ์</span>
           </div>
         </div>
@@ -4234,7 +4236,7 @@ function renderSourceDropdown(rowIdx) {
 
   const headerHtml = `
     <div class="dropdown-header-bar">
-      <span class="dropdown-header-title">🏢 เลือกคลัง / แหล่งที่มา (Source)</span>
+      <span class="dropdown-header-title">เลือกคลัง / แหล่งที่มา (Source)</span>
       <button type="button" class="btn-close-dropdown" data-close-source-dropdown title="ปิด (✕)">✕</button>
     </div>
   `;
@@ -4330,7 +4332,7 @@ function renderBrandDropdown(rowIdx, query = '') {
   const headerHtml = `
     <div class="dropdown-header-bar">
       <div style="display:flex; align-items:center; gap:6px;">
-        <span class="dropdown-header-title">🏷️ เลือกแบรนด์สินค้า</span>
+        <span class="dropdown-header-title">เลือกแบรนด์สินค้า</span>
         <span class="dropdown-count-badge">${filtered.length} แบรนด์</span>
       </div>
       <button type="button" class="btn-close-dropdown" data-close-brand-dropdown title="ปิด (✕)">✕</button>
@@ -4349,7 +4351,7 @@ function renderBrandDropdown(rowIdx, query = '') {
       >
         <div class="model-item-main">
           <div style="display:flex; align-items:center; gap:6px;">
-            <span class="brand-item-new-icon">➕</span>
+            <span class="brand-item-new-icon">+</span>
             <span class="model-item-name" style="color:#2563eb; font-weight:700;">ใช้แบรนด์ใหม่: "${escapeHtml(query.trim())}"</span>
           </div>
           <span class="model-item-sub">บันทึกแบรนด์ใหม่นี้ลงฐานข้อมูลอัตโนมัติ</span>
@@ -4842,9 +4844,9 @@ function renderLoanExcelRows() {
       if (!isActive && hasModel) {
         let snBadgeHtml = '';
         if (filledSn.length === rowQty && rowQty > 0) {
-          snBadgeHtml = `<span class="collapsed-sn-pill complete" title="S/N: ${escapeHtml(filledSn.join(', '))}">🏷️ S/N: ${escapeHtml(filledSn.join(', '))}</span>`;
+          snBadgeHtml = `<span class="collapsed-sn-pill complete" title="S/N: ${escapeHtml(filledSn.join(', '))}"><span class="sn-icon-mini">${APP_ICONS.tag}</span><span>S/N: ${escapeHtml(filledSn.join(', '))}</span></span>`;
         } else if (filledSn.length > 0) {
-          snBadgeHtml = `<span class="collapsed-sn-pill warn" title="ระบุแล้ว ${filledSn.length}/${rowQty} เครื่อง (ต้องครบตามจำนวน)">🏷️ S/N: ${filledSn.length}/${rowQty}</span>`;
+          snBadgeHtml = `<span class="collapsed-sn-pill warn" title="ระบุแล้ว ${filledSn.length}/${rowQty} เครื่อง (ต้องครบตามจำนวน)"><span class="sn-icon-mini">${APP_ICONS.tag}</span><span>S/N: ${filledSn.length}/${rowQty}</span></span>`;
         }
 
         const stockPillHtml = sim?.isAutoSupplier ? `
@@ -4880,9 +4882,9 @@ function renderLoanExcelRows() {
         if (hasAcc || hasNote || hasAtt) {
           detailsLineHtml = `
             <div class="collapsed-details-line">
-              ${hasAcc ? `<span class="collapsed-acc-text">📦 อุปกรณ์: ${escapeHtml(row.accessories.join(', '))}</span>` : ''}
-              ${hasNote ? `<span class="collapsed-note-text">📝 ${escapeHtml(row.free_note.replace(/\n+/g, ' '))}</span>` : ''}
-              ${hasAtt ? `<span class="collapsed-att-text">📎 ${row.attachments.length} ไฟล์แนบ</span>` : ''}
+              ${hasAcc ? `<span class="collapsed-acc-text" style="display:inline-flex; align-items:center; gap:3px;">${APP_ICONS.box} <span>อุปกรณ์: ${escapeHtml(row.accessories.join(', '))}</span></span>` : ''}
+              ${hasNote ? `<span class="collapsed-note-text" style="display:inline-flex; align-items:center; gap:3px;">${APP_ICONS.note} <span>${escapeHtml(row.free_note.replace(/\n+/g, ' '))}</span></span>` : ''}
+              ${hasAtt ? `<span class="collapsed-att-text" style="display:inline-flex; align-items:center; gap:3px;">${APP_ICONS.clip} <span>${row.attachments.length} ไฟล์แนบ</span></span>` : ''}
             </div>
           `;
         }
@@ -4940,7 +4942,7 @@ function renderLoanExcelRows() {
             <!-- 5. อุปกรณ์เสริม & S/N -->
             <td class="cell-options-cell">
               <div class="collapsed-cell-options-wrap">
-                ${hasAcc ? `<span class="collapsed-acc-text" title="${escapeHtml(row.accessories.join(', '))}">📦 ${escapeHtml(row.accessories.join(', '))}</span>` : ''}
+                ${hasAcc ? `<span class="collapsed-acc-text" title="${escapeHtml(row.accessories.join(', '))}" style="display:inline-flex; align-items:center; gap:3px;">${APP_ICONS.box} <span>${escapeHtml(row.accessories.join(', '))}</span></span>` : ''}
                 ${snBadgeHtml}
                 ${(!hasAcc && !snBadgeHtml) ? `<span class="collapsed-empty-dash">-</span>` : ''}
               </div>
@@ -4949,8 +4951,8 @@ function renderLoanExcelRows() {
             <!-- 6. หมายเหตุ -->
             <td class="cell-note">
               <div class="collapsed-cell-note-wrap">
-                ${hasNote ? `<span class="collapsed-note-text" title="${escapeHtml(row.free_note)}">📝 ${escapeHtml(row.free_note.replace(/\n+/g, ' '))}</span>` : ''}
-                ${hasAtt ? `<span class="collapsed-att-text">📎 ${row.attachments.length} ไฟล์แนบ</span>` : ''}
+                ${hasNote ? `<span class="collapsed-note-text" title="${escapeHtml(row.free_note)}" style="display:inline-flex; align-items:center; gap:3px;">${APP_ICONS.note} <span>${escapeHtml(row.free_note.replace(/\n+/g, ' '))}</span></span>` : ''}
+                ${hasAtt ? `<span class="collapsed-att-text" style="display:inline-flex; align-items:center; gap:3px;">${APP_ICONS.clip} <span>${row.attachments.length} ไฟล์แนบ</span></span>` : ''}
                 ${(!hasNote && !hasAtt) ? `<span class="collapsed-empty-dash">-</span>` : ''}
               </div>
             </td>
@@ -5018,7 +5020,7 @@ function renderLoanExcelRows() {
       if (accList.length === 0) {
         accTriggerHtml = `
           <button type="button" class="btn-acc-trigger" data-open-acc-modal="${rowIdx}" title="แตะเพื่อเลือกอุปกรณ์เสริม">
-            <span class="acc-trig-icon">📦</span>
+            <span class="acc-trig-icon">${APP_ICONS.box}</span>
             <span class="acc-trig-label">+ อุปกรณ์เสริม</span>
           </button>
         `;
@@ -5027,9 +5029,9 @@ function renderLoanExcelRows() {
         accTriggerHtml = `
           <div class="acc-trig-filled-group">
             <button type="button" class="btn-acc-trigger filled" data-open-acc-modal="${rowIdx}" title="อุปกรณ์: ${escapeHtml(accSummary)} (แตะเพื่อแก้ไข)">
-              <span class="acc-trig-icon">📦</span>
+              <span class="acc-trig-icon">${APP_ICONS.box}</span>
               <span class="acc-trig-label">อุปกรณ์ (${accList.length})</span>
-              <span class="acc-trig-edit-hint">✏️</span>
+              <span class="acc-trig-edit-hint">${APP_ICONS.edit}</span>
             </button>
             <button type="button" class="btn-clear-acc-quick" data-clear-all-acc="${rowIdx}" title="ล้างอุปกรณ์เสริมทั้งหมด">✕</button>
           </div>
@@ -5041,7 +5043,7 @@ function renderLoanExcelRows() {
       if (filledSn.length === 0) {
         snTriggerHtml = `
           <button type="button" class="btn-sn-trigger" data-open-sn-modal="${rowIdx}" title="แตะเพื่อระบุ S/N เครื่อง">
-            <span class="sn-trig-icon">🏷️</span>
+            <span class="sn-trig-icon">${APP_ICONS.tag}</span>
             <span class="sn-trig-label">+ ระบุ S/N</span>
             <span class="sn-trig-qty-badge">${rowQty}</span>
           </button>
@@ -5051,7 +5053,7 @@ function renderLoanExcelRows() {
         snTriggerHtml = `
           <div class="sn-trig-filled-group">
             <button type="button" class="btn-sn-trigger filled complete" data-open-sn-modal="${rowIdx}" title="S/N: ${escapeHtml(snSummary)} (แตะเพื่อแก้ไข)">
-              <span class="sn-trig-icon">✅</span>
+              <span class="sn-trig-icon">${APP_ICONS.check}</span>
               <span class="sn-trig-label">S/N ครบ (${rowQty})</span>
             </button>
             <button type="button" class="btn-clear-sn-quick" data-clear-all-sn="${rowIdx}" title="ลบ S/N ออก">✕</button>
@@ -5061,7 +5063,7 @@ function renderLoanExcelRows() {
         snTriggerHtml = `
           <div class="sn-trig-filled-group">
             <button type="button" class="btn-sn-trigger filled warn" data-open-sn-modal="${rowIdx}" title="แตะเพื่อระบุ S/N ให้ครบตามจำนวน (${filledSn.length}/${rowQty})">
-              <span class="sn-trig-icon">⚠️</span>
+              <span class="sn-trig-icon">${APP_ICONS.alert}</span>
               <span class="sn-trig-label">S/N: ${filledSn.length}/${rowQty}</span>
             </button>
             <button type="button" class="btn-clear-sn-quick" data-clear-all-sn="${rowIdx}" title="ลบ S/N ออก">✕</button>

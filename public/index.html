@@ -168,13 +168,17 @@
         <!-- Option 2: เพิ่ม Demo -->
         <button type="button" class="fab-action-item" id="fabActionAddDemo">
           <span class="fab-action-label">เพิ่ม Demo</span>
-          <span class="fab-action-icon">📦</span>
+          <span class="fab-action-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          </span>
         </button>
 
         <!-- Option 1: ออกใบยืม -->
         <button type="button" class="fab-action-item" id="fabActionCreateLoan">
           <span class="fab-action-label">ออกใบยืม</span>
-          <span class="fab-action-icon">📄</span>
+          <span class="fab-action-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+          </span>
         </button>
       </div>
 
@@ -195,10 +199,16 @@
       <!-- Highlight Banner when a new loan is created -->
       <div class="highlight-banner hidden" id="highlightBanner">
         <div class="highlight-banner-left">
-          <span>✨ ออกใบยืม <b id="highlightDocNoText"></b> สำเร็จแล้ว (ไฮไลท์การ์ดบนกระดาน)</span>
+          <span style="display:inline-flex; align-items:center; gap:6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            <span>ออกใบยืม <b id="highlightDocNoText"></b> สำเร็จแล้ว (ไฮไลท์การ์ดบนกระดาน)</span>
+          </span>
         </div>
         <div class="highlight-banner-actions">
-          <button type="button" class="btn btn-sm btn-primary" id="btnPrintHighlighted">🖨️ พิมพ์ใบยืม</button>
+          <button type="button" class="btn btn-sm btn-primary" id="btnPrintHighlighted" style="display:inline-flex; align-items:center; gap:5px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            <span>พิมพ์ใบยืม</span>
+          </button>
           <button type="button" class="btn btn-sm btn-ghost" id="btnDismissHighlight">×</button>
         </div>
       </div>
@@ -390,7 +400,15 @@
       <form id="loanForm" class="modal-body">
         <!-- Note-only Notice Banner (for Delivered loans) -->
         <div id="loanNoteOnlyBanner" class="loan-note-only-banner hidden">
-          <div class="note-banner-icon">📝</div>
+          <div class="note-banner-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </div>
           <div class="note-banner-content">
             <strong>โหมดแก้ไขหมายเหตุ (ส่งมอบสินค้าแล้ว)</strong>
             <span>ใบยืมนี้จัดส่งมอบสินค้าเรียบร้อยแล้ว รายการสินค้าและ S/N จะถูกล็อกไว้เพื่อความถูกต้องของสต็อก โดยคุณสามารถแก้ไขและบันทึกหมายเหตุเพิ่มเติมของแต่ละรายการได้</span>
@@ -470,32 +488,32 @@
                       <label for="loanPurposeTrigger">วัตถุประสงค์</label>
                       <div class="custom-select-wrap" id="loanPurposeCustomWrap">
                         <button type="button" class="custom-select-trigger" id="loanPurposeTrigger" aria-haspopup="listbox" aria-expanded="false">
-                          <span class="custom-select-val" id="loanPurposeDisplay">🎯 Demo ให้ลูกค้า</span>
+                          <span class="custom-select-val" id="loanPurposeDisplay">Demo ให้ลูกค้า</span>
                           <span class="custom-select-arrow">▾</span>
                         </button>
                         <select id="loanPurpose" class="visually-hidden" tabindex="-1">
-                          <option value="Demo">🎯 Demo ให้ลูกค้า</option>
-                          <option value="POC">🔬 POC ทดสอบระบบ</option>
-                          <option value="Standby_Repair">🛠️ เครื่องสำรองระหว่างซ่อม</option>
+                          <option value="Demo">Demo ให้ลูกค้า</option>
+                          <option value="POC">POC ทดสอบระบบ</option>
+                          <option value="Standby_Repair">เครื่องสำรองระหว่างซ่อม</option>
                         </select>
                         <div class="custom-select-menu hidden" id="loanPurposeMenu" role="listbox">
                           <div class="custom-select-item active" data-val="Demo" role="option">
                             <div class="custom-select-item-text">
-                              <span class="item-title">🎯 Demo ให้ลูกค้า</span>
+                              <span class="item-title">Demo ให้ลูกค้า</span>
                               <span class="item-desc">สาธิตการใช้งานให้ลูกค้าดู</span>
                             </div>
                             <span class="item-check">✓</span>
                           </div>
                           <div class="custom-select-item" data-val="POC" role="option">
                             <div class="custom-select-item-text">
-                              <span class="item-title">🔬 POC ทดสอบระบบ</span>
+                              <span class="item-title">POC ทดสอบระบบ</span>
                               <span class="item-desc">ทดสอบระบบ / POC หน้างานจริง</span>
                             </div>
                             <span class="item-check">✓</span>
                           </div>
                           <div class="custom-select-item" data-val="Standby_Repair" role="option">
                             <div class="custom-select-item-text">
-                              <span class="item-title">🛠️ เครื่องสำรองระหว่างซ่อม</span>
+                              <span class="item-title">เครื่องสำรองระหว่างซ่อม</span>
                               <span class="item-desc">Standby ระหว่างรอซ่อมเครื่องเดิม</span>
                             </div>
                             <span class="item-check">✓</span>
@@ -508,24 +526,24 @@
                       <label for="loanInitialStatusTrigger">สถานะ</label>
                       <div class="custom-select-wrap" id="loanInitialStatusCustomWrap">
                         <button type="button" class="custom-select-trigger" id="loanInitialStatusTrigger" aria-haspopup="listbox" aria-expanded="false">
-                          <span class="custom-select-val" id="loanInitialStatusDisplay">🔵 รอจัด (Requested)</span>
+                          <span class="custom-select-val" id="loanInitialStatusDisplay">รอจัด (Requested)</span>
                           <span class="custom-select-arrow">▾</span>
                         </button>
                         <select id="loanInitialStatus" class="visually-hidden" tabindex="-1">
-                          <option value="Requested">🔵 รอจัด (Requested)</option>
-                          <option value="Dispatching">🔵 กำลังจัด (Dispatching)</option>
+                          <option value="Requested">รอจัด (Requested)</option>
+                          <option value="Dispatching">กำลังจัด (Dispatching)</option>
                         </select>
                         <div class="custom-select-menu hidden" id="loanInitialStatusMenu" role="listbox">
                           <div class="custom-select-item active" data-val="Requested" role="option">
                             <div class="custom-select-item-text">
-                              <span class="item-title">🔵 รอจัด (Requested)</span>
+                              <span class="item-title">รอจัด (Requested)</span>
                               <span class="item-desc">รอคนจัดของและ Match S/N</span>
                             </div>
                             <span class="item-check">✓</span>
                           </div>
                           <div class="custom-select-item" data-val="Dispatching" role="option">
                             <div class="custom-select-item-text">
-                              <span class="item-title">🔵 กำลังจัด (Dispatching)</span>
+                              <span class="item-title">กำลังจัด (Dispatching)</span>
                               <span class="item-desc">กำลังเบิกของเตรียมส่งมอบ</span>
                             </div>
                             <span class="item-check">✓</span>
@@ -537,7 +555,14 @@
                     <div class="field-group fg-date-start">
                       <label for="btnOpenAgodaStart">วันยืม</label>
                       <button type="button" class="agoda-single-date-box" id="btnOpenAgodaStart" title="แตะเพื่อเลือกวันยืม">
-                        <span class="date-box-icon">📅</span>
+                        <span class="date-box-icon">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                          </svg>
+                        </span>
                         <span class="date-box-val" id="agodaDisplayCheckout">02/11/2026</span>
                       </button>
                     </div>
@@ -545,7 +570,14 @@
                     <div class="field-group fg-date-end">
                       <label for="btnOpenAgodaEnd">กำหนดคืน <span class="req">*</span></label>
                       <button type="button" class="agoda-single-date-box" id="btnOpenAgodaEnd" title="แตะเพื่อเลือกกำหนดคืน">
-                        <span class="date-box-icon">📅</span>
+                        <span class="date-box-icon">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                          </svg>
+                        </span>
                         <span class="date-box-val" id="agodaDisplayDue">09/11/2026</span>
                         <span class="agoda-range-days-pill" id="agodaDisplayDaysPill">7 วัน</span>
                       </button>
@@ -820,7 +852,9 @@
           <div class="modal-title-group dispatch-title-group">
             <div class="dispatch-title-row">
               <h2 id="dispatchDialogTitle" class="dispatch-modal-title">
-                <span class="dispatch-title-icon">📦</span>
+                <span class="dispatch-title-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                </span>
                 <span class="dispatch-title-text">จัดของ &amp; Match S/N</span>
                 <span class="dispatch-title-sep">—</span>
                 <span class="dispatch-title-loan-id" id="dispatchTitleLoanId"></span>
@@ -1069,8 +1103,9 @@
         </div>
         <div class="camera-error-overlay" id="dispatchCameraError" style="display:none;">
           <p id="dispatchCameraErrorMsg">ไม่สามารถเข้าถึงกล้องได้</p>
-          <button type="button" class="btn btn-outline btn-sm" id="btnFallbackFileInput">
-            📁 เลือกไฟล์ภาพจากเครื่องแทน
+          <button type="button" class="btn btn-outline btn-sm" id="btnFallbackFileInput" style="display:inline-flex; align-items:center; gap:6px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            <span>เลือกไฟล์ภาพจากเครื่องแทน</span>
           </button>
         </div>
       </div>
@@ -1082,8 +1117,9 @@
           </button>
         </div>
         <div class="camera-confirm-row" id="cameraReviewControls" style="display:none;">
-          <button type="button" class="btn btn-ghost" id="btnRetakePhoto">
-            🔄 ถ่ายใหม่
+          <button type="button" class="btn btn-ghost" id="btnRetakePhoto" style="display:inline-flex; align-items:center; gap:5px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            <span>ถ่ายใหม่</span>
           </button>
           <button type="button" class="btn btn-success" id="btnUsePhoto">
             ✓ ใช้รูปนี้
@@ -1099,7 +1135,9 @@
   <dialog id="dispatchMismatchDialog" class="modal-dialog modal-mismatch-sheet no-print" aria-labelledby="dispatchMismatchTitle">
     <div class="mismatch-dialog-content">
       <div class="mismatch-header">
-        <div class="mismatch-icon-bubble" id="mismatchIconBubble">⚡</div>
+        <div class="mismatch-icon-bubble" id="mismatchIconBubble">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        </div>
         <div class="mismatch-title-group">
           <h3 id="dispatchMismatchTitle" class="mismatch-title">สแกนได้เครื่องไม่ตรงรุ่นในใบยืม</h3>
           <p class="mismatch-sub" id="dispatchMismatchSub">เครื่องที่สแกนไม่ตรงกับรุ่นที่ยังไม่ได้สแกนในใบยืมนี้</p>
@@ -1122,7 +1160,7 @@
       </div>
 
       <div class="mismatch-choice-section">
-        <label class="mismatch-choice-label" id="mismatchChoiceLabel">🎯 กรุณาเลือกว่าต้องการนำเครื่องนี้ไปลงแทนที่รายการใดในใบยืม:</label>
+        <label class="mismatch-choice-label" id="mismatchChoiceLabel">เลือกรายการที่ต้องการนำเครื่องนี้ไปลงแทนที่:</label>
         <div class="mismatch-items-list" id="mismatchItemsChoiceList">
           <!-- Rendered dynamically -->
         </div>
@@ -1171,7 +1209,10 @@
           <div class="proof-box">
             <div class="proof-header">
               <div>
-                <h4>📸 รูปถ่ายตอนส่งออก (เปรียบเทียบ)</h4>
+                <h4 style="display:flex; align-items:center; gap:6px;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  <span>รูปถ่ายตอนส่งออก (เปรียบเทียบ)</span>
+                </h4>
                 <p>ภาพที่บันทึกไว้ก่อนส่งมอบ</p>
               </div>
             </div>
@@ -1181,7 +1222,10 @@
           <div class="proof-box highlight-proof-box">
             <div class="proof-header">
               <div>
-                <h4>📷 ถ่ายรูปตอนรับคืน (หลักฐานการรับกลับ)</h4>
+                <h4 style="display:flex; align-items:center; gap:6px;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  <span>ถ่ายรูปตอนรับคืน (หลักฐานการรับกลับ)</span>
+                </h4>
                 <p>ถ่ายรูปเครื่องและอุปกรณ์เสริมที่รับกลับมาจริง</p>
               </div>
               <label class="btn btn-primary btn-sm file-btn">
@@ -1196,7 +1240,10 @@
         <!-- Per-item QC & Accessory Tag Check -->
         <div class="modal-section">
           <div class="section-title-row">
-            <h3>✅ ตรวจเช็คตามรายการเครื่องและอุปกรณ์เสริม (จิ้มป้าย Tag ชิ้นที่ขาดออกหากไม่ครบ)</h3>
+            <h3 style="display:flex; align-items:center; gap:6px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#10b981;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>ตรวจเช็คตามรายการเครื่องและอุปกรณ์เสริม (จิ้มป้าย Tag ชิ้นที่ขาดออกหากไม่ครบ)</span>
+            </h3>
           </div>
           <div id="returnItemsContainer" class="return-items-stack"></div>
         </div>
@@ -1211,8 +1258,9 @@
           </div>
           <div class="footer-right-btns">
             <button type="button" class="btn btn-ghost" data-close-dialog="returnDialog">ยกเลิก</button>
-            <button type="submit" class="btn btn-success">
-              📥 ยืนยันผลตรวจ QC & บันทึกรับคืน
+            <button type="submit" class="btn btn-success" style="display:inline-flex; align-items:center; gap:6px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <span>ยืนยันผลตรวจ QC & บันทึกรับคืน</span>
             </button>
           </div>
         </footer>
@@ -1273,8 +1321,8 @@
           <div class="print-toolbar-right">
             <!-- Zoom mode segmented control for mobile/tablet preview (Default: 100%) -->
             <div class="print-zoom-segmented" id="printZoomSegmented" role="group" aria-label="มุมมองหน้ากระดาษ">
-              <button type="button" class="btn-zoom-seg is-active" id="btnZoom100" data-zoom-target="100" title="มุมมองขนาดจริง 100%">🔍 100%</button>
-              <button type="button" class="btn-zoom-seg" id="btnZoomFit" data-zoom-target="fit" title="ย่อมุมมองพอดีหน้าจอ (สัดส่วน A4)">📱 พอดีจอ</button>
+              <button type="button" class="btn-zoom-seg is-active" id="btnZoom100" data-zoom-target="100" title="มุมมองขนาดจริง 100%">100%</button>
+              <button type="button" class="btn-zoom-seg" id="btnZoomFit" data-zoom-target="fit" title="ย่อมุมมองพอดีหน้าจอ (สัดส่วน A4)">พอดีจอ</button>
             </div>
             <button type="button" class="btn btn-navbar-action btn-company-settings btn-navbar-icon-only" id="btnOpenCompanySettings" title="ข้อมูลบริษัท & โลโก้" aria-label="ข้อมูลบริษัท & โลโก้">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1311,11 +1359,13 @@
         </div>
       </div>
       <footer class="modal-footer print-mobile-footer">
-        <button type="button" class="btn btn-outline btn-mobile-email-action" id="btnOpenSendEmailModalMobile">
-          ✉️ ส่ง Email
+        <button type="button" class="btn btn-outline btn-mobile-email-action" id="btnOpenSendEmailModalMobile" style="display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+          <span>ส่ง Email</span>
         </button>
-        <button type="button" class="btn btn-primary btn-mobile-print-action" id="btnTriggerBrowserPrintMobile">
-          🖨️ สั่งพิมพ์ / บันทึกเป็น PDF
+        <button type="button" class="btn btn-primary btn-mobile-print-action" id="btnTriggerBrowserPrintMobile" style="display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+          <span>สั่งพิมพ์ / บันทึกเป็น PDF</span>
         </button>
       </footer>
     </div>
@@ -1379,7 +1429,10 @@
                 </div>
               </div>
               <div style="display:flex; gap:6px;">
-                <button type="button" class="btn btn-sm btn-outline" id="btnEditDeliverySig" style="font-size:11.5px; padding:4px 10px; font-weight:600;">✎ เซ็นใหม่</button>
+                <button type="button" class="btn btn-sm btn-outline" id="btnEditDeliverySig" style="font-size:11.5px; padding:4px 10px; font-weight:600; display:inline-flex; align-items:center; gap:4px;">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                  <span>เซ็นใหม่</span>
+                </button>
                 <button type="button" class="btn btn-sm btn-outline" id="btnClearDeliverySig" style="font-size:11.5px; padding:4px 8px; color:#ef4444; border-color:#fecaca;" title="ลบลายเซ็น">✕</button>
               </div>
             </div>
@@ -1521,8 +1574,13 @@
         </div>
 
         <div class="print-navbar-right">
-          <button type="button" class="btn btn-primary btn-print-action" id="btnPrintReturnSlipDirect">
-            🖨️ สั่งพิมพ์ / บันทึกเป็น PDF
+          <button type="button" class="btn btn-primary btn-print-action" id="btnPrintReturnSlipDirect" style="display:inline-flex; align-items:center; gap:6px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 6 2 18 2 18 9"></polyline>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+              <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            <span>สั่งพิมพ์ / บันทึกเป็น PDF</span>
           </button>
         </div>
       </header>
@@ -1546,8 +1604,9 @@
           <p class="modal-subtitle sig-subtitle-text" id="sigModalSubtitle">ผู้ยืม / ผู้รับเครื่อง</p>
         </div>
         <div class="sig-header-actions">
-          <button type="button" class="btn btn-sm btn-outline btn-toggle-sig-orient" id="btnToggleSigOrient" title="สลับโหมดแนวนอน">
-            🔄 <span id="sigOrientText">แนวนอน</span>
+          <button type="button" class="btn btn-sm btn-outline btn-toggle-sig-orient" id="btnToggleSigOrient" title="สลับโหมดแนวนอน" style="display:inline-flex; align-items:center; gap:5px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            <span id="sigOrientText">แนวนอน</span>
           </button>
           <button type="button" class="btn-close-modal" id="btnCloseSigModal" aria-label="ปิด">✕</button>
         </div>
@@ -1562,7 +1621,9 @@
         <!-- Quick Apply Saved Dispatcher Signature Banner -->
         <div id="sigSavedDispatcherBanner" class="sig-saved-banner hidden">
           <div class="sig-saved-info">
-            <span class="sig-saved-icon">⚡</span>
+            <span class="sig-saved-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            </span>
             <span>มีลายเซ็นผู้จ่ายเครื่องที่บันทึกไว้ในโปรแกรม</span>
           </div>
           <button type="button" class="btn btn-sm btn-secondary" id="btnApplySavedDispatcherSig">
@@ -1611,7 +1672,9 @@
         <div id="sigUploadSection" class="sig-pane hidden">
           <div class="sig-upload-box" id="sigUploadDropzone">
             <input type="file" id="sigFileInput" accept="image/png, image/jpeg, image/webp" class="hidden" />
-            <div class="upload-icon">🖋️</div>
+            <div class="upload-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>
+            </div>
             <div class="upload-text">เลือกไฟล์รูปภาพลายเซ็น</div>
             <div class="upload-hint">PNG, JPG, WEBP</div>
           </div>
@@ -1651,7 +1714,9 @@
           </button>
           <div class="modal-title-group">
             <h2 id="companySettingsTitle" class="company-settings-header-title">
-              <span class="company-title-icon">⚙️</span>
+              <span class="company-title-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              </span>
               <span>ข้อมูลบริษัท &amp; ตั้งค่าระบบ</span>
             </h2>
           </div>
@@ -1759,8 +1824,14 @@
               <div class="company-signature-controls">
                 <input type="file" id="companyDispatcherSigFileInput" accept="image/png, image/jpeg, image/webp" class="hidden" />
                 <div class="signature-btn-group">
-                  <button type="button" class="btn btn-sm btn-secondary" id="btnDrawCompanyDispatcherSig">✍️ วาดลายเซ็น</button>
-                  <button type="button" class="btn btn-sm btn-secondary" id="btnUploadCompanyDispatcherSig">📁 อัปโหลดรูปภาพ</button>
+                  <button type="button" class="btn btn-sm btn-secondary" id="btnDrawCompanyDispatcherSig" style="display:inline-flex; align-items:center; gap:5px;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                    <span>วาดลายเซ็น</span>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-secondary" id="btnUploadCompanyDispatcherSig" style="display:inline-flex; align-items:center; gap:5px;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                    <span>อัปโหลดรูปภาพ</span>
+                  </button>
                   <button type="button" class="btn btn-sm btn-ghost text-danger hidden" id="btnRemoveCompanyDispatcherSig">ลบ</button>
                 </div>
                 <div class="form-hint">บันทึกเป็นลายเซ็นผู้จ่ายเครื่องในเอกสารใบยืม (Gate Pass) ทุกใบโดยอัตโนมัติ</div>
@@ -1828,21 +1899,18 @@
           <div class="settings-section email-tab-content">
             <div class="smtp-section-header">
               <label class="form-label" style="font-size: 13px; font-weight: 600; color: #1e293b; margin: 0;">เลือกผู้ให้บริการส่งอีเมล</label>
-              <span class="smtp-badge" id="smtpActiveProviderBadge">⚡ แนะนำ: Resend API</span>
+              <span class="smtp-badge" id="smtpActiveProviderBadge">Resend API (แนะนำ)</span>
             </div>
 
             <!-- Provider Segmented Tabs -->
             <div class="email-provider-tabs" role="tablist">
               <button type="button" class="provider-tab active" data-provider="resend">
-                <span class="tab-dot">⚡</span>
                 <span>Resend API (แนะนำ)</span>
               </button>
               <button type="button" class="provider-tab" data-provider="sendgrid">
-                <span class="tab-dot">✉️</span>
                 <span>SendGrid API</span>
               </button>
               <button type="button" class="provider-tab" data-provider="smtp">
-                <span class="tab-dot">📧</span>
                 <span>Gmail SMTP</span>
               </button>
             </div>
@@ -1865,7 +1933,9 @@
                     data-form-type="other"
                     spellcheck="false" 
                   />
-                  <button type="button" class="btn-toggle-pwd" id="btnToggleApiKey" title="แสดง/ซ่อน API Key">👁️</button>
+                  <button type="button" class="btn-toggle-pwd" id="btnToggleApiKey" title="แสดง/ซ่อน API Key">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  </button>
                 </div>
               </div>
 
@@ -1882,21 +1952,25 @@
 
               <div class="api-actions-row">
                 <button type="button" class="btn btn-secondary btn-test-smtp" id="btnTestEmailApiKey">
-                  <span id="btnTestApiKeyText">⚡ ทดสอบ API Key</span>
+                  <span id="btnTestApiKeyText">ทดสอบ API Key</span>
                 </button>
               </div>
 
               <div id="apiTestStatusBox" class="smtp-status-box hidden"></div>
 
               <div class="smtp-guide-note" id="guideNoteResend">
-                <span class="note-icon">💡</span>
+                <span class="note-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </span>
                 <div class="note-content">
                   <strong>ทำไมแนะนำ Resend?</strong> สมัครฟรีที่ <a href="https://resend.com" target="_blank" rel="noopener">resend.com</a> แล้วไปที่หน้า <a href="https://resend.com/api-keys" target="_blank" rel="noopener">API Keys</a> เพื่อคัดลอกคีย์มาวางได้ทันที! ส่งฟรี 3,000 ฉบับ/เดือน (วันละ 100 ฉบับ) เสถียรรวดเร็ว ไม่ต้องตั้งค่า 2-Factor หรือทำ App Password เหมือน Gmail
                 </div>
               </div>
 
               <div class="smtp-guide-note hidden" id="guideNoteSendGrid">
-                <span class="note-icon">💡</span>
+                <span class="note-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </span>
                 <div class="note-content">
                   <strong>วิธีใช้ SendGrid:</strong> สมัครที่ <a href="https://sendgrid.com" target="_blank" rel="noopener">sendgrid.com</a> ไปที่ Settings &gt; API Keys เพื่อสร้างคีย์ (สิทธิ์ Full Access หรือ Mail Send) นำคีย์ที่ขึ้นต้นด้วย <code>SG....</code> มาวาง
                 </div>
@@ -1914,7 +1988,9 @@
                   <label for="settingSmtpPass" class="form-label">App Password (16 หลัก) *</label>
                   <div class="input-password-wrap">
                     <input type="password" id="settingSmtpPass" class="form-control" placeholder="xxxx xxxx xxxx xxxx" autocomplete="new-password" />
-                    <button type="button" class="btn-toggle-pwd" id="btnToggleSmtpPass" title="แสดง/ซ่อนรหัสผ่าน">👁️</button>
+                    <button type="button" class="btn-toggle-pwd" id="btnToggleSmtpPass" title="แสดง/ซ่อนรหัสผ่าน">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1926,14 +2002,16 @@
 
               <div class="api-actions-row">
                 <button type="button" class="btn btn-secondary btn-test-smtp" id="btnTestSmtpConnection">
-                  <span id="btnTestSmtpText">⚡ ทดสอบเชื่อมต่อ Gmail</span>
+                  <span id="btnTestSmtpText">ทดสอบเชื่อมต่อ Gmail</span>
                 </button>
               </div>
 
               <div id="smtpTestStatusBox" class="smtp-status-box hidden"></div>
 
               <div class="smtp-guide-note">
-                <span class="note-icon">💡</span>
+                <span class="note-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </span>
                 <div class="note-content">
                   <strong>วิธีสร้างรหัส App Password:</strong> เปิดบัญชี Google &gt; ความปลอดภัย &gt; รหัสผ่านสำหรับแอป (App passwords) หรือคลิก <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">myaccount.google.com/apppasswords</a> เพื่อสร้างรหัส 16 หลัก
                 </div>
@@ -1945,7 +2023,10 @@
         <!-- Tab 3: การเข้าสู่ระบบ & Google Workspace -->
         <div id="tabPanelCompanyAuth" class="company-tab-panel hidden">
           <div class="settings-section">
-            <div class="section-title" style="font-weight:700; color:#1e293b; margin-bottom:6px; font-size:14px;">🔒 ระบบความปลอดภัย &amp; การจำกัดสิทธิ์องค์กร (Google Workspace)</div>
+            <div class="section-title" style="font-weight:700; color:#1e293b; margin-bottom:6px; font-size:14px; display:flex; align-items:center; gap:6px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              <span>ระบบความปลอดภัย &amp; การจำกัดสิทธิ์องค์กร (Google Workspace)</span>
+            </div>
             <p class="section-desc" style="font-size:12.5px; color:#64748b; margin-bottom:18px; line-height:1.5;">
               กำหนดโดเมนอีเมลของบริษัทที่อนุญาตให้ล็อกอินเข้าใช้งานระบบ activeASSET v2 และชื่อผู้ล็อกอินจะถูกบันทึกเป็นผู้สร้างเอกสารและผู้ปฏิบัติงานตามสถานะต่างๆ
             </p>
@@ -1991,7 +2072,10 @@
             <!-- Header Toolbar -->
             <div class="roles-matrix-toolbar">
               <div class="roles-matrix-heading">
-                <div class="roles-matrix-title">👥 กำหนดสิทธิ์การใช้งานรายบทบาท (Role Permissions Matrix)</div>
+                <div class="roles-matrix-title" style="display:flex; align-items:center; gap:6px;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                  <span>กำหนดสิทธิ์การใช้งานรายบทบาท (Role Permissions Matrix)</span>
+                </div>
                 <div class="roles-matrix-sub">เปิด/ปิดสิทธิ์การทำงานของแต่ละบทบาทได้ทันทีตามคอลัมน์ด้านล่าง</div>
               </div>
             </div>
@@ -2008,13 +2092,14 @@
           <div class="roles-tab-fullscreen-container">
             <div class="roles-users-assign-section is-standalone-tab">
               <div class="roles-users-assign-header">
-                <div class="roles-users-assign-title">
-                  <span>👤 กำหนดบทบาทผู้ใช้งาน</span>
+                <div class="roles-users-assign-title" style="display:flex; align-items:center; gap:6px;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  <span>กำหนดบทบาทผู้ใช้งาน</span>
                   <span class="roles-badge-count" id="countUsersRolesBadge">0</span>
                 </div>
                 <div class="roles-users-search-box">
                   <div class="input-clearable-wrap">
-                    <input type="text" id="inputSearchUserRoles" class="form-control" placeholder="🔍 ค้นหาพนักงาน (ชื่อ, อีเมล)..." autocomplete="off" />
+                    <input type="text" id="inputSearchUserRoles" class="form-control" placeholder="ค้นหาพนักงาน (ชื่อ, อีเมล)..." autocomplete="off" />
                     <button type="button" class="btn-input-clear hidden" data-clear-target="inputSearchUserRoles" title="ล้างค่า">✕</button>
                   </div>
                 </div>
@@ -2144,7 +2229,7 @@
 
         <footer class="modal-footer" style="padding-top:16px;">
           <button type="button" class="btn btn-outline" id="btnCancelRoleEditor">ยกเลิก</button>
-          <button type="submit" class="btn btn-primary" id="btnSaveRoleEditor">💾 บันทึกบทบาท</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveRoleEditor">บันทึกบทบาท</button>
         </footer>
       </form>
     </div>
@@ -2155,7 +2240,7 @@
     <div class="modal-card master-editor-card">
       <header class="modal-header">
         <div class="modal-title-group">
-          <h3 id="customerEditorTitle" class="modal-title">🏢 เพิ่มข้อมูลลูกค้าใหม่</h3>
+          <h3 id="customerEditorTitle" class="modal-title">เพิ่มข้อมูลลูกค้าใหม่</h3>
           <p class="modal-subtitle">ข้อมูลบริษัท เลขผู้เสียภาษี และข้อมูลการติดต่อ</p>
         </div>
         <button type="button" class="btn-close-modal" id="btnCloseCustomerEditor" aria-label="ปิด">✕</button>
@@ -2223,7 +2308,7 @@
 
         <footer class="modal-footer master-editor-footer">
           <button type="button" class="btn btn-outline" id="btnCancelCustomerEditor">ยกเลิก</button>
-          <button type="submit" class="btn btn-primary" id="btnSaveCustomerEditor">💾 บันทึกข้อมูลลูกค้า</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveCustomerEditor">บันทึกข้อมูลลูกค้า</button>
         </footer>
       </form>
     </div>
@@ -2234,7 +2319,7 @@
     <div class="modal-card master-editor-card">
       <header class="modal-header">
         <div class="modal-title-group">
-          <h3 id="catalogEditorTitle" class="modal-title">📦 เพิ่มรุ่นสินค้าใหม่</h3>
+          <h3 id="catalogEditorTitle" class="modal-title">เพิ่มรุ่นสินค้าใหม่</h3>
           <p class="modal-subtitle">กำหนดรุ่น ยี่ห้อ หมวดหมู่ สเปก และอุปกรณ์เสริมมาตรฐาน</p>
         </div>
         <button type="button" class="btn-close-modal" id="btnCloseCatalogEditor" aria-label="ปิด">✕</button>
@@ -2287,7 +2372,7 @@
 
         <footer class="modal-footer master-editor-footer">
           <button type="button" class="btn btn-outline" id="btnCancelCatalogEditor">ยกเลิก</button>
-          <button type="submit" class="btn btn-primary" id="btnSaveCatalogEditor">💾 บันทึกแคตตาล็อก</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveCatalogEditor">บันทึกแคตตาล็อก</button>
         </footer>
       </form>
     </div>
@@ -2298,7 +2383,7 @@
     <div class="modal-card master-editor-card" style="max-width: 480px;">
       <header class="modal-header">
         <div class="modal-title-group">
-          <h3 id="optionEditorTitle" class="modal-title">🏷️ เพิ่มรายการใหม่</h3>
+          <h3 id="optionEditorTitle" class="modal-title">เพิ่มรายการใหม่</h3>
           <p class="modal-subtitle" id="optionEditorSubtitle">กำหนดชื่อและรายละเอียด</p>
         </div>
         <button type="button" class="btn-close-modal" id="btnCloseOptionEditor" aria-label="ปิด">✕</button>
@@ -2319,7 +2404,7 @@
 
         <footer class="modal-footer master-editor-footer">
           <button type="button" class="btn btn-outline" id="btnCancelOptionEditor">ยกเลิก</button>
-          <button type="submit" class="btn btn-primary" id="btnSaveOptionEditor">💾 บันทึก</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveOptionEditor">บันทึก</button>
         </footer>
       </form>
     </div>
@@ -2420,14 +2505,19 @@
   <!-- Beautiful Generic Confirm Dialog -->
   <dialog id="confirmModalDialog" class="modal-dialog modal-confirm no-print" aria-labelledby="confirmDialogTitle">
     <div class="confirm-dialog-content">
-      <div class="confirm-icon-bubble" id="confirmDialogIcon">🗑️</div>
+      <div class="confirm-icon-bubble" id="confirmDialogIcon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:#ef4444;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+      </div>
       <h3 class="confirm-title" id="confirmDialogTitle">ยืนยันการลบรายการ</h3>
       <p class="confirm-message" id="confirmDialogMessage">คุณต้องการลบรายการนี้ใช่หรือไม่?</p>
       <div class="confirm-item-badge" id="confirmDialogItemBadge" style="display:none;"></div>
       <div class="confirm-item-custom-html" id="confirmDialogCustomHtml" style="display:none;"></div>
       <div class="confirm-actions">
         <button type="button" class="btn btn-outline" id="btnCancelConfirm">ยกเลิก</button>
-        <button type="button" class="btn btn-danger" id="btnApproveConfirm">🗑️ ยืนยันลบ</button>
+        <button type="button" class="btn btn-danger" id="btnApproveConfirm" style="display:inline-flex; align-items:center; gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          <span>ยืนยันลบ</span>
+        </button>
       </div>
     </div>
   </dialog>
@@ -2437,7 +2527,9 @@
     <div class="preview-lightbox-inner">
       <header class="preview-lightbox-header">
         <div class="preview-header-info">
-          <span class="preview-header-icon" id="previewModalIcon">📄</span>
+          <span class="preview-header-icon" id="previewModalIcon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+          </span>
           <div class="preview-header-text">
             <div class="preview-title-row">
               <h4 class="preview-modal-title" id="previewModalTitle">ตัวอย่างไฟล์</h4>
@@ -2538,7 +2630,10 @@
           <!-- Section 2: ข้อมูลอุปกรณ์ -->
           <div class="form-section-card">
             <div class="section-card-header">
-              <span class="section-card-title">🏷️ ข้อมูลอุปกรณ์</span>
+              <span class="section-card-title" style="display:inline-flex; align-items:center; gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                <span>ข้อมูลอุปกรณ์</span>
+              </span>
             </div>
             <div class="form-grid-2">
               <div class="form-group">
@@ -2598,7 +2693,10 @@
           <!-- Section 3: สถานที่เก็บ & อุปกรณ์ -->
           <div class="form-section-card">
             <div class="section-card-header">
-              <span class="section-card-title">📍 ที่เก็บ & อุปกรณ์</span>
+              <span class="section-card-title" style="display:inline-flex; align-items:center; gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                <span>ที่เก็บ & อุปกรณ์</span>
+              </span>
             </div>
             <div class="form-group">
               <label class="form-label" for="addDemoLocation">ที่เก็บประจำ</label>
@@ -2624,7 +2722,10 @@
           <!-- Section 4: รูปถ่าย & บันทึก -->
           <div class="form-section-card">
             <div class="section-card-header">
-              <span class="section-card-title">📸 รูปถ่าย & บันทึก</span>
+              <span class="section-card-title" style="display:inline-flex; align-items:center; gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                <span>รูปถ่าย & บันทึก</span>
+              </span>
             </div>
             <div class="form-group">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
@@ -2634,7 +2735,9 @@
               <div class="demo-multi-photos-box" id="addDemoImageBox" role="button" tabindex="0" title="คลิกเพื่อเพิ่มรูปภาพ">
                 <div class="demo-photos-gallery" id="addDemoPhotosGallery"></div>
                 <div class="demo-upload-watermark" id="addDemoWatermark">
-                  <span class="watermark-icon">📷</span>
+                  <span class="watermark-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  </span>
                   <span class="watermark-text">+ เพิ่มรูปภาพ</span>
                   <span class="watermark-sub">คลิกหรือลากรูปภาพมาวางที่นี่</span>
                 </div>
@@ -2654,7 +2757,7 @@
 
       <footer class="modal-footer">
         <button type="button" class="btn btn-outline" id="btnCancelAddDemo">ยกเลิก</button>
-        <button type="button" class="btn btn-primary" id="btnSaveAddDemo">✓ บันทึกเครื่อง Demo</button>
+        <button type="submit" class="btn btn-primary" id="btnSaveAddDemo">บันทึกเครื่อง Demo</button>
       </footer>
 
       <!-- Custom Dropdown Menus for Add Demo Modal (Matches Loan Form interactive dropdown UX) -->
@@ -2680,7 +2783,9 @@
             </svg>
             <span class="back-text">กลับ</span>
           </button>
-          <div class="asset-device-avatar" id="assetDetailCatIcon">📦</div>
+          <div class="asset-device-avatar" id="assetDetailCatIcon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          </div>
           <div class="asset-header-info-group">
             <div class="asset-header-title-row">
               <h2 id="assetDetailModalTitle" class="asset-header-title">Honeywell EDA52-1</h2>
@@ -2746,7 +2851,10 @@
           <!-- If disposed, show prominent disposed callout -->
           <div id="assetDetailDisposedCallout" class="asset-detail-disposed-box hidden">
             <div class="detail-disposed-header">
-              <span class="detail-disposed-badge">📦 เครื่องนี้ถูกจำหน่ายออกจากระบบแล้ว</span>
+              <span class="detail-disposed-badge" style="display:inline-flex; align-items:center; gap:5px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                <span>เครื่องนี้ถูกจำหน่ายออกจากระบบแล้ว</span>
+              </span>
               <span class="detail-disposed-date font-mono" id="assetDetailDisposedDate">17 พ.ย. 2026</span>
             </div>
             <div class="detail-disposed-grid">
@@ -2764,8 +2872,9 @@
               </div>
             </div>
             <div class="detail-disposed-footer-action">
-              <button type="button" class="btn btn-sm btn-primary" id="btnReactivateFromCallout">
-                📥 นำเครื่องกลับเข้าคลัง / เปิดใช้งานต่อ
+              <button type="button" class="btn btn-sm btn-primary" id="btnReactivateFromCallout" style="display:inline-flex; align-items:center; gap:5px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg>
+                <span>นำเครื่องกลับเข้าคลัง / เปิดใช้งานต่อ</span>
               </button>
             </div>
           </div>
@@ -2773,7 +2882,10 @@
           <!-- If on loan, show prominent loan callout -->
           <div id="assetDetailLoanCallout" class="asset-detail-loan-box hidden">
             <div class="detail-loan-header">
-              <span class="detail-loan-badge" id="assetDetailLoanBadge">📄 กำลังอยู่ระหว่างการยืม</span>
+              <span class="detail-loan-badge" id="assetDetailLoanBadge" style="display:inline-flex; align-items:center; gap:5px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                <span>กำลังอยู่ระหว่างการยืม</span>
+              </span>
               <button type="button" class="doc-link-pill doc-link-loan-box" id="assetDetailLoanId" data-open-loan="" title="คลิกเพื่อเปิดดูใบยืมจริง">
                 <span class="doc-link-id-text">LOAN-202610-001</span>
                 <svg class="doc-link-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -2798,8 +2910,9 @@
               </div>
             </div>
             <div class="detail-loan-footer-action">
-              <button type="button" class="btn-jump-history" id="btnJumpToAssetHistory">
-                🕒 ดูประวัติการยืมทั้งหมดของเครื่องนี้ (<span id="assetDetailHistoryCount">0</span> ครั้ง) →
+              <button type="button" class="btn-jump-history" id="btnJumpToAssetHistory" style="display:inline-flex; align-items:center; gap:5px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <span>ดูประวัติการยืมทั้งหมดของเครื่องนี้ (<span id="assetDetailHistoryCount">0</span> ครั้ง) →</span>
               </button>
             </div>
           </div>
@@ -2812,7 +2925,9 @@
             <div class="detail-section-block" id="detailSectionPhotos">
               <div class="detail-section-header">
                 <div class="detail-section-title-wrap">
-                  <span class="detail-section-icon">📷</span>
+                  <span class="detail-section-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  </span>
                   <span class="detail-section-title">รูปภาพเครื่อง</span>
                   <span class="detail-section-count" id="detailPhotoCountBadge">0 รูป</span>
                 </div>
@@ -2831,7 +2946,9 @@
                 <div class="demo-multi-photos-box" id="editAssetImageBox" role="button" tabindex="0" title="คลิกเพื่อเพิ่มรูปภาพ">
                   <div class="demo-photos-gallery" id="editAssetPhotosGallery"></div>
                   <div class="demo-upload-watermark" id="editAssetWatermark">
-                    <span class="watermark-icon">📷</span>
+                    <span class="watermark-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                    </span>
                     <span class="watermark-text">+ เพิ่มรูปภาพ</span>
                     <span class="watermark-sub">คลิกหรือลากรูปภาพมาวางที่นี่</span>
                   </div>
@@ -2968,11 +3085,15 @@
             <div class="library-card-header">
               <div class="lib-header-row-primary">
                 <div class="lib-title-wrap">
-                  <span class="lib-icon">📚</span>
+                  <span class="lib-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                  </span>
                   <span class="lib-title-text">บัตรประวัติการยืม-คืน</span>
                 </div>
                 <div class="lib-header-status-wrap" id="libCardCurrStatus">
-                  <span class="lib-status-pill avail">🟢 ว่างพร้อมยืม</span>
+                  <span class="lib-status-pill avail">
+                    <span class="status-indicator-dot avail"></span>ว่างพร้อมยืม
+                  </span>
                 </div>
               </div>
               <div class="lib-header-row-meta">
@@ -3005,7 +3126,7 @@
             <!-- Library Card Pagination Footer -->
             <div class="library-card-pagination">
               <div class="lib-page-info" id="libCardPageInfo">
-                📄 การ์ดยืมแผ่นที่ <span id="libCurrentPage">1</span> จาก <span id="libTotalPages">1</span>
+                การ์ดยืมแผ่นที่ <span id="libCurrentPage">1</span> จาก <span id="libTotalPages">1</span>
                 <span class="lib-total-records">(ประวัติทั้งหมด <span id="libTotalRecords">1</span> รายการ)</span>
               </div>
               <div class="lib-page-nav">
@@ -3130,7 +3251,9 @@
         </div>
 
         <div class="dispose-warning-callout">
-          <span class="callout-icon">💡</span>
+          <span class="callout-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          </span>
           <span class="callout-text">เมื่อจำหน่ายออกแล้ว เครื่องจะถูกตัดออกจากสต็อกพร้อมยืม โดยประวัติเดิมทั้งหมดจะถูกบันทึกไว้ในบัตรประวัติ และสามารถ "นำกลับเข้าคลัง" เพื่อใช้งานต่อได้ตลอดเวลา</span>
         </div>
 
@@ -3213,7 +3336,9 @@
         </div>
 
         <div class="reactivate-info-callout">
-          <span class="callout-icon">✅</span>
+          <span class="callout-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:#059669;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </span>
           <span class="callout-text">ข้อมูลประวัติการยืมในอดีต บัตรประวัติ และอุปกรณ์เสริมจะคงอยู่ครบถ้วน เครื่องจะเปลี่ยนสถานะเป็น "ว่าง" พร้อมจ่ายยืมได้ทันที</span>
         </div>
 
@@ -3250,7 +3375,7 @@
             </svg>
           </button>
           <button type="button" class="btn-scanner-action hidden" id="btnSearchBarcodeTorch" title="เปิด/ปิด แฟลช" aria-label="เปิดแฟลช">
-            🔦
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-6-4-6 4v3l6 4 6-4V6z"></path><line x1="12" y1="13" x2="12" y2="22"></line></svg>
           </button>
           <button type="button" class="btn-scanner-close" id="btnCloseSearchBarcode" aria-label="ปิดหน้าต่างสแกน">
             ✕
@@ -3275,23 +3400,28 @@
           <span>กำลังเปิดกล้อง...</span>
         </div>
         <div class="scanner-error-box hidden" id="scannerErrorBox">
-          <span class="scanner-error-icon">⚠️</span>
+          <span class="scanner-error-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:#ef4444;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          </span>
           <span class="scanner-error-msg" id="scannerErrorMsg">ไม่สามารถเข้าถึงกล้องได้</span>
           <div style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:280px; margin-top:12px;">
-            <label class="btn btn-primary btn-sm btn-scanner-file-fallback" style="cursor:pointer; width:100%; justify-content:center;">
-              <span>📁 ถ่ายรูป / เลือกรูปบาร์โค้ด</span>
+            <label class="btn btn-primary btn-sm btn-scanner-file-fallback" style="cursor:pointer; width:100%; justify-content:center; display:inline-flex; align-items:center; gap:6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              <span>ถ่ายรูป / เลือกรูปบาร์โค้ด</span>
               <input type="file" id="searchBarcodeFileInputFallback" accept="image/*" capture="environment" class="hidden" />
             </label>
-            <button type="button" class="btn btn-outline btn-sm hidden" id="btnOpenExternalChrome" style="border-color:#cbd5e1; color:#1e293b; background:#f8fafc; width:100%; justify-content:center;">
-              <span>🌐 เปิดใน Google Chrome</span>
+            <button type="button" class="btn btn-outline btn-sm hidden" id="btnOpenExternalChrome" style="border-color:#cbd5e1; color:#1e293b; background:#f8fafc; width:100%; justify-content:center; display:inline-flex; align-items:center; gap:6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+              <span>เปิดใน Google Chrome</span>
             </button>
           </div>
         </div>
       </div>
 
       <footer class="scanner-modal-footer">
-        <label class="btn-scanner-upload" title="เลือกรูปภาพบาร์โค้ด">
-          <span>📁 สแกนจากไฟล์รูป</span>
+        <label class="btn-scanner-upload" title="เลือกรูปภาพบาร์โค้ด" style="display:inline-flex; align-items:center; gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          <span>สแกนจากไฟล์รูป</span>
           <input type="file" id="searchBarcodeFileInput" accept="image/*" capture="environment" class="hidden" />
         </label>
         <button type="button" class="btn btn-outline btn-sm" id="btnCancelSearchBarcode">ยกเลิก</button>
@@ -3323,7 +3453,9 @@
 
         <!-- Error Notification Banner -->
         <div id="loginAlertBox" class="login-alert-box hidden" role="alert">
-          <span class="alert-icon">⚠️</span>
+          <span class="alert-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          </span>
           <span id="loginAlertMsg" class="alert-msg"></span>
         </div>
 
@@ -3382,7 +3514,10 @@
         </form>
 
         <div class="login-footer-hint">
-          <span>🛡️ พนักงานใหม่โดเมน @active5.co.th จะได้รับสิทธิ์ผู้ใช้งาน (User) อัตโนมัติทันทีที่เข้าสู่ระบบ</span>
+          <span style="display:inline-flex; align-items:center; gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <span>พนักงานใหม่โดเมน @active5.co.th จะได้รับสิทธิ์ผู้ใช้งาน (User) อัตโนมัติทันทีที่เข้าสู่ระบบ</span>
+          </span>
         </div>
       </div>
     </div>
