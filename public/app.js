@@ -28,7 +28,26 @@ const APP_ICONS = {
   phone: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>`,
   calendar: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`,
   tag: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>`,
-  clip: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>`
+  clip: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>`,
+  factory: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M17 18h1"></path><path d="M12 18h1"></path><path d="M7 18h1"></path></svg>`,
+  briefcase: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>`,
+  tool: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>`,
+  mobile: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>`,
+  printerCategory: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>`,
+  barcode: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5v14M8 5v14M12 5v14M17 5v14M21 5v14"></path></svg>`,
+  radio: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"></circle><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"></path></svg>`,
+  tablet: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>`,
+  receipt: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z"></path><path d="M8 7h8"></path><path d="M8 11h8"></path><path d="M8 15h5"></path></svg>`,
+  scissors: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="8.12" y2="15.88"></line><line x1="14.47" y1="14.48" x2="20" y2="20"></line><line x1="8.12" y1="8.12" x2="12" y2="12"></line></svg>`,
+  plusCircle: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>`,
+  plusMini: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
+  bell: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>`,
+  plug: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5"></path><path d="M9 8V2"></path><path d="M15 8V2"></path><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"></path></svg>`,
+  sync: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>`,
+  filePdf: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="15" y2="17"></line></svg>`,
+  fileDoc: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`,
+  fileSheet: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><rect x="8" y="12" width="8" height="6"></rect></svg>`,
+  fileImg: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`
 };
 
 const MAIN_COLUMNS = [
@@ -421,8 +440,8 @@ function initMobileKeyboardControl() {
       updateMenuLabel();
       showToast(
         window.mobileKeyboardMode === 'suppressed'
-          ? '🛡️ โหมดคีย์บอร์ดมือถือ: ซ่อนอัตโนมัติเมื่อแตะ/โฟกัส (มีปุ่มเปิด/ปิด)'
-          : '📱 โหมดคีย์บอร์ดมือถือ: เด้งอัตโนมัติตามปกติ'
+          ? 'โหมดคีย์บอร์ดมือถือ: ซ่อนอัตโนมัติเมื่อแตะ/โฟกัส (มีปุ่มเปิด/ปิด)'
+          : 'โหมดคีย์บอร์ดมือถือ: เด้งอัตโนมัติตามปกติ'
       );
     });
   }
@@ -833,9 +852,9 @@ function showConfirmDialog({
   message = 'คุณต้องการลบรายการนี้ใช่หรือไม่?',
   itemText = '',
   itemHtml = '',
-  confirmText = '🗑️ ยืนยันลบ',
+  confirmText = 'ยืนยันลบ',
   cancelText = 'ยกเลิก',
-  icon = '🗑️',
+  icon = APP_ICONS.trash,
   confirmBtnClass = 'btn-danger'
 } = {}) {
   return new Promise(resolve => {
@@ -855,7 +874,13 @@ function showConfirmDialog({
 
     if (titleEl) titleEl.textContent = title;
     if (msgEl) msgEl.textContent = message;
-    if (iconEl) iconEl.textContent = icon;
+    if (iconEl) {
+      if (typeof icon === 'string' && icon.includes('<svg')) {
+        iconEl.innerHTML = icon;
+      } else {
+        iconEl.textContent = icon;
+      }
+    }
 
     if (customHtmlEl) {
       if (itemHtml) {
@@ -1135,7 +1160,7 @@ function renderDatalists() {
     modelList.innerHTML = state.catalogs
       .map(
         c =>
-          `<option value="${escapeHtml(c.brand ? `${c.brand} ${c.model}` : c.model)}">📦 ว่าง ${c.available_count}/${c.total_count} เครื่อง</option>`
+          `<option value="${escapeHtml(c.brand ? `${c.brand} ${c.model}` : c.model)}">ว่าง ${c.available_count}/${c.total_count} เครื่อง</option>`
       )
       .join('');
   }
@@ -1919,7 +1944,7 @@ const BRAND_PRESETS = {
 function getBrandVisual(brand) {
   const clean = (brand || '').trim();
   if (BRAND_PRESETS[clean]) return BRAND_PRESETS[clean];
-  const char = clean ? clean[0].toUpperCase() : '📦';
+  const char = clean ? clean[0].toUpperCase() : '#';
   return {
     initial: char,
     gradient: 'linear-gradient(135deg, #64748b, #475569)',
@@ -4535,11 +4560,11 @@ function formatFileSize(bytes) {
 function getFileIcon(type, name) {
   const n = (name || '').toLowerCase();
   const t = (type || '').toLowerCase();
-  if (t.includes('pdf') || n.endsWith('.pdf')) return '📄';
-  if (t.includes('word') || n.endsWith('.doc') || n.endsWith('.docx')) return '📝';
-  if (t.includes('sheet') || t.includes('excel') || n.endsWith('.xls') || n.endsWith('.xlsx')) return '📊';
-  if (t.includes('image') || /\.(jpg|jpeg|png|gif|webp)$/i.test(n)) return '🖼️';
-  return '📎';
+  if (t.includes('pdf') || n.endsWith('.pdf')) return APP_ICONS.filePdf;
+  if (t.includes('word') || n.endsWith('.doc') || n.endsWith('.docx')) return APP_ICONS.fileDoc;
+  if (t.includes('sheet') || t.includes('excel') || n.endsWith('.xls') || n.endsWith('.xlsx')) return APP_ICONS.fileSheet;
+  if (t.includes('image') || /\.(jpg|jpeg|png|gif|webp)$/i.test(n)) return APP_ICONS.fileImg;
+  return APP_ICONS.clip;
 }
 
 function renderNoteAttachmentPills(attachments, rowIdx) {
@@ -4919,7 +4944,7 @@ function renderLoanExcelRows() {
                   ` : ''}
                 </span>
                 <span class="collapsed-model-name">${escapeHtml(modelVal || (row.brand ? row.brand : ''))}</span>
-                ${isSupplierOrSale && !hasBrand ? '<span class="badge-brand-missing" style="color:#ef4444; font-size:11px; margin-left:6px; font-weight:600;">(⚠️ ยังไม่ระบุแบรนด์)</span>' : ''}
+                ${isSupplierOrSale && !hasBrand ? `<span class="badge-brand-missing" style="color:#ef4444; font-size:11px; margin-left:6px; font-weight:600; display:inline-flex; align-items:center; gap:3px;">${APP_ICONS.alert} <span>(ยังไม่ระบุแบรนด์)</span></span>` : ''}
                 ${isNewRow ? '<span class="badge-card-new">ใหม่</span>' : ''}
               </div>
             </td>
@@ -6031,8 +6056,8 @@ function renderDispatchSnDropdown(rowIdx, query = '') {
         style="background:#f5f3ff; border-top:1px dashed #c4b5fd; cursor:pointer;"
       >
         <div class="model-item-main">
-          <span class="model-item-name" style="font-size:13px; font-weight:700; color:#7c3aed;">
-            ➕ ใช้ S/N ใหม่: "${escapeHtml(query)}"
+          <span class="model-item-name" style="font-size:13px; font-weight:700; color:#7c3aed; display:inline-flex; align-items:center; gap:4px;">
+            ${APP_ICONS.plusMini} <span>ใช้ S/N ใหม่: "${escapeHtml(query)}"</span>
           </span>
           <span class="model-item-sub" style="color:#6b7280; font-size:11.5px;">
             สร้างเครื่องใหม่ในคลังและผูกกับ ${escapeHtml(modelTitle)} ทันที
@@ -6048,7 +6073,7 @@ function renderDispatchSnDropdown(rowIdx, query = '') {
   if (pool.length === 0 && !q) {
     dropdown.innerHTML = `
       <div class="dropdown-header-bar">
-        <span class="dropdown-header-title">🏷️ เลือก S/N: ${escapeHtml(modelTitle)}</span>
+        <span class="dropdown-header-title" style="display:inline-flex; align-items:center; gap:6px;">${APP_ICONS.tag} <span>เลือก S/N: ${escapeHtml(modelTitle)}</span></span>
         <button type="button" class="btn-close-dropdown" data-close-dispatch-sn title="ปิด">✕</button>
       </div>
       <div class="model-dropdown-empty">ไม่มีเครื่องว่างในคลังสำหรับรุ่นนี้</div>
@@ -6056,7 +6081,7 @@ function renderDispatchSnDropdown(rowIdx, query = '') {
   } else if (filtered.length === 0) {
     dropdown.innerHTML = `
       <div class="dropdown-header-bar">
-        <span class="dropdown-header-title">🏷️ เลือก S/N: ${escapeHtml(modelTitle)} (${pool.length} เครื่อง)</span>
+        <span class="dropdown-header-title" style="display:inline-flex; align-items:center; gap:6px;">${APP_ICONS.tag} <span>เลือก S/N: ${escapeHtml(modelTitle)} (${pool.length} เครื่อง)</span></span>
         <button type="button" class="btn-close-dropdown" data-close-dispatch-sn title="ปิด">✕</button>
       </div>
       <div class="dropdown-scroll-list">
@@ -6076,8 +6101,8 @@ function renderDispatchSnDropdown(rowIdx, query = '') {
             title="แตะเพื่อเลือกเครื่องนี้"
           >
             <div class="model-item-main">
-              <span class="model-item-name" style="font-family:monospace, sans-serif; font-size:13px; font-weight:700; color:#0f172a;">
-                🏷️ ${escapeHtml(a.serial_no)}
+              <span class="model-item-name" style="font-family:monospace, sans-serif; font-size:13px; font-weight:700; color:#0f172a; display:inline-flex; align-items:center; gap:5px;">
+                ${APP_ICONS.tag} <span>${escapeHtml(a.serial_no)}</span>
               </span>
               <span class="model-item-sub">
                 รหัส: <strong>${escapeHtml(a.tag_id)}</strong> · ที่เก็บ: ${escapeHtml(a.location || 'คลัง')}
@@ -6093,7 +6118,7 @@ function renderDispatchSnDropdown(rowIdx, query = '') {
 
     dropdown.innerHTML = `
       <div class="dropdown-header-bar">
-        <span class="dropdown-header-title">🏷️ เลือกรหัส S/N: ${escapeHtml(modelTitle)} (ว่าง ${pool.length} เครื่อง)</span>
+        <span class="dropdown-header-title" style="display:inline-flex; align-items:center; gap:6px;">${APP_ICONS.tag} <span>เลือกรหัส S/N: ${escapeHtml(modelTitle)} (ว่าง ${pool.length} เครื่อง)</span></span>
         <button type="button" class="btn-close-dropdown" data-close-dispatch-sn title="ปิด">✕</button>
       </div>
       <div class="dropdown-scroll-list">
@@ -6162,8 +6187,8 @@ function renderDispatchAccDropdown(rowIdx, query = '') {
         style="background:#f0fdf4; border-bottom:1px dashed #86efac; cursor:pointer;"
       >
         <div class="model-item-main">
-          <span class="model-item-name" style="font-weight:700; color:#15803d;">
-            ➕ เพิ่มอุปกรณ์ใหม่: "${escapeHtml(trimmedQ)}"
+          <span class="model-item-name" style="font-weight:700; color:#15803d; display:inline-flex; align-items:center; gap:4px;">
+            ${APP_ICONS.plusMini} <span>เพิ่มอุปกรณ์ใหม่: "${escapeHtml(trimmedQ)}"</span>
           </span>
           <span class="model-item-sub">
             กดคลิกหรือกด Enter เพื่อเพิ่มอุปกรณ์เสริมนี้
@@ -6185,7 +6210,7 @@ function renderDispatchAccDropdown(rowIdx, query = '') {
         title="แตะเพื่อเลือกอุปกรณ์นี้"
       >
         <div class="model-item-main">
-          <span class="model-item-name">🔌 ${escapeHtml(name)}</span>
+          <span class="model-item-name" style="display:inline-flex; align-items:center; gap:5px;">${APP_ICONS.plug} <span>${escapeHtml(name)}</span></span>
         </div>
         <span class="model-count-box count-full">+ เลือก</span>
       </div>
@@ -6194,7 +6219,7 @@ function renderDispatchAccDropdown(rowIdx, query = '') {
 
   const headerHtml = `
     <div class="dropdown-header-bar">
-      <span class="dropdown-header-title">🔌 เลือกอุปกรณ์เสริม (${filtered.length} รายการ)</span>
+      <span class="dropdown-header-title" style="display:inline-flex; align-items:center; gap:6px;">${APP_ICONS.plug} <span>เลือกอุปกรณ์เสริม (${filtered.length} รายการ)</span></span>
       <button type="button" class="btn-close-dropdown" data-close-dispatch-acc title="ปิด">✕</button>
     </div>
   `;
@@ -6817,7 +6842,7 @@ function renderDispatchTable() {
                           return `<span class="note-quote-icon" style="color:#16a34a;">✓</span> <span style="color:#15803d; font-weight:600;">${escapeHtml(fullNote)}</span>`;
                         }
                         return row.free_note
-                          ? `<span class="note-quote-icon">💬</span> <span>${escapeHtml(row.free_note)}</span>`
+                          ? `<span class="note-quote-icon">${APP_ICONS.note}</span> <span>${escapeHtml(row.free_note)}</span>`
                           : '<span class="text-muted-empty">ไม่มีหมายเหตุ</span>';
                       })()}
                     </div>
@@ -7070,16 +7095,16 @@ function openDispatchMismatchDialog(asset) {
   const choiceLabel = document.getElementById('mismatchChoiceLabel');
   const btnApply = document.getElementById('btnApplyMismatchChoice');
 
-  if (iconBubble) iconBubble.textContent = isNew ? '➕' : '⚡';
+  if (iconBubble) iconBubble.innerHTML = isNew ? APP_ICONS.plusCircle : APP_ICONS.zap;
   if (titleEl) titleEl.textContent = isNew ? `ไม่พบ S/N "${asset.serial_no}" ในระบบคลัง` : 'สแกนได้เครื่องไม่ตรงรุ่นในใบยืม';
   if (subEl) subEl.textContent = isNew ? 'คุณสามารถเพิ่ม S/N นี้เป็นเครื่องใหม่ และผูกเข้ากับรายการในใบยืมได้ทันที' : 'เครื่องที่สแกนไม่ตรงกับรุ่นที่ยังไม่ได้สแกนในใบยืมนี้';
   if (cardLabel) cardLabel.textContent = isNew ? 'S/N ใหม่ที่ต้องการเพิ่ม:' : 'เครื่องที่ยิงบาร์โค้ดได้:';
   if (nameEl) nameEl.textContent = isNew ? 'เครื่องใหม่ (ระบุ S/N เอง)' : `${asset.brand || ''} ${asset.model || ''}`;
   if (snEl) snEl.textContent = asset.serial_no || '-';
   if (tagEl) tagEl.textContent = isNew ? 'จะออกรหัส ACT ให้อัตโนมัติ' : (asset.tag_id || '-');
-  if (choiceLabel) choiceLabel.textContent = isNew ? '🎯 กรุณาเลือกว่าต้องการผูก S/N ใหม่นี้เข้ากับรายการใดในใบยืม:' : '🎯 กรุณาเลือกว่าต้องการนำเครื่องนี้ไปลงแทนที่รายการใดในใบยืม:';
+  if (choiceLabel) choiceLabel.textContent = isNew ? 'กรุณาเลือกว่าต้องการผูก S/N ใหม่นี้เข้ากับรายการใดในใบยืม:' : 'กรุณาเลือกว่าต้องการนำเครื่องนี้ไปลงแทนที่รายการใดในใบยืม:';
   if (btnApply) {
-    btnApply.textContent = isNew ? '➕ ยืนยันเพิ่มและผูก S/N เข้ากับรายการที่เลือก' : '✓ ยืนยันลงรายการที่เลือก';
+    btnApply.textContent = isNew ? 'ยืนยันเพิ่มและผูก S/N เข้ากับรายการที่เลือก' : 'ยืนยันลงรายการที่เลือก';
     btnApply.disabled = false;
   }
 
@@ -7117,8 +7142,8 @@ function openDispatchMismatchDialog(asset) {
               <div class="mismatch-opt-status ${isUnpicked ? 'empty' : 'filled'}">
                 ${
                   isUnpicked
-                    ? '⏳ ยังไม่ได้สแกน (ว่าง — แนะนำเลือกลงช่องนี้)'
-                    : `⚠️ มีเครื่องอยู่แล้ว: S/N ${escapeHtml(currentAsset?.serial_no || r.tag_id)} (จะถูกแทนที่)`
+                    ? 'ยังไม่ได้สแกน (ว่าง — แนะนำเลือกลงช่องนี้)'
+                    : `มีเครื่องอยู่แล้ว: S/N ${escapeHtml(currentAsset?.serial_no || r.tag_id)} (จะถูกแทนที่)`
                 }
               </div>
             </div>
@@ -7177,17 +7202,17 @@ function renderReturnChecklistItems() {
             </label>
 
             <div class="qc-status-toggle">
-              <button type="button" class="qc-radio-btn pass ${!effectiveFail ? 'active' : ''}" data-qc-status="${idx}" data-val="Pass">
-                ✅ ปกติ (ผ่าน QC)
+              <button type="button" class="qc-radio-btn pass ${!effectiveFail ? 'active' : ''}" data-qc-status="${idx}" data-val="Pass" style="display:inline-flex; align-items:center; justify-content:center; gap:5px;">
+                ${APP_ICONS.check} <span>ปกติ (ผ่าน QC)</span>
               </button>
-              <button type="button" class="qc-radio-btn fail ${effectiveFail ? 'active' : ''}" data-qc-status="${idx}" data-val="Fail">
-                ⚠️ มีปัญหา / ของไม่ครบ
+              <button type="button" class="qc-radio-btn fail ${effectiveFail ? 'active' : ''}" data-qc-status="${idx}" data-val="Fail" style="display:inline-flex; align-items:center; justify-content:center; gap:5px;">
+                ${APP_ICONS.alert} <span>มีปัญหา / ของไม่ครบ</span>
               </button>
             </div>
           </div>
 
           <div class="qc-acc-section">
-            <div class="qc-acc-label">🔌 ตรวจเช็คอุปกรณ์เสริมตามใบยืม (จิ้มที่ป้ายหากชิ้นไหนขาด/ไม่มา):</div>
+            <div class="qc-acc-label" style="display:inline-flex; align-items:center; gap:6px;">${APP_ICONS.plug} <span>ตรวจเช็คอุปกรณ์เสริมตามใบยืม (จิ้มที่ป้ายหากชิ้นไหนขาด/ไม่มา):</span></div>
             <div class="qc-tag-pills">
               ${
                 item.allAccessories.length === 0
@@ -7197,7 +7222,7 @@ function renderReturnChecklistItems() {
                         const isMissing = item.missingSet.has(acc);
                         return `
                           <button type="button" class="qc-tag-pill ${isMissing ? 'missing' : ''}" data-toggle-ret-acc="${idx}" data-acc="${escapeHtml(acc)}">
-                            ${isMissing ? '❌ ขาด:' : '✅'} ${escapeHtml(acc)}
+                            ${isMissing ? '✕ ขาด:' : '✓'} ${escapeHtml(acc)}
                           </button>
                         `;
                       })
@@ -7219,7 +7244,7 @@ function renderReturnChecklistItems() {
               ? `
               <div class="qc-destination-banner dest-pass">
                 <div>
-                  📍 เสร็จแล้วนำกลับไปเก็บคืนที่เดิม: <strong>${escapeHtml(item.location_snapshot)}</strong>
+                  <span style="display:inline-flex; align-items:center; gap:4px;">${APP_ICONS.pin} <span>เสร็จแล้วนำกลับไปเก็บคืนที่เดิม:</span></span> <strong>${escapeHtml(item.location_snapshot)}</strong>
                   <span>(Source: ${escapeHtml(item.source_snapshot)})</span>
                 </div>
                 <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
@@ -7231,7 +7256,7 @@ function renderReturnChecklistItems() {
               : `
               <div class="qc-destination-banner dest-fail">
                 <div>
-                  ⚠️ คืนไม่ครบ / ไม่ผ่าน QC ${hasMissing ? `(ขาด: ${escapeHtml(missingStr)})` : ''} —
+                  <span style="display:inline-flex; align-items:center; gap:4px;">${APP_ICONS.alert} <span>คืนไม่ครบ / ไม่ผ่าน QC</span></span> ${hasMissing ? `(ขาด: ${escapeHtml(missingStr)})` : ''} —
                   การ์ดจะอยู่ในคอลัมน์ <strong>"เกินกำหนด / คืนไม่ครบ"</strong> เพื่อติดตามต่อ
                 </div>
               </div>
@@ -7497,7 +7522,7 @@ function renderSingleGatePassSheet(loan, copyType = '', sizeClass = '') {
                   ${
                     (it.loan_accessories || []).length === 0
                       ? '-'
-                      : it.loan_accessories.map(a => `<span class="gp-acc-tag">☑ ${escapeHtml(a)}</span>`).join('')
+                      : it.loan_accessories.map(a => `<span class="gp-acc-tag">✓ ${escapeHtml(a)}</span>`).join('')
                   }
                 </td>
                 <td class="gp-td-note">
@@ -7522,7 +7547,7 @@ function renderSingleGatePassSheet(loan, copyType = '', sizeClass = '') {
                     if (it.attachments && it.attachments.length > 0) {
                       parts.push(`
                         <div class="print-attachments-list">
-                          📎 ไฟล์แนบ: ${it.attachments.map(a => `<span class="gp-att-chip">${escapeHtml(a.name)}</span>`).join(', ')}
+                          <span style="display:inline-flex; align-items:center; gap:3px;">${APP_ICONS.clip} ไฟล์แนบ:</span> ${it.attachments.map(a => `<span class="gp-att-chip">${escapeHtml(a.name)}</span>`).join(', ')}
                         </div>
                       `);
                     }
@@ -7562,7 +7587,7 @@ function renderSingleGatePassSheet(loan, copyType = '', sizeClass = '') {
                 <img class="gp-sig-img" src="${escapeHtml(loan.borrower_signature)}" alt="ลายเซ็นผู้ยืม" />
                 ${!isDelivered ? `
                   <div class="gp-sig-hover-actions no-print">
-                    <button type="button" class="btn-sig-icon-action" data-open-sig="borrower" title="แก้ไข">✎</button>
+                    <button type="button" class="btn-sig-icon-action" data-open-sig="borrower" title="แก้ไข">${APP_ICONS.edit}</button>
                     <button type="button" class="btn-sig-icon-action btn-sig-clear" data-clear-sig="borrower" title="ลบ">✕</button>
                   </div>
                 ` : ''}
@@ -7593,7 +7618,7 @@ function renderSingleGatePassSheet(loan, copyType = '', sizeClass = '') {
                 <img class="gp-sig-img" src="${escapeHtml(loan.dispatcher_signature || state.companySettings?.dispatcher_signature)}" alt="ลายเซ็นผู้จ่ายเครื่อง" />
                 ${!isDelivered ? `
                   <div class="gp-sig-hover-actions no-print">
-                    <button type="button" class="btn-sig-icon-action" data-open-sig="dispatcher" title="แก้ไข">✎</button>
+                    <button type="button" class="btn-sig-icon-action" data-open-sig="dispatcher" title="แก้ไข">${APP_ICONS.edit}</button>
                     <button type="button" class="btn-sig-icon-action btn-sig-clear" data-clear-sig="dispatcher" title="ลบ">✕</button>
                   </div>
                 ` : ''}
@@ -7623,7 +7648,7 @@ function renderSingleGatePassSheet(loan, copyType = '', sizeClass = '') {
               <div class="gp-sig-preview-wrap">
                 <img class="gp-sig-img" src="${escapeHtml(loan.receiver_signature)}" alt="ลายเซ็นผู้ตรวจรับคืน" />
                 <div class="gp-sig-hover-actions no-print">
-                  <button type="button" class="btn-sig-icon-action" data-open-sig="receiver" title="แก้ไข">✎</button>
+                  <button type="button" class="btn-sig-icon-action" data-open-sig="receiver" title="แก้ไข">${APP_ICONS.edit}</button>
                   <button type="button" class="btn-sig-icon-action btn-sig-clear" data-clear-sig="receiver" title="ลบ">✕</button>
                 </div>
               </div>
@@ -7681,35 +7706,35 @@ const PRINT_SIZE_OPTIONS = [
   {
     value: 'auto',
     label: 'อัตโนมัติ (แนะนำ)',
-    title: '📄 อัตโนมัติ (Smart Auto)',
+    title: 'อัตโนมัติ (Smart Auto)',
     sub: 'วิเคราะห์รายการยืมอัตโนมัติ (สลับ A4 แบ่งครึ่ง หรือ เต็มหน้า 2 ใบ)',
-    badge: '<span class="print-opt-badge badge-recommended">✨ แนะนำ</span>'
+    badge: '<span class="print-opt-badge badge-recommended">แนะนำ</span>'
   },
   {
     value: 'dual',
     label: 'A4 แบ่งครึ่ง',
-    title: '📄 A4 แบ่งครึ่ง (2-in-1)',
+    title: 'A4 แบ่งครึ่ง (2-in-1)',
     sub: 'ต้นฉบับ + สำเนา ในแผ่นเดียว พร้อมเส้นประรอยปรุตัดแบ่งครึ่ง',
-    badge: '<span class="print-opt-badge badge-eco">🌿 ประหยัดกระดาษ</span>'
+    badge: '<span class="print-opt-badge badge-eco">ประหยัดกระดาษ</span>'
   },
   {
     value: 'full-pair',
     label: 'A4 เต็มหน้า 2 ใบ',
-    title: '📑 A4 เต็มหน้า 2 ใบ (หน้าละใบ)',
+    title: 'A4 เต็มหน้า 2 ใบ (หน้าละใบ)',
     sub: 'หน้า 1 ต้นฉบับ + หน้า 2 สำเนา (เหมาะกับรายการยาว หรือมีรูปถ่าย)',
-    badge: '<span class="print-opt-badge badge-photo">📷 รูปภาพ/รายการยาว</span>'
+    badge: '<span class="print-opt-badge badge-photo">รายการยาว</span>'
   },
   {
     value: 'a4',
     label: 'A4 เฉพาะต้นฉบับ',
-    title: '📄 A4 เฉพาะต้นฉบับ (Original)',
+    title: 'A4 เฉพาะต้นฉบับ (Original)',
     sub: 'พิมพ์เฉพาะใบต้นฉบับ 1 แผ่นเต็มหน้า A4 ไม่พิมพ์สำเนา',
     badge: '<span class="print-opt-badge badge-single">1 แผ่น</span>'
   },
   {
     value: 'half',
     label: 'ครึ่งแผ่น A4',
-    title: '📄 ครึ่งแผ่น A4 (Single Half)',
+    title: 'ครึ่งแผ่น A4 (Single Half)',
     sub: 'พิมพ์เฉพาะครึ่งแผ่นด้านบน ประหยัดพื้นที่จัดเก็บ',
     badge: '<span class="print-opt-badge badge-compact">กะทัดรัด</span>'
   }
@@ -7723,8 +7748,9 @@ function renderPrintSizeDropdownItems() {
 
   let itemsHtml = `
     <div class="dropdown-header-bar">
-      <div class="dropdown-header-title">
-        <span>📄 รูปแบบการจัดหน้ากระดาษ</span>
+      <div class="dropdown-header-title" style="display:inline-flex; align-items:center; gap:6px;">
+        ${APP_ICONS.printer}
+        <span>รูปแบบการจัดหน้ากระดาษ</span>
         <span class="dropdown-header-count">5 รูปแบบ</span>
       </div>
       <button type="button" class="btn-close-dropdown" id="btnClosePrintSizeDropdown" title="ปิด (✕)">✕</button>
@@ -7872,7 +7898,7 @@ function renderGatePassHtml() {
         <!-- เส้นประแบ่งครึ่งหน้ากระดาษ A4 สำหรับตัด/ฉีก (กึ่งกลาง 148.5mm พอดี) -->
         <div class="gp-perforation-divider">
           <div class="gp-perf-line"></div>
-          <span class="gp-perf-label">✂️ รอยปรุ / ตัดแบ่งครึ่งหน้ากระดาษ A4 (ต้นฉบับ - สำเนา)</span>
+          <span class="gp-perf-label" style="display:inline-flex; align-items:center; gap:5px;">${APP_ICONS.scissors} <span>รอยปรุ / ตัดแบ่งครึ่งหน้ากระดาษ A4 (ต้นฉบับ - สำเนา)</span></span>
           <div class="gp-perf-line"></div>
         </div>
 
@@ -7888,7 +7914,7 @@ function renderGatePassHtml() {
         <!-- แผ่นที่ 1: ต้นฉบับ เต็มหน้า A4 -->
         <div class="gp-page-sheet gp-page-original">
           <div class="gp-page-indicator no-print">
-            <span class="indicator-title">★ แผ่นที่ 1: ต้นฉบับ (ORIGINAL)</span>
+            <span class="indicator-title">แผ่นที่ 1: ต้นฉบับ (ORIGINAL)</span>
             <span class="indicator-page">หน้า 1/2</span>
           </div>
           ${renderSingleGatePassSheet(loan, 'original', 'size-a4')}
@@ -7897,7 +7923,7 @@ function renderGatePassHtml() {
         <!-- แผ่นที่ 2: สำเนา เต็มหน้า A4 -->
         <div class="gp-page-sheet gp-page-copy">
           <div class="gp-page-indicator no-print">
-            <span class="indicator-title">📑 แผ่นที่ 2: สำเนา (COPY)</span>
+            <span class="indicator-title">แผ่นที่ 2: สำเนา (COPY)</span>
             <span class="indicator-page">หน้า 2/2</span>
           </div>
           ${renderSingleGatePassSheet(loan, 'copy', 'size-a4')}
@@ -7912,7 +7938,7 @@ function renderGatePassHtml() {
         </div>
         <div class="gp-perforation-divider">
           <div class="gp-perf-line"></div>
-          <span class="gp-perf-label">✂️ รอยตัดแบ่งครึ่งหน้ากระดาษ A4</span>
+          <span class="gp-perf-label" style="display:inline-flex; align-items:center; gap:5px;">${APP_ICONS.scissors} <span>รอยตัดแบ่งครึ่งหน้ากระดาษ A4</span></span>
           <div class="gp-perf-line"></div>
         </div>
       </div>
@@ -8412,7 +8438,7 @@ function setupDigitalSignatureModal() {
         `,
         confirmText: 'ลบลายเซ็น',
         cancelText: 'ยกเลิก',
-        icon: '🖋️',
+        icon: APP_ICONS.trash,
         confirmBtnClass: 'btn-danger'
       });
       if (!confirmed) return;
@@ -8516,7 +8542,7 @@ function setupDigitalSignatureModal() {
     }
 
     const timeEl = document.getElementById('sigCurrentTimeText');
-    if (timeEl) timeEl.textContent = `🕒 ${formatDateTimeThai(new Date().toISOString())}`;
+    if (timeEl) timeEl.textContent = formatDateTimeThai(new Date().toISOString());
 
     // Auto-detect mobile portrait orientation and enable rotated landscape for big signature pad
     const isMobilePortrait = window.innerWidth <= 640 && window.innerHeight > window.innerWidth;
@@ -8593,7 +8619,7 @@ function setupCompanySettingsModal() {
       if (panelApi) panelApi.classList.add('hidden');
       if (panelSmtp) panelSmtp.classList.remove('hidden');
       if (badge) {
-        badge.textContent = '📧 Gmail SMTP';
+        badge.textContent = 'Gmail SMTP';
         badge.style.color = '#dc2626';
         badge.style.background = '#fef2f2';
         badge.style.borderColor = '#fecaca';
@@ -8607,7 +8633,7 @@ function setupCompanySettingsModal() {
         if (apiKeyInp) apiKeyInp.placeholder = 'SG.xxxxxxxxxxxxxxxxxxxxxxxx';
         if (lblApiKey) lblApiKey.textContent = 'SendGrid API Key *';
         if (badge) {
-          badge.textContent = '✉️ SendGrid API';
+          badge.textContent = 'SendGrid API';
           badge.style.color = '#0284c7';
           badge.style.background = '#f0f9ff';
           badge.style.borderColor = '#bae6fd';
@@ -8619,7 +8645,7 @@ function setupCompanySettingsModal() {
         if (apiKeyInp) apiKeyInp.placeholder = 're_xxxxxxxxxxxxxxxxxxxxxxxx';
         if (lblApiKey) lblApiKey.textContent = 'Resend API Key *';
         if (badge) {
-          badge.textContent = '⚡ แนะนำ: Resend API';
+          badge.textContent = 'แนะนำ: Resend API';
           badge.style.color = '#2563eb';
           badge.style.background = '#eff6ff';
           badge.style.borderColor = '#bfdbfe';
@@ -8824,7 +8850,9 @@ function setupCompanySettingsModal() {
     btnToggleApiKey.addEventListener('click', () => {
       const isPwd = inputApiKey.type === 'password';
       inputApiKey.type = isPwd ? 'text' : 'password';
-      btnToggleApiKey.textContent = isPwd ? '🙈' : '👁️';
+      btnToggleApiKey.innerHTML = isPwd
+        ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`
+        : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
     });
   }
 
@@ -8855,7 +8883,7 @@ function setupCompanySettingsModal() {
       }
       try {
         btnTestApiKey.disabled = true;
-        if (btnTestApiKeyText) btnTestApiKeyText.textContent = '⏳ กำลังทดสอบ API Key...';
+        if (btnTestApiKeyText) btnTestApiKeyText.textContent = 'กำลังทดสอบ API Key...';
         if (apiStatusBox) {
           apiStatusBox.className = 'smtp-status-box loading';
           apiStatusBox.textContent = `กำลังเชื่อมต่อและตรวจสอบคีย์กับ ${provider === 'sendgrid' ? 'SendGrid' : 'Resend'} API...`;
@@ -8883,25 +8911,25 @@ function setupCompanySettingsModal() {
 
           if (apiStatusBox) {
             apiStatusBox.className = 'smtp-status-box success';
-            apiStatusBox.textContent = `✅ ${data.message || 'API Key ถูกต้อง พร้อมใช้งาน (บันทึกเข้าระบบเรียบร้อยแล้ว)!'}`;
+            apiStatusBox.textContent = `${data.message || 'API Key ถูกต้อง พร้อมใช้งาน (บันทึกเข้าระบบเรียบร้อยแล้ว)!'}`;
           }
           showToast(`✅ ${data.message || 'API Key ถูกต้อง (บันทึกเรียบร้อย)'}`);
         } else {
           if (apiStatusBox) {
             apiStatusBox.className = 'smtp-status-box error';
-            apiStatusBox.textContent = `❌ ${data.error || 'API Key ไม่ถูกต้อง'}`;
+            apiStatusBox.textContent = `${data.error || 'API Key ไม่ถูกต้อง'}`;
           }
-          showToast(`❌ ${data.error || 'API Key ไม่ถูกต้อง'}`);
+          showToast(`⚠️ ${data.error || 'API Key ไม่ถูกต้อง'}`);
         }
       } catch (err) {
         if (apiStatusBox) {
           apiStatusBox.className = 'smtp-status-box error';
-          apiStatusBox.textContent = `❌ เกิดข้อผิดพลาด: ${err.message}`;
+          apiStatusBox.textContent = `เกิดข้อผิดพลาด: ${err.message}`;
         }
-        showToast(`❌ ${err.message}`);
+        showToast(`⚠️ ${err.message}`);
       } finally {
         btnTestApiKey.disabled = false;
-        if (btnTestApiKeyText) btnTestApiKeyText.textContent = '⚡ ทดสอบ API Key';
+        if (btnTestApiKeyText) btnTestApiKeyText.textContent = 'ทดสอบ API Key';
       }
     });
   }
@@ -8913,7 +8941,9 @@ function setupCompanySettingsModal() {
     btnToggleSmtpPass.addEventListener('click', () => {
       const isPwd = inputSmtpPass.type === 'password';
       inputSmtpPass.type = isPwd ? 'text' : 'password';
-      btnToggleSmtpPass.textContent = isPwd ? '🙈' : '👁️';
+      btnToggleSmtpPass.innerHTML = isPwd
+        ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`
+        : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
     });
   }
 
@@ -8932,7 +8962,7 @@ function setupCompanySettingsModal() {
       }
       try {
         btnTestSmtp.disabled = true;
-        if (btnTestSmtpText) btnTestSmtpText.textContent = '⏳ กำลังทดสอบ...';
+        if (btnTestSmtpText) btnTestSmtpText.textContent = 'กำลังทดสอบ...';
         if (smtpStatusBox) {
           smtpStatusBox.className = 'smtp-status-box loading';
           smtpStatusBox.textContent = 'กำลังเชื่อมต่อ smtp.gmail.com:465 และยืนยันตัวตน...';
@@ -8948,25 +8978,25 @@ function setupCompanySettingsModal() {
         if (data.success) {
           if (smtpStatusBox) {
             smtpStatusBox.className = 'smtp-status-box success';
-            smtpStatusBox.textContent = '✅ เชื่อมต่อและยืนยันตัวตนกับ Gmail สำเร็จ พร้อมส่งอีเมล!';
+            smtpStatusBox.textContent = 'เชื่อมต่อและยืนยันตัวตนกับ Gmail สำเร็จ พร้อมส่งอีเมล!';
           }
           showToast('✅ เชื่อมต่อ Gmail สำเร็จ');
         } else {
           if (smtpStatusBox) {
             smtpStatusBox.className = 'smtp-status-box error';
-            smtpStatusBox.textContent = `❌ ${data.error || 'เชื่อมต่อไม่สำเร็จ'}`;
+            smtpStatusBox.textContent = `${data.error || 'เชื่อมต่อไม่สำเร็จ'}`;
           }
-          showToast(`❌ ${data.error || 'เชื่อมต่อไม่สำเร็จ'}`);
+          showToast(`⚠️ ${data.error || 'เชื่อมต่อไม่สำเร็จ'}`);
         }
       } catch (err) {
         if (smtpStatusBox) {
           smtpStatusBox.className = 'smtp-status-box error';
-          smtpStatusBox.textContent = `❌ เกิดข้อผิดพลาด: ${err.message}`;
+          smtpStatusBox.textContent = `เกิดข้อผิดพลาด: ${err.message}`;
         }
-        showToast(`❌ ${err.message}`);
+        showToast(`⚠️ ${err.message}`);
       } finally {
         btnTestSmtp.disabled = false;
-        if (btnTestSmtpText) btnTestSmtpText.textContent = '⚡ ทดสอบเชื่อมต่อ Gmail';
+        if (btnTestSmtpText) btnTestSmtpText.textContent = 'ทดสอบเชื่อมต่อ Gmail';
       }
     });
   }
@@ -9241,7 +9271,7 @@ function setupCompanySettingsModal() {
     let thRolesHtml = roles.map(r => {
       const isSystem = r.is_system;
       const isSystemAdmin = r.id === 'admin';
-      const roleIcon = isSystemAdmin ? '👑' : (r.id === 'user' ? '👤' : '🛠️');
+      const roleIcon = isSystemAdmin ? APP_ICONS.sparkle : (r.id === 'user' ? APP_ICONS.user : APP_ICONS.tool);
 
       if (inlineEditingRoleId === r.id) {
         return `
@@ -9262,14 +9292,14 @@ function setupCompanySettingsModal() {
           <div class="role-col-minimal-card" title="${escapeHtml(r.description || r.name)}">
             <div class="role-col-top-row">
               <div class="role-col-identity">
-                <span class="role-col-icon">${roleIcon}</span>
+                <span class="role-col-icon" style="display:inline-flex; align-items:center;">${roleIcon}</span>
                 <span class="role-col-name">${escapeHtml(r.name)}</span>
-                <span class="role-col-user-count" title="${r.user_count || 0} คนใช้งาน">👤 ${r.user_count || 0}</span>
+                <span class="role-col-user-count" title="${r.user_count || 0} คนใช้งาน" style="display:inline-flex; align-items:center; gap:3px;">${APP_ICONS.user} <span>${r.user_count || 0}</span></span>
               </div>
               ${!isSystem ? `
                 <div class="role-col-ghost-actions">
-                  <button type="button" class="btn-role-ghost-action" data-edit-role="${escapeHtml(r.id)}" title="แก้ไขชื่อบทบาท">✏️</button>
-                  <button type="button" class="btn-role-ghost-action danger" data-delete-role="${escapeHtml(r.id)}" title="ลบบทบาทนี้">🗑️</button>
+                  <button type="button" class="btn-role-ghost-action" data-edit-role="${escapeHtml(r.id)}" title="แก้ไขชื่อบทบาท">${APP_ICONS.edit}</button>
+                  <button type="button" class="btn-role-ghost-action danger" data-delete-role="${escapeHtml(r.id)}" title="ลบบทบาทนี้">${APP_ICONS.trash}</button>
                 </div>
               ` : ''}
             </div>
@@ -9294,7 +9324,7 @@ function setupCompanySettingsModal() {
       <th class="col-add-role-header active-inline-add">
         <div class="inline-role-add-card" id="inlineRoleAddBox">
           <div class="inline-role-input-line">
-            <span class="inline-role-lead-icon">🛠️</span>
+            <span class="inline-role-lead-icon" style="display:inline-flex; align-items:center;">${APP_ICONS.tool}</span>
             <input 
               type="text" 
               id="inputInlineRoleName" 
@@ -9757,12 +9787,12 @@ function setupCompanySettingsModal() {
 
     const itemsHtml = cachedRoles.map(r => {
       const isSelected = r.id === currentRoleId;
-      const roleIcon = r.id === 'admin' ? '👑' : (r.id === 'user' ? '👤' : '🛠️');
+      const roleIcon = r.id === 'admin' ? APP_ICONS.sparkle : (r.id === 'user' ? APP_ICONS.user : APP_ICONS.tool);
       const badgeText = r.is_system ? 'มาตรฐาน' : 'กำหนดเอง';
       return `
         <div class="model-dropdown-item ${isSelected ? 'is-selected' : ''}" data-select-user-role="${escapeHtml(r.id)}">
           <div class="model-item-main">
-            <span class="model-item-name">${roleIcon} ${escapeHtml(r.name)}</span>
+            <span class="model-item-name" style="display:inline-flex; align-items:center; gap:6px;">${roleIcon} <span>${escapeHtml(r.name)}</span></span>
             <span class="model-item-sub">${escapeHtml(r.description || 'กำหนดสิทธิ์การใช้งาน')}</span>
           </div>
           <div class="model-item-end">
@@ -9836,7 +9866,7 @@ function setupCompanySettingsModal() {
     container.innerHTML = filtered.map(u => {
       const initial = (u.name || u.email || 'U').charAt(0);
       const currentRole = roles.find(r => r.id === u.role_id) || roles.find(r => r.id === 'user') || { id: u.role_id || 'user', name: u.role_id || 'ผู้ใช้งาน' };
-      const roleIcon = currentRole.id === 'admin' ? '👑' : (currentRole.id === 'user' ? '👤' : '🛠️');
+      const roleIcon = currentRole.id === 'admin' ? APP_ICONS.sparkle : (currentRole.id === 'user' ? APP_ICONS.user : APP_ICONS.tool);
       const isDisabled = u.status === 'disabled';
       const isSelf = state.currentUser && state.currentUser.email === u.email;
 
@@ -10000,7 +10030,7 @@ function setupCompanySettingsModal() {
     }
 
     const isNew = !role;
-    title.textContent = isNew ? '➕ สร้างบทบาทใหม่ (Add Role)' : `✏️ แก้ไขบทบาท: ${role.name}`;
+    title.textContent = isNew ? 'สร้างบทบาทใหม่ (Add Role)' : `แก้ไขบทบาท: ${role.name}`;
     inpId.value = role ? role.id : '';
     inpId.disabled = !isNew;
     inpName.value = role ? role.name : '';
@@ -10096,7 +10126,7 @@ function setupCompanySettingsModal() {
     } finally {
       if (btnSaveRole) {
         btnSaveRole.disabled = false;
-        btnSaveRole.textContent = '💾 บันทึกบทบาท';
+        btnSaveRole.textContent = 'บันทึกบทบาท';
       }
     }
   }
@@ -10107,9 +10137,9 @@ function setupCompanySettingsModal() {
     const ok = await showConfirmDialog({
       title: `ลบบทบาท "${name}" หรือไม่?`,
       message: `ผู้ใช้งานที่เคยมีบทบาทนี้ทั้งหมด (${role?.user_count || 0} คน) จะถูกปรับเป็นบทบาท User ตามค่าเริ่มต้น`,
-      confirmText: '🗑️ ยืนยันลบบทบาท',
+      confirmText: 'ยืนยันลบบทบาท',
       cancelText: 'ยกเลิก',
-      icon: '🗑️',
+      icon: APP_ICONS.trash,
       confirmBtnClass: 'btn-danger'
     });
     if (!ok) return;
@@ -10140,9 +10170,9 @@ function setupCompanySettingsModal() {
         title: 'ระงับการใช้งานบัญชีผู้ใช้',
         message: `ต้องการระงับการใช้งานของ "${userName}" (${email}) ใช่หรือไม่?`,
         itemHtml: `<div style="font-size:12.5px; color:#64748b; line-height:1.5;">เมื่อระงับแล้ว บัญชีนี้จะไม่สามารถเข้าสู่ระบบ activeASSET ได้จนกว่าจะได้รับการเปิดใช้งานอีกครั้ง</div>`,
-        confirmText: '🚫 ระงับการใช้งาน',
+        confirmText: 'ระงับการใช้งาน',
         cancelText: 'ยกเลิก',
-        icon: '🚫',
+        icon: APP_ICONS.alert,
         confirmBtnClass: 'btn-danger'
       });
       if (!confirmed) return;
@@ -10176,10 +10206,10 @@ function setupCompanySettingsModal() {
     const confirmed = await showConfirmDialog({
       title: 'ลบผู้ใช้งานออกจากระบบ',
       message: `ยืนยันการลบ "${userName}" (${email}) ใช่หรือไม่?`,
-      itemHtml: `<div style="font-size:12.5px; color:#ef4444; line-height:1.5;">⚠️ ข้อมูลบัญชีผู้ใช้นี้จะถูกลบออกจากระบบทันที (ประวัติและเอกสารใบยืมเดิมจะยังคงอยู่เพื่อการตรวจสอบ)</div>`,
-      confirmText: '🗑️ ยืนยันลบผู้ใช้',
+      itemHtml: `<div style="font-size:12.5px; color:#ef4444; line-height:1.5; display:inline-flex; align-items:center; gap:4px;">${APP_ICONS.alert} <span>ข้อมูลบัญชีผู้ใช้นี้จะถูกลบออกจากระบบทันที (ประวัติและเอกสารใบยืมเดิมจะยังคงอยู่เพื่อการตรวจสอบ)</span></div>`,
+      confirmText: 'ยืนยันลบผู้ใช้',
       cancelText: 'ยกเลิก',
-      icon: '🗑️',
+      icon: APP_ICONS.trash,
       confirmBtnClass: 'btn-danger'
     });
     if (!confirmed) return;
@@ -10438,11 +10468,11 @@ async function renderMasterCustomersTab(container) {
   container.innerHTML = `
     <div class="master-toolbar">
       <div class="master-toolbar-title-group">
-        <span class="master-toolbar-title">🏢 ข้อมูลลูกค้า &amp; บริษัทคู่ค้า</span>
+        <span class="master-toolbar-title" style="display:inline-flex; align-items:center; gap:6px;">${APP_ICONS.building} <span>ข้อมูลลูกค้า &amp; บริษัทคู่ค้า</span></span>
       </div>
       <div class="master-toolbar-actions">
         <div class="input-clearable-wrap master-search-wrap has-actions-end">
-          <input type="text" id="masterCustomerSearchInput" class="form-control" placeholder="🔍 ค้นหาลูกค้า, เลขภาษี, ผู้ติดต่อ..." value="${escapeHtml(masterCustomerQuery)}" autocomplete="off" />
+          <input type="text" id="masterCustomerSearchInput" class="form-control" placeholder="ค้นหาลูกค้า, เลขภาษี, ผู้ติดต่อ..." value="${escapeHtml(masterCustomerQuery)}" autocomplete="off" />
           <div class="input-actions-end">
             <button type="button" class="btn-input-clear ${masterCustomerQuery ? '' : 'hidden'}" data-clear-target="masterCustomerSearchInput" title="ล้างค่า">✕</button>
             <button type="button" class="btn-keyboard-toggle" data-keyboard-target="masterCustomerSearchInput" title="แสดง/ซ่อน แป้นพิมพ์บนหน้าจอ" aria-label="แสดง/ซ่อน แป้นพิมพ์">
@@ -10461,8 +10491,8 @@ async function renderMasterCustomersTab(container) {
             </button>
           </div>
         </div>
-        <button type="button" class="btn btn-primary btn-sm" id="btnAddNewMasterCustomer">
-          <span>➕ เพิ่มลูกค้าใหม่</span>
+        <button type="button" class="btn btn-primary btn-sm" id="btnAddNewMasterCustomer" style="display:inline-flex; align-items:center; gap:5px;">
+          ${APP_ICONS.plusMini} <span>เพิ่มลูกค้าใหม่</span>
         </button>
       </div>
     </div>
@@ -10515,12 +10545,13 @@ async function fetchAndRenderCustomers(container, opts = {}) {
       if (masterCustomerQuery && masterCustomerQuery.length >= 2) {
         container.innerHTML = `
           <div style="padding:40px 20px; text-align:center; color:#64748b;">
-            <div style="font-size:32px; margin-bottom:8px;">🏢</div>
+            <div style="font-size:28px; margin-bottom:8px; color:#94a3b8; display:flex; justify-content:center;">${APP_ICONS.building}</div>
             <div style="font-size:14px; font-weight:600; color:#334155;">ไม่พบลูกค้า "${escapeHtml(masterCustomerQuery)}" ในระบบ</div>
             <div style="font-size:12px; margin-top:4px; color:#64748b;">คุณสามารถค้นหาดึงข้อมูลจากภายนอกมาบันทึกเข้าระบบได้ฟรีทันที</div>
             <div style="margin-top:14px;">
-              <button type="button" class="btn btn-outline btn-sm" id="btnSearchMasterCustomerOnline" style="background:#f5f3ff; color:#7c3aed; border-color:#c4b5fd; padding:7px 16px; font-size:13px; font-weight:600;">
-                🌐 ค้นหา "${escapeHtml(masterCustomerQuery)}" จากฐานข้อมูลภายนอก (ฟรี)
+              <button type="button" class="btn btn-outline btn-sm" id="btnSearchMasterCustomerOnline" style="background:#f5f3ff; color:#7c3aed; border-color:#c4b5fd; padding:7px 16px; font-size:13px; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                <span>ค้นหา "${escapeHtml(masterCustomerQuery)}" จากฐานข้อมูลภายนอก (ฟรี)</span>
               </button>
             </div>
           </div>
@@ -10535,11 +10566,11 @@ async function fetchAndRenderCustomers(container, opts = {}) {
             if (!onlineItems || onlineItems.length === 0) {
               container.innerHTML = `
                 <div style="padding:40px 20px; text-align:center; color:#64748b;">
-                  <div style="font-size:32px; margin-bottom:8px;">🔍</div>
+                  <div style="font-size:28px; margin-bottom:8px; color:#94a3b8; display:flex; justify-content:center;">${APP_ICONS.search}</div>
                   <div style="font-size:14px; font-weight:600; color:#334155;">ไม่พบบริษัทที่ตรงกับ "${escapeHtml(masterCustomerQuery)}" จากภายนอก</div>
                   <div style="margin-top:12px;">
-                    <button type="button" class="btn btn-primary btn-sm" id="btnManualAddCustPrompt">
-                      ➕ เพิ่มบริษัทนี้ด้วยตนเอง
+                    <button type="button" class="btn btn-primary btn-sm" id="btnManualAddCustPrompt" style="display:inline-flex; align-items:center; gap:5px;">
+                      ${APP_ICONS.plusMini} <span>เพิ่มบริษัทนี้ด้วยตนเอง</span>
                     </button>
                   </div>
                 </div>
@@ -10552,7 +10583,7 @@ async function fetchAndRenderCustomers(container, opts = {}) {
 
             container.innerHTML = `
               <div style="padding:10px 16px; background:#f5f3ff; border-bottom:1px solid #ddd6fe; color:#6b21a8; font-size:12.5px; font-weight:600; display:flex; justify-content:space-between; align-items:center;">
-                <span>🌐 พบบริษัทจากฐานข้อมูลธุรกิจภายนอก (${onlineItems.length} รายการ)</span>
+                <span>พบบริษัทจากฐานข้อมูลธุรกิจภายนอก (${onlineItems.length} รายการ)</span>
                 <span style="font-size:11px; font-weight:normal; color:#7c3aed;">คลิก "เพิ่มเข้าระบบ" เพื่อบันทึกเข้าสู่ Master Data ทันที</span>
               </div>
               <table class="master-table">
@@ -10572,11 +10603,11 @@ async function fetchAndRenderCustomers(container, opts = {}) {
                         <div style="font-weight:600; color:#1e293b;">${escapeHtml(item.name)}</div>
                       </td>
                       <td style="text-align:center;">
-                        <span class="company-item-badge badge-online">🌐 ภายนอก</span>
+                        <span class="company-item-badge badge-online">ภายนอก</span>
                       </td>
                       <td style="text-align:center;">
-                        <button type="button" class="btn btn-primary btn-xs btn-add-online-to-master" data-online-name="${escapeHtml(item.name)}">
-                          ➕ เพิ่มเข้าระบบ
+                        <button type="button" class="btn btn-primary btn-xs btn-add-online-to-master" data-online-name="${escapeHtml(item.name)}" style="display:inline-flex; align-items:center; gap:4px;">
+                          ${APP_ICONS.plusMini} <span>เพิ่มเข้าระบบ</span>
                         </button>
                       </td>
                     </tr>
@@ -10598,7 +10629,7 @@ async function fetchAndRenderCustomers(container, opts = {}) {
                   });
                   const lData = await lRes.json();
                   if (!lRes.ok) throw new Error(lData.error || 'บันทึกไม่สำเร็จ');
-                  showToast(`✅ เพิ่ม "${bName}" เข้าสู่ระบบเรียบร้อย`);
+                  showToast(`เพิ่ม "${bName}" เข้าสู่ระบบเรียบร้อย`);
                   await updateMasterBadgeCounts();
                   masterCustomerQuery = bName;
                   const sInp = document.getElementById('masterCustomerSearchInput');
@@ -10607,7 +10638,7 @@ async function fetchAndRenderCustomers(container, opts = {}) {
                 } catch (err) {
                   showToast(`❌ ${err.message}`);
                   btn.disabled = false;
-                  btn.textContent = '➕ เพิ่มเข้าระบบ';
+                  btn.innerHTML = `${APP_ICONS.plusMini} <span>เพิ่มเข้าระบบ</span>`;
                 }
               });
             });
@@ -10620,7 +10651,7 @@ async function fetchAndRenderCustomers(container, opts = {}) {
 
       container.innerHTML = `
         <div style="padding:40px 20px; text-align:center; color:#64748b;">
-          <div style="font-size:32px; margin-bottom:8px;">🏢</div>
+          <div style="font-size:28px; margin-bottom:8px; color:#94a3b8; display:flex; justify-content:center;">${APP_ICONS.building}</div>
           <div style="font-size:14px; font-weight:600; color:#334155;">ไม่พบข้อมูลลูกค้า</div>
           <div style="font-size:12px; margin-top:4px;">ลองเปลี่ยนคำค้นหา หรือกดปุ่ม "เพิ่มลูกค้าใหม่" ด้านบน</div>
         </div>
@@ -10769,7 +10800,7 @@ function openCustomerEditor(cust = null) {
   if (!modal) return;
 
   if (cust) {
-    if (titleEl) titleEl.textContent = '🏢 แก้ไขข้อมูลลูกค้า';
+    if (titleEl) titleEl.textContent = 'แก้ไขข้อมูลลูกค้า';
     if (idInput) idInput.value = cust.id;
     if (nameInput) nameInput.value = cust.name || '';
     if (nameEnInput) nameEnInput.value = cust.name_en || '';
@@ -10780,7 +10811,7 @@ function openCustomerEditor(cust = null) {
     if (phoneInput) phoneInput.value = cust.phone || '';
     if (emailInput) emailInput.value = cust.email || '';
   } else {
-    if (titleEl) titleEl.textContent = '🏢 เพิ่มข้อมูลลูกค้าใหม่';
+    if (titleEl) titleEl.textContent = 'เพิ่มข้อมูลลูกค้าใหม่';
     if (idInput) idInput.value = '';
     if (nameInput) nameInput.value = '';
     if (nameEnInput) nameEnInput.value = '';
@@ -10810,11 +10841,11 @@ async function renderMasterCatalogsTab(container) {
   container.innerHTML = `
     <div class="master-toolbar">
       <div class="master-toolbar-title-group">
-        <span class="master-toolbar-title">📦 แคตตาล็อกสินค้า &amp; รุ่นเครื่อง</span>
+        <span class="master-toolbar-title" style="display:inline-flex; align-items:center; gap:6px;">${APP_ICONS.box} <span>แคตตาล็อกสินค้า &amp; รุ่นเครื่อง</span></span>
       </div>
       <div class="master-toolbar-actions">
         <div class="input-clearable-wrap master-search-wrap has-actions-end">
-          <input type="text" id="masterCatalogSearchInput" class="form-control" placeholder="🔍 ค้นหารุ่น, ยี่ห้อ, หมวดหมู่..." value="${escapeHtml(masterCatalogQuery)}" autocomplete="off" />
+          <input type="text" id="masterCatalogSearchInput" class="form-control" placeholder="ค้นหารุ่น, ยี่ห้อ, หมวดหมู่..." value="${escapeHtml(masterCatalogQuery)}" autocomplete="off" />
           <div class="input-actions-end">
             <button type="button" class="btn-input-clear ${masterCatalogQuery ? '' : 'hidden'}" data-clear-target="masterCatalogSearchInput" title="ล้างค่า">✕</button>
             <button type="button" class="btn-keyboard-toggle" data-keyboard-target="masterCatalogSearchInput" title="แสดง/ซ่อน แป้นพิมพ์บนหน้าจอ" aria-label="แสดง/ซ่อน แป้นพิมพ์">
@@ -10833,8 +10864,8 @@ async function renderMasterCatalogsTab(container) {
             </button>
           </div>
         </div>
-        <button type="button" class="btn btn-primary btn-sm" id="btnAddNewMasterCatalog">
-          <span>➕ เพิ่มรุ่นใหม่</span>
+        <button type="button" class="btn btn-primary btn-sm" id="btnAddNewMasterCatalog" style="display:inline-flex; align-items:center; gap:5px;">
+          ${APP_ICONS.plusMini} <span>เพิ่มรุ่นใหม่</span>
         </button>
       </div>
     </div>
@@ -10884,7 +10915,7 @@ async function fetchAndRenderCatalogs(container, opts = {}) {
     if (list.length === 0) {
       container.innerHTML = `
         <div style="padding:40px 20px; text-align:center; color:#64748b;">
-          <div style="font-size:32px; margin-bottom:8px;">📦</div>
+          <div style="font-size:28px; margin-bottom:8px; color:#94a3b8; display:flex; justify-content:center;">${APP_ICONS.box}</div>
           <div style="font-size:14px; font-weight:600; color:#334155;">ไม่พบแคตตาล็อกรุ่นสินค้า</div>
           <div style="font-size:12px; margin-top:4px;">กดปุ่ม "เพิ่มรุ่นใหม่" ด้านบนเพื่อเพิ่มรายการเข้าสู่ระบบ</div>
         </div>
@@ -10970,9 +11001,9 @@ async function fetchAndRenderCatalogs(container, opts = {}) {
           title: 'ลบแคตตาล็อกรุ่นสินค้า',
           message: `คุณต้องการลบรุ่น "${model}" ออกจากแคตตาล็อกใช่หรือไม่?`,
           itemHtml: `<div style="font-size:12.5px; color:#64748b;">หากมีเครื่องในสต็อกที่ใช้รุ่นนี้อยู่ จะไม่สามารถลบได้</div>`,
-          confirmText: '🗑️ ยืนยันลบ',
+          confirmText: 'ยืนยันลบ',
           cancelText: 'ยกเลิก',
-          icon: '🗑️',
+          icon: APP_ICONS.trash,
           confirmBtnClass: 'btn-danger'
         });
         if (!confirmed) return;
@@ -10988,7 +11019,7 @@ async function fetchAndRenderCatalogs(container, opts = {}) {
           const delRes = await fetch(`/api/master/catalogs/${id}`, { method: 'DELETE' });
           const delData = await delRes.json();
           if (!delRes.ok) throw new Error(delData.error || 'ลบแคตตาล็อกไม่สำเร็จ');
-          showToast(`✅ ${delData.message || 'ลบเรียบร้อยแล้ว'}`);
+          showToast(`ลบเรียบร้อยแล้ว`);
           await updateMasterBadgeCounts();
           fetchAndRenderCatalogs(container, { silent: true });
         } catch (err) {
@@ -11015,7 +11046,7 @@ function openCatalogEditor(cat = null) {
   if (!modal) return;
 
   if (cat) {
-    if (titleEl) titleEl.textContent = '📦 แก้ไขแคตตาล็อกรุ่นสินค้า';
+    if (titleEl) titleEl.textContent = 'แก้ไขแคตตาล็อกรุ่นสินค้า';
     if (idInput) idInput.value = cat.id;
     if (brandInput) brandInput.value = cat.brand || '';
     if (modelInput) modelInput.value = cat.model || '';
@@ -11025,7 +11056,7 @@ function openCatalogEditor(cat = null) {
     try { accs = JSON.parse(cat.default_accessories || '[]'); } catch (_) { accs = []; }
     if (accInput) accInput.value = Array.isArray(accs) ? accs.join(', ') : '';
   } else {
-    if (titleEl) titleEl.textContent = '📦 เพิ่มรุ่นสินค้าใหม่เข้าแคตตาล็อก';
+    if (titleEl) titleEl.textContent = 'เพิ่มรุ่นสินค้าใหม่เข้าแคตตาล็อก';
     if (idInput) idInput.value = '';
     if (brandInput) brandInput.value = '';
     if (modelInput) modelInput.value = '';
@@ -11090,7 +11121,7 @@ async function renderMasterOptionsTab(container, type) {
         type="text" 
         id="masterOptQuickInput" 
         class="master-opt-quick-input" 
-        placeholder="➕ พิมพ์ชื่อ${meta.label}ใหม่... (แล้วกด Enter เพื่อเพิ่มทันที)" 
+        placeholder="พิมพ์ชื่อ${meta.label}ใหม่... (แล้วกด Enter เพื่อเพิ่มทันที)" 
         autocomplete="off" 
       />
       <button type="button" class="btn btn-primary btn-sm" id="btnMasterQuickAdd" style="white-space:nowrap; display:inline-flex; align-items:center; gap:5px;">
@@ -11167,7 +11198,7 @@ async function fetchAndRenderOptions(container, type, opts = {}) {
     if (list.length === 0) {
       container.innerHTML = `
         <div style="padding:40px 20px; text-align:center; color:#64748b; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px;">
-          <div style="font-size:24px; margin-bottom:6px; opacity:0.6;">📋</div>
+          <div style="font-size:24px; margin-bottom:6px; color:#94a3b8; display:flex; justify-content:center;">${APP_ICONS.clip}</div>
           <div style="font-size:13.5px; font-weight:600; color:#334155;">ยังไม่มีรายการในหมวดนี้</div>
           <div style="font-size:12px; margin-top:4px; color:#94a3b8;">พิมพ์ชื่อในกล่องด้านบนแล้วกด Enter เพื่อเพิ่มรายการแรก</div>
         </div>
@@ -11753,7 +11784,7 @@ function setupSendEmailModal() {
     if (!to) {
       if (emailStatusBox) {
         emailStatusBox.className = 'email-status-banner error';
-        emailStatusBox.innerHTML = '⚠️ กรุณาระบุอีเมลลูกค้าผู้รับ (To)';
+        emailStatusBox.innerHTML = `<span style="display:inline-flex; align-items:center; gap:5px;">${APP_ICONS.alert} <span>กรุณาระบุอีเมลลูกค้าผู้รับ (To)</span></span>`;
         emailStatusBox.classList.remove('hidden');
         emailStatusBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
@@ -11790,10 +11821,10 @@ function setupSendEmailModal() {
         }
         if (emailStatusBox) {
           emailStatusBox.className = 'email-status-banner success';
-          emailStatusBox.innerHTML = `✅ ${data.message || 'ส่งอีเมลพร้อมแนบ PDF สำเร็จเรียบร้อย'}`;
+          emailStatusBox.innerHTML = `<span style="display:inline-flex; align-items:center; gap:5px;">${APP_ICONS.check} <span>${data.message || 'ส่งอีเมลพร้อมแนบ PDF สำเร็จเรียบร้อย'}</span></span>`;
           emailStatusBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
-        showToast(`✉️ ส่งอีเมลพร้อมแนบ PDF ให้ ${to} เรียบร้อยแล้ว`);
+        showToast(`ส่งอีเมลพร้อมแนบ PDF ให้ ${to} เรียบร้อยแล้ว`);
         setTimeout(() => {
           modal.close();
           if (emailStatusBox) emailStatusBox.classList.add('hidden');
@@ -11805,7 +11836,7 @@ function setupSendEmailModal() {
       if (emailStatusBox) {
         emailStatusBox.className = 'email-status-banner error';
         const isConfigErr = err.message.includes('ตั้งค่า') || err.message.includes('API Key') || err.message.includes('SMTP');
-        emailStatusBox.innerHTML = `❌ ${err.message}${isConfigErr ? ' <button type="button" class="btn btn-xs btn-outline" style="margin-left:6px;padding:2px 8px;font-size:11px;background:#fff;" onclick="document.getElementById(\'btnOpenSmtpSettingsFromModal\')?.click()">⚙️ ไปตั้งค่า</button>' : ''}`;
+        emailStatusBox.innerHTML = `<span style="display:inline-flex; align-items:center; gap:5px;">${APP_ICONS.alert} <span>${err.message}</span></span>${isConfigErr ? ' <button type="button" class="btn btn-xs btn-outline" style="margin-left:6px;padding:2px 8px;font-size:11px;background:#fff;" onclick="document.getElementById(\'btnOpenSmtpSettingsFromModal\')?.click()">ไปตั้งค่า</button>' : ''}`;
         emailStatusBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
       showToast(`❌ ${err.message}`);
@@ -12222,7 +12253,7 @@ async function submitDeliveryForm(e) {
   } finally {
     if (submitBtn) {
       submitBtn.disabled = false;
-      submitBtn.textContent = '🚚 ยืนยันการส่งมอบสินค้า';
+      submitBtn.textContent = 'ยืนยันการส่งมอบสินค้า';
     }
   }
 }
@@ -12396,7 +12427,7 @@ function setupSupplierSaleReturnModal() {
       showToast(`❌ ${err.message}`);
     } finally {
       btnSubmit.disabled = false;
-      btnSubmit.innerHTML = '<span>📄 บันทึกและออกใบคืน</span>';
+      btnSubmit.innerHTML = '<span>บันทึกและออกใบคืน</span>';
     }
   });
 
@@ -12807,11 +12838,11 @@ function openSupplierSaleReturnModal(loanId) {
       <div class="delivery-photo-actions">
         <input type="file" id="supCameraInput" accept="image/*" capture="environment" class="hidden" />
         <input type="file" id="supFileInput" accept="image/*" multiple class="hidden" />
-        <button type="button" class="btn btn-outline btn-photo-snap" id="btnSnapSupCamera">
-          📷 ถ่ายรูปด้วยกล้อง
+        <button type="button" class="btn btn-outline btn-photo-snap" id="btnSnapSupCamera" style="display:inline-flex; align-items:center; gap:6px;">
+          ${APP_ICONS.camera} <span>ถ่ายรูปด้วยกล้อง</span>
         </button>
-        <button type="button" class="btn btn-outline btn-photo-pick" id="btnPickSupFile">
-          📁 เลือกจากคลังรูปภาพ
+        <button type="button" class="btn btn-outline btn-photo-pick" id="btnPickSupFile" style="display:inline-flex; align-items:center; gap:6px;">
+          ${APP_ICONS.gallery} <span>เลือกจากคลังรูปภาพ</span>
         </button>
       </div>
       <!-- Grid of uploaded photo previews -->
@@ -12821,19 +12852,19 @@ function openSupplierSaleReturnModal(loanId) {
     <!-- Row 3: GPS & Timestamp Card -->
     <div class="delivery-meta-card">
       <div class="delivery-meta-row">
-        <div class="delivery-meta-icon">📍</div>
+        <div class="delivery-meta-icon">${APP_ICONS.pin}</div>
         <div class="delivery-meta-info">
           <div class="delivery-meta-label">พิกัดสถานที่ส่งมอบ (GPS)</div>
           <div class="delivery-meta-value" id="supGpsDisplay">กำลังค้นหาพิกัด...</div>
           <input type="hidden" id="supGpsVal" name="supGps" />
         </div>
-        <button type="button" class="btn btn-sm btn-outline btn-refresh-gps" id="btnRefreshSupGps" title="ดึงพิกัดใหม่">
-          🔄 ดึงพิกัดใหม่
+        <button type="button" class="btn btn-sm btn-outline btn-refresh-gps" id="btnRefreshSupGps" title="ดึงพิกัดใหม่" style="display:inline-flex; align-items:center; gap:4px;">
+          ${APP_ICONS.sync} <span>ดึงพิกัดใหม่</span>
         </button>
       </div>
       <div class="delivery-meta-divider"></div>
       <div class="delivery-meta-row">
-        <div class="delivery-meta-icon">🕒</div>
+        <div class="delivery-meta-icon">${APP_ICONS.clock}</div>
         <div class="delivery-meta-info">
           <div class="delivery-meta-label">วันเวลาที่ส่งมอบ (Timestamp)</div>
           <div class="delivery-meta-value" id="supTimestampDisplay">-</div>
@@ -12895,7 +12926,7 @@ function renderReturnSlipSheet(loan, sizeClass = 'size-a4') {
       rowsHtml += `
         <tr class="gp-group-header-row">
           <td colspan="5" style="background:#eff6ff; font-weight:700; color:#1e40af; padding:6px 12px; font-size:12.5px; border:1px solid #64748b;">
-            🚚 รายการส่งคืนให้ Supplier (ยืมภายนอก)
+            <span style="display:inline-flex; align-items:center; gap:5px;">${APP_ICONS.truck} <span>รายการส่งคืนให้ Supplier (ยืมภายนอก)</span></span>
           </td>
         </tr>
       `;
@@ -12911,11 +12942,11 @@ function renderReturnSlipSheet(loan, sizeClass = 'size-a4') {
             ${it.serial_no && it.serial_no.trim() !== '-' ? `<code class="gp-sn-code">${escapeHtml(it.serial_no)}</code>` : '<span style="color:#94a3b8;">-</span>'}
           </td>
           <td class="gp-td-acc">
-            ${(it.loan_accessories || []).length === 0 ? '<span style="color:#94a3b8;">ตัวเครื่องมาตรฐาน</span>' : it.loan_accessories.map(a => `<span class="gp-acc-tag">☑ ${escapeHtml(a)}</span>`).join('')}
+            ${(it.loan_accessories || []).length === 0 ? '<span style="color:#94a3b8;">ตัวเครื่องมาตรฐาน</span>' : it.loan_accessories.map(a => `<span class="gp-acc-tag">✓ ${escapeHtml(a)}</span>`).join('')}
           </td>
           <td class="gp-td-note">
-            <div class="gp-ret-tag" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-weight:600;">
-              🚚 ส่งคืน Supplier เรียบร้อย
+            <div class="gp-ret-tag" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-weight:600; display:inline-flex; align-items:center; gap:4px;">
+              ${APP_ICONS.truck} <span>ส่งคืน Supplier เรียบร้อย</span>
             </div>
             ${it.loan_free_note && it.loan_free_note.trim() && it.loan_free_note.trim() !== '-' ? `<div class="gp-note-free" style="margin-top:4px;">${escapeHtml(it.loan_free_note)}</div>` : ''}
           </td>
@@ -12929,7 +12960,7 @@ function renderReturnSlipSheet(loan, sizeClass = 'size-a4') {
       rowsHtml += `
         <tr class="gp-group-header-row">
           <td colspan="5" style="background:#fef3c7; font-weight:700; color:#b45309; padding:6px 12px; font-size:12.5px; border:1px solid #64748b;">
-            🏢 รายการคืนคลังขาย (เบิกสต็อกขาย)
+            <span style="display:inline-flex; align-items:center; gap:5px;">${APP_ICONS.briefcase} <span>รายการคืนคลังขาย (เบิกสต็อกขาย)</span></span>
           </td>
         </tr>
       `;
@@ -12947,11 +12978,11 @@ function renderReturnSlipSheet(loan, sizeClass = 'size-a4') {
             ${it.serial_no && it.serial_no.trim() !== '-' ? `<code class="gp-sn-code">${escapeHtml(it.serial_no)}</code>` : '<span style="color:#94a3b8;">-</span>'}
           </td>
           <td class="gp-td-acc">
-            ${(it.loan_accessories || []).length === 0 ? '<span style="color:#94a3b8;">ตัวเครื่องมาตรฐาน</span>' : it.loan_accessories.map(a => `<span class="gp-acc-tag">☑ ${escapeHtml(a)}</span>`).join('')}
+            ${(it.loan_accessories || []).length === 0 ? '<span style="color:#94a3b8;">ตัวเครื่องมาตรฐาน</span>' : it.loan_accessories.map(a => `<span class="gp-acc-tag">✓ ${escapeHtml(a)}</span>`).join('')}
           </td>
           <td class="gp-td-note">
-            <div class="gp-ret-tag" style="background:${isConvert ? '#f5f3ff' : '#ecfdf5'}; color:${isConvert ? '#6d28d9' : '#047857'}; border:1px solid ${isConvert ? '#ddd6fe' : '#a7f3d0'}; font-weight:600;">
-              ${isConvert ? '📦 ตีเข้าเป็นคลัง Demo' : '🏢 คืนสต็อกคลังขายปกติ'}
+            <div class="gp-ret-tag" style="background:${isConvert ? '#f5f3ff' : '#ecfdf5'}; color:${isConvert ? '#6d28d9' : '#047857'}; border:1px solid ${isConvert ? '#ddd6fe' : '#a7f3d0'}; font-weight:600; display:inline-flex; align-items:center; gap:4px;">
+              ${isConvert ? `${APP_ICONS.box} <span>ตีเข้าเป็นคลัง Demo</span>` : `${APP_ICONS.briefcase} <span>คืนสต็อกคลังขายปกติ</span>`}
             </div>
             ${it.loan_free_note && it.loan_free_note.trim() && it.loan_free_note.trim() !== '-' ? `<div class="gp-note-free" style="margin-top:4px;">${escapeHtml(it.loan_free_note)}</div>` : ''}
           </td>
@@ -12972,11 +13003,11 @@ function renderReturnSlipSheet(loan, sizeClass = 'size-a4') {
             ${it.serial_no && it.serial_no.trim() !== '-' ? `<code class="gp-sn-code">${escapeHtml(it.serial_no)}</code>` : '<span style="color:#94a3b8;">-</span>'}
           </td>
           <td class="gp-td-acc">
-            ${(it.loan_accessories || []).length === 0 ? '<span style="color:#94a3b8;">ตัวเครื่องมาตรฐาน</span>' : it.loan_accessories.map(a => `<span class="gp-acc-tag">☑ ${escapeHtml(a)}</span>`).join('')}
+            ${(it.loan_accessories || []).length === 0 ? '<span style="color:#94a3b8;">ตัวเครื่องมาตรฐาน</span>' : it.loan_accessories.map(a => `<span class="gp-acc-tag">✓ ${escapeHtml(a)}</span>`).join('')}
           </td>
           <td class="gp-td-note">
-            <div class="gp-ret-tag gp-ret-returned">
-              ✅ รับเข้าคลัง Demo (QC ผ่าน)
+            <div class="gp-ret-tag gp-ret-returned" style="display:inline-flex; align-items:center; gap:4px;">
+              ${APP_ICONS.check} <span>รับเข้าคลัง Demo (QC ผ่าน)</span>
             </div>
             ${it.loan_free_note && it.loan_free_note.trim() && it.loan_free_note.trim() !== '-' ? `<div class="gp-note-free" style="margin-top:4px;">${escapeHtml(it.loan_free_note)}</div>` : ''}
           </td>
@@ -13325,7 +13356,7 @@ async function startBarcodeCamera(facingMode) {
       if (caps && caps.torch && torchBtn) {
         torchBtn.classList.remove('hidden');
         isTorchOn = false;
-        torchBtn.textContent = '🔦';
+        torchBtn.innerHTML = APP_ICONS.zap;
       } else if (torchBtn) {
         torchBtn.classList.add('hidden');
       }
@@ -13541,7 +13572,7 @@ function setupSearchBarcodeScanner() {
         await searchHtml5QrCode.applyVideoConstraints({
           advanced: [{ torch: isTorchOn }]
         });
-        btnTorch.textContent = isTorchOn ? '⚡' : '🔦';
+        btnTorch.innerHTML = APP_ICONS.zap;
       } catch (err) {
         console.warn('Torch toggle failed:', err);
       }
@@ -13884,17 +13915,17 @@ function setupEventListeners() {
         </div>
         <div class="confirm-loan-details">
           <div class="confirm-loan-row">
-            <span class="confirm-loan-label">🏢 ลูกค้า:</span>
+            <span class="confirm-loan-label">ลูกค้า:</span>
             <strong class="confirm-loan-val">${escapeHtml(company || '-')}</strong>
           </div>
           ${loan?.borrower_name ? `
           <div class="confirm-loan-row">
-            <span class="confirm-loan-label">👤 ผู้ยืม:</span>
+            <span class="confirm-loan-label">ผู้ยืม:</span>
             <span class="confirm-loan-val">${escapeHtml(loan.borrower_name)}</span>
           </div>` : ''}
           ${itemsSummary ? `
           <div class="confirm-loan-row">
-            <span class="confirm-loan-label">📦 สินค้า:</span>
+            <span class="confirm-loan-label">สินค้า:</span>
             <span class="confirm-loan-val font-medium">${escapeHtml(itemsSummary)}</span>
           </div>` : ''}
         </div>
@@ -13905,8 +13936,8 @@ function setupEventListeners() {
       title: 'ยืนยันการยกเลิกใบยืมสินค้า',
       message: 'การยกเลิกจะลบใบยืมนี้และปลดล็อกเครื่องเดโม่คืนเข้าคลังทันที',
       itemHtml: itemHtml,
-      icon: '🗑️',
-      confirmText: '🗑️ ยืนยันยกเลิกใบยืม',
+      icon: APP_ICONS.trash,
+      confirmText: 'ยืนยันยกเลิกใบยืม',
       cancelText: 'ไม่ยกเลิก (คงไว้)',
       confirmBtnClass: 'btn-danger'
     });
@@ -14754,11 +14785,11 @@ function setupEventListeners() {
         if (remainingFilledRows.length === 0) {
           const modelDisplay = row.brand ? `${row.brand} ${row.model}` : (row.model || 'สินค้านี้');
           const confirmed = await showConfirmDialog({
-            title: '⚠️ ลบรายการสุดท้าย & ยกเลิกใบยืม',
+            title: 'ลบรายการสุดท้าย & ยกเลิกใบยืม',
             message: `รายการนี้เป็นสินค้าชิ้นสุดท้ายในใบยืม ${state.editingLoanId}\nหากลบรายการนี้ ระบบจะทำการ "ยกเลิกใบยืมนี้" ทั้งหมด\n\nคุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้และยกเลิกใบยืม?`,
             itemText: `${modelDisplay} (จำนวน ${row.qty || 1} เครื่อง)`,
-            icon: '⚠️',
-            confirmText: '🗑️ ยืนยันลบ & ยกเลิกใบยืม',
+            icon: APP_ICONS.trash,
+            confirmText: 'ยืนยันลบ & ยกเลิกใบยืม',
             cancelText: 'ยกเลิก (คงรายการไว้)',
             confirmBtnClass: 'btn-danger'
           });
@@ -14820,9 +14851,9 @@ function setupEventListeners() {
           title: 'ยืนยันการลบรายการ',
           message: 'แถวนี้มีข้อมูลระบุไว้ คุณต้องการลบรายการนี้ใช่หรือไม่?',
           itemText: itemLabel,
-          confirmText: '🗑️ ยืนยันลบ',
+          confirmText: 'ยืนยันลบ',
           cancelText: 'ยกเลิก',
-          icon: '🗑️'
+          icon: APP_ICONS.trash
         });
 
         if (!confirmed) return;
@@ -15270,11 +15301,11 @@ function setupEventListeners() {
 
     if (shortItems.length > 0) {
       const proceed = await showConfirmDialog({
-        title: '⚠️ สินค้าในคลังมีไม่พอตามจำนวนที่ขอ',
+        title: 'สินค้าในคลังมีไม่พอตามจำนวนที่ขอ',
         message: `ระบบทดลองจองสินค้าพบว่าจำนวนที่ขอเกินสต็อกพร้อมส่งในคลัง:\n\n${shortItems.join('\n')}\n\nต้องการบันทึกใบยืมเพื่อรอจัดหาต่อหรือไม่?`,
         confirmText: 'ยืนยันบันทึก',
         cancelText: 'กลับไปปรับจำนวน',
-        icon: '⚠️'
+        icon: APP_ICONS.alert
       });
       if (!proceed) return;
     }
@@ -15423,12 +15454,12 @@ function setupEventListeners() {
     const modelDisplayName = row.brand ? `${row.brand} ${row.model}` : (row.model || 'สินค้านี้');
 
     const confirmed = await showConfirmDialog({
-      title: '⚠️ ไม่พบ S/N ในฐานข้อมูลคลัง Demo',
+      title: 'ไม่พบ S/N ในฐานข้อมูลคลัง Demo',
       message: `ไม่พบ S/N "${val}" ในฐานข้อมูลสินค้าคลัง Demo (${modelDisplayName})\n\nคุณต้องการยืนยันเพิ่ม S/N นี้เข้าเอกสารหรือไม่?`,
       itemText: `S/N: ${val}`,
-      confirmText: '✓ ยืนยันเพิ่มเข้าเอกสาร',
+      confirmText: 'ยืนยันเพิ่มเข้าเอกสาร',
       cancelText: 'ยกเลิก / แก้ไขใหม่',
-      icon: '⚠️',
+      icon: APP_ICONS.alert,
       confirmBtnClass: 'btn-primary'
     });
 
@@ -15821,9 +15852,9 @@ function setupEventListeners() {
       title: 'ลบรายการออกจากใบยืม',
       message: `คุณต้องการลบ "${itemName}" ออกจากใบยืม ${loan.id} ใช่หรือไม่?`,
       itemHtml: `<div style="font-size:12.5px; color:#64748b; line-height:1.5;">เมื่อยืนยัน รายการนี้จะถูกตัดออกจากใบยืมทันที และเครื่องจะถูกปลดคืนสู่สต็อกพร้อมยืม</div>`,
-      confirmText: '🗑️ ยืนยันลบรายการ',
+      confirmText: 'ยืนยันลบรายการ',
       cancelText: 'ยกเลิก',
-      icon: '🗑️',
+      icon: APP_ICONS.trash,
       confirmBtnClass: 'btn-danger'
     });
     if (!confirmed) return;
@@ -17400,7 +17431,7 @@ function setupEventListeners() {
 
     const headerHtml = `
       <div class="dropdown-header-bar">
-        <span class="dropdown-header-title">🔌 เลือกอุปกรณ์เสริม (${filtered.length})</span>
+        <span class="dropdown-header-title" style="display:inline-flex; align-items:center; gap:6px;">${APP_ICONS.plug} <span>เลือกอุปกรณ์เสริม (${filtered.length})</span></span>
         <button type="button" class="btn-close-dropdown" data-close-modal-acc="${mode}" title="ปิด (✕)">✕</button>
       </div>
     `;
@@ -17412,7 +17443,9 @@ function setupEventListeners() {
           <div class="dropdown-scroll-list">
             <div class="model-dropdown-item" data-modal-select-acc="${escapeHtml(query.trim())}" data-modal-mode="${mode}">
               <div class="model-item-main">
-                <span class="model-item-name">➕ เพิ่ม Tag ใหม่: "${escapeHtml(query.trim())}"</span>
+                <span class="model-item-name" style="display:inline-flex; align-items:center; gap:4px; color:#15803d;">
+                  ${APP_ICONS.plusMini} <span>เพิ่ม Tag ใหม่: "${escapeHtml(query.trim())}"</span>
+                </span>
                 <span class="model-item-sub">กดคลิกหรือกด Enter เพื่อเพิ่ม Tag นี้</span>
               </div>
               <span class="model-item-badge badge-avail">+ เพิ่ม</span>
@@ -17432,7 +17465,9 @@ function setupEventListeners() {
         html += `
           <div class="model-dropdown-item" data-modal-select-acc="${escapeHtml(query.trim())}" data-modal-mode="${mode}" style="background:#f0fdf4;">
             <div class="model-item-main">
-              <span class="model-item-name" style="color:#15803d;">➕ เพิ่ม Tag ใหม่: "${escapeHtml(query.trim())}"</span>
+              <span class="model-item-name" style="color:#15803d; display:inline-flex; align-items:center; gap:4px;">
+                ${APP_ICONS.plusMini} <span>เพิ่ม Tag ใหม่: "${escapeHtml(query.trim())}"</span>
+              </span>
               <span class="model-item-sub">สร้างป้ายอุปกรณ์เสริมตามที่พิมพ์</span>
             </div>
             <span class="model-item-badge badge-avail">+ เพิ่ม</span>
@@ -17677,7 +17712,7 @@ function setupEventListeners() {
             </td>
             <td>
               <div style="font-weight:700; font-size:13px; color:${isDischarge ? '#dc2626' : '#16a34a'};">
-                ${isDischarge ? '📦 บันทึกจำหน่ายเครื่องออกจากระบบ' : '📥 นำเครื่องกลับเข้าคลัง'}
+                ${isDischarge ? 'บันทึกจำหน่ายเครื่องออกจากระบบ' : 'นำเครื่องกลับเข้าคลัง'}
               </div>
               <div style="font-size:12px; color:#475569; margin-top:2px;">
                 ${escapeHtml(h.reason ? `สาเหตุ: ${h.reason}` : '')} ${escapeHtml(h.note ? `(หมายเหตุ: ${h.note})` : '')}
@@ -17685,7 +17720,7 @@ function setupEventListeners() {
             </td>
             <td style="text-align:center;">
               <span class="lib-stamp ${isDischarge ? 'stamped-overdue' : 'stamped-returned'}">
-                ${isDischarge ? '📦 จำหน่ายออก' : '📥 กลับเข้าคลัง'}
+                ${isDischarge ? 'จำหน่ายออก' : 'กลับเข้าคลัง'}
               </span>
             </td>
           </tr>
@@ -17710,15 +17745,15 @@ function setupEventListeners() {
 
       let stampHtml = '';
       if (isReturnedComplete) {
-        stampHtml = '<span class="lib-stamp stamped-returned">✅ คืนแล้ว</span>';
+        stampHtml = '<span class="lib-stamp stamped-returned">คืนแล้ว</span>';
       } else if (isWaitingSupplier) {
-        stampHtml = '<span class="lib-stamp stamped-supplier">🚚 รอคืน Supplier</span>';
+        stampHtml = '<span class="lib-stamp stamped-supplier">รอคืน Supplier</span>';
       } else if (isWaitingQc) {
-        stampHtml = '<span class="lib-stamp stamped-qc">🔍 รอตรวจ QC</span>';
+        stampHtml = '<span class="lib-stamp stamped-qc">รอตรวจ QC</span>';
       } else if (isOverdue) {
-        stampHtml = '<span class="lib-stamp stamped-overdue">🔴 เกินกำหนด</span>';
+        stampHtml = '<span class="lib-stamp stamped-overdue">เกินกำหนด</span>';
       } else {
-        stampHtml = '<span class="lib-stamp stamped-ongoing">🔵 กำลังยืม</span>';
+        stampHtml = '<span class="lib-stamp stamped-ongoing">กำลังยืม</span>';
       }
 
       const accList = Array.isArray(h.loan_accessories) ? h.loan_accessories : [];
@@ -17755,7 +17790,7 @@ function setupEventListeners() {
                 ${escapeHtml(h.customer_company || h.customer_name || '—')}
               </span>
             </div>
-            ${accText ? `<span class="lib-acc-summary" title="${escapeHtml(accText)}">🎒 ${escapeHtml(accText)}</span>` : ''}
+            ${accText ? `<span class="lib-acc-summary" title="${escapeHtml(accText)}" style="display:inline-flex; align-items:center; gap:3px;">${APP_ICONS.box} <span>${escapeHtml(accText)}</span></span>` : ''}
           </td>
           <td style="text-align:center;">
             ${stampHtml}
@@ -17800,9 +17835,9 @@ function setupEventListeners() {
     const wf = getAssetWorkflowStatus(asset);
     if (libCardCurrStatus) {
       if (isAvailable) {
-        libCardCurrStatus.innerHTML = '<span class="lib-status-pill avail">🟢 ว่างพร้อมยืม</span>';
+        libCardCurrStatus.innerHTML = '<span class="lib-status-pill avail">ว่างพร้อมยืม</span>';
       } else if (isDisposed) {
-        libCardCurrStatus.innerHTML = `<span class="lib-status-pill disposed font-mono" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5;">⚪ จำหน่ายแล้ว (${formatShortDate(asset.disposed_at) || asset.disposed_at || '-'})</span>`;
+        libCardCurrStatus.innerHTML = `<span class="lib-status-pill disposed font-mono" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5;">จำหน่ายแล้ว (${formatShortDate(asset.disposed_at) || asset.disposed_at || '-'})</span>`;
       } else {
         const curLoanId = asset.current_loan_id || '';
         libCardCurrStatus.innerHTML = curLoanId
@@ -17883,7 +17918,7 @@ function setupEventListeners() {
       if (timeline) {
         timeline.innerHTML = `
           <div class="audit-log-empty">
-            <div class="audit-log-empty-icon">⚠️</div>
+            <div class="audit-log-empty-icon">${APP_ICONS.alert}</div>
             <div>ไม่สามารถโหลดบันทึกประวัติได้: ${escapeHtml(err.message)}</div>
           </div>
         `;
@@ -18060,7 +18095,7 @@ function setupEventListeners() {
     const el = document.getElementById('detailLocationViewVal');
     if (!el) return;
     if (asset.location && asset.location.trim()) {
-      el.innerHTML = `<span>📍 ${escapeHtml(asset.location.trim())}</span>`;
+      el.innerHTML = `<span style="display:inline-flex; align-items:center; gap:4px;">${APP_ICONS.pin} <span>${escapeHtml(asset.location.trim())}</span></span>`;
     } else {
       el.innerHTML = `<span class="detail-empty-text">ไม่ได้ระบุที่เก็บ</span>`;
     }
@@ -18133,10 +18168,10 @@ function setupEventListeners() {
     const currentSource = (state.currentDetailAsset?.source || 'Demo').trim().toLowerCase();
 
     const standardSources = [
-      { value: 'Demo', display: '1. Demo', icon: '🏷️', sub: 'คลังเครื่องตัวอย่าง' },
-      { value: 'Supplier', display: '2. Supplier', icon: '🏭', sub: 'เครื่องส่งคืน / ยืมจากผู้ผลิต' },
-      { value: 'คลังขาย', display: '3. คลังขาย', icon: '💼', sub: 'คลังสินค้าสำหรับจำหน่าย' },
-      { value: 'ทดแทนระหว่างซ่อม', display: '4. ทดแทนระหว่างซ่อม', icon: '🔧', sub: 'เครื่องสำรองระหว่างซ่อม' }
+      { value: 'Demo', display: '1. Demo', icon: APP_ICONS.tag, sub: 'คลังเครื่องตัวอย่าง' },
+      { value: 'Supplier', display: '2. Supplier', icon: APP_ICONS.factory, sub: 'เครื่องส่งคืน / ยืมจากผู้ผลิต' },
+      { value: 'คลังขาย', display: '3. คลังขาย', icon: APP_ICONS.briefcase, sub: 'คลังสินค้าสำหรับจำหน่าย' },
+      { value: 'ทดแทนระหว่างซ่อม', display: '4. ทดแทนระหว่างซ่อม', icon: APP_ICONS.tool, sub: 'เครื่องสำรองระหว่างซ่อม' }
     ];
 
     const srcMap = new Map();
@@ -18148,7 +18183,7 @@ function setupEventListeners() {
         srcMap.set(s.toLowerCase(), {
           value: s,
           display: s,
-          icon: '📦',
+          icon: APP_ICONS.box,
           sub: 'คลังสินค้า'
         });
       }
@@ -18195,7 +18230,7 @@ function setupEventListeners() {
 
     const headerHtml = `
       <div class="dropdown-header-bar">
-        <span class="dropdown-header-title">📍 เลือกที่เก็บประจำ (${filtered.length})</span>
+        <span class="dropdown-header-title" style="display:inline-flex; align-items:center; gap:6px;">${APP_ICONS.pin} <span>เลือกที่เก็บประจำ (${filtered.length})</span></span>
         <button type="button" class="btn-close-dropdown" id="btnCloseEditAssetLocDd" title="ปิด (✕)">✕</button>
       </div>
     `;
@@ -18205,7 +18240,9 @@ function setupEventListeners() {
       itemsHtml += `
         <div class="model-dropdown-item" data-select-edit-location="${escapeHtml(query.trim())}" style="background:#f0fdf4;">
           <div class="model-item-main">
-            <span class="model-item-name" style="color:#15803d;">➕ ใช้ที่เก็บใหม่: "${escapeHtml(query.trim())}"</span>
+            <span class="model-item-name" style="color:#15803d; display:inline-flex; align-items:center; gap:4px;">
+              ${APP_ICONS.plusMini} <span>ใช้ที่เก็บใหม่: "${escapeHtml(query.trim())}"</span>
+            </span>
             <span class="model-item-sub">บันทึกเป็นชื่อที่เก็บตามที่พิมพ์</span>
           </div>
           <span class="model-item-badge badge-avail">+ เลือก</span>
@@ -18218,7 +18255,7 @@ function setupEventListeners() {
       itemsHtml += `
         <div class="model-dropdown-item" data-select-edit-location="${escapeHtml(loc)}">
           <div class="model-item-main">
-            <span class="model-item-name">📍 ${escapeHtml(loc)}</span>
+            <span class="model-item-name" style="display:inline-flex; align-items:center; gap:6px;">${APP_ICONS.pin} <span>${escapeHtml(loc)}</span></span>
             <span class="model-item-sub">ตำแหน่งจัดเก็บ</span>
           </div>
           <span class="model-count-box count-full"><span class="count-num">${locAssetsCount} เครื่อง</span></span>
@@ -18268,12 +18305,12 @@ function setupEventListeners() {
     const catIconEl = document.getElementById('assetDetailCatIcon');
     if (catIconEl) {
       const cat = (asset.category || '').toLowerCase();
-      if (cat.includes('printer') || cat.includes('พิมพ์')) catIconEl.textContent = '🖨️';
-      else if (cat.includes('scanner') || cat.includes('สแกน')) catIconEl.textContent = '📟';
-      else if (cat.includes('tablet') || cat.includes('แท็บเล็ต')) catIconEl.textContent = '📲';
-      else if (cat.includes('rfid')) catIconEl.textContent = '📡';
-      else if (cat.includes('computer') || cat.includes('mobile')) catIconEl.textContent = '📱';
-      else catIconEl.textContent = '📦';
+      if (cat.includes('printer') || cat.includes('พิมพ์')) catIconEl.innerHTML = APP_ICONS.printerCategory;
+      else if (cat.includes('scanner') || cat.includes('สแกน')) catIconEl.innerHTML = APP_ICONS.barcode;
+      else if (cat.includes('tablet') || cat.includes('แท็บเล็ต')) catIconEl.innerHTML = APP_ICONS.tablet;
+      else if (cat.includes('rfid')) catIconEl.innerHTML = APP_ICONS.radio;
+      else if (cat.includes('computer') || cat.includes('mobile')) catIconEl.innerHTML = APP_ICONS.mobile;
+      else catIconEl.innerHTML = APP_ICONS.box;
     }
 
     const tagBadge = document.getElementById('assetDetailTagBadge');
@@ -18426,13 +18463,13 @@ function setupEventListeners() {
   // ASSET DISPOSITION (จำหน่ายออก & นำกลับเข้าคลัง)
   // --------------------------------------------------------------------------
   const DISPOSE_REASONS = [
-    { value: 'ขายสินค้าให้ลูกค้า (Sales Stock)', title: 'ขายสินค้าให้ลูกค้า (Sales Stock)', desc: 'จำหน่ายเครื่องจากคลังขายส่งมอบให้ลูกค้าสำเร็จ', icon: '🏷️', badge: 'ขาย' },
-    { value: 'ส่งคืน Supplier / คืนเจ้าของเครื่อง', title: 'ส่งคืน Supplier / คืนเจ้าของเครื่อง', desc: 'ส่งคืนตัวเดโมให้ซัพพลายเออร์หรือบริษัทเจ้าของสินค้า', icon: '🔄', badge: 'ส่งคืน' },
-    { value: 'ตัดจำหน่ายชำรุด / เสื่อมสภาพ', title: 'ตัดจำหน่ายชำรุด / เสื่อมสภาพ', desc: 'เครื่องชำรุดเสียหายหนัก ไม่คุ้มค่าการซ่อม หรือหมดอายุการใช้งาน', icon: '⚠️', badge: 'ชำรุด' },
-    { value: 'โอนย้ายไปสาขาอื่น', title: 'โอนย้ายไปสาขาอื่น', desc: 'ตัดโอนย้ายสินทรัพย์ไปยังสาขาหรือสำนักงานอื่น', icon: '🚚', badge: 'โอนย้าย' },
-    { value: 'สูญหาย / ตรวจนับไม่พบ', title: 'สูญหาย / ตรวจนับไม่พบ', desc: 'ตรวจสอบสต็อกแล้วไม่พบเครื่อง หรือสูญหายระหว่างใช้งาน', icon: '🔍', badge: 'สูญหาย' },
-    { value: 'หมดความจำเป็นในการใช้งาน (Obsolete)', title: 'หมดความจำเป็นในการใช้งาน (Obsolete)', desc: 'ตกรุ่น หรือไม่มีความต้องการนำไปเดโมต่อในอนาคต', icon: '📦', badge: 'ตกรุ่น' },
-    { value: 'อื่นๆ', title: 'อื่นๆ (ระบุเอง)', desc: 'ระบุเหตุผลอื่นๆ ตามความเหมาะสม', icon: '✏️', badge: 'กำหนดเอง' }
+    { value: 'ขายสินค้าให้ลูกค้า (Sales Stock)', title: 'ขายสินค้าให้ลูกค้า (Sales Stock)', desc: 'จำหน่ายเครื่องจากคลังขายส่งมอบให้ลูกค้าสำเร็จ', icon: APP_ICONS.tag, badge: 'ขาย' },
+    { value: 'ส่งคืน Supplier / คืนเจ้าของเครื่อง', title: 'ส่งคืน Supplier / คืนเจ้าของเครื่อง', desc: 'ส่งคืนตัวเดโมให้ซัพพลายเออร์หรือบริษัทเจ้าของสินค้า', icon: APP_ICONS.sync, badge: 'ส่งคืน' },
+    { value: 'ตัดจำหน่ายชำรุด / เสื่อมสภาพ', title: 'ตัดจำหน่ายชำรุด / เสื่อมสภาพ', desc: 'เครื่องชำรุดเสียหายหนัก ไม่คุ้มค่าการซ่อม หรือหมดอายุการใช้งาน', icon: APP_ICONS.alert, badge: 'ชำรุด' },
+    { value: 'โอนย้ายไปสาขาอื่น', title: 'โอนย้ายไปสาขาอื่น', desc: 'ตัดโอนย้ายสินทรัพย์ไปยังสาขาหรือสำนักงานอื่น', icon: APP_ICONS.truck, badge: 'โอนย้าย' },
+    { value: 'สูญหาย / ตรวจนับไม่พบ', title: 'สูญหาย / ตรวจนับไม่พบ', desc: 'ตรวจสอบสต็อกแล้วไม่พบเครื่อง หรือสูญหายระหว่างใช้งาน', icon: APP_ICONS.search, badge: 'สูญหาย' },
+    { value: 'หมดความจำเป็นในการใช้งาน (Obsolete)', title: 'หมดความจำเป็นในการใช้งาน (Obsolete)', desc: 'ตกรุ่น หรือไม่มีความต้องการนำไปเดโมต่อในอนาคต', icon: APP_ICONS.box, badge: 'ตกรุ่น' },
+    { value: 'อื่นๆ', title: 'อื่นๆ (ระบุเอง)', desc: 'ระบุเหตุผลอื่นๆ ตามความเหมาะสม', icon: APP_ICONS.edit, badge: 'กำหนดเอง' }
   ];
 
   function renderDisposeReasonDropdown(query = '') {
@@ -18457,7 +18494,9 @@ function setupEventListeners() {
       itemsHtml = `
         <div class="model-dropdown-item custom-add" data-select-dispose-reason="${escapeHtml(q)}">
           <div class="model-item-main">
-            <span class="model-item-name">➕ ใช้สาเหตุใหม่: "${escapeHtml(q)}"</span>
+            <span class="model-item-name" style="display:inline-flex; align-items:center; gap:5px; color:#15803d;">
+              ${APP_ICONS.plusMini} <span>ใช้สาเหตุใหม่: "${escapeHtml(q)}"</span>
+            </span>
             <span class="model-item-sub">บันทึกเป็นสาเหตุการจำหน่าย</span>
           </div>
         </div>
@@ -18466,7 +18505,7 @@ function setupEventListeners() {
       itemsHtml = filtered.map(r => `
         <div class="model-dropdown-item" data-select-dispose-reason="${escapeHtml(r.value)}">
           <div class="model-item-main">
-            <span class="model-item-name">${r.icon} ${escapeHtml(r.title)}</span>
+            <span class="model-item-name" style="display:inline-flex; align-items:center; gap:6px;">${r.icon} <span>${escapeHtml(r.title)}</span></span>
             <span class="model-item-sub">${escapeHtml(r.desc)}</span>
           </div>
           <span class="model-count-box count-full"><span class="count-num">${escapeHtml(r.badge)}</span></span>
@@ -18477,7 +18516,7 @@ function setupEventListeners() {
         itemsHtml += `
           <div class="model-dropdown-item custom-add" data-select-dispose-reason="${escapeHtml(q)}">
             <div class="model-item-main">
-              <span class="model-item-name">➕ ใช้สาเหตุใหม่: "${escapeHtml(q)}"</span>
+              <span class="model-item-name" style="display:inline-flex; align-items:center; gap:5px;">${APP_ICONS.plusMini} <span>ใช้สาเหตุใหม่: "${escapeHtml(q)}"</span></span>
               <span class="model-item-sub">บันทึกเป็นสาเหตุการจำหน่าย</span>
             </div>
           </div>
@@ -18524,7 +18563,9 @@ function setupEventListeners() {
       itemsHtml = `
         <div class="model-dropdown-item custom-add" data-select-reactivate-loc="${escapeHtml(q)}">
           <div class="model-item-main">
-            <span class="model-item-name">➕ ใช้ที่เก็บใหม่: "${escapeHtml(q)}"</span>
+            <span class="model-item-name" style="display:inline-flex; align-items:center; gap:4px; color:#15803d;">
+              ${APP_ICONS.plusMini} <span>ใช้ที่เก็บใหม่: "${escapeHtml(q)}"</span>
+            </span>
             <span class="model-item-sub">บันทึกเป็นสถานที่จัดเก็บ</span>
           </div>
         </div>
@@ -18533,7 +18574,9 @@ function setupEventListeners() {
       itemsHtml = filtered.map(loc => `
         <div class="model-dropdown-item" data-select-reactivate-loc="${escapeHtml(loc)}">
           <div class="model-item-main">
-            <span class="model-item-name">📍 ${escapeHtml(loc)}</span>
+            <span class="model-item-name" style="display:inline-flex; align-items:center; gap:6px;">
+              ${APP_ICONS.pin} <span>${escapeHtml(loc)}</span>
+            </span>
             <span class="model-item-sub">ตำแหน่งจัดเก็บในคลัง</span>
           </div>
         </div>
@@ -18543,7 +18586,9 @@ function setupEventListeners() {
         itemsHtml += `
           <div class="model-dropdown-item custom-add" data-select-reactivate-loc="${escapeHtml(q)}">
             <div class="model-item-main">
-              <span class="model-item-name">➕ ใช้ที่เก็บใหม่: "${escapeHtml(q)}"</span>
+              <span class="model-item-name" style="display:inline-flex; align-items:center; gap:4px; color:#15803d;">
+                ${APP_ICONS.plusMini} <span>ใช้ที่เก็บใหม่: "${escapeHtml(q)}"</span>
+              </span>
               <span class="model-item-sub">บันทึกเป็นสถานที่จัดเก็บ</span>
             </div>
           </div>
@@ -18762,11 +18807,11 @@ function setupEventListeners() {
 
     const modelDisplay = asset.brand ? `${asset.brand} ${asset.model}` : asset.model;
     const confirmed = await showConfirmDialog({
-      title: '🗑️ ยืนยันการลบเครื่องออกจากระบบ',
+      title: 'ยืนยันการลบเครื่องออกจากระบบ',
       message: `คุณต้องการลบเครื่อง "${modelDisplay}" (รหัส ${asset.tag_id}, S/N: ${asset.serial_no || '-'}) ออกจากฐานข้อมูลคลังสินค้าใช่หรือไม่?\n\nการกระทำนี้จะลบข้อมูลเครื่องถาวร ไม่สามารถย้อนกลับได้`,
       itemText: `${asset.tag_id}: ${modelDisplay}`,
-      icon: '🗑️',
-      confirmText: '🗑️ ยืนยันลบเครื่อง',
+      icon: APP_ICONS.trash,
+      confirmText: 'ยืนยันลบเครื่อง',
       cancelText: 'ยกเลิก',
       confirmBtnClass: 'btn-danger'
     });
@@ -18995,7 +19040,7 @@ function setupEventListeners() {
       </div>
     `).join('') + `
       <div class="demo-photo-thumb-card demo-photo-add-more" title="คลิกเพื่อเพิ่มรูปภาพอีก">
-        <span class="add-more-icon">➕</span>
+        <span class="add-more-icon">${APP_ICONS.plusMini}</span>
         <span class="add-more-text">เพิ่มรูป</span>
       </div>
     `;
@@ -19653,7 +19698,7 @@ function setupEventListeners() {
       </div>
     `).join('') + `
       <div class="demo-photo-thumb-card demo-photo-add-more" title="คลิกเพื่อเพิ่มรูปภาพอีก">
-        <span class="add-more-icon">➕</span>
+        <span class="add-more-icon">${APP_ICONS.plusMini}</span>
         <span class="add-more-text">เพิ่มรูป</span>
       </div>
     `;
@@ -19854,10 +19899,10 @@ function setupEventListeners() {
     }
 
     const standardSources = [
-      { value: 'Demo', display: '1. Demo', icon: '🏷️', sub: 'คลังเครื่องตัวอย่าง' },
-      { value: 'Supplier', display: '2. Supplier', icon: '🏭', sub: 'เครื่องส่งคืน / ยืมจากผู้ผลิต' },
-      { value: 'คลังขาย', display: '3. คลังขาย', icon: '💼', sub: 'คลังสินค้าสำหรับจำหน่าย' },
-      { value: 'ทดแทนระหว่างซ่อม', display: '4. ทดแทนระหว่างซ่อม', icon: '🔧', sub: 'เครื่องสำรองระหว่างซ่อม' }
+      { value: 'Demo', display: '1. Demo', icon: APP_ICONS.tag, sub: 'คลังเครื่องตัวอย่าง' },
+      { value: 'Supplier', display: '2. Supplier', icon: APP_ICONS.factory, sub: 'เครื่องส่งคืน / ยืมจากผู้ผลิต' },
+      { value: 'คลังขาย', display: '3. คลังขาย', icon: APP_ICONS.briefcase, sub: 'คลังสินค้าสำหรับจำหน่าย' },
+      { value: 'ทดแทนระหว่างซ่อม', display: '4. ทดแทนระหว่างซ่อม', icon: APP_ICONS.tool, sub: 'เครื่องสำรองระหว่างซ่อม' }
     ];
 
     const srcMap = new Map();
@@ -19869,7 +19914,7 @@ function setupEventListeners() {
         srcMap.set(s.toLowerCase(), {
           value: s,
           display: s,
-          icon: '📦',
+          icon: APP_ICONS.box,
           sub: 'คลังสินค้า'
         });
       }
@@ -19882,7 +19927,7 @@ function setupEventListeners() {
 
     const headerHtml = `
       <div class="dropdown-header-bar">
-        <span class="dropdown-header-title">📦 เลือกคลังจัดเก็บ (${filtered.length})</span>
+        <span class="dropdown-header-title" style="display:inline-flex; align-items:center; gap:6px;">${APP_ICONS.box} <span>เลือกคลังจัดเก็บ (${filtered.length})</span></span>
         <button type="button" class="btn-close-dropdown" id="btnCloseAddDemoSourceDd" title="ปิด (✕)">✕</button>
       </div>
     `;
@@ -19893,7 +19938,7 @@ function setupEventListeners() {
       itemsHtml += `
         <div class="model-dropdown-item" data-select-demo-source-val="${escapeHtml(s.value)}" data-select-demo-source-name="${escapeHtml(s.display)}">
           <div class="model-item-main">
-            <span class="model-item-name">${s.icon} ${escapeHtml(s.display)}</span>
+            <span class="model-item-name" style="display:inline-flex; align-items:center; gap:6px;">${s.icon} <span>${escapeHtml(s.display)}</span></span>
             <span class="model-item-sub">${escapeHtml(s.sub)}</span>
           </div>
           <span class="model-count-box count-full"><span class="count-num">${srcCount} เครื่อง</span></span>
@@ -19950,7 +19995,7 @@ function setupEventListeners() {
     const titleSuffix = brandInpVal ? ` - ${escapeHtml(brandInpVal)}` : '';
     const headerHtml = `
       <div class="dropdown-header-bar">
-        <span class="dropdown-header-title">🏷️ เลือกรุ่นสินค้า${titleSuffix} (${filtered.length})</span>
+        <span class="dropdown-header-title" style="display:inline-flex; align-items:center; gap:6px;">${APP_ICONS.tag} <span>เลือกรุ่นสินค้า${titleSuffix} (${filtered.length})</span></span>
         <button type="button" class="btn-close-dropdown" id="btnCloseAddDemoModelDd" title="ปิด (✕)">✕</button>
       </div>
     `;
@@ -19960,7 +20005,9 @@ function setupEventListeners() {
       itemsHtml += `
         <div class="model-dropdown-item" data-select-demo-custom-model="${escapeHtml(query.trim())}" style="background:#f0fdf4;">
           <div class="model-item-main">
-            <span class="model-item-name" style="color:#15803d;">➕ ใช้รุ่นใหม่: "${escapeHtml(query.trim())}"</span>
+            <span class="model-item-name" style="color:#15803d; display:inline-flex; align-items:center; gap:4px;">
+              ${APP_ICONS.plusMini} <span>ใช้รุ่นใหม่: "${escapeHtml(query.trim())}"</span>
+            </span>
             <span class="model-item-sub">บันทึกเป็นชื่อรุ่นตามที่พิมพ์</span>
           </div>
           <span class="model-item-badge badge-avail">+ เลือก</span>
@@ -20059,7 +20106,7 @@ function setupEventListeners() {
 
     const headerHtml = `
       <div class="dropdown-header-bar">
-        <span class="dropdown-header-title">🏷️ เลือกยี่ห้อ (Brand) (${filtered.length})</span>
+        <span class="dropdown-header-title" style="display:inline-flex; align-items:center; gap:6px;">${APP_ICONS.tag} <span>เลือกยี่ห้อ (Brand) (${filtered.length})</span></span>
         <button type="button" class="btn-close-dropdown" id="btnCloseAddDemoBrandDd" title="ปิด (✕)">✕</button>
       </div>
     `;
@@ -20069,7 +20116,9 @@ function setupEventListeners() {
       itemsHtml += `
         <div class="model-dropdown-item" data-select-demo-brand-val="${escapeHtml(query.trim())}" style="background:#f0fdf4;">
           <div class="model-item-main">
-            <span class="model-item-name" style="color:#15803d;">➕ ใช้ยี่ห้อใหม่: "${escapeHtml(query.trim())}"</span>
+            <span class="model-item-name" style="color:#15803d; display:inline-flex; align-items:center; gap:4px;">
+              ${APP_ICONS.plusMini} <span>ใช้ยี่ห้อใหม่: "${escapeHtml(query.trim())}"</span>
+            </span>
             <span class="model-item-sub">บันทึกเป็นชื่อยี่ห้อตามที่พิมพ์</span>
           </div>
           <span class="model-item-badge badge-avail">+ เลือก</span>
@@ -20122,7 +20171,7 @@ function setupEventListeners() {
 
     const headerHtml = `
       <div class="dropdown-header-bar">
-        <span class="dropdown-header-title">📍 เลือกที่เก็บประจำ (${filtered.length})</span>
+        <span class="dropdown-header-title" style="display:inline-flex; align-items:center; gap:6px;">${APP_ICONS.pin} <span>เลือกที่เก็บประจำ (${filtered.length})</span></span>
         <button type="button" class="btn-close-dropdown" id="btnCloseAddDemoLocDd" title="ปิด (✕)">✕</button>
       </div>
     `;
@@ -20132,7 +20181,9 @@ function setupEventListeners() {
       itemsHtml += `
         <div class="model-dropdown-item" data-select-demo-loc-val="${escapeHtml(query.trim())}" style="background:#f0fdf4;">
           <div class="model-item-main">
-            <span class="model-item-name" style="color:#15803d;">➕ ใช้ที่เก็บใหม่: "${escapeHtml(query.trim())}"</span>
+            <span class="model-item-name" style="color:#15803d; display:inline-flex; align-items:center; gap:4px;">
+              ${APP_ICONS.plusMini} <span>ใช้ที่เก็บใหม่: "${escapeHtml(query.trim())}"</span>
+            </span>
             <span class="model-item-sub">บันทึกเป็นชื่อที่เก็บตามที่พิมพ์</span>
           </div>
           <span class="model-item-badge badge-avail">+ เลือก</span>
@@ -20176,12 +20227,12 @@ function setupEventListeners() {
     const q = (query || '').trim().toLowerCase();
 
     const defaultCategories = [
-      { name: 'Mobile Computer', icon: '📱', desc: 'คอมพิวเตอร์พกพา / Handheld Terminal' },
-      { name: 'Barcode Printer', icon: '🖨️', desc: 'เครื่องพิมพ์บาร์โค้ด / สติกเกอร์' },
-      { name: 'Barcode Scanner', icon: '📷', desc: 'เครื่องสแกนบาร์โค้ด / 2D Imager' },
-      { name: 'RFID Reader', icon: '📡', desc: 'เครื่องอ่าน RFID / Fixed & Mobile' },
-      { name: 'Tablet', icon: '📟', desc: 'แท็บเล็ตอุตสาหกรรม (Rugged Tablet)' },
-      { name: 'อื่นๆ', icon: '📦', desc: 'อุปกรณ์อื่นๆ / Other Accessories' }
+      { name: 'Mobile Computer', icon: APP_ICONS.mobile, desc: 'คอมพิวเตอร์พกพา / Handheld Terminal' },
+      { name: 'Barcode Printer', icon: APP_ICONS.printerCategory, desc: 'เครื่องพิมพ์บาร์โค้ด / สติกเกอร์' },
+      { name: 'Barcode Scanner', icon: APP_ICONS.barcode, desc: 'เครื่องสแกนบาร์โค้ด / 2D Imager' },
+      { name: 'RFID Reader', icon: APP_ICONS.radio, desc: 'เครื่องอ่าน RFID / Fixed & Mobile' },
+      { name: 'Tablet', icon: APP_ICONS.tablet, desc: 'แท็บเล็ตอุตสาหกรรม (Rugged Tablet)' },
+      { name: 'อื่นๆ', icon: APP_ICONS.box, desc: 'อุปกรณ์อื่นๆ / Other Accessories' }
     ];
 
     const catMap = new Map();
@@ -20191,7 +20242,7 @@ function setupEventListeners() {
       if (c.category && !catMap.has(c.category.trim().toLowerCase())) {
         catMap.set(c.category.trim().toLowerCase(), {
           name: c.category.trim(),
-          icon: '📦',
+          icon: APP_ICONS.box,
           desc: 'หมวดหมู่อุปกรณ์'
         });
       }
@@ -20201,7 +20252,7 @@ function setupEventListeners() {
       if (a.category && !catMap.has(a.category.trim().toLowerCase())) {
         catMap.set(a.category.trim().toLowerCase(), {
           name: a.category.trim(),
-          icon: '📦',
+          icon: APP_ICONS.box,
           desc: 'หมวดหมู่อุปกรณ์'
         });
       }
@@ -20214,7 +20265,7 @@ function setupEventListeners() {
 
     const headerHtml = `
       <div class="dropdown-header-bar">
-        <span class="dropdown-header-title">🗂️ เลือกหมวดหมู่สินค้า (${filtered.length})</span>
+        <span class="dropdown-header-title" style="display:inline-flex; align-items:center; gap:6px;">${APP_ICONS.box} <span>เลือกหมวดหมู่สินค้า (${filtered.length})</span></span>
         <button type="button" class="btn-close-dropdown" id="btnCloseAddDemoCatDd" title="ปิด (✕)">✕</button>
       </div>
     `;
@@ -20224,7 +20275,9 @@ function setupEventListeners() {
       itemsHtml += `
         <div class="model-dropdown-item" data-select-demo-cat-val="${escapeHtml(query.trim())}" style="background:#f0fdf4;">
           <div class="model-item-main">
-            <span class="model-item-name" style="color:#15803d;">➕ ใช้หมวดหมู่ใหม่: "${escapeHtml(query.trim())}"</span>
+            <span class="model-item-name" style="color:#15803d; display:inline-flex; align-items:center; gap:4px;">
+              ${APP_ICONS.plusMini} <span>ใช้หมวดหมู่ใหม่: "${escapeHtml(query.trim())}"</span>
+            </span>
             <span class="model-item-sub">บันทึกเป็นชื่อหมวดหมู่ตามที่พิมพ์</span>
           </div>
           <span class="model-item-badge badge-avail">+ เลือก</span>
@@ -20237,7 +20290,7 @@ function setupEventListeners() {
       itemsHtml += `
         <div class="model-dropdown-item" data-select-demo-cat-val="${escapeHtml(cat.name)}">
           <div class="model-item-main">
-            <span class="model-item-name">${cat.icon} ${escapeHtml(cat.name)}</span>
+            <span class="model-item-name" style="display:inline-flex; align-items:center; gap:6px;">${cat.icon} <span>${escapeHtml(cat.name)}</span></span>
             <span class="model-item-sub">${escapeHtml(cat.desc)}</span>
           </div>
           <span class="model-count-box count-full"><span class="count-num">${catCount} เครื่อง</span></span>
@@ -20809,7 +20862,7 @@ function setupEventListeners() {
     if (!el) {
       const alertEl = document.getElementById('addDemoAlert');
       if (alertEl) {
-        alertEl.textContent = '⚠️ ' + errorMsg;
+        alertEl.textContent = errorMsg;
         alertEl.className = 'alert-banner';
         try { alertEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
       } else {
@@ -20827,7 +20880,7 @@ function setupEventListeners() {
 
     const errTextEl = document.createElement('div');
     errTextEl.className = 'field-error-text';
-    errTextEl.innerHTML = `⚠️ ${escapeHtml(errorMsg)}`;
+    errTextEl.innerHTML = `<span class="err-icon-svg" style="display:inline-flex; align-items:center; margin-right:4px;">${APP_ICONS.alert}</span><span>${escapeHtml(errorMsg)}</span>`;
     formGroup.appendChild(errTextEl);
 
     // Scroll problematic field smoothly into view inside modal scroll container
@@ -20896,7 +20949,7 @@ function setupEventListeners() {
     const saveBtn = document.getElementById('btnSaveAddDemo');
     if (saveBtn) {
       saveBtn.disabled = true;
-      saveBtn.textContent = '⏳ กำลังบันทึก...';
+      saveBtn.textContent = 'กำลังบันทึก...';
     }
 
     try {
@@ -20923,7 +20976,7 @@ function setupEventListeners() {
       if (!res.ok) {
         if (saveBtn) {
           saveBtn.disabled = false;
-          saveBtn.textContent = '✓ บันทึกเครื่อง Demo';
+          saveBtn.textContent = 'บันทึกเครื่อง Demo';
         }
         const err = data.error || 'บันทึกเครื่อง Demo ไม่สำเร็จ';
         if (/รุ่นสินค้า|Model/i.test(err)) {
@@ -20937,7 +20990,7 @@ function setupEventListeners() {
         } else {
           const alertEl = document.getElementById('addDemoAlert');
           if (alertEl) {
-            alertEl.textContent = '⚠️ ' + err;
+            alertEl.textContent = err;
             alertEl.className = 'alert-banner';
             try { alertEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
           } else {
@@ -20951,7 +21004,7 @@ function setupEventListeners() {
       document.getElementById('addDemoModalDialog')?.close();
       if (saveBtn) {
         saveBtn.disabled = false;
-        saveBtn.textContent = '✓ บันทึกเครื่อง Demo';
+        saveBtn.textContent = 'บันทึกเครื่อง Demo';
       }
       showToast(`✅ เพิ่มเครื่อง Demo ${data.createdTagId || tagId} เรียบร้อยแล้ว`);
 
@@ -21162,7 +21215,7 @@ function setupAuthSystem() {
     const ddAvatar = document.getElementById('userDropdownAvatar');
 
     if (user && user.name) {
-      const initial = user.name.trim().charAt(0) || '👤';
+      const initial = user.name.trim().charAt(0) || 'U';
       if (navName) navName.textContent = user.name;
       if (navAvatar) {
         if (user.picture) {
@@ -21187,7 +21240,7 @@ function setupAuthSystem() {
       applyPermissionsToUI();
     } else {
       if (navName) navName.textContent = 'เข้าสู่ระบบ';
-      if (navAvatar) navAvatar.textContent = '👤';
+      if (navAvatar) navAvatar.innerHTML = APP_ICONS.user;
       if (state.authConfig.require_login) {
         document.documentElement.classList.add('is-unauthenticated');
         if (loginOverlay) loginOverlay.classList.remove('hidden');
@@ -21376,7 +21429,7 @@ function setupAuthSystem() {
         // If Google Client ID not yet entered in settings, guide user
         if (emailInput) {
           emailInput.focus();
-          showAlert('💡 กรอกอีเมล Google Workspace ของคุณ (เช่น @active5.co.th) เพื่อเข้าใช้งาน หรือไปที่เมนูตั้งค่าเพื่อผูก Google Client ID');
+          showAlert('กรอกอีเมล Google Workspace ของคุณ (เช่น @active5.co.th) เพื่อเข้าใช้งาน หรือไปที่เมนูตั้งค่าเพื่อผูก Google Client ID');
         }
       }
     });
@@ -21624,7 +21677,7 @@ function showLiveLoanNotification(loan) {
   toast.className = 'live-loan-toast';
   const company = loan.customer_company || loan.customer_name || '-';
   toast.innerHTML = `
-    <div class="live-toast-icon">🔔</div>
+    <div class="live-toast-icon">${APP_ICONS.bell}</div>
     <div class="live-toast-body">
       <div class="live-toast-title">มีใบยืมใหม่เข้ามา!</div>
       <div class="live-toast-desc"><strong>${escapeHtml(loan.id)}</strong> · ${escapeHtml(loan.borrower_name)} (${escapeHtml(company)})</div>
