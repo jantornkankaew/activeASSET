@@ -309,6 +309,9 @@ try {
   db.exec(`ALTER TABLE loans ADD COLUMN supplier_return_gps TEXT DEFAULT ''`);
 } catch (e) {}
 try {
+  db.exec(`ALTER TABLE loans ADD COLUMN supplier_return_signature TEXT DEFAULT ''`);
+} catch (e) {}
+try {
   db.exec(`ALTER TABLE loans ADD COLUMN sale_return_sender TEXT DEFAULT ''`);
 } catch (e) {}
 try {
@@ -4167,6 +4170,11 @@ const server = http.createServer(async (req, res) => {
         .map(p => saveBase64Image(p, `ret-sup-${loanId}`))
         .filter(Boolean);
 
+      const rawSupSig = String(body.supplier_return_signature || '').trim();
+      const supplierSignature = rawSupSig.startsWith('data:image/')
+        ? saveBase64Image(rawSupSig, `sig-sup-ret-${loanId}`)
+        : rawSupSig;
+
       const saleSender = String(body.sale_return_sender || '').trim();
       const saleTimestamp = String(body.sale_return_timestamp || '').trim();
       const saleNote = String(body.sale_return_note || '').trim();
@@ -4251,6 +4259,8 @@ const server = http.createServer(async (req, res) => {
               supplier_return_note = COALESCE(NULLIF(?, ''), supplier_return_note),
               supplier_return_gps = COALESCE(NULLIF(?, ''), supplier_return_gps),
               supplier_return_photos_json = ?,
+              supplier_return_signature = COALESCE(NULLIF(?, ''), supplier_return_signature),
+              receiver_signature = COALESCE(NULLIF(?, ''), receiver_signature),
               sale_return_sender = COALESCE(NULLIF(?, ''), sale_return_sender),
               sale_return_timestamp = COALESCE(NULLIF(?, ''), sale_return_timestamp),
               sale_return_note = COALESCE(NULLIF(?, ''), sale_return_note),
@@ -4265,6 +4275,8 @@ const server = http.createServer(async (req, res) => {
           supplierNote,
           supplierGps,
           JSON.stringify(combinedPhotos),
+          supplierSignature,
+          supplierSignature,
           saleSender,
           saleTimestamp,
           saleNote,

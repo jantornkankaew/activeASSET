@@ -8194,6 +8194,19 @@ function setupDigitalSignatureModal() {
 
     const saveBtn = document.getElementById('btnSaveDigitalSig');
 
+    // Case 0: Custom callback handler (e.g. Return Modal, Supplier/Sales Return, Delivery Modal)
+    if (typeof state.customSignatureCallback === 'function') {
+      try {
+        state.customSignatureCallback(sigData);
+      } catch (err) {
+        console.error('customSignatureCallback error:', err);
+      }
+      state.customSignatureCallback = null;
+      modal.close();
+      showToast('✅ เซ็นชื่อเรียบร้อย');
+      return;
+    }
+
     // Case 1: Saving system default dispatcher signature from Company Settings
     if (state.activeSigRole === 'dispatcher_setting') {
       if (saveBtn) {
@@ -8369,8 +8382,13 @@ function setupDigitalSignatureModal() {
     }
   });
 
-  window.openDigitalSigModalForRole = function(role) {
-    if (role !== 'dispatcher_setting') {
+  window.openDigitalSigModalForRole = function(role, options = {}) {
+    if (typeof options === 'function') {
+      options = { onSave: options };
+    }
+    state.customSignatureCallback = options.onSave || null;
+
+    if (role !== 'dispatcher_setting' && !state.customSignatureCallback) {
       if (!state.activePrintLoanId && state.loans.length > 0) {
         state.activePrintLoanId = state.loans[0].id;
       }
@@ -8391,13 +8409,15 @@ function setupDigitalSignatureModal() {
     const roleTitles = {
       borrower: 'ผู้ยืม / ผู้รับเครื่อง',
       dispatcher: 'ผู้จ่ายเครื่อง / คลัง',
-      receiver: 'ผู้ตรวจรับคืน (QC)'
+      receiver: 'ผู้ตรวจรับคืน (QC)',
+      return_receiver: 'ผู้รับคืนสินค้า / ตัวแทน Supplier'
     };
     const loan = state.loans.find(l => l.id === state.activePrintLoanId);
     const rolePersons = {
       borrower: (loan && (loan.customer_name || loan.borrower_name)) || '',
       dispatcher: 'เจ้าหน้าที่คลัง',
-      receiver: (loan && (loan.return_receiver || 'เจ้าหน้าที่ QC')) || ''
+      receiver: (loan && (loan.return_receiver || 'เจ้าหน้าที่ QC')) || '',
+      return_receiver: 'ผู้รับคืนสินค้า'
     };
 
     const titleEl = document.getElementById('sigModalTitle');
@@ -8406,7 +8426,12 @@ function setupDigitalSignatureModal() {
     const chkSaveDefaultWrap = document.getElementById('lblSaveDefaultDispatcherSig');
     const chkSaveDefault = document.getElementById('chkSaveDefaultDispatcherSig');
 
-    if (role === 'dispatcher_setting') {
+    if (options.title) {
+      if (titleEl) titleEl.textContent = options.title;
+      if (subEl) subEl.textContent = options.subtitle || '';
+      if (chkSaveDefaultWrap) chkSaveDefaultWrap.classList.add('hidden');
+      if (banner) banner.classList.add('hidden');
+    } else if (role === 'dispatcher_setting') {
       if (titleEl) titleEl.textContent = 'บันทึกลายเซ็นผู้จ่ายเครื่อง';
       if (subEl) subEl.textContent = 'บันทึกเป็นลายเซ็นประจำโปรแกรม (ใช้ซ้ำทุกใบยืมอัตโนมัติ)';
       if (chkSaveDefaultWrap) chkSaveDefaultWrap.classList.add('hidden');
@@ -12181,6 +12206,7 @@ function clearSignatureCanvas() {
 // SUPPLIER & SALES STOCK RETURN (คืน Supplier, คลังขาย)
 // ============================================================================
 let currentSupplierReturnPhotos = [];
+let currentSupplierReturnSignature = '';
 let currentSaleActions = {};
 
 function setupSupplierSaleReturnModal() {
@@ -12240,6 +12266,7 @@ function setupSupplierSaleReturnModal() {
         supplier_return_note: noteVal,
         supplier_return_gps: gpsVal,
         supplier_return_photos: currentSupplierReturnPhotos,
+        supplier_return_signature: currentSupplierReturnSignature,
         sale_return_sender: senderVal,
         sale_return_timestamp: timestampVal || new Date().toISOString(),
         sale_return_note: noteVal,
@@ -12438,6 +12465,37 @@ function attachSupplierSaleModalEvents() {
   refreshGpsBtn?.addEventListener('click', () => {
     captureSupGps();
   });
+
+  // 7. Signature events for Receiver (เซ็นรับของคืน)
+  const btnOpenSig = document.getElementById('btnOpenSupRetSignature');
+  const btnEditSig = document.getElementById('btnEditSupSig');
+  const btnClearSig = document.getElementById('btnClearSupSig');
+
+  const triggerSigModal = () => {
+    const receiverName = (document.getElementById('supRetReceiver')?.value || '').trim() || 'ตัวแทน Supplier / คลัง';
+    openDigitalSigModalForRole('return_receiver', {
+      title: 'เซ็นรับของคืน',
+      subtitle: `ผู้รับคืนสินค้า • ${receiverName}`,
+      onSave: (sigData) => {
+        currentSupplierReturnSignature = sigData;
+        const previewEl = document.getElementById('supSigImgPreview');
+        if (previewEl) previewEl.src = sigData;
+        document.getElementById('supSigEmptyWrap')?.classList.add('hidden');
+        document.getElementById('supSigPreviewWrap')?.classList.remove('hidden');
+      }
+    });
+  };
+
+  btnOpenSig?.addEventListener('click', triggerSigModal);
+  btnEditSig?.addEventListener('click', triggerSigModal);
+
+  btnClearSig?.addEventListener('click', () => {
+    currentSupplierReturnSignature = '';
+    const previewEl = document.getElementById('supSigImgPreview');
+    if (previewEl) previewEl.src = '';
+    document.getElementById('supSigPreviewWrap')?.classList.add('hidden');
+    document.getElementById('supSigEmptyWrap')?.classList.remove('hidden');
+  });
 }
 
 function openSupplierSaleReturnModal(loanId) {
@@ -12445,6 +12503,7 @@ function openSupplierSaleReturnModal(loanId) {
   if (!loan) return;
   state.activeSupplierSaleLoan = loan;
   currentSupplierReturnPhotos = Array.isArray(loan.supplier_return_photos) ? [...loan.supplier_return_photos] : [];
+  currentSupplierReturnSignature = loan.supplier_return_signature || loan.receiver_signature || '';
   currentSaleActions = { ...(loan.sale_return_action || {}) };
 
   const dialog = document.getElementById('supplierSaleReturnDialog');
@@ -12605,6 +12664,31 @@ function openSupplierSaleReturnModal(loanId) {
         <div class="input-clearable-wrap">
           <input type="text" id="supRetReceiver" class="form-control" placeholder="ชื่อ-นามสกุล / ตำแหน่ง ผู้รับ" value="${escapeHtml(receiverVal)}" required autocomplete="off" />
           <button type="button" class="btn-input-clear ${receiverVal ? '' : 'hidden'}" data-clear-target="supRetReceiver" title="ล้างค่า">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 1.5: ปุ่มเซ็นรับของคืน (Signature Widget) -->
+    <div class="form-group" style="margin-bottom:14px;">
+      <div id="supSigEmptyWrap" class="${currentSupplierReturnSignature ? 'hidden' : ''}">
+        <button type="button" class="btn btn-outline" id="btnOpenSupRetSignature" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:10px 16px; border:1.5px dashed #93c5fd; background:#f0f7ff; color:#1d4ed8; font-weight:700; font-size:13px; border-radius:10px; cursor:pointer; transition:all 0.15s ease;">
+          <span style="font-size:16px;">✍️</span>
+          <span>เซ็นรับของคืน</span>
+        </button>
+      </div>
+
+      <div id="supSigPreviewWrap" class="${currentSupplierReturnSignature ? '' : 'hidden'}" style="display:flex; align-items:center; justify-content:space-between; padding:8px 14px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="display:flex; flex-direction:column; gap:2px;">
+            <span style="font-size:11.5px; color:#15803d; font-weight:700; display:flex; align-items:center; gap:4px;">
+              <span>✓</span> เซ็นรับของคืนแล้ว
+            </span>
+            <img id="supSigImgPreview" src="${escapeHtml(currentSupplierReturnSignature || '')}" alt="ลายเซ็นผู้รับคืน" style="height:44px; max-width:200px; object-fit:contain; background:#ffffff; border-radius:6px; padding:2px 8px; border:1px solid #e2e8f0;" />
+          </div>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button type="button" class="btn btn-sm btn-outline" id="btnEditSupSig" style="font-size:11.5px; padding:4px 10px; font-weight:600;">✎ เซ็นใหม่</button>
+          <button type="button" class="btn btn-sm btn-outline" id="btnClearSupSig" style="font-size:11.5px; padding:4px 8px; color:#ef4444; border-color:#fecaca;" title="ลบลายเซ็น">✕</button>
         </div>
       </div>
     </div>
@@ -12951,9 +13035,9 @@ function renderReturnSlipSheet(loan, sizeClass = 'size-a4') {
         <!-- 2. ผู้รับคืนสินค้า / ตัวแทน Supplier / คลังขาย -->
         <div class="gp-sig-box" data-sig-role="return-receiver">
           <div class="gp-sig-slot">
-            ${(loan.dispatcher_signature || state.companySettings?.dispatcher_signature) ? `
+            ${(loan.supplier_return_signature || loan.receiver_signature || loan.dispatcher_signature || state.companySettings?.dispatcher_signature) ? `
               <div class="gp-sig-preview-wrap">
-                <img class="gp-sig-img" src="${escapeHtml(loan.dispatcher_signature || state.companySettings?.dispatcher_signature)}" alt="ลายเซ็นผู้รับคืน" />
+                <img class="gp-sig-img" src="${escapeHtml(loan.supplier_return_signature || loan.receiver_signature || loan.dispatcher_signature || state.companySettings?.dispatcher_signature)}" alt="ลายเซ็นผู้รับคืน" />
               </div>
             ` : ''}
           </div>
