@@ -1463,15 +1463,15 @@
         <div id="supSaleContentWrap"></div>
       </div>
 
-      <footer class="modal-footer delivery-modal-footer" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-        <div style="display:flex; gap:8px;">
-          <button type="button" class="btn btn-outline" data-close-dialog="supplierSaleReturnDialog">ยกเลิก</button>
-          <button type="button" class="btn btn-sm btn-outline" id="btnRevertSupSaleReturn" style="color:#ef4444; border-color:#fecaca;" title="ย้อนสถานะกลับไปก่อนหน้า">
+      <footer class="modal-footer sup-sale-footer">
+        <div class="sup-sale-footer-secondary">
+          <button type="button" class="btn btn-sup-cancel" data-close-dialog="supplierSaleReturnDialog">ยกเลิก</button>
+          <button type="button" class="btn btn-sup-revert" id="btnRevertSupSaleReturn" title="ย้อนสถานะกลับไปก่อนหน้า">
             ↩️ ย้อนสถานะ
           </button>
         </div>
-        <div>
-          <button type="button" class="btn btn-primary btn-confirm-delivery" id="btnSubmitSupSaleReturn" style="background:#2563eb; border-color:#2563eb;">
+        <div class="sup-sale-footer-primary">
+          <button type="button" class="btn btn-primary btn-sup-submit" id="btnSubmitSupSaleReturn">
             📄 บันทึกและออกใบคืน
           </button>
         </div>
