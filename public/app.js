@@ -8771,7 +8771,6 @@ function setupCompanySettingsModal() {
   const btnHeaderSave = document.getElementById('btnHeaderSaveCompanySettings');
   const closeModal = (e) => smoothCloseDialog(modal, e?.currentTarget);
   if (btnClose) btnClose.addEventListener('click', closeModal);
-  if (btnCancel) btnCancel.addEventListener('click', closeModal);
   if (btnBack) btnBack.addEventListener('click', closeModal);
   if (btnHeaderSave) {
     btnHeaderSave.addEventListener('click', () => {
