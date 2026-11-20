@@ -5561,7 +5561,7 @@ function openDispatchModal(loanId, updateHash = true, forceReturnMode = false) {
       returned_at: it.returned_at || it.return_date || (it.returned && loan.return_date ? loan.return_date : null),
       selectedForReturn: isPendingQc ? isInQcQueue : false,
       scannedSn: '',
-      allAccessories: [...(it.loan_accessories || (assetObj ? assetObj.accessories : []) || [])],
+      allAccessories: [...new Set([...(it.loan_accessories || (assetObj ? assetObj.accessories : []) || []), ...(it.missing_accessories || [])])],
       missingAccessories: new Set(it.missing_accessories || []),
       qcStatus: it.qc_status === 'Fail' ? 'Fail' : 'Pass',
       qcNote: it.qc_note || '',
@@ -6251,7 +6251,9 @@ function renderDispatchTable() {
     tbody.innerHTML = (state.dispatchDraftItems || [])
       .map((row, rowIdx) => {
         const isReturned = Boolean(row.selectedForReturn);
-        const hasMissing = (row.missingAccessories || new Set()).size > 0;
+        const missingList = Array.from(row.missingAccessories || []);
+        const hasMissing = missingList.length > 0;
+        const missingStr = missingList.join(', ');
 
         return `
           <tr class="dispatch-row return-qc-row ${row.returned ? 'row-ret-completed' : (isReturned ? 'row-ret-checked' : 'row-ret-pending')}" data-ret-row="${rowIdx}">
@@ -6325,7 +6327,7 @@ function renderDispatchTable() {
                         }).join('')
                   }
                 </div>
-                ${hasMissing ? `<span style="font-size:11px; color:#ef4444; font-weight:600;">⚠️ อุปกรณ์ไม่ครบ (${(row.missingAccessories || new Set()).size} รายการ)</span>` : ''}
+                ${hasMissing ? `<span style="font-size:11.5px; color:#ef4444; font-weight:600; margin-top:3px; display:inline-block;">⚠️ อุปกรณ์ไม่ครบ (${missingList.length} รายการ): <strong style="text-decoration:underline;">${escapeHtml(missingStr)}</strong></span>` : ''}
               </div>
             </td>
             <!-- Step 3: หมายเหตุ (ถ้ามี) -->
