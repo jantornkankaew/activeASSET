@@ -17448,12 +17448,28 @@ function setupEventListeners() {
         return;
       }
 
-      const isReturned = Boolean(h.returned || h.loan_status === 'Returned');
-      const isOverdue = !isReturned && h.due_date && (new Date(h.due_date).getTime() < new Date().setHours(0,0,0,0));
+      const isReturnedComplete = Boolean(h.returned || h.loan_status === 'Returned');
+      const isWaitingSupplier = h.loan_status === 'Pending_Return_Supplier_Sale';
+      const isWaitingQc = h.loan_status === 'Pending_QC';
+      const hasReturnedFromCustomer = Boolean(h.returned_at || h.return_date || isReturnedComplete || isWaitingSupplier || isWaitingQc);
+
+      const rawReturnDate = h.returned_at || h.return_date || (hasReturnedFromCustomer ? (h.supplier_return_timestamp || h.sale_return_timestamp || h.updated_at) : null);
+      let returnDateDisplay = '—';
+      if (rawReturnDate) {
+        returnDateDisplay = String(rawReturnDate).slice(0, 10);
+      } else if (hasReturnedFromCustomer) {
+        returnDateDisplay = (h.checkout_date ? String(h.checkout_date).slice(0, 10) : 'คืนแล้ว');
+      }
+
+      const isOverdue = !hasReturnedFromCustomer && h.due_date && (new Date(h.due_date).getTime() < new Date().setHours(0,0,0,0));
 
       let stampHtml = '';
-      if (isReturned) {
+      if (isReturnedComplete) {
         stampHtml = '<span class="lib-stamp stamped-returned">✅ คืนแล้ว</span>';
+      } else if (isWaitingSupplier) {
+        stampHtml = '<span class="lib-stamp stamped-supplier">🚚 รอคืน Supplier</span>';
+      } else if (isWaitingQc) {
+        stampHtml = '<span class="lib-stamp stamped-qc">🔍 รอตรวจ QC</span>';
       } else if (isOverdue) {
         stampHtml = '<span class="lib-stamp stamped-overdue">🔴 เกินกำหนด</span>';
       } else {
@@ -17469,10 +17485,10 @@ function setupEventListeners() {
             <span class="lib-date-val">${escapeHtml(h.checkout_date || '—')}</span>
           </td>
           <td>
-            <span class="lib-date-val ${!isReturned ? 'due-ongoing' : ''}">${escapeHtml(h.due_date || '—')}</span>
+            <span class="lib-date-val ${!hasReturnedFromCustomer ? 'due-ongoing' : ''}">${escapeHtml(h.due_date || '—')}</span>
           </td>
           <td>
-            <span class="lib-date-val ${isReturned ? 'returned-ok' : ''}">${escapeHtml(isReturned ? (h.returned_at || h.return_date || 'คืนแล้ว') : '—')}</span>
+            <span class="lib-date-val ${hasReturnedFromCustomer ? 'returned-ok font-mono' : ''}">${escapeHtml(returnDateDisplay)}</span>
           </td>
           <td>
             <span class="lib-borrower-name">${escapeHtml(h.borrower_name || '—')}</span>

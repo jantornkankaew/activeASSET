@@ -324,6 +324,25 @@ try {
   db.exec(`ALTER TABLE loan_items ADD COLUMN return_action TEXT DEFAULT ''`);
 } catch (e) {}
 
+// Backfill return_date and returned_at for loans that have reached return or QC stages
+try {
+  db.exec(`
+    UPDATE loans 
+    SET return_date = COALESCE(NULLIF(return_date, ''), NULLIF(supplier_return_timestamp, ''), NULLIF(sale_return_timestamp, ''), datetime('now', 'localtime')) 
+    WHERE status IN ('Pending_QC', 'Pending_Return_Supplier_Sale', 'Returned') 
+      AND (return_date IS NULL OR return_date = '');
+  `);
+} catch (e) {}
+
+try {
+  db.exec(`
+    UPDATE loan_items
+    SET returned_at = COALESCE(NULLIF(returned_at, ''), (SELECT return_date FROM loans WHERE loans.id = loan_items.loan_id), datetime('now', 'localtime'))
+    WHERE loan_id IN (SELECT id FROM loans WHERE status IN ('Pending_QC', 'Pending_Return_Supplier_Sale', 'Returned'))
+      AND (returned_at IS NULL OR returned_at = '');
+  `);
+} catch (e) {}
+
 // Users & Corporate Authentication Table
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
@@ -4102,12 +4121,11 @@ const server = http.createServer(async (req, res) => {
           SET after_photos_json = ?,
               return_receiver = COALESCE(NULLIF(?, ''), return_receiver),
               status = ?,
-              return_date = CASE WHEN ? = 'Returned' THEN datetime('now', 'localtime') ELSE return_date END
+              return_date = COALESCE(return_date, datetime('now', 'localtime'))
           WHERE id = ?
         `).run(
           JSON.stringify(combinedAfterPhotos),
           returnReceiver,
-          nextLoanStatus,
           nextLoanStatus,
           loanId
         );
@@ -4238,7 +4256,7 @@ const server = http.createServer(async (req, res) => {
               sale_return_note = COALESCE(NULLIF(?, ''), sale_return_note),
               sale_return_action_json = ?,
               status = ?,
-              return_date = CASE WHEN ? = 'Returned' THEN datetime('now', 'localtime') ELSE return_date END
+              return_date = COALESCE(return_date, datetime('now', 'localtime'))
           WHERE id = ?
         `).run(
           supplierReceiver,
@@ -4251,7 +4269,6 @@ const server = http.createServer(async (req, res) => {
           saleTimestamp,
           saleNote,
           JSON.stringify(saleActions),
-          finalStatus,
           finalStatus,
           loanId
         );
@@ -4379,19 +4396,26 @@ const server = http.createServer(async (req, res) => {
           l.checkout_date,
           l.due_date,
           l.return_date,
+          l.supplier_return_timestamp,
+          l.sale_return_timestamp,
           l.status AS loan_status,
-          l.created_at
+          l.created_at,
+          l.after_photos_json
         FROM loan_items li
         JOIN loans l ON li.loan_id = l.id
         WHERE li.tag_id = ? OR (li.serial_no = ? AND ? != '')
         ORDER BY l.checkout_date DESC, l.created_at DESC
       `).all(tagId, asset.serial_no || '', asset.serial_no || '');
 
-      const history = historyRows.map(r => ({
-        ...r,
-        returned: Boolean(r.returned),
-        loan_accessories: JSON.parse(r.loan_accessories_json || '[]')
-      }));
+      const history = historyRows.map(r => {
+        const itemReturnedAt = r.returned_at || r.return_date || r.supplier_return_timestamp || r.sale_return_timestamp || null;
+        return {
+          ...r,
+          returned_at: itemReturnedAt,
+          returned: Boolean(r.returned),
+          loan_accessories: JSON.parse(r.loan_accessories_json || '[]')
+        };
+      });
 
       const dispositionLogs = db.prepare(`
         SELECT * FROM asset_disposition_logs

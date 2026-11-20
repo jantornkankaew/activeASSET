@@ -15408,6 +15408,18 @@ dialog.modal-send-email {
   background: #ecfdf5;
 }
 
+.lib-stamp.stamped-supplier {
+  color: #6d28d9;
+  border-color: #8b5cf6;
+  background: #f5f3ff;
+}
+
+.lib-stamp.stamped-qc {
+  color: #b45309;
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
 .lib-stamp.stamped-overdue {
   color: #b91c1c;
   border-color: #ef4444;
