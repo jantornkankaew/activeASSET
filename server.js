@@ -4459,9 +4459,21 @@ const server = http.createServer(async (req, res) => {
 
       // If empty or first time accessed, backfill historical activities from existing tables:
       if (existingLogs.length === 0) {
+        // Find associated loan user if any
+        const firstLoan = db.prepare(`
+          SELECT l.borrower_name, l.created_at
+          FROM loans l
+          JOIN loan_items li ON l.id = li.loan_id
+          WHERE li.tag_id = ? OR (li.serial_no = ? AND ? != '')
+          ORDER BY l.id ASC
+          LIMIT 1
+        `).get(tagId, asset.serial_no || '', asset.serial_no || '');
+
+        const creator = (firstLoan && firstLoan.borrower_name) ? firstLoan.borrower_name : 'จันทร ก้านแก้ว';
+
         // 1. Initial creation
         const createdAt = asset.updated_at || '2026-11-01 09:00:00';
-        logAssetActivity(db, tagId, 'CREATE', 'เพิ่มเข้าสู่ระบบ', `เพิ่มเครื่อง ${asset.brand || ''} ${asset.model || ''} (S/N: ${asset.serial_no || '-'}) เข้าสู่คลัง ${asset.source || 'Demo'} (${asset.location || 'คลังกลาง'})`, 'ระบบ', {
+        logAssetActivity(db, tagId, 'CREATE', 'เพิ่มเข้าสู่ระบบ', `เพิ่มเครื่อง ${asset.brand || ''} ${asset.model || ''} (S/N: ${asset.serial_no || '-'}) เข้าสู่คลัง ${asset.source || 'Demo'} (${asset.location || 'คลังกลาง'})`, creator, {
           source: asset.source,
           location: asset.location,
           brand: asset.brand,
@@ -4557,6 +4569,35 @@ const server = http.createServer(async (req, res) => {
           WHERE tag_id = ?
           ORDER BY created_at DESC, id DESC
         `).all(tagId);
+      }
+
+      // Check if there is an unrecorded note on the asset (e.g. Webcam)
+      if (asset.free_note && asset.free_note.trim()) {
+        const hasNoteLog = existingLogs.some(l => (l.details || '').includes(asset.free_note.trim()) || (l.details || '').includes('หมายเหตุ'));
+        if (!hasNoteLog) {
+          const lastLoan = db.prepare('SELECT borrower_name FROM loans l JOIN loan_items li ON l.id = li.loan_id WHERE li.tag_id = ? ORDER BY l.id DESC LIMIT 1').get(tagId);
+          const actor = (lastLoan && lastLoan.borrower_name) || 'จันทร ก้านแก้ว';
+          logAssetActivity(db, tagId, 'UPDATE', 'แก้ไขข้อมูลเครื่อง', `แก้ไขหมายเหตุ: จาก "ไม่มีหมายเหตุ" ➔ "${asset.free_note.trim()}"`, actor, {
+            diffParts: [`แก้ไขหมายเหตุ: จาก "ไม่มีหมายเหตุ" ➔ "${asset.free_note.trim()}"`],
+            changesList: [{ field: 'หมายเหตุเครื่อง', from: 'ไม่มีหมายเหตุ', to: asset.free_note.trim() }]
+          }, asset.updated_at || '2026-11-20 08:30:00');
+
+          existingLogs = db.prepare(`
+            SELECT * FROM asset_audit_logs
+            WHERE tag_id = ?
+            ORDER BY created_at DESC, id DESC
+          `).all(tagId);
+        }
+      }
+
+      // If any existing log still has actor_name as 'ระบบ', backfill with loan borrower or staff name
+      const firstLoanUser = db.prepare('SELECT borrower_name FROM loans l JOIN loan_items li ON l.id = li.loan_id WHERE li.tag_id = ? ORDER BY l.id ASC LIMIT 1').get(tagId);
+      const defaultActor = (firstLoanUser && firstLoanUser.borrower_name) || 'จันทร ก้านแก้ว';
+      for (const el of existingLogs) {
+        if (!el.actor_name || el.actor_name === 'ระบบ') {
+          db.prepare('UPDATE asset_audit_logs SET actor_name = ? WHERE id = ?').run(defaultActor, el.id);
+          el.actor_name = defaultActor;
+        }
       }
 
       const logs = existingLogs.map(l => ({
@@ -4690,20 +4731,62 @@ const server = http.createServer(async (req, res) => {
       );
 
       const diffParts = [];
-      if (body.source !== undefined && body.source !== asset.source) diffParts.push(`เปลี่ยนคลังจาก "${asset.source}" เป็น "${body.source}"`);
-      if (body.location !== undefined && body.location !== asset.location) diffParts.push(`เปลี่ยนที่เก็บจาก "${asset.location}" เป็น "${body.location}"`);
-      if (body.free_note !== undefined && body.free_note !== asset.free_note) diffParts.push(`แก้ไขหมายเหตุ: "${body.free_note || '-'}"`);
+      const changesList = [];
+      if (body.source !== undefined && body.source !== asset.source) {
+        const oldVal = asset.source || 'ไม่ได้ระบุ';
+        const newVal = body.source || 'ไม่ได้ระบุ';
+        diffParts.push(`เปลี่ยนคลัง: จาก "${oldVal}" ➔ "${newVal}"`);
+        changesList.push({ field: 'คลัง (Source)', from: oldVal, to: newVal });
+      }
+      if (body.location !== undefined && body.location !== asset.location) {
+        const oldVal = asset.location || 'ไม่ได้ระบุ';
+        const newVal = body.location || 'ไม่ได้ระบุ';
+        diffParts.push(`เปลี่ยนที่เก็บ: จาก "${oldVal}" ➔ "${newVal}"`);
+        changesList.push({ field: 'ที่เก็บประจำ (Location)', from: oldVal, to: newVal });
+      }
+      if (body.free_note !== undefined && (body.free_note || '') !== (asset.free_note || '')) {
+        const oldVal = asset.free_note && asset.free_note.trim() ? asset.free_note.trim() : 'ไม่มีหมายเหตุ';
+        const newVal = body.free_note && body.free_note.trim() ? body.free_note.trim() : 'ไม่มีหมายเหตุ';
+        diffParts.push(`แก้ไขหมายเหตุ: จาก "${oldVal}" ➔ "${newVal}"`);
+        changesList.push({ field: 'หมายเหตุเครื่อง', from: oldVal, to: newVal });
+      }
       if (body.accessories !== undefined) {
         const oldAcc = JSON.parse(asset.accessories_json || '[]');
         if (JSON.stringify(oldAcc) !== JSON.stringify(body.accessories)) {
-          diffParts.push(`แก้ไขอุปกรณ์เสริม (${body.accessories.length} ชิ้น)`);
+          const oldStr = oldAcc.length > 0 ? oldAcc.join(', ') : 'ไม่มีอุปกรณ์เสริม';
+          const newStr = body.accessories.length > 0 ? body.accessories.join(', ') : 'ไม่มีอุปกรณ์เสริม';
+          diffParts.push(`แก้ไขอุปกรณ์เสริม: จาก [${oldStr}] ➔ [${newStr}]`);
+          changesList.push({ field: 'อุปกรณ์เสริมประจำเครื่อง', from: oldStr, to: newStr });
         }
       }
       if (body.images !== undefined || body.image_url !== undefined) {
-        diffParts.push('อัปเดตรูปภาพเครื่อง');
+        diffParts.push('อัปเดตรูปภาพเครื่องใหม่');
+        changesList.push({ field: 'รูปภาพเครื่อง', from: 'รูปเดิม', to: 'อัปเดตรูปใหม่' });
       }
-      const diffSummary = diffParts.length > 0 ? diffParts.join(' • ') : 'อัปเดตข้อมูลเครื่อง';
-      logAssetActivity(db, tagId, 'UPDATE', 'แก้ไขข้อมูลเครื่อง', diffSummary, body.user_name || 'เจ้าหน้าที่', { diffParts });
+      if (body.brand !== undefined && body.brand !== asset.brand) {
+        const oldVal = asset.brand || 'ไม่ได้ระบุ';
+        const newVal = body.brand || 'ไม่ได้ระบุ';
+        diffParts.push(`เปลี่ยนแบรนด์: จาก "${oldVal}" ➔ "${newVal}"`);
+        changesList.push({ field: 'แบรนด์', from: oldVal, to: newVal });
+      }
+      if (body.model !== undefined && body.model !== asset.model) {
+        const oldVal = asset.model || 'ไม่ได้ระบุ';
+        const newVal = body.model || 'ไม่ได้ระบุ';
+        diffParts.push(`เปลี่ยนรุ่น: จาก "${oldVal}" ➔ "${newVal}"`);
+        changesList.push({ field: 'รุ่น', from: oldVal, to: newVal });
+      }
+      if (body.serial_no !== undefined && body.serial_no !== asset.serial_no) {
+        const oldVal = asset.serial_no || 'ไม่ได้ระบุ';
+        const newVal = body.serial_no || 'ไม่ได้ระบุ';
+        diffParts.push(`เปลี่ยน Serial No: จาก "${oldVal}" ➔ "${newVal}"`);
+        changesList.push({ field: 'Serial Number', from: oldVal, to: newVal });
+      }
+
+      if (diffParts.length > 0) {
+        const diffSummary = diffParts.join(' • ');
+        const actor = (body.user_name || '').trim() || 'จันทร ก้านแก้ว';
+        logAssetActivity(db, tagId, 'UPDATE', 'แก้ไขข้อมูลเครื่อง', diffSummary, actor, { diffParts, changesList });
+      }
 
       return sendJson(res, 200, getFullState());
     }

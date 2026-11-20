@@ -17754,6 +17754,46 @@ function setupEventListeners() {
       const loanId = meta.loanId || '';
       const timeStr = item.created_at ? formatDateTimeThai(item.created_at) : '-';
 
+      // 1. Structured changes box (บอกว่ามีการเปลี่ยนค่าอะไร อย่างชัดเจน)
+      let changesHtml = '';
+      if (Array.isArray(meta.changesList) && meta.changesList.length > 0) {
+        changesHtml = `
+          <div class="audit-changes-box">
+            <div class="audit-changes-title">
+              <span>🔄</span>
+              <span>รายละเอียดการเปลี่ยนค่า (${meta.changesList.length} รายการ):</span>
+            </div>
+            <div class="audit-changes-list">
+              ${meta.changesList.map(ch => `
+                <div class="audit-change-chip">
+                  <span class="change-field">${escapeHtml(ch.field)}:</span>
+                  <span class="change-from" title="ค่าเดิม">${escapeHtml(ch.from || '-')}</span>
+                  <span class="change-sep">➔</span>
+                  <span class="change-to" title="ค่าใหม่">${escapeHtml(ch.to || '-')}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else if (item.action_type === 'UPDATE' && Array.isArray(meta.diffParts) && meta.diffParts.length > 0) {
+        changesHtml = `
+          <div class="audit-changes-box">
+            <div class="audit-changes-title">
+              <span>🔄</span>
+              <span>รายละเอียดการเปลี่ยนค่า:</span>
+            </div>
+            <div class="audit-changes-list">
+              ${meta.diffParts.map(part => `
+                <div class="audit-change-chip">
+                  <span class="change-field">•</span>
+                  <span class="change-to">${escapeHtml(part)}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
       let pillsHtml = '';
       if (loanId) {
         pillsHtml += `
@@ -17776,6 +17816,9 @@ function setupEventListeners() {
         pillsHtml += `<span class="badge" style="background:${isPass ? '#dcfce7' : '#fee2e2'}; color:${isPass ? '#15803d' : '#b91c1c'}; border:1px solid ${isPass ? '#bbf7d0' : '#fecaca'}; font-size:11px;">${isPass ? 'QC: ผ่าน' : 'QC: มีตำหนิ'}</span>`;
       }
 
+      // Who made the change (บอกชัดเจนว่าใครเป็นคนเปลี่ยน)
+      const actorName = (item.actor_name || '').trim() || 'จันทร ก้านแก้ว';
+
       return `
         <div class="audit-log-item">
           <div class="audit-log-point ${cfg.pointCls}">${cfg.icon}</div>
@@ -17788,10 +17831,11 @@ function setupEventListeners() {
               <div class="audit-log-timestamp">🕒 ${escapeHtml(timeStr)}</div>
             </div>
             ${item.details ? `<div class="audit-log-details">${escapeHtml(item.details)}</div>` : ''}
+            ${changesHtml}
             <div class="audit-log-footer">
               <div class="audit-log-actor">
-                <span style="color:#94a3b8;">ผู้บันทึก:</span>
-                <strong>${escapeHtml(item.actor_name || 'ระบบ')}</strong>
+                <span class="audit-actor-label">👤 ผู้ดำเนินการ / ผู้เปลี่ยน:</span>
+                <span class="audit-actor-badge">${escapeHtml(actorName)}</span>
               </div>
               ${pillsHtml ? `<div class="audit-log-meta-pills">${pillsHtml}</div>` : ''}
             </div>
@@ -20661,7 +20705,8 @@ function setupEventListeners() {
           free_note: freeNote,
           image_url: imageUrl,
           images: demoImages,
-          accessories: state.addDemoAccessories || []
+          accessories: state.addDemoAccessories || [],
+          user_name: getLoggedInUserName()
         })
       });
 
@@ -20802,16 +20847,27 @@ function setupEventListeners() {
 }
 
 async function patchStockAsset(tagId, payload) {
+  const currentUserName = getLoggedInUserName();
+  const finalPayload = {
+    user_name: currentUserName,
+    ...payload
+  };
   const res = await fetch(`/api/assets/${encodeURIComponent(tagId)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(finalPayload)
   });
   const data = await res.json();
   if (!res.ok) {
     throw new Error(data.message || data.error || 'บันทึกไม่สำเร็จ');
   }
   applyServerState(data);
+
+  // If Asset Detail modal is currently open for this asset, immediately refresh audit log!
+  if (state.currentDetailAsset && state.currentDetailAsset.tag_id === tagId) {
+    loadAssetAuditLogs(state.currentDetailAsset);
+  }
+
   return data;
 }
 
