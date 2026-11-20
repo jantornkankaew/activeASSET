@@ -14891,48 +14891,49 @@ dialog.modal-send-email {
   gap: 12px;
 }
 
+/* ============================================================================
+   ASSET STOCK CARD (Apple HIG / Appllama Minimal Luxury Benchmark)
+   ============================================================================ */
 .asset-stock-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-left: 4px solid #10b981;
-  border-radius: 12px;
-  padding: 12px 14px;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 14px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
   cursor: pointer;
   user-select: none;
   position: relative;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
-  transition: all 0.16s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.16s ease, border-color 0.16s ease;
+  box-sizing: border-box;
+}
+
+.asset-stock-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -3px rgba(15, 23, 42, 0.08), 0 3px 6px rgba(15, 23, 42, 0.03);
+  border-color: #cbd5e1;
 }
 
 .asset-stock-card.is-avail {
   background: #ffffff;
-  border-color: #e2e8f0;
-  border-left-color: #10b981;
 }
 
 .asset-stock-card.is-avail:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px -2px rgba(16, 185, 129, 0.12), 0 2px 4px rgba(15, 23, 42, 0.03);
-  border-color: #a7f3d0;
+  border-color: #86efac;
 }
 
 .asset-stock-card.is-loaned {
-  background: #fbfdff;
-  border-color: #cbd5e1;
-  border-left-color: #3b82f6;
+  background: #ffffff;
 }
 
 .asset-stock-card.is-loaned:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px -2px rgba(59, 130, 246, 0.14), 0 2px 4px rgba(15, 23, 42, 0.03);
   border-color: #93c5fd;
 }
 
 .asset-stock-card:active {
-  transform: scale(0.99);
+  transform: scale(0.985);
 }
 
 /* Card Top Bar */
@@ -14940,13 +14941,13 @@ dialog.modal-send-email {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: 8px;
 }
 
 .asset-top-tags {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   flex-wrap: wrap;
   min-width: 0;
 }
@@ -14956,95 +14957,105 @@ dialog.modal-send-email {
   font-size: 11px;
   font-weight: 700;
   background: #f1f5f9;
-  color: #334155;
+  color: #475569;
   border: 1px solid #e2e8f0;
-  padding: 1.5px 6px;
-  border-radius: 5px;
+  padding: 2px 7px;
+  border-radius: 6px;
   letter-spacing: 0.2px;
+  line-height: 1.2;
 }
 
 .asset-loc-pill {
   font-size: 11px;
   color: #64748b;
   background: #f8fafc;
-  border: 1px solid #f1f5f9;
-  padding: 1px 6px;
-  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  padding: 2px 7px;
+  border-radius: 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 140px;
+  line-height: 1.2;
 }
 
 .asset-source-badge {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
-  padding: 1px 6px;
-  border-radius: 4px;
+  padding: 2px 7.5px;
+  border-radius: 6px;
   border: 1px solid transparent;
+  line-height: 1.2;
 }
 
 .asset-source-badge.src-demo {
   background: #eef2ff;
   color: #4f46e5;
-  border-color: #c7d2fe;
+  border-color: rgba(99, 102, 241, 0.2);
 }
 
 .asset-source-badge.src-supplier {
   background: #fffbeb;
-  color: #d97706;
-  border-color: #fde68a;
+  color: #b45309;
+  border-color: rgba(245, 158, 11, 0.25);
 }
 
 .asset-source-badge.src-sales {
   background: #f0fdf4;
-  color: #16a34a;
-  border-color: #bbf7d0;
+  color: #15803d;
+  border-color: rgba(34, 197, 94, 0.25);
 }
 
 .asset-source-badge.src-repair {
   background: #ecfeff;
   color: #0e7490;
-  border-color: #a5f3fc;
+  border-color: rgba(6, 182, 212, 0.25);
 }
 
 /* Clean Status Badges */
 .asset-status-badge {
   font-size: 11px;
   font-weight: 600;
-  padding: 2px 7px;
+  padding: 2.5px 8px;
   border-radius: 9999px;
   display: inline-flex;
   align-items: center;
-  gap: 4.5px;
+  gap: 5px;
   letter-spacing: 0.1px;
   white-space: nowrap;
+  line-height: 1.2;
 }
 
 .asset-status-badge.avail {
-  background: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid rgba(34, 197, 94, 0.25);
 }
 
 .asset-status-badge.loaned {
   background: #eff6ff;
-  color: #2563eb;
-  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.25);
 }
 
 .asset-status-badge.purple,
 .asset-status-pill.purple {
   background: #f5f3ff;
   color: #7c3aed;
-  border: 1px solid #ddd6fe;
+  border: 1px solid rgba(139, 92, 246, 0.25);
 }
 
 .asset-status-badge.amber,
 .asset-status-pill.amber {
   background: #fffbeb;
   color: #b45309;
-  border: 1px solid #fde68a;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.asset-status-badge.disposed {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
 }
 
 .status-dot.purple,
@@ -15062,18 +15073,24 @@ dialog.modal-send-email {
 }
 
 .status-dot {
-  width: 6.5px;
-  height: 6.5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .status-dot.green {
-  background: #10b981;
+  background: #22c55e;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
 }
 
 .status-dot.blue {
-  background: #2563eb;
+  background: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.status-dot.gray {
+  background: #94a3b8;
 }
 
 /* Hero Section: Model Name & Serial Number */
@@ -15085,12 +15102,13 @@ dialog.modal-send-email {
 }
 
 .asset-model-hero {
-  font-size: 17.5px;
+  font-size: 16.5px;
   font-weight: 700;
   color: #0f172a;
   line-height: 1.25;
-  letter-spacing: -0.3px;
-  word-break: break-word;
+  letter-spacing: -0.02em;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .asset-sn-hero {
@@ -15099,32 +15117,32 @@ dialog.modal-send-email {
   gap: 6px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 3px 8px;
+  border-radius: 7px;
+  padding: 2.5px 7px 2.5px 5px;
   width: fit-content;
   max-width: 100%;
   box-sizing: border-box;
 }
 
 .sn-hero-label {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
-  color: #64748b;
-  letter-spacing: 0.5px;
+  color: #475569;
+  letter-spacing: 0.4px;
   background: #e2e8f0;
   padding: 1px 4px;
-  border-radius: 3px;
+  border-radius: 4px;
   line-height: 1.2;
   flex-shrink: 0;
 }
 
 .sn-hero-value {
   font-family: var(--font-mono, monospace);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
-  color: #1e293b;
-  letter-spacing: 0.3px;
+  color: #0f172a;
+  letter-spacing: 0.2px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -15132,12 +15150,12 @@ dialog.modal-send-email {
 
 .asset-stock-card.is-loaned .asset-sn-hero {
   background: #eff6ff;
-  border-color: #dbeafe;
+  border-color: #bfdbfe;
 }
 
 .asset-stock-card.is-loaned .sn-hero-label {
-  background: #dbeafe;
-  color: #1e40af;
+  background: #bfdbfe;
+  color: #1d4ed8;
 }
 
 .asset-stock-card.is-loaned .sn-hero-value {
@@ -15147,20 +15165,20 @@ dialog.modal-send-email {
 /* Active Loan Info (Minimal 2-Row Bar) */
 .asset-loan-minimal-bar {
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 9px;
   padding: 7px 10px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 3.5px;
   font-size: 11.5px;
   line-height: 1.35;
   margin-top: 2px;
 }
 
 .asset-stock-card.is-loaned .asset-loan-minimal-bar {
-  background: #ffffff;
-  border-color: #dbeafe;
+  background: #f0f7ff;
+  border-color: rgba(191, 219, 254, 0.9);
 }
 
 .loan-min-row-1 {
@@ -15212,13 +15230,15 @@ dialog.modal-send-email {
 .asset-acc-mini-line {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 11px;
+  gap: 10px;
+  font-size: 11.5px;
   color: #64748b;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding-top: 2px;
+  border-top: 1px solid rgba(241, 245, 249, 0.95);
+  padding-top: 6px;
+  margin-top: 2px;
 }
 
 .acc-mini-text,
@@ -23500,9 +23520,9 @@ html.is-unauthenticated .app-shell {
 }
 
 .asset-stock-card.is-disposed {
-  opacity: 0.92;
-  background: #fbfcfd;
-  border-color: #e2e8f0;
+  opacity: 0.88;
+  background: #fafbfc;
+  border-color: rgba(226, 232, 240, 0.85);
 }
 
 .asset-stock-card.is-disposed:hover {
@@ -23515,12 +23535,12 @@ html.is-unauthenticated .app-shell {
   align-items: center;
   gap: 6px;
   background: #f8fafc;
-  border: 1px dashed #cbd5e1;
-  border-radius: 6px;
-  padding: 4px 8px;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 8px;
+  padding: 5px 9px;
   font-size: 11.5px;
   color: #64748b;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .asset-disposed-minimal-bar strong {
