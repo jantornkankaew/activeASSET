@@ -1401,19 +1401,43 @@ function renderKanbanCard(loan) {
     modelCounts.set(label, (modelCounts.get(label) || 0) + 1);
   }
 
-  const modelsHtml =
-    modelCounts.size === 0
-      ? `<span class="muted-hint">ไม่ได้ระบุรุ่น</span>`
-      : [...modelCounts.entries()]
-          .map(
-            ([brandModel, qty]) => `
-            <span class="card-model-pill">
-              <strong>${escapeHtml(brandModel)}</strong>
-              ${qty > 1 ? `<span class="model-qty">×${qty}</span>` : ''}
-            </span>
-          `
-          )
-          .join('');
+  // 1. Line 1: ยี่ห้อ รุ่น (Brand & Model) แทนชื่อบริษัท
+  let brandModelHeadline = '';
+  if (modelCounts.size > 0) {
+    brandModelHeadline = [...modelCounts.entries()]
+      .map(([brandModel, qty]) => (qty > 1 ? `${brandModel} (×${qty})` : brandModel))
+      .join(', ');
+  } else if (loan.items && loan.items.length > 0 && loan.items[0].model) {
+    brandModelHeadline = `${loan.items[0].brand || ''} ${loan.items[0].model}`.trim();
+  } else {
+    brandModelHeadline = 'ไม่ได้ระบุรุ่น';
+  }
+
+  // 2. Line 2: บริษัทลูกค้า · ผู้ยืม
+  const companyName = (loan.customer_company || loan.customer_name || '').trim();
+
+  // 3. Line 3: หมายเหตุ (นำมาใส่แทนที่คำว่าไม่ได้ระบุรุ่น)
+  const allNotes = [];
+  for (const it of loan.items || []) {
+    const n = String(it.loan_free_note || it.free_note || '').trim();
+    if (n && n !== '-' && !allNotes.includes(n)) {
+      allNotes.push(n);
+    }
+  }
+  if (loan.supplier_return_note && loan.supplier_return_note.trim() && loan.supplier_return_note.trim() !== '-' && !allNotes.includes(loan.supplier_return_note.trim())) {
+    allNotes.push(loan.supplier_return_note.trim());
+  }
+  if (loan.sale_return_note && loan.sale_return_note.trim() && loan.sale_return_note.trim() !== '-' && !allNotes.includes(loan.sale_return_note.trim())) {
+    allNotes.push(loan.sale_return_note.trim());
+  }
+  if (loan.delivery_note && loan.delivery_note.trim() && loan.delivery_note.trim() !== '-' && !allNotes.includes(loan.delivery_note.trim())) {
+    allNotes.push(loan.delivery_note.trim());
+  }
+  if (loan.note && loan.note.trim() && loan.note.trim() !== '-' && !allNotes.includes(loan.note.trim())) {
+    allNotes.push(loan.note.trim());
+  }
+
+  const notesText = allNotes.join(' · ');
 
   // Editable: Requested, Dispatching, Dispatched. Delivered: Note-only.
   const isEditable = loan.status === 'Requested' || loan.status === 'Dispatching' || loan.status === 'Dispatched';
@@ -1452,8 +1476,6 @@ function renderKanbanCard(loan) {
     wmClass = 'wm-returned';
   }
 
-  const companyHeadline = loan.customer_company || loan.customer_name || loan.borrower_name;
-
   return `
     <article
       class="loan-card clickable-card ${isHighlight ? 'card-highlight card-status-changed' : ''} ${statusClass} ${loan.is_overdue ? 'card-overdue' : ''}"
@@ -1463,14 +1485,15 @@ function renderKanbanCard(loan) {
       <!-- Background Watermark (ลายน้ำสถานะ) -->
       <div class="card-watermark ${wmClass}" aria-hidden="true">${wmText}</div>
 
-      <!-- Line 1: Prominent Company Name + Mini Calendar -->
+      <!-- Line 1: Prominent Brand & Model (ยี่ห้อ รุ่น) + Mini Calendar -->
       <div class="card-top-row">
         <div class="card-top-left">
           ${isStatusChanged ? `<span class="badge-status-changed-pill">🔄 เพิ่งเปลี่ยนสถานะ</span>` : ''}
-          <div class="card-company-headline" title="${escapeHtml(companyHeadline)}">
-            ${escapeHtml(companyHeadline)}
+          <div class="card-company-headline" title="${escapeHtml(brandModelHeadline)}">
+            ${escapeHtml(brandModelHeadline)}
           </div>
           <div class="card-sub-meta">
+            ${companyName ? `<span class="card-company-sub" title="บริษัทลูกค้า">${escapeHtml(companyName)}</span><span>·</span>` : ''}
             <span>${escapeHtml(loan.borrower_name)}</span>
             ${loan.customer_phone ? `<span>·</span><span class="card-phone-meta" title="เบอร์โทรผู้ติดต่อ">📞 ${escapeHtml(loan.customer_phone)}</span>` : ''}
           </div>
@@ -1478,9 +1501,18 @@ function renderKanbanCard(loan) {
         ${miniCalHtml}
       </div>
 
-      <!-- Emphasize Brand & Model ONLY (No Tag ID, No extra details) -->
-      <div class="card-models-wrap">
-        ${modelsHtml}
+      <!-- Line 3: หมายเหตุ (นำมาใส่แทนที่คำว่าไม่ได้ระบุรุ่น) -->
+      <div class="card-notes-row">
+        ${notesText ? `
+          <div class="card-note-item" title="${escapeHtml(notesText)}">
+            <span class="note-quote-icon">📝</span>
+            <span class="card-note-text">${escapeHtml(notesText)}</span>
+          </div>
+        ` : `
+          <div class="card-note-item empty">
+            <span class="muted-hint">-</span>
+          </div>
+        `}
       </div>
 
       <div class="card-footer">

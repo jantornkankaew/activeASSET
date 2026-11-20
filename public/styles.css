@@ -1362,6 +1362,52 @@ input[type="search"]::-webkit-search-results-decoration {
   padding: 6px 0 2px;
 }
 
+/* Card Notes Row (แสดงหมายเหตุในบรรทัดที่ 3 แทนที่ไม่ได้ระบุรุ่น) */
+.card-notes-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0 2px;
+  min-height: 24px;
+}
+
+.card-note-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 12px;
+  padding: 2.5px 8px;
+  border-radius: 6px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.card-note-item.empty {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #94a3b8;
+}
+
+.card-note-item .note-quote-icon {
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.card-note-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-company-sub {
+  font-weight: 600;
+  color: #475569;
+}
+
 .card-model-pill {
   display: inline-flex;
   align-items: center;
