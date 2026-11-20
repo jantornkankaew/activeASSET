@@ -6455,15 +6455,16 @@ dialog:not([open]) * {
 }
 
 .proof-box {
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  padding: 12px;
-  background: #f8fafc;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 14px;
+  padding: 14px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 .highlight-proof-box {
-  border-color: #93c5fd;
-  background: #f0f7ff;
+  border-color: rgba(37, 99, 235, 0.28);
+  background: #ffffff;
 }
 
 .proof-header {
@@ -6539,10 +6540,11 @@ dialog:not([open]) * {
 }
 
 .qc-item-card {
-  border: 1px solid var(--border-strong);
-  border-radius: 10px;
-  padding: 12px;
-  background: #fff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 14px;
+  padding: 14px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -17098,41 +17100,49 @@ dialog.modal-company-settings.modal-fullscreen {
 
 .company-main-tabs {
   display: flex;
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 6px 20px 0;
-  gap: 4px;
+  align-items: center;
+  background: #f1f5f9;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 9999px;
+  padding: 3px;
+  margin: 14px 24px 0;
+  gap: 3px;
   flex-shrink: 0;
   overflow-x: auto;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+  scrollbar-width: none;
+}
+
+.company-main-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .company-main-tab {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 10px 16px;
+  gap: 6px;
+  padding: 6.5px 14px;
   background: transparent;
   border: none;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
+  border-radius: 9999px;
   color: #64748b;
-  font-size: 13.5px;
-  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s ease;
+  user-select: none;
 }
 
 .company-main-tab:hover {
   color: #0f172a;
-  background: rgba(241, 245, 249, 0.6);
 }
 
 .company-main-tab.is-active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
-  background: transparent;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .company-settings-body {
@@ -17253,9 +17263,10 @@ dialog.modal-company-settings.modal-fullscreen {
 
   /* Smooth horizontal scrolling tabs on mobile */
   .company-main-tabs {
-    padding: 4px 10px 0 !important;
-    margin: 0 !important;
-    gap: 4px !important;
+    padding: 3px !important;
+    margin: 8px 12px 0 !important;
+    gap: 3px !important;
+    border-radius: 9999px !important;
     scrollbar-width: none !important;
     -webkit-overflow-scrolling: touch !important;
   }
@@ -17265,8 +17276,9 @@ dialog.modal-company-settings.modal-fullscreen {
   }
 
   .company-main-tab {
-    padding: 8px 12px !important;
-    font-size: 12.5px !important;
+    padding: 5.5px 12px !important;
+    font-size: 12px !important;
+    border-radius: 9999px !important;
     gap: 5px !important;
     flex-shrink: 0 !important;
     white-space: nowrap !important;
@@ -18051,12 +18063,15 @@ dialog .mobile-keyboard-pill,
 }
 
 .picking-card.pending {
-  border-left: 4px solid #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+  border-left: 1px solid rgba(245, 158, 11, 0.35) !important;
+  background: #ffffff;
 }
 
 .picking-card.matched {
-  border-left: 4px solid #10b981;
-  background: #fbfdfc;
+  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+  border-left: 1px solid rgba(16, 185, 129, 0.35) !important;
+  background: #ffffff;
 }
 
 .picking-card-main {
@@ -22639,13 +22654,13 @@ html.is-unauthenticated .app-shell {
   min-width: 185px;
   background: #fcfcfc;
   vertical-align: middle;
-  border-left: 1.5px dashed #cbd5e1;
+  border-left: 1px solid #e2e8f0;
   padding: 6px 10px;
 }
 
 .roles-matrix-table th.col-add-role-header.active-inline-add {
   background: #ffffff;
-  border-left: 2px solid #3b82f6;
+  border-left: 1px solid #3b82f6;
 }
 
 .btn-add-role-minimal {
@@ -22784,7 +22799,7 @@ html.is-unauthenticated .app-shell {
 
 /* Col Add Role Cell (Empty vs Draft) */
 .roles-matrix-table td.col-add-role-cell {
-  border-left: 1.5px dashed #cbd5e1;
+  border-left: 1px solid #e2e8f0;
   text-align: center;
   vertical-align: middle;
 }
@@ -22795,7 +22810,7 @@ html.is-unauthenticated .app-shell {
 
 .roles-matrix-table td.col-add-role-cell.active-draft {
   background: #f8fafc;
-  border-left: 2px solid #3b82f6;
+  border-left: 1px solid #3b82f6;
 }
 
 /* Group Rows */
