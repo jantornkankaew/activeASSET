@@ -25105,14 +25105,14 @@ html.is-unauthenticated .app-shell {
 .return-sn-pill {
   display: inline-flex;
   align-items: center;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
+  font-family: 'Inter', monospace;
+  font-size: 11.5px;
   font-weight: 600;
-  color: #0f766e;
-  background: #ccfbf1;
-  padding: 3px 8px;
+  color: #0f172a;
+  background: #f8fafc;
+  padding: 2.5px 8px;
   border-radius: 6px;
-  border: 1px solid #99f6e4;
+  border: 1px solid #e2e8f0;
 }
 
 /* Sale Action Pill Segmented Switcher */

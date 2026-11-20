@@ -1935,24 +1935,14 @@ function getSourceClass(src) {
 }
 
 function getAssetWorkflowStatus(asset) {
-  if (!asset) {
+  if (!asset || asset.status === 'Available') {
     return {
       text: 'ว่าง',
       pillCls: 'avail',
       dotCls: 'green',
       indicatorCls: 'avail',
-      badgeIcon: '🟢',
-      calloutBadge: '🟢 ว่างพร้อมยืม'
-    };
-  }
-  if (asset.status === 'Available') {
-    return {
-      text: 'ว่าง',
-      pillCls: 'avail',
-      dotCls: 'green',
-      indicatorCls: 'avail',
-      badgeIcon: '🟢',
-      calloutBadge: '🟢 ว่างพร้อมยืม'
+      badgeIcon: APP_ICONS.check,
+      calloutBadge: 'ว่างพร้อมยืม'
     };
   }
   if (asset.status === 'Disposed') {
@@ -1961,8 +1951,8 @@ function getAssetWorkflowStatus(asset) {
       pillCls: 'disposed',
       dotCls: 'gray',
       indicatorCls: 'gray',
-      badgeIcon: '⚪',
-      calloutBadge: '📦 จำหน่ายออกจากระบบแล้ว'
+      badgeIcon: APP_ICONS.box,
+      calloutBadge: 'จำหน่ายออกจากระบบแล้ว'
     };
   }
 
@@ -1979,8 +1969,8 @@ function getAssetWorkflowStatus(asset) {
         pillCls: 'purple',
         dotCls: 'purple',
         indicatorCls: 'purple',
-        badgeIcon: '🚚',
-        calloutBadge: '🚚 รอคืน Supplier (ภายนอก)'
+        badgeIcon: APP_ICONS.truck,
+        calloutBadge: 'รอคืน Supplier (ภายนอก)'
       };
     }
     if (isSale) {
@@ -1989,8 +1979,8 @@ function getAssetWorkflowStatus(asset) {
         pillCls: 'amber',
         dotCls: 'amber',
         indicatorCls: 'amber',
-        badgeIcon: '🏢',
-        calloutBadge: '🏢 รอส่งคืนคลังขาย'
+        badgeIcon: APP_ICONS.building,
+        calloutBadge: 'รอส่งคืนคลังขาย'
       };
     }
     return {
@@ -1998,8 +1988,8 @@ function getAssetWorkflowStatus(asset) {
       pillCls: 'purple',
       dotCls: 'purple',
       indicatorCls: 'purple',
-      badgeIcon: '🚚',
-      calloutBadge: '🚚 รอคืน Supplier, คลังขาย'
+      badgeIcon: APP_ICONS.truck,
+      calloutBadge: 'รอคืน Supplier, คลังขาย'
     };
   }
 
@@ -2009,8 +1999,8 @@ function getAssetWorkflowStatus(asset) {
       pillCls: 'amber',
       dotCls: 'amber',
       indicatorCls: 'amber',
-      badgeIcon: '🔍',
-      calloutBadge: '🔍 รอตรวจสภาพ QC'
+      badgeIcon: APP_ICONS.qc,
+      calloutBadge: 'รอตรวจสภาพ QC'
     };
   }
 
@@ -2020,8 +2010,8 @@ function getAssetWorkflowStatus(asset) {
       pillCls: 'loaned',
       dotCls: 'blue',
       indicatorCls: 'loaned',
-      badgeIcon: '📦',
-      calloutBadge: '📦 อยู่ระหว่างจัดของ'
+      badgeIcon: APP_ICONS.box,
+      calloutBadge: 'อยู่ระหว่างจัดของ'
     };
   }
 
@@ -2031,8 +2021,8 @@ function getAssetWorkflowStatus(asset) {
       pillCls: 'loaned',
       dotCls: 'blue',
       indicatorCls: 'loaned',
-      badgeIcon: '🚚',
-      calloutBadge: '🚚 จัดของเสร็จแล้ว รอส่งมอบ'
+      badgeIcon: APP_ICONS.truck,
+      calloutBadge: 'จัดของเสร็จแล้ว รอส่งมอบ'
     };
   }
 
@@ -2041,8 +2031,8 @@ function getAssetWorkflowStatus(asset) {
     pillCls: 'loaned',
     dotCls: 'blue',
     indicatorCls: 'loaned',
-    badgeIcon: '🔵',
-    calloutBadge: '📄 กำลังอยู่ระหว่างการยืม'
+    badgeIcon: APP_ICONS.clock,
+    calloutBadge: 'กำลังอยู่ระหว่างการยืม'
   };
 }
 
@@ -2244,8 +2234,8 @@ function renderStockView() {
                   </span>
                 ` : ''}
                 ${a.free_note ? `
-                  <span class="note-mini-text" title="${escapeHtml(a.free_note)}">
-                    💬 ${escapeHtml(a.free_note)}
+                  <span class="note-mini-text" title="${escapeHtml(a.free_note)}" style="display:inline-flex; align-items:center; gap:3px;">
+                    ${APP_ICONS.note} <span>${escapeHtml(a.free_note)}</span>
                   </span>
                 ` : ''}
               </div>
@@ -17992,7 +17982,7 @@ function setupEventListeners() {
       let extraBadgesHtml = '';
       if (meta.delivery_gps || meta.supplierGps) {
         const gps = meta.delivery_gps || meta.supplierGps;
-        extraBadgesHtml += `<span class="badge" style="background:#ecfeff; color:#0e7490; border:1px solid #cffafe; font-size:10.5px; padding:1px 6px;">📍 GPS: ${escapeHtml(gps)}</span>`;
+        extraBadgesHtml += `<span class="badge" style="background:#ecfeff; color:#0e7490; border:1px solid #cffafe; font-size:10.5px; padding:1px 6px; display:inline-flex; align-items:center; gap:3px;">${APP_ICONS.pin} <span>GPS: ${escapeHtml(gps)}</span></span>`;
       }
       if (meta.qc_status) {
         const isPass = meta.qc_status === 'Pass';
@@ -18041,7 +18031,7 @@ function setupEventListeners() {
     if (images.length === 0) {
       gallery.innerHTML = `
         <div class="detail-photos-empty-view">
-          <span>📷</span>
+          <span style="display:inline-flex; align-items:center; color:#94a3b8;">${APP_ICONS.camera}</span>
           <span>ยังไม่มีรูปภาพเครื่อง</span>
         </div>
       `;
