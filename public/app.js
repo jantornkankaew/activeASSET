@@ -3018,18 +3018,18 @@ function openEditLoanModal(loanId, updateHash = true) {
         : [{ brand: '', model: '', qty: 1, source: 'Demo', accessories: [], free_note: '', serials: [], attachments: [] }];
   }
 
+  // Set all rows collapsed by default when opening in edit mode so user must click a row to edit it
+  state.activeLoanRowIdx = -1;
+
   // Ensure trailing empty row is present for seamless adding
   ensureTrailingEmptyRow();
 
   collapseTopInfoDrawer();
   updateTopInfoSummary();
 
+  closeAllModelDropdowns();
   renderLoanExcelRows();
   document.getElementById('loanDialog').showModal();
-  setTimeout(() => {
-    const firstInput = document.querySelector('[data-excel-model-input="0"]');
-    if (firstInput && !isTouchOrMobileDevice()) firstInput.focus();
-  }, 100);
 }
 
 function ensureTrailingEmptyRow() {
@@ -4800,7 +4800,7 @@ function renderLoanExcelRows() {
   }
 
   if (state.activeLoanRowIdx === undefined || state.activeLoanRowIdx === null) {
-    state.activeLoanRowIdx = 0;
+    state.activeLoanRowIdx = state.editingLoanId ? -1 : 0;
   }
 
   const { rowSimulations } = getLoanDraftStockSimulation();
