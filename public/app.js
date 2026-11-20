@@ -5464,8 +5464,9 @@ function updateDispatchSummary() {
       const isEnabled = currentSelected > 0;
       rightBtnsEl.innerHTML = `
         ${isPendingQc ? `
-          <button type="button" class="btn btn-ghost text-muted" id="btnRevertQcToDelivered" style="font-size:12px; margin-right:auto;" title="ย้อนกลับไปสถานะกำลังยืม">
-            ↩️ ย้อนกลับเป็นกำลังยืม
+          <button type="button" class="btn btn-ghost text-muted" id="btnRevertQcToDelivered" style="font-size:12px; margin-right:auto; display:inline-flex; align-items:center; gap:4px;" title="ย้อนกลับไปสถานะกำลังยืม">
+            ${APP_ICONS.undo}
+            <span>ย้อนกลับเป็นกำลังยืม</span>
           </button>
         ` : `
           <button type="button" class="btn btn-ghost" id="btnCancelReturnMode">
@@ -6317,20 +6318,20 @@ function renderDispatchTable() {
                       ${escapeHtml(row.brand || '')} <strong>${escapeHtml(row.model || '')}</strong>
                     </span>
                     ${row.returned 
-                      ? `<span class="ret-status-badge badge-returned" style="font-size:11px; padding:2px 8px;">✓ คืนเข้าคลังแล้ว</span>`
+                      ? `<span class="ret-status-badge badge-returned">${APP_ICONS.check}<span>คืนเข้าคลังแล้ว</span></span>`
                       : (isPendingQc && row.isInQcQueue)
-                      ? `<span class="ret-status-badge" style="font-size:11px; padding:2px 8px; background:#fef3c7; color:#92400e; border:1px solid #fde68a;">🔍 กำลังรอตรวจ QC</span>`
-                      : `<span class="ret-status-badge ${isReturned ? 'badge-returned' : 'badge-pending'}" style="font-size:11px; padding:2px 8px;">
-                          ${isReturned ? '✓ ได้รับเครื่องแล้ว' : '⏳ รอรับคืน'}
+                      ? `<span class="ret-status-badge badge-qc">${APP_ICONS.clock}<span>กำลังรอตรวจ QC</span></span>`
+                      : `<span class="ret-status-badge ${isReturned ? 'badge-returned' : 'badge-pending'}">
+                          ${isReturned ? `${APP_ICONS.check}<span>ได้รับเครื่องแล้ว</span>` : `${APP_ICONS.clock}<span>รอรับคืน</span>`}
                         </span>`
                     }
                   </div>
 
                   <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                    <div class="sn-target-badge" style="padding:3px 10px; font-size:12px; font-family:monospace; font-weight:600; background:${isReturned ? '#f0fdf4' : '#f8fafc'}; border:1px solid ${isReturned ? '#86efac' : '#cbd5e1'}; border-radius:6px; color:${isReturned ? '#15803d' : '#334155'}; transition:all 0.2s;" title="S/N ของเครื่องที่ต้องรับคืน">
-                      <span style="color:#64748b; font-weight:normal; margin-right:4px;">S/N:</span>
-                      <strong style="color:${isReturned ? '#15803d' : '#0f172a'};">${escapeHtml(row.serial_no || row.tag_id || '-')}</strong>
-                      ${row.tag_id ? `<span style="margin-left:4px; font-size:11px; color:#64748b; font-weight:normal;">(${escapeHtml(row.tag_id)})</span>` : ''}
+                    <div class="sn-target-badge ${isReturned ? 'is-returned' : ''}" title="S/N ของเครื่องที่ต้องรับคืน">
+                      <span class="sn-lbl">S/N:</span>
+                      <strong class="sn-val">${escapeHtml(row.serial_no || row.tag_id || '-')}</strong>
+                      ${row.tag_id ? `<span class="tag-val">(${escapeHtml(row.tag_id)})</span>` : ''}
                     </div>
                   </div>
                 </div>
@@ -6338,11 +6339,11 @@ function renderDispatchTable() {
             </td>
             <!-- Step 2: ตรวจอุปกรณ์เสริม -->
             <td style="vertical-align:middle; padding:12px 14px;">
-              <div class="ret-acc-cell" style="display:flex; flex-direction:column; gap:4px;">
-                <div class="ret-acc-container" style="display:flex; flex-wrap:wrap; gap:5px;">
+              <div class="ret-acc-cell">
+                <div class="ret-acc-container">
                   ${
                     (row.allAccessories || []).length === 0
-                      ? `<span style="color:#94a3b8; font-size:12px; font-style:italic;">ไม่มีอุปกรณ์เสริม</span>`
+                      ? `<span class="ret-no-acc">ไม่มีอุปกรณ์เสริม</span>`
                       : (row.allAccessories || []).map(acc => {
                           const isMissing = (row.missingAccessories || new Set()).has(acc);
                           return `
@@ -6352,18 +6353,20 @@ function renderDispatchTable() {
                               data-ret-toggle-acc="${rowIdx}"
                               data-acc-name="${escapeHtml(acc)}"
                               title="${isMissing ? 'แตะเพื่อเปลี่ยนเป็นได้รับครบ' : 'แตะหากอุปกรณ์ชิ้นนี้ขาด/หาย'}"
-                              style="padding:4px 10px; font-size:12px; border-radius:6px;"
                             >
-                              ${isMissing 
-                                ? `<span style="color:#ef4444; margin-right:4px; font-weight:700;">✕ ขาด:</span><span>${escapeHtml(acc)}</span>` 
-                                : `<span style="color:#16a34a; margin-right:4px; font-weight:700;">✓</span><span>${escapeHtml(acc)}</span>`
-                              }
+                              <span class="acc-pill-icon">${isMissing ? APP_ICONS.alert : APP_ICONS.check}</span>
+                              <span class="acc-pill-name">${isMissing ? 'ขาด: ' : ''}${escapeHtml(acc)}</span>
                             </button>
                           `;
                         }).join('')
                   }
                 </div>
-                ${hasMissing ? `<span style="font-size:11.5px; color:#ef4444; font-weight:600; margin-top:3px; display:inline-block;">⚠️ อุปกรณ์ไม่ครบ (${missingList.length} รายการ): <strong style="text-decoration:underline;">${escapeHtml(missingStr)}</strong></span>` : ''}
+                ${hasMissing ? `
+                  <div class="ret-acc-missing-alert">
+                    ${APP_ICONS.alert}
+                    <span>อุปกรณ์ไม่ครบ (${missingList.length} รายการ): <strong>${escapeHtml(missingStr)}</strong></span>
+                  </div>
+                ` : ''}
               </div>
             </td>
             <!-- Step 3: หมายเหตุ (ถ้ามี) -->
