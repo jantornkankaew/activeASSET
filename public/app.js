@@ -12073,14 +12073,7 @@ let currentSaleActions = {};
 function setupSupplierSaleReturnModal() {
   const dialog = document.getElementById('supplierSaleReturnDialog');
   const btnSubmit = document.getElementById('btnSubmitSupSaleReturn');
-  const btnOpenSlip = document.getElementById('btnOpenReturnSlipFromModal');
   const btnRevert = document.getElementById('btnRevertSupSaleReturn');
-
-  btnOpenSlip?.addEventListener('click', () => {
-    if (state.activeSupplierSaleLoan) {
-      openReturnSlipModal(state.activeSupplierSaleLoan.id);
-    }
-  });
 
   btnRevert?.addEventListener('click', async () => {
     if (!state.activeSupplierSaleLoan) return;
@@ -12106,48 +12099,37 @@ function setupSupplierSaleReturnModal() {
     const loan = state.activeSupplierSaleLoan;
     const loanId = loan.id;
 
-    const items = loan.items || [];
-    const hasSupplier = items.some(it => (it.source_snapshot || 'Demo') === 'Supplier');
-    const hasSale = items.some(it => (it.source_snapshot || 'Demo') === 'คลังขาย');
+    const senderVal = (document.getElementById('supRetSender')?.value || '').trim();
+    const receiverVal = (document.getElementById('supRetReceiver')?.value || '').trim();
+    const timestampVal = (document.getElementById('supRetTimestamp')?.value || '').trim();
+    const noteVal = (document.getElementById('supRetNote')?.value || '').trim();
+    const gpsVal = (document.getElementById('supGpsVal')?.value || '').trim();
 
-    const supReceiver = (document.getElementById('supRetReceiver')?.value || '').trim();
-    const supSender = (document.getElementById('supRetSender')?.value || '').trim();
-    const supTimestamp = (document.getElementById('supRetTimestamp')?.value || '').trim();
-    const supNote = (document.getElementById('supRetNote')?.value || '').trim();
-
-    const saleSender = (document.getElementById('saleRetSender')?.value || '').trim();
-    const saleTimestamp = (document.getElementById('saleRetTimestamp')?.value || '').trim();
-    const saleNote = (document.getElementById('saleRetNote')?.value || '').trim();
-
-    if (hasSupplier && !supReceiver) {
-      showToast('⚠️ กรุณาระบุชื่อผู้รับคืนฝั่ง Supplier');
-      document.getElementById('supRetReceiver')?.focus();
-      return;
-    }
-    if (hasSupplier && !supSender) {
-      showToast('⚠️ กรุณาระบุชื่อพนักงานผู้ส่งคืน');
+    if (!senderVal) {
+      showToast('⚠️ กรุณาระบุชื่อผู้ส่งสินค้า');
       document.getElementById('supRetSender')?.focus();
       return;
     }
-    if (hasSale && !saleSender) {
-      showToast('⚠️ กรุณาระบุชื่อผู้ดำเนินการคืนคลังขาย');
-      document.getElementById('saleRetSender')?.focus();
+    if (!receiverVal) {
+      showToast('⚠️ กรุณาระบุชื่อผู้รับสินค้า');
+      document.getElementById('supRetReceiver')?.focus();
       return;
     }
 
     btnSubmit.disabled = true;
-    btnSubmit.innerHTML = '<span>กำลังบันทึก...</span>';
+    btnSubmit.innerHTML = '<span>กำลังบันทึกและออกใบคืน...</span>';
 
     try {
       const payload = {
-        supplier_return_receiver: supReceiver,
-        supplier_return_sender: supSender,
-        supplier_return_timestamp: supTimestamp,
-        supplier_return_note: supNote,
+        supplier_return_receiver: receiverVal,
+        supplier_return_sender: senderVal,
+        supplier_return_timestamp: timestampVal || new Date().toISOString(),
+        supplier_return_note: noteVal,
+        supplier_return_gps: gpsVal,
         supplier_return_photos: currentSupplierReturnPhotos,
-        sale_return_sender: saleSender,
-        sale_return_timestamp: saleTimestamp,
-        sale_return_note: saleNote,
+        sale_return_sender: senderVal,
+        sale_return_timestamp: timestampVal || new Date().toISOString(),
+        sale_return_note: noteVal,
         sale_actions: currentSaleActions
       };
 
@@ -12161,23 +12143,15 @@ function setupSupplierSaleReturnModal() {
 
       applyServerState(data);
       dialog?.close();
-      showToast(`✅ บันทึกส่งคืน Supplier / คลังขาย (${loanId}) เรียบร้อยแล้ว`);
+      showToast(`✅ บันทึกส่งคืนและออกใบคืน (${loanId}) เรียบร้อยแล้ว`);
 
-      // Prompt to optionally view or print Return Slip
-      showModalAlert({
-        title: 'บันทึกการคืนสำเร็จ',
-        message: `บันทึกการคืนสำหรับใบยืม ${loanId} เรียบร้อยแล้ว\nต้องการออกใบคืนสินค้าเป็นหลักฐานหรือไม่?`,
-        confirmText: '🖨️ ออกใบคืนสินค้า',
-        cancelText: 'ปิด (ไม่พิมพ์)',
-        onConfirm: () => {
-          openReturnSlipModal(loanId);
-        }
-      });
+      // Immediately open Return Slip modal
+      openReturnSlipModal(loanId);
     } catch (err) {
       showToast(`❌ ${err.message}`);
     } finally {
       btnSubmit.disabled = false;
-      btnSubmit.innerHTML = '<span>✅ บันทึกยืนยันการคืน</span>';
+      btnSubmit.innerHTML = '<span>📄 บันทึกและออกใบคืน</span>';
     }
   });
 
@@ -12190,9 +12164,11 @@ function setupSupplierSaleReturnModal() {
 
 async function handleSupPhotoFiles(files) {
   if (!files || !files.length) return;
+  showToast(`⏳ กำลังเตรียมรูปถ่าย ${files.length} รูป...`);
   for (const file of Array.from(files)) {
+    if (!file.type.startsWith('image/')) continue;
     try {
-      const compressed = await compressImageFile(file, 1280, 0.75);
+      const compressed = await compressImageFile(file, 1200, 0.85);
       currentSupplierReturnPhotos.push(compressed);
     } catch (e) {
       console.warn('Failed to compress supplier return photo:', e);
@@ -12207,15 +12183,68 @@ function renderSupPhotoGrid() {
   if (countBadge) countBadge.textContent = `${currentSupplierReturnPhotos.length} รูป`;
   if (!grid) return;
   if (currentSupplierReturnPhotos.length === 0) {
-    grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:12px; color:#94a3b8; font-size:12px;">ยังไม่มีรูปถ่ายหลักฐาน</div>`;
+    grid.innerHTML = `<div class="text-muted text-xs" style="grid-column: 1 / -1; padding: 4px 0;">ยังไม่มีรูปถ่ายหลักฐานส่งงาน (กดถ่ายรูปหรือเลือกรูปด้านบน)</div>`;
     return;
   }
   grid.innerHTML = currentSupplierReturnPhotos.map((src, idx) => `
-    <div class="delivery-photo-item">
-      <img src="${src}" alt="หลักฐานการคืน #${idx + 1}" />
-      <button type="button" class="btn-remove-photo" data-del-sup-photo="${idx}" title="ลบรูปนี้">✕</button>
+    <div class="delivery-photo-thumb" data-photo-idx="${idx}">
+      <img src="${escapeHtml(src)}" alt="หลักฐานส่งงาน #${idx + 1}" />
+      <button type="button" class="btn-del-photo-rm" data-rm-sup-photo="${idx}" title="ลบรูปนี้">✕</button>
     </div>
   `).join('');
+}
+
+function updateSupTimestamp() {
+  const now = new Date();
+  const isoStr = now.toISOString();
+
+  const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+  const day = now.getDate();
+  const month = thaiMonths[now.getMonth()];
+  const year = now.getFullYear();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const mins = String(now.getMinutes()).padStart(2, '0');
+  const secs = String(now.getSeconds()).padStart(2, '0');
+  const displayStr = `${day} ${month} ${year}, ${hours}:${mins}:${secs} น.`;
+
+  const dispEl = document.getElementById('supTimestampDisplay');
+  if (dispEl) dispEl.textContent = displayStr;
+  const valEl = document.getElementById('supRetTimestamp');
+  if (valEl) valEl.value = isoStr;
+}
+
+function captureSupGps() {
+  const dispEl = document.getElementById('supGpsDisplay');
+  const valEl = document.getElementById('supGpsVal');
+  if (dispEl) dispEl.innerHTML = `<span class="text-muted">กำลังค้นหาพิกัด GPS...</span>`;
+  if (valEl) valEl.value = '';
+
+  if (!navigator.geolocation) {
+    if (dispEl) dispEl.innerHTML = `<span class="text-muted">อุปกรณ์ไม่รองรับ GPS</span>`;
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lng = pos.coords.longitude.toFixed(6);
+      const acc = Math.round(pos.coords.accuracy || 0);
+      const coordsStr = `${lat}, ${lng}`;
+      if (valEl) valEl.value = coordsStr;
+      if (dispEl) {
+        dispEl.innerHTML = `<strong>${coordsStr}</strong> <span class="text-xs text-muted">(±${acc}m)</span> • <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" rel="noopener">ดูแผนที่ ↗</a>`;
+      }
+    },
+    err => {
+      console.warn('Geolocation error:', err);
+      let errMsg = 'ไม่สามารถระบุพิกัดได้ (ปิดการเข้าถึง GPS)';
+      if (err.code === 1) errMsg = 'ไม่อนุญาตให้เข้าถึงตำแหน่งที่ตั้ง';
+      else if (err.code === 2) errMsg = 'ไม่พบสัญญาณพิกัด GPS';
+      else if (err.code === 3) errMsg = 'หมดเวลาค้นหาพิกัด GPS';
+      if (dispEl) dispEl.innerHTML = `<span class="text-muted">${errMsg}</span>`;
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
 }
 
 function attachSupplierSaleModalEvents() {
@@ -12260,7 +12289,7 @@ function attachSupplierSaleModalEvents() {
     });
   });
 
-  // 4. Camera snap and file pick for Supplier photos
+  // 4. Camera snap and file pick for photos
   const snapBtn = document.getElementById('btnSnapSupCamera');
   const pickBtn = document.getElementById('btnPickSupFile');
   const camInput = document.getElementById('supCameraInput');
@@ -12281,14 +12310,20 @@ function attachSupplierSaleModalEvents() {
   // 5. Remove photo
   const grid = document.getElementById('supPhotoGrid');
   grid?.addEventListener('click', (e) => {
-    const rmBtn = e.target.closest('[data-del-sup-photo]');
+    const rmBtn = e.target.closest('[data-rm-sup-photo]');
     if (rmBtn) {
-      const idx = Number(rmBtn.getAttribute('data-del-sup-photo'));
+      const idx = Number(rmBtn.getAttribute('data-rm-sup-photo'));
       if (!isNaN(idx) && idx >= 0 && idx < currentSupplierReturnPhotos.length) {
         currentSupplierReturnPhotos.splice(idx, 1);
         renderSupPhotoGrid();
       }
     }
+  });
+
+  // 6. Refresh GPS button
+  const refreshGpsBtn = document.getElementById('btnRefreshSupGps');
+  refreshGpsBtn?.addEventListener('click', () => {
+    captureSupGps();
   });
 }
 
@@ -12307,7 +12342,8 @@ function openSupplierSaleReturnModal(loanId) {
   const subEl = document.getElementById('supSaleCustomerSubtitle');
   if (subEl) {
     const cust = loan.customer_company ? `${loan.customer_company} (${loan.customer_name})` : (loan.customer_name || 'ลูกค้า');
-    subEl.textContent = `ลูกค้า: ${cust} • ผู้ยืม: ${loan.borrower_name || '-'}`;
+    const purpose = loan.purpose ? ` • วัตถุประสงค์: ${loan.purpose}` : '';
+    subEl.textContent = `ลูกค้า: ${cust}${purpose}`;
   }
 
   const hiddenId = document.getElementById('supSaleLoanId');
@@ -12327,25 +12363,26 @@ function openSupplierSaleReturnModal(loanId) {
   const contentWrap = document.getElementById('supSaleContentWrap');
   if (!contentWrap) return;
 
-  const nowDt = new Date();
-  const nowIsoString = new Date(nowDt.getTime() - (nowDt.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
   const defaultUser = getLoggedInUserName() || loan.borrower_name || '';
+  const senderVal = loan.supplier_return_sender || loan.sale_return_sender || defaultUser;
+  const receiverVal = loan.supplier_return_receiver || '';
+  const noteVal = loan.supplier_return_note || loan.sale_return_note || '';
 
   let html = '';
 
   // SECTION 1: SUPPLIER ITEMS (ถ้ามี)
   if (supplierItems.length > 0) {
     html += `
-      <div class="return-section-block">
-        <div class="return-section-header">
-          <div class="return-section-title-wrap">
+      <div class="return-section-block" style="margin-bottom:14px;">
+        <div class="return-section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div class="return-section-title-wrap" style="display:flex; align-items:center; gap:8px;">
             <span style="font-size:18px;">🚚</span>
-            <h4 class="return-section-title">1. รายการคืน Supplier</h4>
+            <h4 class="return-section-title" style="margin:0; font-size:14px; font-weight:700; color:#1e293b;">1. รายการคืน Supplier</h4>
             <span class="badge" style="background:#e0e7ff; color:#4338ca; border:1px solid #c7d2fe; font-size:12px; padding:2px 8px; border-radius:999px;">
               ${supplierItems.length} เครื่อง
             </span>
           </div>
-          <div class="return-flow-notice supplier-flow" style="padding:4px 10px; font-size:12px;">
+          <div class="return-flow-notice supplier-flow" style="padding:3px 8px; font-size:11.5px; border-radius:6px; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe;">
             ⚡ ไม่ต้องผ่าน QC (ส่งคืน Supplier ภายนอก)
           </div>
         </div>
@@ -12377,53 +12414,6 @@ function openSupplierSaleReturnModal(loanId) {
             `).join('')}
           </tbody>
         </table>
-
-        <!-- Form Fields for Supplier Return -->
-        <div class="form-grid grid-2-col" style="margin-top:6px;">
-          <div class="form-group mb-0">
-            <label class="form-label" for="supRetReceiver">คืนให้ใคร (ผู้รับคืนฝั่ง Supplier) <span class="required">*</span></label>
-            <div class="input-clearable-wrap">
-              <input type="text" id="supRetReceiver" class="form-control" placeholder="ชื่อเจ้าหน้าที่ / ตัวแทน Supplier ผู้รับคืน..." value="${escapeHtml(loan.supplier_return_receiver || '')}" autocomplete="off" />
-              <button type="button" class="btn-input-clear ${loan.supplier_return_receiver ? '' : 'hidden'}" data-clear-target="supRetReceiver" title="ล้างค่า">✕</button>
-            </div>
-          </div>
-          <div class="form-group mb-0">
-            <label class="form-label" for="supRetSender">คืนโดยใคร (พนักงานผู้ส่งคืน) <span class="required">*</span></label>
-            <div class="input-clearable-wrap">
-              <input type="text" id="supRetSender" class="form-control" placeholder="ชื่อพนักงานผู้ส่งคืน..." value="${escapeHtml(loan.supplier_return_sender || defaultUser)}" autocomplete="off" />
-              <button type="button" class="btn-input-clear" data-clear-target="supRetSender" title="ล้างค่า">✕</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-grid grid-2-col" style="margin-top:6px;">
-          <div class="form-group mb-0">
-            <label class="form-label" for="supRetTimestamp">วันที่และเวลาที่ส่งคืน</label>
-            <input type="datetime-local" id="supRetTimestamp" class="form-control" value="${escapeHtml(loan.supplier_return_timestamp || nowIsoString)}" />
-          </div>
-          <div class="form-group mb-0">
-            <label class="form-label" for="supRetNote">หมายเหตุส่งคืน Supplier</label>
-            <div class="input-clearable-wrap">
-              <input type="text" id="supRetNote" class="form-control" placeholder="เช่น ฝาก รปภ., ส่งคืนเคาน์เตอร์, ใบส่งของเลขที่..." value="${escapeHtml(loan.supplier_return_note || '')}" autocomplete="off" />
-              <button type="button" class="btn-input-clear ${loan.supplier_return_note ? '' : 'hidden'}" data-clear-target="supRetNote" title="ล้างค่า">✕</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Supplier Return Photos -->
-        <div class="form-group mb-0" style="margin-top:4px;">
-          <div class="photo-upload-header">
-            <label class="form-label mb-0">รูปถ่ายหลักฐานการส่งคืน Supplier (ถ้ามี)</label>
-            <span class="photo-count-badge" id="supPhotoCountBadge">${currentSupplierReturnPhotos.length} รูป</span>
-          </div>
-          <div class="delivery-photo-actions">
-            <input type="file" id="supCameraInput" accept="image/*" capture="environment" class="hidden" />
-            <input type="file" id="supFileInput" accept="image/*" multiple class="hidden" />
-            <button type="button" class="btn btn-outline btn-photo-snap" id="btnSnapSupCamera">📷 ถ่ายรูป</button>
-            <button type="button" class="btn btn-outline btn-photo-pick" id="btnPickSupFile">📁 เลือกรูป</button>
-          </div>
-          <div id="supPhotoGrid" class="delivery-photo-grid"></div>
-        </div>
       </div>
     `;
   }
@@ -12431,16 +12421,16 @@ function openSupplierSaleReturnModal(loanId) {
   // SECTION 2: SALE ITEMS (ถ้ามี)
   if (saleItems.length > 0) {
     html += `
-      <div class="return-section-block">
-        <div class="return-section-header">
-          <div class="return-section-title-wrap">
+      <div class="return-section-block" style="margin-bottom:14px;">
+        <div class="return-section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div class="return-section-title-wrap" style="display:flex; align-items:center; gap:8px;">
             <span style="font-size:18px;">🏢</span>
-            <h4 class="return-section-title">2. รายการคืนคลังขาย</h4>
+            <h4 class="return-section-title" style="margin:0; font-size:14px; font-weight:700; color:#1e293b;">2. รายการคืนคลังขาย</h4>
             <span class="badge" style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-size:12px; padding:2px 8px; border-radius:999px;">
               ${saleItems.length} เครื่อง
             </span>
           </div>
-          <div class="return-flow-notice" style="padding:4px 10px; font-size:12px;">
+          <div class="return-flow-notice" style="padding:3px 8px; font-size:11.5px; border-radius:6px; background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0;">
             ✅ ผ่านการตรวจสภาพ QC เรียบร้อยแล้ว
           </div>
         </div>
@@ -12482,36 +12472,89 @@ function openSupplierSaleReturnModal(loanId) {
             }).join('')}
           </tbody>
         </table>
-
-        <!-- Form Fields for Sale Return -->
-        <div class="form-grid grid-2-col" style="margin-top:6px;">
-          <div class="form-group mb-0">
-            <label class="form-label" for="saleRetSender">คืนโดยใคร (พนักงานผู้ดำเนินการ) <span class="required">*</span></label>
-            <div class="input-clearable-wrap">
-              <input type="text" id="saleRetSender" class="form-control" placeholder="ชื่อผู้ดำเนินการ..." value="${escapeHtml(loan.sale_return_sender || defaultUser)}" autocomplete="off" />
-              <button type="button" class="btn-input-clear" data-clear-target="saleRetSender" title="ล้างค่า">✕</button>
-            </div>
-          </div>
-          <div class="form-group mb-0">
-            <label class="form-label" for="saleRetTimestamp">วันที่และเวลา</label>
-            <input type="datetime-local" id="saleRetTimestamp" class="form-control" value="${escapeHtml(loan.sale_return_timestamp || nowIsoString)}" />
-          </div>
-        </div>
-
-        <div class="form-group mb-0" style="margin-top:6px;">
-          <label class="form-label" for="saleRetNote">หมายเหตุการคืนคลังขาย</label>
-          <div class="input-clearable-wrap">
-            <input type="text" id="saleRetNote" class="form-control" placeholder="เช่น สภาพสมบูรณ์ ไม่ชำรุดเสียหาย, หรือตีเข้าเดโมเพราะมีรอยแกะ..." value="${escapeHtml(loan.sale_return_note || '')}" autocomplete="off" />
-            <button type="button" class="btn-input-clear ${loan.sale_return_note ? '' : 'hidden'}" data-clear-target="saleRetNote" title="ล้างค่า">✕</button>
-          </div>
-        </div>
       </div>
     `;
   }
 
+  // UNIFIED EXECUTION FORM (EXACTLY MATCHING DELIVERY MODAL / IMAGE 2)
+  html += `
+    <!-- Row 1: ผู้ส่ง & ผู้รับ -->
+    <div class="form-grid grid-2-col">
+      <div class="form-group">
+        <label class="form-label" for="supRetSender">ผู้ส่งสินค้า <span class="required">*</span></label>
+        <div class="input-clearable-wrap">
+          <input type="text" id="supRetSender" class="form-control" placeholder="ชื่อ-นามสกุล ผู้ส่งสินค้า" value="${escapeHtml(senderVal)}" required autocomplete="off" />
+          <button type="button" class="btn-input-clear ${senderVal ? '' : 'hidden'}" data-clear-target="supRetSender" title="ล้างค่า">✕</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="supRetReceiver">ผู้รับสินค้า <span class="required">*</span></label>
+        <div class="input-clearable-wrap">
+          <input type="text" id="supRetReceiver" class="form-control" placeholder="ชื่อ-นามสกุล / ตำแหน่ง ผู้รับ" value="${escapeHtml(receiverVal)}" required autocomplete="off" />
+          <button type="button" class="btn-input-clear ${receiverVal ? '' : 'hidden'}" data-clear-target="supRetReceiver" title="ล้างค่า">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2: ถ่ายรูปส่งงาน / หลักฐานหน้างาน -->
+    <div class="form-group">
+      <div class="photo-upload-header">
+        <label class="form-label mb-0">ถ่ายรูปส่งงาน / หลักฐานหน้างาน</label>
+        <span class="photo-count-badge" id="supPhotoCountBadge">${currentSupplierReturnPhotos.length} รูป</span>
+      </div>
+      <div class="delivery-photo-actions">
+        <input type="file" id="supCameraInput" accept="image/*" capture="environment" class="hidden" />
+        <input type="file" id="supFileInput" accept="image/*" multiple class="hidden" />
+        <button type="button" class="btn btn-outline btn-photo-snap" id="btnSnapSupCamera">
+          📷 ถ่ายรูปด้วยกล้อง
+        </button>
+        <button type="button" class="btn btn-outline btn-photo-pick" id="btnPickSupFile">
+          📁 เลือกจากคลังรูปภาพ
+        </button>
+      </div>
+      <!-- Grid of uploaded photo previews -->
+      <div id="supPhotoGrid" class="delivery-photo-grid"></div>
+    </div>
+
+    <!-- Row 3: GPS & Timestamp Card -->
+    <div class="delivery-meta-card">
+      <div class="delivery-meta-row">
+        <div class="delivery-meta-icon">📍</div>
+        <div class="delivery-meta-info">
+          <div class="delivery-meta-label">พิกัดสถานที่ส่งมอบ (GPS)</div>
+          <div class="delivery-meta-value" id="supGpsDisplay">กำลังค้นหาพิกัด...</div>
+          <input type="hidden" id="supGpsVal" name="supGps" />
+        </div>
+        <button type="button" class="btn btn-sm btn-outline btn-refresh-gps" id="btnRefreshSupGps" title="ดึงพิกัดใหม่">
+          🔄 ดึงพิกัดใหม่
+        </button>
+      </div>
+      <div class="delivery-meta-divider"></div>
+      <div class="delivery-meta-row">
+        <div class="delivery-meta-icon">🕒</div>
+        <div class="delivery-meta-info">
+          <div class="delivery-meta-label">วันเวลาที่ส่งมอบ (Timestamp)</div>
+          <div class="delivery-meta-value" id="supTimestampDisplay">-</div>
+          <input type="hidden" id="supRetTimestamp" name="supRetTimestamp" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 4: หมายเหตุเพิ่มเติม (ถ้ามี) -->
+    <div class="form-group mb-0">
+      <label class="form-label" for="supRetNote">หมายเหตุการส่งมอบ (ถ้ามี)</label>
+      <div class="input-clearable-wrap">
+        <input type="text" id="supRetNote" class="form-control" placeholder="เช่น ฝากไว้ที่ป้อม รปภ., วางที่โต๊ะประชาสัมพันธ์..." value="${escapeHtml(noteVal)}" autocomplete="off" />
+        <button type="button" class="btn-input-clear ${noteVal ? '' : 'hidden'}" data-clear-target="supRetNote" title="ล้างค่า">✕</button>
+      </div>
+    </div>
+  `;
+
   contentWrap.innerHTML = html;
 
   renderSupPhotoGrid();
+  updateSupTimestamp();
+  captureSupGps();
   attachSupplierSaleModalEvents();
 
   dialog.showModal();

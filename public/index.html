@@ -1417,40 +1417,37 @@
   <!-- =====================================================================
        MODAL: คืน Supplier, คลังขาย (Supplier & Sales Stock Return Modal)
        ===================================================================== -->
-  <dialog id="supplierSaleReturnDialog" class="modal-dialog modal-supplier-sale no-print" aria-labelledby="supSaleModalTitle">
-    <div class="modal-card supplier-sale-modal-card">
+  <dialog id="supplierSaleReturnDialog" class="modal-dialog modal-delivery no-print" aria-labelledby="supSaleModalTitle">
+    <div class="modal-card delivery-modal-card">
       <div class="sheet-drag-handle"></div>
       <header class="modal-header">
         <div class="modal-title-group">
           <div class="modal-title-with-badge">
-            <h3 id="supSaleModalTitle" class="modal-title">คืน Supplier, คลังขาย</h3>
+            <h3 id="supSaleModalTitle" class="modal-title">บันทึกคืน Supplier, คลังขาย</h3>
             <span class="badge badge-purple" id="supSaleLoanBadge">LOAN-XXXX</span>
           </div>
-          <p class="modal-subtitle" id="supSaleCustomerSubtitle">บันทึกข้อมูลการส่งคืนสินค้าให้ Supplier และจัดสต็อกคืนคลังขาย</p>
+          <p class="modal-subtitle" id="supSaleCustomerSubtitle">บันทึกข้อมูลและหลักฐานการส่งคืนสินค้า</p>
         </div>
         <button type="button" class="btn-close-modal" data-close-dialog="supplierSaleReturnDialog" aria-label="ปิด">✕</button>
       </header>
 
-      <div class="modal-body supplier-sale-body">
+      <div class="modal-body delivery-modal-body">
         <input type="hidden" id="supSaleLoanId" />
 
         <!-- Dynamic Container rendered by app.js: Supplier Section & Sale Section -->
         <div id="supSaleContentWrap"></div>
       </div>
 
-      <footer class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+      <footer class="modal-footer delivery-modal-footer" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
         <div style="display:flex; gap:8px;">
-          <button type="button" class="btn btn-outline" data-close-dialog="supplierSaleReturnDialog">ปิด</button>
+          <button type="button" class="btn btn-outline" data-close-dialog="supplierSaleReturnDialog">ยกเลิก</button>
           <button type="button" class="btn btn-sm btn-outline" id="btnRevertSupSaleReturn" style="color:#ef4444; border-color:#fecaca;" title="ย้อนสถานะกลับไปก่อนหน้า">
             ↩️ ย้อนสถานะ
           </button>
         </div>
-        <div style="display:flex; gap:8px;">
-          <button type="button" class="btn btn-outline" id="btnOpenReturnSlipFromModal" style="border-color:#cbd5e1; color:#0f766e;">
-            🖨️ ออกใบคืนสินค้า
-          </button>
-          <button type="button" class="btn btn-primary" id="btnSubmitSupSaleReturn" style="background:#4338ca; border-color:#4338ca;">
-            ✅ บันทึกยืนยันการคืน
+        <div>
+          <button type="button" class="btn btn-primary btn-confirm-delivery" id="btnSubmitSupSaleReturn" style="background:#2563eb; border-color:#2563eb;">
+            📄 บันทึกและออกใบคืน
           </button>
         </div>
       </footer>

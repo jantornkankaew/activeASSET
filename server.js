@@ -289,6 +289,9 @@ try {
   db.exec(`ALTER TABLE loans ADD COLUMN supplier_return_photos_json TEXT DEFAULT '[]'`);
 } catch (e) {}
 try {
+  db.exec(`ALTER TABLE loans ADD COLUMN supplier_return_gps TEXT DEFAULT ''`);
+} catch (e) {}
+try {
   db.exec(`ALTER TABLE loans ADD COLUMN sale_return_sender TEXT DEFAULT ''`);
 } catch (e) {}
 try {
@@ -4099,6 +4102,7 @@ const server = http.createServer(async (req, res) => {
       const supplierSender = String(body.supplier_return_sender || '').trim();
       const supplierTimestamp = String(body.supplier_return_timestamp || '').trim();
       const supplierNote = String(body.supplier_return_note || '').trim();
+      const supplierGps = String(body.supplier_return_gps || '').trim();
       const supplierPhotos = (Array.isArray(body.supplier_return_photos) ? body.supplier_return_photos : [])
         .map(p => saveBase64Image(p, `ret-sup-${loanId}`))
         .filter(Boolean);
@@ -4181,6 +4185,7 @@ const server = http.createServer(async (req, res) => {
               supplier_return_sender = COALESCE(NULLIF(?, ''), supplier_return_sender),
               supplier_return_timestamp = COALESCE(NULLIF(?, ''), supplier_return_timestamp),
               supplier_return_note = COALESCE(NULLIF(?, ''), supplier_return_note),
+              supplier_return_gps = COALESCE(NULLIF(?, ''), supplier_return_gps),
               supplier_return_photos_json = ?,
               sale_return_sender = COALESCE(NULLIF(?, ''), sale_return_sender),
               sale_return_timestamp = COALESCE(NULLIF(?, ''), sale_return_timestamp),
@@ -4194,6 +4199,7 @@ const server = http.createServer(async (req, res) => {
           supplierSender,
           supplierTimestamp,
           supplierNote,
+          supplierGps,
           JSON.stringify(combinedPhotos),
           saleSender,
           saleTimestamp,
