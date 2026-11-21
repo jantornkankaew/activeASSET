@@ -570,7 +570,7 @@ function getUserWithRole(email) {
     picture: user.picture || '',
     domain: user.domain || '',
     permissions: role.permissions,
-    is_fallback_admin: user.email === 'admin@active5.co.th' || user.email === 'superadmin@active5.co.th',
+    is_fallback_admin: user.email === 'admin@active5.co.th',
     last_login: user.last_login
   };
 }
@@ -584,31 +584,33 @@ if (userCount.cnt === 0) {
   insertUser.run('logistics@active5.co.th', 'พนักงานส่งมอบสินค้า', 'user', 'active5.co.th');
 }
 
-// Guarantee Fallback Admin accounts always exist with Admin role, password protection, and are unblocked
+// Clean up superadmin if existed
 try {
-  const specialAdmins = [
-    { email: 'admin@active5.co.th', name: 'ผู้ดูแลระบบสำรอง (Admin สำรอง)' },
-    { email: 'superadmin@active5.co.th', name: 'ผู้ดูแลระบบสำรอง (Super Admin)' }
-  ];
-  for (const sa of specialAdmins) {
-    db.prepare('DELETE FROM deleted_users WHERE email = ?').run(sa.email);
-    const existing = db.prepare('SELECT password_hash FROM users WHERE email = ?').get(sa.email);
-    let pHash = existing?.password_hash;
-    if (!pHash) {
-      pHash = hashPassword('admin1234');
-    }
-    db.prepare(`
-      INSERT INTO users (email, name, role, domain, status, password_hash)
-      VALUES (?, ?, 'admin', 'active5.co.th', 'active', ?)
-      ON CONFLICT(email) DO UPDATE SET
-        role = 'admin',
-        status = 'active',
-        name = excluded.name,
-        password_hash = CASE WHEN users.password_hash != '' THEN users.password_hash ELSE excluded.password_hash END
-    `).run(sa.email, sa.name, pHash);
+  db.prepare("DELETE FROM users WHERE email = 'superadmin@active5.co.th'").run();
+  db.prepare("DELETE FROM deleted_users WHERE email = 'superadmin@active5.co.th'").run();
+} catch (e) {}
+
+// Guarantee Fallback Admin account (admin@active5.co.th) always exists with Admin role, password protection, and is unblocked
+try {
+  const adminEmail = 'admin@active5.co.th';
+  const adminName = 'ผู้ดูแลระบบสำรอง (Admin สำรอง)';
+  db.prepare('DELETE FROM deleted_users WHERE email = ?').run(adminEmail);
+  const existing = db.prepare('SELECT password_hash FROM users WHERE email = ?').get(adminEmail);
+  let pHash = existing?.password_hash;
+  if (!pHash) {
+    pHash = hashPassword('admin1234');
   }
+  db.prepare(`
+    INSERT INTO users (email, name, role, domain, status, password_hash)
+    VALUES (?, ?, 'admin', 'active5.co.th', 'active', ?)
+    ON CONFLICT(email) DO UPDATE SET
+      role = 'admin',
+      status = 'active',
+      name = excluded.name,
+      password_hash = CASE WHEN users.password_hash != '' THEN users.password_hash ELSE excluded.password_hash END
+  `).run(adminEmail, adminName, pHash);
 } catch (e) {
-  console.warn('Special admin setup notice:', e.message);
+  console.warn('Admin setup notice:', e.message);
 }
 
 // Company / Issuer Settings
@@ -1982,7 +1984,7 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 400, { success: false, valid: false, error: 'กรุณาระบุอีเมล' });
       }
 
-      const isSpecialAdmin = email === 'admin@active5.co.th' || email === 'superadmin@active5.co.th';
+      const isSpecialAdmin = email === 'admin@active5.co.th';
       if (isSpecialAdmin) {
         db.prepare('DELETE FROM deleted_users WHERE email = ?').run(email);
         db.prepare(`
@@ -2168,7 +2170,7 @@ const server = http.createServer(async (req, res) => {
       const roleObj = db.prepare('SELECT * FROM roles WHERE id = ?').get(newRoleId);
       if (!roleObj) return sendJson(res, 400, { error: `ไม่พบบทบาท "${newRoleId}" ในระบบ` });
 
-      if ((email === 'admin@active5.co.th' || email === 'superadmin@active5.co.th') && newRoleId !== 'admin') {
+      if (email === 'admin@active5.co.th' && newRoleId !== 'admin') {
         return sendJson(res, 400, { error: 'ไม่สามารถเปลี่ยนบทบาทของบัญชี Admin สำรองเป็นบทบาทอื่นได้' });
       }
 
@@ -2198,7 +2200,7 @@ const server = http.createServer(async (req, res) => {
       const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
       if (!user) return sendJson(res, 404, { error: 'ไม่พบผู้ใช้นี้ในระบบ' });
 
-      if ((email === 'admin@active5.co.th' || email === 'superadmin@active5.co.th') && newStatus === 'disabled') {
+      if (email === 'admin@active5.co.th' && newStatus === 'disabled') {
         return sendJson(res, 400, { error: 'ไม่สามารถระงับการใช้งานบัญชี Admin สำรองได้' });
       }
 
@@ -2228,7 +2230,7 @@ const server = http.createServer(async (req, res) => {
       const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
       if (!user) return sendJson(res, 404, { error: 'ไม่พบผู้ใช้นี้ในระบบ' });
 
-      if (email === 'admin@active5.co.th' || email === 'superadmin@active5.co.th') {
+      if (email === 'admin@active5.co.th') {
         return sendJson(res, 400, { error: 'ไม่สามารถลบบัญชีผู้ดูแลระบบสำรอง (Admin สำรอง) ได้ เพื่อความปลอดภัยของระบบ' });
       }
 
@@ -2284,7 +2286,6 @@ const server = http.createServer(async (req, res) => {
 
       const newHash = hashPassword(newPassword);
       db.prepare("UPDATE users SET password_hash = ? WHERE email = 'admin@active5.co.th'").run(newHash);
-      db.prepare("UPDATE users SET password_hash = ? WHERE email = 'superadmin@active5.co.th'").run(newHash);
       db.prepare("INSERT OR REPLACE INTO company_settings (key, value) VALUES ('fallback_admin_password_hash', ?)").run(newHash);
       db.prepare("INSERT OR REPLACE INTO company_settings (key, value) VALUES ('fallback_admin_password_updated_at', datetime('now', 'localtime'))").run();
 
@@ -2721,11 +2722,10 @@ const server = http.createServer(async (req, res) => {
       // Auto-append @active5.co.th if local username was provided without domain
       if (!email.includes('@')) {
         if (email === 'admin') email = 'admin@active5.co.th';
-        else if (email === 'superadmin') email = 'superadmin@active5.co.th';
         else email = email + '@active5.co.th';
       }
 
-      const isSpecialAdmin = email === 'admin@active5.co.th' || email === 'superadmin@active5.co.th';
+      const isSpecialAdmin = email === 'admin@active5.co.th';
       if (isSpecialAdmin) {
         db.prepare('DELETE FROM deleted_users WHERE email = ?').run(email);
         const existing = db.prepare('SELECT password_hash FROM users WHERE email = ?').get(email);
@@ -2788,7 +2788,7 @@ const server = http.createServer(async (req, res) => {
         if (existing && existing.name) {
           name = existing.name;
         } else if (isSpecialAdmin) {
-          name = email === 'superadmin@active5.co.th' ? 'Super Admin (สิทธิ์สูงสุด)' : 'ผู้ดูแลระบบพิเศษ (Super Admin)';
+          name = 'ผู้ดูแลระบบสำรอง (Admin สำรอง)';
         } else {
           const localPart = email.split('@')[0];
           name = localPart.charAt(0).toUpperCase() + localPart.slice(1);
@@ -2806,7 +2806,7 @@ const server = http.createServer(async (req, res) => {
         }
         userRole = isSpecialAdmin ? 'admin' : (existingUser.role || 'user');
       } else {
-        if (isSpecialAdmin || email === 'admin@active5.co.th' || email === 'jantorn@active5.co.th' || email.startsWith('admin@') || email.startsWith('superadmin@')) {
+        if (isSpecialAdmin || email === 'admin@active5.co.th' || email === 'jantorn@active5.co.th' || email.startsWith('admin@')) {
           userRole = 'admin';
         } else {
           // Automatic assignment of 'user' role for all new users from active5.co.th

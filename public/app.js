@@ -10049,7 +10049,7 @@ function setupCompanySettingsModal() {
       const roleIcon = currentRole.id === 'admin' ? APP_ICONS.sparkle : (currentRole.id === 'user' ? APP_ICONS.user : APP_ICONS.tool);
       const isDisabled = u.status === 'disabled';
       const isSelf = state.currentUser && state.currentUser.email === u.email;
-      const isFallbackAdmin = u.email === 'admin@active5.co.th' || u.email === 'superadmin@active5.co.th' || u.is_fallback_admin;
+      const isFallbackAdmin = u.email === 'admin@active5.co.th' || u.is_fallback_admin;
 
       return `
         <div class="user-role-row ${isDisabled ? 'is-disabled' : ''}" data-user-email="${escapeHtml(u.email)}">
@@ -21649,11 +21649,10 @@ function setupAuthSystem() {
       if (!email.includes('@')) {
         const lower = email.toLowerCase();
         if (lower === 'admin') email = 'admin@active5.co.th';
-        else if (lower === 'superadmin') email = 'superadmin@active5.co.th';
         else email = email + '@active5.co.th';
       }
 
-      if ((email === 'admin@active5.co.th' || email === 'superadmin@active5.co.th') && !pwd) {
+      if (email === 'admin@active5.co.th' && !pwd) {
         showAlert('กรุณากรอกรหัสผ่านสำหรับบัญชี Admin สำรอง (หากยังไม่ได้เปลี่ยน ค่าเริ่มต้นคือ admin1234)');
         pwdInput?.focus();
         return;
