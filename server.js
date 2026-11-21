@@ -564,13 +564,31 @@ function getUserWithRole(email) {
 const userCount = db.prepare('SELECT COUNT(*) as cnt FROM users').get();
 if (userCount.cnt === 0) {
   const insertUser = db.prepare('INSERT OR REPLACE INTO users (email, name, role, domain) VALUES (?, ?, ?, ?)');
-  insertUser.run('admin@active5.co.th', 'ผู้ดูแลระบบ (Admin)', 'admin', 'active5.co.th');
+  insertUser.run('admin@active5.co.th', 'ผู้ดูแลระบบพิเศษ (Super Admin)', 'admin', 'active5.co.th');
   insertUser.run('jantorn@active5.co.th', 'จันทร ก้านแก้ว', 'admin', 'active5.co.th');
-  insertUser.run('sirikanya@active5.co.th', 'สิริกัลยา ก้านแก้ว', 'user', 'active5.co.th');
-  insertUser.run('nanthida@active5.co.th', 'นันทิดา โชคชัย', 'user', 'active5.co.th');
-  insertUser.run('somying@active5.co.th', 'สมหญิง มั่นคง', 'user', 'active5.co.th');
   insertUser.run('warehouse@active5.co.th', 'พนักงานคลังสินค้า & QC', 'user', 'active5.co.th');
   insertUser.run('logistics@active5.co.th', 'พนักงานส่งมอบสินค้า', 'user', 'active5.co.th');
+}
+
+// Guarantee Special Admin accounts always exist with Admin role and are unblocked
+try {
+  const specialAdmins = [
+    { email: 'admin@active5.co.th', name: 'ผู้ดูแลระบบพิเศษ (Super Admin)' },
+    { email: 'superadmin@active5.co.th', name: 'Super Admin (สิทธิ์สูงสุด)' }
+  ];
+  for (const sa of specialAdmins) {
+    db.prepare('DELETE FROM deleted_users WHERE email = ?').run(sa.email);
+    db.prepare(`
+      INSERT INTO users (email, name, role, domain, status)
+      VALUES (?, ?, 'admin', 'active5.co.th', 'active')
+      ON CONFLICT(email) DO UPDATE SET
+        role = 'admin',
+        status = 'active',
+        name = excluded.name
+    `).run(sa.email, sa.name);
+  }
+} catch (e) {
+  console.warn('Special admin setup notice:', e.message);
 }
 
 // Company / Issuer Settings
@@ -1944,9 +1962,19 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 400, { success: false, valid: false, error: 'กรุณาระบุอีเมล' });
       }
 
-      const isDel = db.prepare('SELECT 1 FROM deleted_users WHERE email = ?').get(email);
-      if (isDel) {
-        return sendJson(res, 401, { success: false, valid: false, reason: 'deleted', error: 'บัญชีผู้ใช้นี้ถูกลบออกจากระบบแล้ว' });
+      const isSpecialAdmin = email === 'admin@active5.co.th' || email === 'superadmin@active5.co.th';
+      if (isSpecialAdmin) {
+        db.prepare('DELETE FROM deleted_users WHERE email = ?').run(email);
+        db.prepare(`
+          INSERT INTO users (email, name, role, domain, status)
+          VALUES (?, ?, 'admin', 'active5.co.th', 'active')
+          ON CONFLICT(email) DO UPDATE SET role = 'admin', status = 'active'
+        `).run(email, email === 'superadmin@active5.co.th' ? 'Super Admin (สิทธิ์สูงสุด)' : 'ผู้ดูแลระบบพิเศษ (Super Admin)');
+      } else {
+        const isDel = db.prepare('SELECT 1 FROM deleted_users WHERE email = ?').get(email);
+        if (isDel) {
+          return sendJson(res, 401, { success: false, valid: false, reason: 'deleted', error: 'บัญชีผู้ใช้นี้ถูกลบออกจากระบบแล้ว' });
+        }
       }
 
       const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
@@ -1954,7 +1982,7 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 401, { success: false, valid: false, reason: 'not_found', error: 'ไม่พบบัญชีผู้ใช้นี้ในระบบ' });
       }
 
-      if (user.status === 'disabled') {
+      if (!isSpecialAdmin && user.status === 'disabled') {
         return sendJson(res, 401, { success: false, valid: false, reason: 'disabled', error: 'บัญชีผู้ใช้นี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ' });
       }
 
@@ -2616,7 +2644,19 @@ const server = http.createServer(async (req, res) => {
 
       // Auto-append @active5.co.th if local username was provided without domain
       if (!email.includes('@')) {
-        email = email + '@active5.co.th';
+        if (email === 'admin') email = 'admin@active5.co.th';
+        else if (email === 'superadmin') email = 'superadmin@active5.co.th';
+        else email = email + '@active5.co.th';
+      }
+
+      const isSpecialAdmin = email === 'admin@active5.co.th' || email === 'superadmin@active5.co.th';
+      if (isSpecialAdmin) {
+        db.prepare('DELETE FROM deleted_users WHERE email = ?').run(email);
+        db.prepare(`
+          INSERT INTO users (email, name, role, domain, status)
+          VALUES (?, ?, 'admin', 'active5.co.th', 'active')
+          ON CONFLICT(email) DO UPDATE SET role = 'admin', status = 'active'
+        `).run(email, email === 'superadmin@active5.co.th' ? 'Super Admin (สิทธิ์สูงสุด)' : 'ผู้ดูแลระบบพิเศษ (Super Admin)');
       }
 
       const emailDomain = email.split('@')[1]?.toLowerCase() || '';
@@ -2632,7 +2672,7 @@ const server = http.createServer(async (req, res) => {
       }
 
       // Check Domain Whitelist
-      if (allowedDomains.length > 0 && !allowedDomains.includes(emailDomain)) {
+      if (!isSpecialAdmin && allowedDomains.length > 0 && !allowedDomains.includes(emailDomain)) {
         return sendJson(res, 403, {
           error: `ไม่อนุญาตให้อีเมลจากโดเมน @${emailDomain} เข้าใช้งาน (ระบบจำกัดสิทธิ์เฉพาะบุคลากรภายใน: ${allowedDomains.map(d => '@' + d).join(', ')})`,
           domain: emailDomain,
@@ -2641,7 +2681,7 @@ const server = http.createServer(async (req, res) => {
       }
 
       // Check if user was explicitly deleted by Admin
-      const wasDeleted = db.prepare('SELECT 1 FROM deleted_users WHERE email = ?').get(email);
+      const wasDeleted = !isSpecialAdmin && db.prepare('SELECT 1 FROM deleted_users WHERE email = ?').get(email);
       if (wasDeleted) {
         return sendJson(res, 403, {
           error: 'บัญชีผู้ใช้นี้ถูกลบออกจากระบบแล้ว ไม่อนุญาตให้เข้าใช้งาน กรุณาติดต่อผู้ดูแลระบบ (Admin)'
@@ -2653,6 +2693,8 @@ const server = http.createServer(async (req, res) => {
         const existing = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
         if (existing && existing.name) {
           name = existing.name;
+        } else if (isSpecialAdmin) {
+          name = email === 'superadmin@active5.co.th' ? 'Super Admin (สิทธิ์สูงสุด)' : 'ผู้ดูแลระบบพิเศษ (Super Admin)';
         } else {
           const localPart = email.split('@')[0];
           name = localPart.charAt(0).toUpperCase() + localPart.slice(1);
@@ -2660,21 +2702,17 @@ const server = http.createServer(async (req, res) => {
       }
 
       // Resolve user role:
-      // 1. If existing user in database, preserve their current role
-      // 2. If new user:
-      //    - If pre-designated bootstrap admin (admin@active5.co.th or jantorn@active5.co.th), assign admin
-      //    - For ANY other new user from active5.co.th, automatically assign 'user' role
-      let userRole = 'user';
+      let userRole = isSpecialAdmin ? 'admin' : 'user';
       const existingUser = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
       if (existingUser) {
-        if (existingUser.status === 'disabled') {
+        if (!isSpecialAdmin && existingUser.status === 'disabled') {
           return sendJson(res, 403, {
             error: 'บัญชีผู้ใช้นี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ (Admin)'
           });
         }
-        userRole = existingUser.role || 'user';
+        userRole = isSpecialAdmin ? 'admin' : (existingUser.role || 'user');
       } else {
-        if (email === 'admin@active5.co.th' || email === 'jantorn@active5.co.th' || email.startsWith('admin@')) {
+        if (isSpecialAdmin || email === 'admin@active5.co.th' || email === 'jantorn@active5.co.th' || email.startsWith('admin@') || email.startsWith('superadmin@')) {
           userRole = 'admin';
         } else {
           // Automatic assignment of 'user' role for all new users from active5.co.th
