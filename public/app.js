@@ -21689,21 +21689,7 @@ function setupAuthSystem() {
     });
   }
 
-  // 5. Google Workspace button click
-  if (btnGoogle) {
-    btnGoogle.addEventListener('click', () => {
-      hideAlert();
-      if (state.authConfig.google_client_id && window.google?.accounts?.id) {
-        window.google.accounts.id.prompt();
-      } else {
-        // If Google Client ID not yet entered in settings, guide user
-        if (emailInput) {
-          emailInput.focus();
-          showAlert('กรอกอีเมล Google Workspace ของคุณ (เช่น @active5.co.th) เพื่อเข้าใช้งาน หรือไปที่เมนูตั้งค่าเพื่อผูก Google Client ID');
-        }
-      }
-    });
-  }
+
 
 
   // 6. Quick Switch for Company Staff
