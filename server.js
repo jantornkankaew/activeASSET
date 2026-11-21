@@ -4769,6 +4769,10 @@ const server = http.createServer(async (req, res) => {
         imagesVal = primaryImgVal ? JSON.stringify([primaryImgVal]) : '[]';
       }
 
+      const cleanSource = body.source !== undefined && body.source !== null
+        ? String(body.source).replace(/^[0-9]+\.\s*/, '').trim()
+        : null;
+
       db.prepare(`
         UPDATE assets
         SET source = COALESCE(?, source),
@@ -4780,7 +4784,7 @@ const server = http.createServer(async (req, res) => {
             updated_at = datetime('now', 'localtime')
         WHERE tag_id = ?
       `).run(
-        body.source !== undefined ? body.source : null,
+        cleanSource,
         body.location !== undefined ? body.location : null,
         body.free_note !== undefined ? body.free_note : null,
         body.accessories !== undefined ? JSON.stringify(body.accessories) : null,
@@ -4793,9 +4797,9 @@ const server = http.createServer(async (req, res) => {
 
       const diffParts = [];
       const changesList = [];
-      if (body.source !== undefined && body.source !== asset.source) {
+      if (cleanSource !== null && cleanSource !== asset.source) {
         const oldVal = asset.source || 'ไม่ได้ระบุ';
-        const newVal = body.source || 'ไม่ได้ระบุ';
+        const newVal = cleanSource || 'ไม่ได้ระบุ';
         diffParts.push(`เปลี่ยนคลัง: จาก "${oldVal}" ➔ "${newVal}"`);
         changesList.push({ field: 'คลัง (Source)', from: oldVal, to: newVal });
       }
@@ -4848,6 +4852,8 @@ const server = http.createServer(async (req, res) => {
         const actor = (body.user_name || '').trim() || 'จันทร ก้านแก้ว';
         logAssetActivity(db, tagId, 'UPDATE', 'แก้ไขข้อมูลเครื่อง', diffSummary, actor, { diffParts, changesList });
       }
+
+      notifyStateChange('update_asset', { tag_id: tagId, source: cleanSource });
 
       return sendJson(res, 200, getFullState());
     }

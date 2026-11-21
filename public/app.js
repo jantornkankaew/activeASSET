@@ -18368,7 +18368,8 @@ function setupEventListeners() {
     const listWrap = document.getElementById('editAssetSourceList');
     if (!listWrap) return;
 
-    const currentSource = (state.currentDetailAsset?.source || 'Demo').trim().toLowerCase();
+    const rawSource = state.currentDetailAsset?.source || 'Demo';
+    const currentSource = rawSource.replace(/^[0-9]+\.\s*/, '').trim().toLowerCase();
 
     const standardSources = [
       { value: 'Demo', display: '1. Demo', icon: APP_ICONS.tag, sub: 'คลังเครื่องตัวอย่าง' },
@@ -18381,7 +18382,7 @@ function setupEventListeners() {
     standardSources.forEach(s => srcMap.set(s.value.toLowerCase(), s));
 
     (state.assets || []).forEach(a => {
-      const s = (a.source || '').trim();
+      const s = (a.source || '').replace(/^[0-9]+\.\s*/, '').trim();
       if (s && !srcMap.has(s.toLowerCase())) {
         srcMap.set(s.toLowerCase(), {
           value: s,
@@ -18396,7 +18397,10 @@ function setupEventListeners() {
 
     listWrap.innerHTML = allSources.map(s => {
       const isSelected = s.value.toLowerCase() === currentSource;
-      const count = (state.assets || []).filter(a => (a.source || '').trim().toLowerCase() === s.value.toLowerCase()).length;
+      const count = (state.assets || []).filter(a => {
+        const aSrc = (a.source || 'Demo').replace(/^[0-9]+\.\s*/, '').trim().toLowerCase();
+        return aSrc === s.value.toLowerCase();
+      }).length;
       return `
         <div class="source-select-option ${isSelected ? 'is-selected' : ''}" data-source-option="${escapeHtml(s.value)}" role="button" tabindex="0">
           <div class="source-option-main">
@@ -19431,14 +19435,19 @@ function setupEventListeners() {
     document.getElementById('detailSectionSource')?.classList.remove('is-editing');
   });
 
+  let isPatchingSource = false;
   document.getElementById('editAssetSourceList')?.addEventListener('click', async (e) => {
+    if (isPatchingSource) return;
     const opt = e.target.closest('[data-source-option]');
     if (!opt) return;
-    const newSource = opt.getAttribute('data-source-option');
+    const rawSource = opt.getAttribute('data-source-option');
+    const newSource = (rawSource || '').replace(/^[0-9]+\.\s*/, '').trim();
     const tagId = state.currentDetailTagId;
     if (!tagId || !newSource) return;
 
-    // Visual selection feedback
+    isPatchingSource = true;
+
+    // Visual selection feedback immediately
     document.querySelectorAll('#editAssetSourceList .source-select-option').forEach(el => {
       el.classList.remove('is-selected');
       const chk = el.querySelector('.source-option-check');
@@ -19446,12 +19455,19 @@ function setupEventListeners() {
     });
     opt.classList.add('is-selected');
     const checkEl = opt.querySelector('.source-option-check');
-    if (checkEl) checkEl.textContent = '✓';
+    if (checkEl) checkEl.textContent = '⏳';
 
     try {
       await patchStockAsset(tagId, { source: newSource });
-      if (state.currentDetailAsset) {
+
+      const freshAsset = (state.assets || []).find(a => a.tag_id === tagId);
+      if (freshAsset) {
+        state.currentDetailAsset = freshAsset;
+      } else if (state.currentDetailAsset) {
         state.currentDetailAsset.source = newSource;
+      }
+
+      if (state.currentDetailAsset) {
         renderDetailSourceReadOnly(state.currentDetailAsset);
         const sourcePill = document.getElementById('assetDetailSourcePill');
         if (sourcePill) {
@@ -19460,12 +19476,36 @@ function setupEventListeners() {
           sourcePill.className = `asset-source-pill ${sourceClass}`;
         }
       }
+
+      // If current stock filter is not 'all' and does not match the newSource, reset stockSourceFilter to 'all'
+      // so the asset remains clearly visible to the user in the background list!
+      if (state.stockSourceFilter && state.stockSourceFilter !== 'all' && state.stockSourceFilter.toLowerCase() !== newSource.toLowerCase()) {
+        state.stockSourceFilter = 'all';
+        document.querySelectorAll('#stockSourceFilter .chip-filter').forEach(c => {
+          c.classList.toggle('active', c.getAttribute('data-src') === 'all');
+        });
+        renderStockView();
+      }
+
       document.getElementById('detailSourceEditMode')?.classList.add('hidden');
       document.getElementById('detailSourceViewMode')?.classList.remove('hidden');
       document.getElementById('detailSectionSource')?.classList.remove('is-editing');
       showToast(`✅ ย้ายเข้าคลัง "${newSource}" เรียบร้อย`);
     } catch (err) {
+      if (checkEl) checkEl.textContent = '';
       showToast('⚠️ ' + (err.message || 'บันทึกไม่สำเร็จ'));
+    } finally {
+      isPatchingSource = false;
+    }
+  });
+
+  document.getElementById('editAssetSourceList')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      const opt = e.target.closest('[data-source-option]');
+      if (opt) {
+        e.preventDefault();
+        opt.click();
+      }
     }
   });
 
@@ -21320,8 +21360,12 @@ async function patchStockAsset(tagId, payload) {
   }
   applyServerState(data);
 
-  // If Asset Detail modal is currently open for this asset, immediately refresh audit log!
+  // If Asset Detail modal is currently open for this asset, update currentDetailAsset from newly applied state and refresh audit log!
   if (state.currentDetailAsset && state.currentDetailAsset.tag_id === tagId) {
+    const freshAsset = (state.assets || []).find(a => a.tag_id === tagId);
+    if (freshAsset) {
+      state.currentDetailAsset = freshAsset;
+    }
     loadAssetAuditLogs(state.currentDetailAsset);
   }
 
