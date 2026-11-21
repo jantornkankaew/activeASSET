@@ -8969,6 +8969,8 @@ function setupCompanySettingsModal() {
 
     if (tabKey === 'roles' || tabKey === 'users') {
       loadRolesAndUsersUI();
+    } else if (tabKey === 'auth') {
+      fetchAdminPasswordInfo();
     } else if (tabKey === 'master') {
       if (typeof loadMasterDataUI === 'function') loadMasterDataUI();
     }
@@ -10047,6 +10049,7 @@ function setupCompanySettingsModal() {
       const roleIcon = currentRole.id === 'admin' ? APP_ICONS.sparkle : (currentRole.id === 'user' ? APP_ICONS.user : APP_ICONS.tool);
       const isDisabled = u.status === 'disabled';
       const isSelf = state.currentUser && state.currentUser.email === u.email;
+      const isFallbackAdmin = u.email === 'admin@active5.co.th' || u.email === 'superadmin@active5.co.th' || u.is_fallback_admin;
 
       return `
         <div class="user-role-row ${isDisabled ? 'is-disabled' : ''}" data-user-email="${escapeHtml(u.email)}">
@@ -10055,6 +10058,7 @@ function setupCompanySettingsModal() {
             <div class="user-row-names">
               <div class="user-row-fullname">
                 ${escapeHtml(u.name || '-')}
+                ${isFallbackAdmin ? '<span class="user-status-pill" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-weight:600;">🛡️ Admin สำรอง</span>' : ''}
                 ${isDisabled ? '<span class="user-status-pill is-disabled">ระงับการใช้งาน</span>' : ''}
                 ${isSelf ? '<span class="user-self-pill">คุณ</span>' : ''}
               </div>
@@ -10063,12 +10067,23 @@ function setupCompanySettingsModal() {
           </div>
 
           <div class="user-row-actions">
+            ${isFallbackAdmin ? `
+              <button type="button" 
+                class="btn btn-xs btn-outline btn-user-pwd" 
+                data-user-change-pwd="${escapeHtml(u.email)}" 
+                style="font-size:12px; padding:3px 9px; display:inline-flex; align-items:center; gap:4px; font-weight:600; color:#1d4ed8; border-color:#bfdbfe; background:#eff6ff; border-radius:6px;" 
+                title="ตั้ง / เปลี่ยนรหัสผ่าน Admin สำรอง"
+              >
+                🔑 รหัสผ่าน
+              </button>
+            ` : ''}
+
             <div class="user-role-selector-wrap">
               <button type="button" 
                 class="btn-user-role-dropdown-trigger ${currentRole.id === 'admin' ? 'is-admin' : ''}" 
                 data-user-role-trigger="${escapeHtml(u.email)}"
-                title="คลิกเพื่อสลับบทบาท (${escapeHtml(currentRole.name)})"
-                ${isDisabled ? 'disabled' : ''}
+                title="${isFallbackAdmin ? 'บัญชี Admin สำรอง ไม่สามารถเปลี่ยนบทบาทได้' : `คลิกเพื่อสลับบทบาท (${escapeHtml(currentRole.name)})`}"
+                ${isDisabled || isFallbackAdmin ? 'disabled' : ''}
               >
                 <span class="role-badge-icon">${roleIcon}</span>
                 <span class="role-badge-name">${escapeHtml(currentRole.name)}</span>
@@ -10081,8 +10096,8 @@ function setupCompanySettingsModal() {
               class="btn-user-status-toggle ${isDisabled ? 'is-disabled' : 'is-active'}"
               data-user-status-toggle="${escapeHtml(u.email)}"
               data-current-status="${isDisabled ? 'disabled' : 'active'}"
-              title="${isSelf ? 'ไม่สามารถระงับบัญชีตนเองได้' : (isDisabled ? 'คลิกเพื่อเปิดใช้งานบัญชี' : 'คลิกเพื่อระงับการใช้งานบัญชี')}"
-              ${isSelf ? 'disabled' : ''}
+              title="${isFallbackAdmin ? 'บัญชี Admin สำรอง ไม่สามารถระงับได้' : (isSelf ? 'ไม่สามารถระงับบัญชีตนเองได้' : (isDisabled ? 'คลิกเพื่อเปิดใช้งานบัญชี' : 'คลิกเพื่อระงับการใช้งานบัญชี'))}"
+              ${isSelf || isFallbackAdmin ? 'disabled' : ''}
             >
               ${isDisabled 
                 ? '<span class="status-dot dot-red"></span> ระงับ' 
@@ -10093,8 +10108,8 @@ function setupCompanySettingsModal() {
             <button type="button"
               class="btn-user-delete"
               data-user-delete="${escapeHtml(u.email)}"
-              title="${isSelf ? 'ไม่สามารถลบบัญชีตนเองได้' : 'ลบผู้ใช้นี้ออกจากระบบ'}"
-              ${isSelf ? 'disabled' : ''}
+              title="${isFallbackAdmin ? 'บัญชี Admin สำรอง ไม่สามารถลบได้' : (isSelf ? 'ไม่สามารถลบบัญชีตนเองได้' : 'ลบผู้ใช้นี้ออกจากระบบ')}"
+              ${isSelf || isFallbackAdmin ? 'disabled' : ''}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 6h18"></path>
@@ -10148,6 +10163,14 @@ function setupCompanySettingsModal() {
         e.stopPropagation();
         const email = btn.dataset.userDelete;
         if (email) deleteUser(email);
+      });
+    });
+
+    // Wire fallback admin change password buttons
+    container.querySelectorAll('[data-user-change-pwd]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openAdminPasswordModal();
       });
     });
   }
@@ -21466,6 +21489,11 @@ function setupAuthSystem() {
       if (ddName) ddName.textContent = user.name;
       if (ddEmail) ddEmail.textContent = user.email || '';
       if (ddRole) ddRole.textContent = user.role_name || (user.role === 'admin' ? 'ผู้ดูแลระบบ (Admin)' : 'ผู้ใช้งานทั่วไป (User)');
+      const btnAdminPwd = document.getElementById('btnOpenAdminPasswordFromDropdown');
+      if (btnAdminPwd) {
+        const isAdmin = user.role_id === 'admin' || user.role === 'admin';
+        btnAdminPwd.style.display = isAdmin ? 'flex' : 'none';
+      }
       if (ddAvatar) {
         if (user.picture) {
           ddAvatar.innerHTML = `<img src="${escapeHtml(user.picture)}" alt="${escapeHtml(user.name)}" />`;
@@ -21625,6 +21653,12 @@ function setupAuthSystem() {
         else email = email + '@active5.co.th';
       }
 
+      if ((email === 'admin@active5.co.th' || email === 'superadmin@active5.co.th') && !pwd) {
+        showAlert('กรุณากรอกรหัสผ่านสำหรับบัญชี Admin สำรอง (หากยังไม่ได้เปลี่ยน ค่าเริ่มต้นคือ admin1234)');
+        pwdInput?.focus();
+        return;
+      }
+
       const submitBtn = document.getElementById('btnLoginSubmit');
       try {
         if (submitBtn) {
@@ -21752,8 +21786,151 @@ function setupAuthSystem() {
     });
   }
 
+  // 10. Fallback Admin Password Handlers
+  setupAdminPasswordHandlers();
+
   // Initial load
   loadAuthConfig();
+  fetchAdminPasswordInfo();
+}
+
+async function fetchAdminPasswordInfo() {
+  const badge = document.getElementById('badgeAdminPasswordStatus');
+  if (!badge) return;
+  try {
+    const res = await fetch('/api/admin/password-info');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.is_default_password) {
+      badge.textContent = 'ค่าเริ่มต้น (admin1234)';
+      badge.style.background = '#fef3c7';
+      badge.style.color = '#92400e';
+      badge.title = 'ยังไม่ได้ตั้งรหัสผ่านใหม่ แนะนำให้เปลี่ยนรหัสผ่านเพื่อความปลอดภัย';
+    } else {
+      badge.textContent = 'ตั้งรหัสผ่านส่วนตัวแล้ว';
+      badge.style.background = '#dcfce7';
+      badge.style.color = '#15803d';
+      badge.title = 'มีการตั้งรหัสผ่าน Admin สำรองเรียบร้อยแล้ว';
+    }
+  } catch (_) {}
+}
+window.fetchAdminPasswordInfo = fetchAdminPasswordInfo;
+
+function openAdminPasswordModal() {
+  const dialog = document.getElementById('adminPasswordModalDialog');
+  const alert = document.getElementById('adminPasswordAlert');
+  const inpNew = document.getElementById('inputAdminNewPassword');
+  const inpConfirm = document.getElementById('inputAdminConfirmPassword');
+  if (!dialog) return;
+
+  if (alert) {
+    alert.classList.add('hidden');
+    alert.textContent = '';
+  }
+  if (inpNew) inpNew.value = '';
+  if (inpConfirm) inpConfirm.value = '';
+
+  if (typeof dialog.showModal === 'function') {
+    dialog.showModal();
+  } else {
+    dialog.setAttribute('open', '');
+  }
+  setTimeout(() => inpNew?.focus(), 100);
+}
+window.openAdminPasswordModal = openAdminPasswordModal;
+
+function setupAdminPasswordHandlers() {
+  const form = document.getElementById('adminPasswordForm');
+  const dialog = document.getElementById('adminPasswordModalDialog');
+  const alert = document.getElementById('adminPasswordAlert');
+  const btnCancel = document.getElementById('btnCancelAdminPassword');
+  const btnOpenSettings = document.getElementById('btnOpenChangeAdminPasswordModal');
+  const btnOpenDropdown = document.getElementById('btnOpenAdminPasswordFromDropdown');
+
+  if (btnOpenSettings && !btnOpenSettings.dataset.wired) {
+    btnOpenSettings.dataset.wired = 'true';
+    btnOpenSettings.addEventListener('click', openAdminPasswordModal);
+  }
+  if (btnOpenDropdown && !btnOpenDropdown.dataset.wired) {
+    btnOpenDropdown.dataset.wired = 'true';
+    btnOpenDropdown.addEventListener('click', () => {
+      document.getElementById('userDropdownCard')?.classList.add('hidden');
+      openAdminPasswordModal();
+    });
+  }
+  if (btnCancel && !btnCancel.dataset.wired) {
+    btnCancel.dataset.wired = 'true';
+    btnCancel.addEventListener('click', () => {
+      dialog?.close?.();
+    });
+  }
+
+  if (form && !form.dataset.wired) {
+    form.dataset.wired = 'true';
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const inpNew = document.getElementById('inputAdminNewPassword');
+      const inpConfirm = document.getElementById('inputAdminConfirmPassword');
+      const btnSave = document.getElementById('btnSaveAdminPassword');
+      const newPwd = (inpNew?.value || '').trim();
+      const confirmPwd = (inpConfirm?.value || '').trim();
+
+      if (!newPwd) {
+        if (alert) {
+          alert.textContent = 'กรุณาระบุรหัสผ่านใหม่';
+          alert.classList.remove('hidden');
+        }
+        inpNew?.focus();
+        return;
+      }
+      if (newPwd.length < 4) {
+        if (alert) {
+          alert.textContent = 'รหัสผ่านต้องมีความยาวอย่างน้อย 4 ตัวอักษร';
+          alert.classList.remove('hidden');
+        }
+        inpNew?.focus();
+        return;
+      }
+      if (newPwd !== confirmPwd) {
+        if (alert) {
+          alert.textContent = 'รหัสผ่านใหม่และการยืนยันรหัสผ่านไม่ตรงกัน';
+          alert.classList.remove('hidden');
+        }
+        inpConfirm?.focus();
+        return;
+      }
+
+      try {
+        if (btnSave) {
+          btnSave.disabled = true;
+          btnSave.textContent = 'กำลังบันทึก...';
+        }
+        const res = await fetch('/api/admin/password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ new_password: newPwd, confirm_password: confirmPwd })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'บันทึกรหัสผ่านไม่สำเร็จ');
+        }
+
+        showToast('✅ บันทึกรหัสผ่านสำหรับ Admin สำรองเรียบร้อยแล้ว');
+        dialog?.close?.();
+        fetchAdminPasswordInfo();
+      } catch (err) {
+        if (alert) {
+          alert.textContent = err.message;
+          alert.classList.remove('hidden');
+        }
+      } finally {
+        if (btnSave) {
+          btnSave.disabled = false;
+          btnSave.textContent = 'บันทึกรหัสผ่าน';
+        }
+      }
+    });
+  }
 }
 
 // ============================================================================
