@@ -21677,37 +21677,6 @@ function setupAuthSystem() {
     });
   }
 
-  // 5.1 Quick Admin Login (Super Admin)
-  const btnQuickAdmin = document.getElementById('btnQuickAdminLogin');
-  if (btnQuickAdmin) {
-    btnQuickAdmin.addEventListener('click', async () => {
-      hideAlert();
-      try {
-        btnQuickAdmin.disabled = true;
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: 'admin@active5.co.th',
-            name: 'ผู้ดูแลระบบพิเศษ (Super Admin)',
-            role: 'admin'
-          })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'เข้าสู่ระบบไม่สำเร็จ');
-        state.currentUser = data.user;
-        localStorage.setItem('activeasset_current_user', JSON.stringify(data.user));
-        updateUserProfileUI();
-        applyPermissionsToUI();
-        renderActiveView();
-        showToast(`👋 ยินดีต้อนรับ ${data.user.name} (สิทธิ์ผู้ดูแลระบบ Admin)`);
-      } catch (err) {
-        showAlert(err.message);
-      } finally {
-        btnQuickAdmin.disabled = false;
-      }
-    });
-  }
 
   // 6. Quick Switch for Company Staff
   if (quickUserChips) {
