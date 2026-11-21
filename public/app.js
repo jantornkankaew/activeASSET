@@ -21489,11 +21489,6 @@ function setupAuthSystem() {
       if (ddName) ddName.textContent = user.name;
       if (ddEmail) ddEmail.textContent = user.email || '';
       if (ddRole) ddRole.textContent = user.role_name || (user.role === 'admin' ? 'ผู้ดูแลระบบ (Admin)' : 'ผู้ใช้งานทั่วไป (User)');
-      const btnAdminPwd = document.getElementById('btnOpenAdminPasswordFromDropdown');
-      if (btnAdminPwd) {
-        const isAdmin = user.role_id === 'admin' || user.role === 'admin';
-        btnAdminPwd.style.display = isAdmin ? 'flex' : 'none';
-      }
       if (ddAvatar) {
         if (user.picture) {
           ddAvatar.innerHTML = `<img src="${escapeHtml(user.picture)}" alt="${escapeHtml(user.name)}" />`;
@@ -21844,18 +21839,10 @@ function setupAdminPasswordHandlers() {
   const alert = document.getElementById('adminPasswordAlert');
   const btnCancel = document.getElementById('btnCancelAdminPassword');
   const btnOpenSettings = document.getElementById('btnOpenChangeAdminPasswordModal');
-  const btnOpenDropdown = document.getElementById('btnOpenAdminPasswordFromDropdown');
 
   if (btnOpenSettings && !btnOpenSettings.dataset.wired) {
     btnOpenSettings.dataset.wired = 'true';
     btnOpenSettings.addEventListener('click', openAdminPasswordModal);
-  }
-  if (btnOpenDropdown && !btnOpenDropdown.dataset.wired) {
-    btnOpenDropdown.dataset.wired = 'true';
-    btnOpenDropdown.addEventListener('click', () => {
-      document.getElementById('userDropdownCard')?.classList.add('hidden');
-      openAdminPasswordModal();
-    });
   }
   if (btnCancel && !btnCancel.dataset.wired) {
     btnCancel.dataset.wired = 'true';
