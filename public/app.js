@@ -1236,6 +1236,15 @@ function can(perm) {
 }
 window.can = can;
 
+function isCurrentUserAdmin() {
+  if (!state.currentUser) return false;
+  const role = state.currentUser.role_id || state.currentUser.role;
+  if (role === 'admin' || role === 'Administrator') return true;
+  if (typeof can === 'function' && can('manage_settings')) return true;
+  return false;
+}
+window.isCurrentUserAdmin = isCurrentUserAdmin;
+
 function applyPermissionsToUI() {
   const isAuth = Boolean(state.currentUser);
 
@@ -1756,7 +1765,7 @@ function renderKanbanCard(loan) {
                 </div>
               `;
             })()
-            : ((isEditable || isDeliveredStage) && can('edit_loan')) || (loan.status === 'Requested' && can('cancel_loan'))
+            : ((isEditable || isDeliveredStage || isCurrentUserAdmin()) && can('edit_loan')) || (loan.status === 'Requested' && can('cancel_loan'))
             ? `
           <div class="card-actions">
             ${can('edit_loan') ? `
@@ -1917,7 +1926,7 @@ function renderListView() {
           <!-- Col 6: Actions Toolbar (สอดคล้องกับสถานะใบยืม) -->
           <td style="text-align:right;">
             <div class="min-actions-toolbar">
-              ${(isEditable || isDeliveredStage) && can('edit_loan') ? `
+              ${(isEditable || isDeliveredStage || isCurrentUserAdmin()) && can('edit_loan') ? `
                 <button type="button" class="btn-min-tool" data-edit-loan="${escapeHtml(l.id)}" title="แก้ไขใบยืม">
                   ${APP_ICONS.edit}
                 </button>
@@ -3061,34 +3070,40 @@ function openEditLoanModal(loanId, updateHash = true) {
   const loan = state.loans.find(l => l.id === loanId);
   if (!loan) return;
 
+  const isAdmin = isCurrentUserAdmin();
   const isDeliveredStage = ['Delivered', 'Partially_Returned', 'Returned'].includes(loan.status);
   const isFullEditable = ['Requested', 'Dispatching', 'Dispatched'].includes(loan.status);
 
-  if (!isFullEditable && !isDeliveredStage) {
+  if (!isFullEditable && !isDeliveredStage && !isAdmin) {
     showToast('🔒 ใบยืมในสถานะนี้ไม่สามารถแก้ไขได้');
     return;
   }
 
   if (updateHash) updateUrlHash('modal', `edit-${loan.id}`);
   state.editingLoanId = loan.id;
-  state.editingLoanNoteOnly = isDeliveredStage;
+  state.editingLoanNoteOnly = isDeliveredStage && !isAdmin;
 
   const loanDialog = document.getElementById('loanDialog');
   if (loanDialog) {
-    loanDialog.classList.toggle('mode-note-only', isDeliveredStage);
+    loanDialog.classList.toggle('mode-note-only', isDeliveredStage && !isAdmin);
+    loanDialog.classList.toggle('mode-admin-edit', isAdmin);
   }
 
   const titleEl = document.getElementById('loanDialogTitle');
   if (titleEl) {
-    titleEl.textContent = isDeliveredStage
-      ? `แก้ไขใบยืม ${loan.id} (ส่งมอบแล้ว)`
-      : `แก้ไขใบยืม ${loan.id}`;
+    if (isAdmin) {
+      titleEl.innerHTML = `แก้ไขใบยืม ${escapeHtml(loan.id)} <span class="badge badge-admin-edit" style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:12px;font-size:12px;font-weight:600;margin-left:8px;vertical-align:middle;display:inline-flex;align-items:center;gap:4px;">👑 โหมด Admin (แก้ไขได้ทุกจุด)</span>`;
+    } else {
+      titleEl.textContent = isDeliveredStage
+        ? `แก้ไขใบยืม ${loan.id} (ส่งมอบแล้ว)`
+        : `แก้ไขใบยืม ${loan.id}`;
+    }
   }
   document.getElementById('btnLoanEditPrintPass')?.classList.remove('hidden');
 
   const btnCancelEdit = document.getElementById('btnCancelLoanFromEdit');
   if (btnCancelEdit) {
-    if (isFullEditable && ['Requested', 'Dispatching', 'Dispatched'].includes(loan.status)) {
+    if ((isFullEditable || isAdmin) && ['Requested', 'Dispatching', 'Dispatched'].includes(loan.status)) {
       btnCancelEdit.classList.remove('hidden');
       btnCancelEdit.setAttribute('data-cancel-loan', loan.id);
     } else {
@@ -3107,27 +3122,27 @@ function openEditLoanModal(loanId, updateHash = true) {
   ['loanBorrower', 'loanCustomer', 'loanCustomerPhone', 'loanCompany'].forEach(inpId => {
     const el = document.getElementById(inpId);
     if (el) {
-      el.readOnly = isDeliveredStage;
-      el.classList.toggle('is-locked', isDeliveredStage);
+      el.readOnly = isDeliveredStage && !isAdmin;
+      el.classList.toggle('is-locked', isDeliveredStage && !isAdmin);
     }
   });
 
   const btnStart = document.getElementById('btnOpenAgodaStart');
   if (btnStart) {
-    btnStart.classList.toggle('is-locked', isDeliveredStage);
-    btnStart.title = isDeliveredStage ? 'สินค้าส่งมอบแล้ว วันที่ยืมถูกล็อก' : 'แตะเพื่อเลือกวันยืม';
+    btnStart.classList.toggle('is-locked', isDeliveredStage && !isAdmin);
+    btnStart.title = (isDeliveredStage && !isAdmin) ? 'สินค้าส่งมอบแล้ว วันที่ยืมถูกล็อก' : 'แตะเพื่อเลือกวันยืม';
   }
 
   const purposeTrigger = document.getElementById('loanPurposeTrigger');
   if (purposeTrigger) {
-    purposeTrigger.classList.toggle('is-locked', isDeliveredStage);
-    purposeTrigger.style.pointerEvents = isDeliveredStage ? 'none' : 'auto';
+    purposeTrigger.classList.toggle('is-locked', isDeliveredStage && !isAdmin);
+    purposeTrigger.style.pointerEvents = (isDeliveredStage && !isAdmin) ? 'none' : 'auto';
   }
 
   const statusTrigger = document.getElementById('loanInitialStatusTrigger');
   if (statusTrigger) {
-    statusTrigger.classList.toggle('is-locked', Boolean(state.editingLoanId));
-    statusTrigger.style.pointerEvents = state.editingLoanId ? 'none' : 'auto';
+    statusTrigger.classList.toggle('is-locked', !isAdmin && Boolean(state.editingLoanId));
+    statusTrigger.style.pointerEvents = (!isAdmin && state.editingLoanId) ? 'none' : 'auto';
   }
 
   document.getElementById('loanBorrower').value = loan.borrower_name || '';
@@ -3144,7 +3159,48 @@ function openEditLoanModal(loanId, updateHash = true) {
 
   const noteBanner = document.getElementById('loanNoteOnlyBanner');
   if (noteBanner) {
-    noteBanner.classList.toggle('hidden', !isDeliveredStage);
+    if (isAdmin) {
+      noteBanner.classList.remove('hidden');
+      noteBanner.style.background = '#f0f9ff';
+      noteBanner.style.borderColor = '#bae6fd';
+      noteBanner.innerHTML = `
+        <div class="note-banner-icon" style="color: #0284c7;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+          </svg>
+        </div>
+        <div class="note-banner-content" style="color: #0369a1;">
+          <strong>👑 โหมดผู้ดูแลระบบ (Admin Edit Mode)</strong>
+          <span>คุณมีสิทธิ์แก้ไขข้อมูลเอกสารได้ทุกจุด (ข้อมูลลูกค้า/ผู้ยืม, วันที่ยืม-คืน, สถานะ, รุ่นสินค้า, แบรนด์, S/N, และรายการสินค้า)</span>
+        </div>
+      `;
+    } else {
+      noteBanner.classList.toggle('hidden', !isDeliveredStage);
+      noteBanner.style.background = '';
+      noteBanner.style.borderColor = '';
+      noteBanner.innerHTML = `
+        <div class="note-banner-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+        </div>
+        <div class="note-banner-content">
+          <strong>โหมดแก้ไขใบยืม (ส่งมอบสินค้าแล้ว)</strong>
+          <span>ใบยืมนี้จัดส่งมอบสินค้าเรียบร้อยแล้ว คุณสามารถแก้ไขกำหนดวันส่งคืน, คลังสินค้า (Source), จำนวน และบันทึกหมายเหตุได้ (ข้อมูลลูกค้า รุ่นสินค้า และ S/N จะถูกล็อกไว้)</span>
+        </div>
+        <button type="button" class="btn btn-xs btn-outline btn-quick-due-edit" id="btnBannerEditDueDate" style="margin-left: auto; align-self: center; white-space: nowrap; font-size: 12px; padding: 5px 12px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; border-color: #3b82f6; color: #1d4ed8; background: #ffffff;">
+          📅 แก้ไขวันคืน
+        </button>
+      `;
+      document.getElementById('btnBannerEditDueDate')?.addEventListener('click', e => {
+        e.preventDefault();
+        openAgodaDateRangeModal('end');
+      });
+    }
   }
 
   if (isDeliveredStage) {
@@ -3247,7 +3303,7 @@ function openEditLoanModal(loanId, updateHash = true) {
   // Ensure trailing empty row is present for seamless adding
   ensureTrailingEmptyRow();
 
-  if (isDeliveredStage) {
+  if (isDeliveredStage || isAdmin) {
     expandTopInfoDrawer();
   } else {
     collapseTopInfoDrawer();
@@ -5629,6 +5685,18 @@ function updateDispatchSummary() {
           </svg>
           <span>ส่งมอบสินค้า</span>
         </button>
+      `;
+    } else if (loan && ['Returned', 'Cancelled'].includes(loan.status)) {
+      rightBtnsEl.innerHTML = `
+        ${isCurrentUserAdmin() ? `
+          <button type="button" class="btn btn-outline btn-dispatch-edit-full" id="btnDispatchEditFromFooter" title="แก้ไขข้อมูลใบยืม (Admin)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+            <span>แก้ไขใบยืม (Admin)</span>
+          </button>
+        ` : ''}
       `;
     } else if (isDispatched && state.dispatchOnsiteEditMode) {
       rightBtnsEl.innerHTML = `
@@ -15636,8 +15704,8 @@ function setupEventListeners() {
       return sum + (f.length === rowQty ? f.length : 0);
     }, 0);
 
-    let submitStatus = document.getElementById('loanInitialStatus').value;
-    if (totalUnits > 0 && unitsWithSn === totalUnits) {
+    let submitStatus = document.getElementById('loanInitialStatus').value || 'Requested';
+    if (!state.editingLoanId && totalUnits > 0 && unitsWithSn === totalUnits) {
       submitStatus = 'Dispatched';
     }
 
@@ -15650,8 +15718,12 @@ function setupEventListeners() {
       status: submitStatus,
       checkout_date: document.getElementById('loanCheckoutDate').value,
       due_date: document.getElementById('loanDueDate').value,
+      delivery_note: (document.getElementById('loanDeliveryNote')?.value || '').trim(),
       items: validRows,
-      created_by: (state.currentUser && state.currentUser.email) || ''
+      created_by: (state.currentUser && state.currentUser.email) || '',
+      user_email: (state.currentUser && state.currentUser.email) || '',
+      user_name: (state.currentUser && state.currentUser.name) || '',
+      admin_override: isCurrentUserAdmin()
     };
 
     try {

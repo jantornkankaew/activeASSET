@@ -3665,8 +3665,27 @@ const server = http.createServer(async (req, res) => {
       const isDeliveredStage = ['Delivered', 'Partially_Returned', 'Returned'].includes(loan.status);
       const isFullEditable = ['Requested', 'Dispatching', 'Dispatched'].includes(loan.status);
 
-      // Case 1: Delivered Stage - Edit due_date, source, quantity, notes, and record AUDIT LOGS
-      if (isDeliveredStage) {
+      // Verify Admin identity (Allow Admin to edit every field regardless of loan status)
+      const userEmail = String(body.user_email || body.created_by || '').trim().toLowerCase();
+      const userName = String(body.user_name || '').trim();
+      let isAdmin = false;
+      if (userEmail === 'admin@active5.co.th') {
+        isAdmin = true;
+      } else if (userEmail) {
+        const u = db.prepare('SELECT role FROM users WHERE LOWER(email) = LOWER(?)').get(userEmail);
+        if (u && (u.role === 'admin' || u.role === 'Administrator')) {
+          isAdmin = true;
+        }
+      }
+      if (!isAdmin && userName) {
+        const u = db.prepare('SELECT role FROM users WHERE LOWER(name) = LOWER(?)').get(userName);
+        if (u && (u.role === 'admin' || u.role === 'Administrator')) {
+          isAdmin = true;
+        }
+      }
+
+      // Case 1: Delivered Stage for Non-Admin - Edit due_date, source, quantity, notes, and record AUDIT LOGS
+      if (isDeliveredStage && !isAdmin) {
         db.exec('BEGIN TRANSACTION');
         try {
           const actor = (body.user_name || '').trim() || loan.borrower_name || 'เจ้าหน้าที่';
@@ -3896,8 +3915,8 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, getFullState());
       }
 
-      // Block uneditable statuses
-      if (!isFullEditable) {
+      // Block uneditable statuses for non-admins
+      if (!isFullEditable && !isAdmin) {
         return sendJson(res, 400, { error: 'ไม่สามารถแก้ไขใบยืมในสถานะนี้ได้' });
       }
 
@@ -3968,8 +3987,11 @@ const server = http.createServer(async (req, res) => {
           } catch (_) {}
         }
 
+        let totalUnits = 0;
+        let unitsWithSn = 0;
+
         if (Array.isArray(body.items)) {
-          const oldItems = db.prepare('SELECT tag_id FROM loan_items WHERE loan_id = ?').all(loanId);
+          const oldItems = db.prepare('SELECT tag_id, serial_no FROM loan_items WHERE loan_id = ?').all(loanId);
           for (const old of oldItems) {
             if (old.tag_id) {
               db.prepare(`UPDATE assets SET status = 'Available', current_loan_id = NULL WHERE tag_id = ?`).run(old.tag_id);
@@ -3983,9 +4005,6 @@ const server = http.createServer(async (req, res) => {
               source_snapshot, location_snapshot, loan_accessories_json, loan_free_note, attachments_json
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `);
-
-          let totalUnits = 0;
-          let unitsWithSn = 0;
 
           for (const it of body.items) {
             const modelName = String(it.model || '').trim();
@@ -4004,39 +4023,43 @@ const server = http.createServer(async (req, res) => {
             }
 
             // Auto-register brand and catalog for Supplier and คลังขาย
-            if (itemSource === 'Supplier' || itemSource === 'คลังขาย') {
-              if (brandName) {
-                try {
-                  db.prepare(`
-                    INSERT OR IGNORE INTO master_options (type, name, code)
-                    VALUES ('brand', ?, ?)
-                  `).run(brandName, brandName.toUpperCase().replace(/[^A-Z0-9]/g, ''));
-                } catch (_) {}
-              }
+            if (brandName) {
               try {
                 db.prepare(`
-                  INSERT OR IGNORE INTO product_catalogs (brand, model, category, default_specs, default_accessories)
-                  VALUES (?, ?, 'General', '', ?)
-                `).run(brandName || 'Other', modelName, JSON.stringify(itemAcc));
+                  INSERT OR IGNORE INTO master_options (type, name, code)
+                  VALUES ('brand', ?, ?)
+                `).run(brandName, brandName.toUpperCase().replace(/[^A-Z0-9]/g, ''));
               } catch (_) {}
             }
+            try {
+              db.prepare(`
+                INSERT OR IGNORE INTO product_catalogs (brand, model, category, default_specs, default_accessories)
+                VALUES (?, ?, 'General', '', ?)
+              `).run(brandName || 'Other', modelName, JSON.stringify(itemAcc));
+            } catch (_) {}
 
             totalUnits += qty;
 
             for (let q = 0; q < qty; q++) {
               const sn = itemSerials[q] || '';
-              let matchedTagId = '';
+              let matchedTagId = (it.tag_id && q === 0) ? it.tag_id : '';
               let matchedLocation = '';
 
-              if (sn) {
-                unitsWithSn++;
-                let asset = db.prepare(`
-                  SELECT * FROM assets 
-                  WHERE (serial_no = ? OR tag_id = ?) 
-                  AND (status = 'Available' OR current_loan_id = ?)
-                `).get(sn, sn, loanId);
+              const targetAssetStatus = ['Delivered', 'Dispatched'].includes(nextStatus) ? 'On_Loan' : 'Available';
+              const targetLoanId = ['Delivered', 'Dispatched'].includes(nextStatus) ? loanId : null;
 
-                if (!asset && (itemSource === 'Supplier' || itemSource === 'คลังขาย')) {
+              if (sn || matchedTagId) {
+                if (sn) unitsWithSn++;
+                let asset = null;
+                if (sn && matchedTagId) {
+                  asset = db.prepare(`SELECT * FROM assets WHERE tag_id = ? OR serial_no = ?`).get(matchedTagId, sn);
+                } else if (sn) {
+                  asset = db.prepare(`SELECT * FROM assets WHERE serial_no = ? OR tag_id = ?`).get(sn, sn);
+                } else if (matchedTagId) {
+                  asset = db.prepare(`SELECT * FROM assets WHERE tag_id = ?`).get(matchedTagId);
+                }
+
+                if (!asset && sn && (itemSource === 'Supplier' || itemSource === 'คลังขาย')) {
                   // Auto-create asset into assets DB for Supplier / คลังขาย
                   const newTagId = getNextActTagId();
                   const fullName = brandName ? `${brandName} ${modelName}` : modelName;
@@ -4045,7 +4068,7 @@ const server = http.createServer(async (req, res) => {
                     INSERT INTO assets (
                       tag_id, name, model, brand, category, serial_no,
                       source, location, accessories_json, free_note, status, current_loan_id, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'On_Loan', ?, datetime('now', 'localtime'))
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
                   `).run(
                     newTagId,
                     fullName,
@@ -4057,18 +4080,23 @@ const server = http.createServer(async (req, res) => {
                     defaultLocation,
                     JSON.stringify(itemAcc),
                     itemNote,
-                    loanId
+                    targetAssetStatus,
+                    targetLoanId
                   );
                   matchedTagId = newTagId;
                   matchedLocation = defaultLocation;
                 } else if (asset) {
                   matchedTagId = asset.tag_id;
                   matchedLocation = asset.location || '';
+                  const newAssetBrand = brandName || asset.brand || '';
+                  const newAssetSource = itemSource || asset.source || 'Demo';
+                  const newAssetName = newAssetBrand ? `${newAssetBrand} ${modelName}` : (asset.name || modelName);
+
                   db.prepare(`
                     UPDATE assets 
-                    SET status = 'On_Loan', current_loan_id = ?, updated_at = datetime('now', 'localtime')
+                    SET status = ?, current_loan_id = ?, brand = ?, source = ?, name = ?, updated_at = datetime('now', 'localtime')
                     WHERE tag_id = ?
-                  `).run(loanId, asset.tag_id);
+                  `).run(targetAssetStatus, targetLoanId, newAssetBrand, newAssetSource, newAssetName, asset.tag_id);
                 }
               }
 
@@ -4087,13 +4115,81 @@ const server = http.createServer(async (req, res) => {
             }
           }
 
-          // อัปเดตสถานะอัตโนมัติ: ถ้ามี S/N ครบทุกรายการเป็น Dispatched, ถ้ามีบางส่วนเป็น Dispatching, ถ้าไม่มีเลยเป็น Requested
-          if (totalUnits > 0 && unitsWithSn === totalUnits) {
-            db.prepare(`UPDATE loans SET status = 'Dispatched' WHERE id = ?`).run(loanId);
-          } else if (unitsWithSn > 0) {
-            db.prepare(`UPDATE loans SET status = 'Dispatching' WHERE id = ?`).run(loanId);
-          } else {
-            db.prepare(`UPDATE loans SET status = 'Requested' WHERE id = ?`).run(loanId);
+          // อัปเดตสถานะอัตโนมัติ: เฉพาะเมื่อสถานะเดิมเป็น Requested / Dispatching / Dispatched และไม่มีการระบุสถานะเจาะจง
+          const isPreDeliveredStatus = ['Requested', 'Dispatching', 'Dispatched'].includes(loan.status);
+          if (isPreDeliveredStatus && (!body.status || isPreDeliveredStatus.includes(body.status))) {
+            if (totalUnits > 0 && unitsWithSn === totalUnits) {
+              nextStatus = 'Dispatched';
+            } else if (unitsWithSn > 0) {
+              nextStatus = 'Dispatching';
+            } else {
+              nextStatus = 'Requested';
+            }
+            db.prepare(`UPDATE loans SET status = ? WHERE id = ?`).run(nextStatus, loanId);
+          } else if (body.status) {
+            nextStatus = body.status;
+            db.prepare(`UPDATE loans SET status = ? WHERE id = ?`).run(nextStatus, loanId);
+          }
+        }
+
+        // Detailed Audit Logging
+        const actor = userName ? `${userName} (Admin)` : (body.user_name ? `${body.user_name} (Admin)` : 'ผู้ดูแลระบบ (Admin)');
+        const diffs = [];
+        if (body.borrower_name && String(body.borrower_name).trim() !== String(loan.borrower_name || '').trim()) {
+          diffs.push(`ผู้ยืม: "${loan.borrower_name || ''}" ➔ "${body.borrower_name}"`);
+        }
+        if (body.customer_name && String(body.customer_name).trim() !== String(loan.customer_name || '').trim()) {
+          diffs.push(`ผู้ติดต่อ: "${loan.customer_name || ''}" ➔ "${body.customer_name}"`);
+        }
+        if (cleanedCompany && String(cleanedCompany).trim() !== String(loan.customer_company || '').trim()) {
+          diffs.push(`บริษัทลูกค้า: "${loan.customer_company || ''}" ➔ "${cleanedCompany}"`);
+        }
+        const oldPhone = loan.customer_phone || loan.borrower_phone || '';
+        if (body.customer_phone && String(body.customer_phone).trim() !== String(oldPhone).trim()) {
+          diffs.push(`เบอร์โทร: "${oldPhone}" ➔ "${body.customer_phone}"`);
+        }
+        if (body.purpose && String(body.purpose).trim() !== String(loan.purpose || '').trim()) {
+          diffs.push(`วัตถุประสงค์: "${loan.purpose || ''}" ➔ "${body.purpose}"`);
+        }
+        if (body.checkout_date && String(body.checkout_date).slice(0, 10) !== String(loan.checkout_date || '').slice(0, 10)) {
+          diffs.push(`วันที่ยืม: "${loan.checkout_date || ''}" ➔ "${body.checkout_date}"`);
+        }
+        if (body.due_date && String(body.due_date).slice(0, 10) !== String(loan.due_date || '').slice(0, 10)) {
+          diffs.push(`กำหนดส่งคืน: "${loan.due_date || ''}" ➔ "${body.due_date}"`);
+        }
+        if (nextStatus && String(nextStatus).trim() !== String(loan.status || '').trim()) {
+          diffs.push(`สถานะ: "${loan.status || ''}" ➔ "${nextStatus}"`);
+        }
+        if (body.delivery_note !== undefined && String(body.delivery_note).trim() !== String(loan.delivery_note || '').trim()) {
+          diffs.push(`หมายเหตุ: "${loan.delivery_note || ''}" ➔ "${body.delivery_note}"`);
+        }
+        if (Array.isArray(body.items)) {
+          diffs.push(`รายการสินค้า: อัปเดตรายการสินค้าใหม่ (${totalUnits} เครื่อง)`);
+        }
+
+        if (diffs.length > 0) {
+          logAssetActivity(
+            db,
+            loanId,
+            'UPDATE',
+            'แก้ไขข้อมูลใบยืมโดย Admin',
+            `ใบยืม ${loanId} ได้รับการแก้ไขโดย ${actor}:\n• ${diffs.join('\n• ')}`,
+            actor,
+            { loanId, changes: diffs }
+          );
+
+          const newLoanItems = db.prepare('SELECT tag_id FROM loan_items WHERE loan_id = ?').all(loanId);
+          const uniqueTags = [...new Set(newLoanItems.map(it => it.tag_id).filter(Boolean))];
+          for (const tid of uniqueTags) {
+            logAssetActivity(
+              db,
+              tid,
+              'UPDATE',
+              'แก้ไขข้อมูลใบยืมโดย Admin',
+              `ใบยืม ${loanId} ได้รับการแก้ไขโดย ${actor}:\n• ${diffs.join('\n• ')}`,
+              actor,
+              { loanId }
+            );
           }
         }
 
