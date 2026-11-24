@@ -5453,7 +5453,7 @@ function renderLoanBeforePhotosPreview() {
 // ============================================================================
 function updateDispatchSummary() {
   const total = (state.dispatchDraftItems || []).length;
-  const matched = (state.dispatchDraftItems || []).filter(r => Boolean(r.tag_id)).length;
+  const matched = (state.dispatchDraftItems || []).filter(r => Boolean((r.serial_no && r.serial_no !== '-') || r.tag_id)).length;
   const totalPhotos = (state.dispatchDraftItems || []).reduce((acc, r) => acc + (r.photos || []).length, 0);
 
   const loan = state.activeDispatchLoan;
@@ -5670,8 +5670,10 @@ function openDispatchModal(loanId, updateHash = true, forceReturnMode = false) {
   // Initialize draft items with their photos
   const isAlreadyDispatched = ['Dispatched', 'Overdue', 'Delivered', 'Pending_QC', 'Partially_Returned', 'Returned'].includes(loan.status);
   state.dispatchDraftItems = (loan.items || []).map(it => {
-    const existingTag = isAlreadyDispatched ? (it.tag_id || '') : '';
-    const assetObj = existingTag ? state.assets.find(a => a.tag_id === existingTag) : null;
+    const assetObj = (it.tag_id ? state.assets.find(a => a.tag_id === it.tag_id) : null)
+      || (it.serial_no ? state.assets.find(a => a.serial_no === it.serial_no) : null);
+    const existingTag = it.tag_id || (assetObj ? assetObj.tag_id : '') || '';
+    const existingSn = it.serial_no || (assetObj ? assetObj.serial_no : '') || '';
     const existingPhotos = Array.isArray(it.photos)
       ? [...it.photos]
       : Array.isArray(it.attachments)
@@ -5686,8 +5688,9 @@ function openDispatchModal(loanId, updateHash = true, forceReturnMode = false) {
       brand: it.brand || (assetObj ? assetObj.brand : ''),
       model: it.model || (assetObj ? assetObj.model : ''),
       tag_id: existingTag,
-      serial_no: it.serial_no || (assetObj ? assetObj.serial_no : ''),
+      serial_no: existingSn,
       source: it.source_snapshot || (assetObj ? assetObj.source : 'Demo'),
+      location_snapshot: it.location_snapshot || (assetObj ? assetObj.location : ''),
       accessories:
         it.loan_accessories && it.loan_accessories.length > 0
           ? [...it.loan_accessories]
@@ -6573,8 +6576,10 @@ function renderDispatchTable() {
 
   tbody.innerHTML = state.dispatchDraftItems
     .map((row, rowIdx) => {
-      const assetObj = state.assets.find(a => a.tag_id === row.tag_id);
-      const isMatched = Boolean(row.tag_id && assetObj);
+      const assetObj = (row.tag_id ? state.assets.find(a => a.tag_id === row.tag_id) : null)
+        || (row.serial_no ? state.assets.find(a => a.serial_no === row.serial_no) : null);
+      const effectiveSn = (row.serial_no || (assetObj ? assetObj.serial_no : '') || row.tag_id || '').trim();
+      const isMatched = Boolean(effectiveSn && effectiveSn !== '-');
       const isExpanded = state.activeDispatchRowIdx === rowIdx;
 
       // Available assets strictly matching this row's model
@@ -6587,7 +6592,9 @@ function renderDispatchTable() {
 
       const availCount = sameModelAssets.length;
       const allSameAssets = state.assets.filter(a => (a.model || '').toLowerCase() === (row.model || '').toLowerCase());
-      const guideLoc = assetObj?.location || sameModelAssets[0]?.location || allSameAssets[0]?.location || 'Main Stock';
+      const guideLoc = assetObj?.location 
+        || row.location_snapshot 
+        || (row.source === 'Supplier' ? 'Supplier (ยืมภายนอก)' : (row.source === 'คลังขาย' ? 'คลังขาย (สต็อกขาย)' : (sameModelAssets[0]?.location || allSameAssets[0]?.location || 'Main Stock')));
 
       const photoCount = (row.photos || []).length;
       const accList = row.accessories || [];
@@ -6657,7 +6664,14 @@ function renderDispatchTable() {
                 <span class="stock-mini ${availCount > 0 ? '' : 'out'}">(ว่าง ${availCount})</span>
               </div>
               `
-                  : ''
+                  : (guideLoc ? `
+              <div class="dispatch-model-sub">
+                <span class="pick-loc-badge">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  <span>${escapeHtml(guideLoc)}</span>
+                </span>
+              </div>
+              ` : '')
               }
             </div>
           </td>
@@ -6677,7 +6691,8 @@ function renderDispatchTable() {
                 </svg>
                 `
                 }
-                <span class="sn-picked-val">${escapeHtml(assetObj ? assetObj.serial_no : (row.tag_id || '-'))}</span>
+                <span class="sn-picked-val">${escapeHtml(effectiveSn)}</span>
+                ${(row.tag_id || assetObj?.tag_id) && (row.tag_id || assetObj?.tag_id) !== effectiveSn ? `<span style="font-size:11px; color:#64748b; font-weight:normal; margin-left:4px;">(${escapeHtml(row.tag_id || assetObj.tag_id)})</span>` : ''}
                 ${
                   !isReadOnly
                     ? `
@@ -6770,8 +6785,8 @@ function renderDispatchTable() {
                     <div class="sn-matched-card ${isReadOnly ? 'readonly-card' : ''} ${isUnreturned ? 'is-unreturned-card' : ''}">
                       <div class="sn-matched-main">
                         ${isUnreturned ? '' : '<span class="sn-matched-check">✓</span>'}
-                        <strong class="sn-matched-code">${escapeHtml(assetObj ? assetObj.serial_no : (row.tag_id || '-'))}</strong>
-                        <span class="sn-matched-tag">รหัส: ${escapeHtml(assetObj ? assetObj.tag_id : (row.tag_id || '-'))}</span>
+                        <strong class="sn-matched-code">${escapeHtml(effectiveSn)}</strong>
+                        ${(row.tag_id || assetObj?.tag_id) ? `<span class="sn-matched-tag">รหัส: ${escapeHtml(row.tag_id || assetObj.tag_id)}</span>` : ''}
                       </div>
                       ${
                         !isReadOnly
@@ -16177,8 +16192,10 @@ function setupEventListeners() {
         if (updatedLoan) {
           state.activeDispatchLoan = updatedLoan;
           state.dispatchDraftItems = (updatedLoan.items || []).map(it => {
-            const existingTag = it.tag_id || '';
-            const assetObj = existingTag ? state.assets.find(a => a.tag_id === existingTag) : null;
+            const assetObj = (it.tag_id ? state.assets.find(a => a.tag_id === it.tag_id) : null)
+              || (it.serial_no ? state.assets.find(a => a.serial_no === it.serial_no) : null);
+            const existingTag = it.tag_id || (assetObj ? assetObj.tag_id : '') || '';
+            const existingSn = it.serial_no || (assetObj ? assetObj.serial_no : '') || '';
             const existingPhotos = Array.isArray(it.photos)
               ? [...it.photos]
               : Array.isArray(it.attachments)
@@ -16189,8 +16206,9 @@ function setupEventListeners() {
               brand: it.brand || (assetObj ? assetObj.brand : ''),
               model: it.model || (assetObj ? assetObj.model : ''),
               tag_id: existingTag,
-              serial_no: it.serial_no || (assetObj ? assetObj.serial_no : ''),
+              serial_no: existingSn,
               source: it.source_snapshot || (assetObj ? assetObj.source : 'Demo'),
+              location_snapshot: it.location_snapshot || (assetObj ? assetObj.location : ''),
               accessories:
                 it.loan_accessories && it.loan_accessories.length > 0
                   ? [...it.loan_accessories]
@@ -17033,8 +17051,10 @@ function setupEventListeners() {
       if (state.activeDispatchLoan) {
         const loan = state.activeDispatchLoan;
         state.dispatchDraftItems = (loan.items || []).map(it => {
-          const existingTag = it.tag_id || '';
-          const assetObj = existingTag ? state.assets.find(a => a.tag_id === existingTag) : null;
+          const assetObj = (it.tag_id ? state.assets.find(a => a.tag_id === it.tag_id) : null)
+            || (it.serial_no ? state.assets.find(a => a.serial_no === it.serial_no) : null);
+          const existingTag = it.tag_id || (assetObj ? assetObj.tag_id : '') || '';
+          const existingSn = it.serial_no || (assetObj ? assetObj.serial_no : '') || '';
           const existingPhotos = Array.isArray(it.photos)
             ? [...it.photos]
             : Array.isArray(it.attachments)
@@ -17045,7 +17065,9 @@ function setupEventListeners() {
             brand: it.brand || (assetObj ? assetObj.brand : ''),
             model: it.model || (assetObj ? assetObj.model : ''),
             tag_id: existingTag,
+            serial_no: existingSn,
             source: it.source_snapshot || (assetObj ? assetObj.source : 'Demo'),
+            location_snapshot: it.location_snapshot || (assetObj ? assetObj.location : ''),
             accessories:
               it.loan_accessories && it.loan_accessories.length > 0
                 ? [...it.loan_accessories]

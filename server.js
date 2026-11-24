@@ -1686,16 +1686,29 @@ function getFullState() {
   const itemsByLoan = new Map();
   for (const li of rawLoanItems) {
     let itemBrand = String(li.brand || '').trim();
-    if (!itemBrand && li.tag_id) {
-      const a = rawAssets.find(x => x.tag_id === li.tag_id);
-      if (a && a.brand) itemBrand = a.brand;
-    } else if (!itemBrand && li.serial_no) {
-      const a = rawAssets.find(x => x.serial_no === li.serial_no);
-      if (a && a.brand) itemBrand = a.brand;
+    let itemSerial = String(li.serial_no || '').trim();
+    let itemTag = String(li.tag_id || '').trim();
+
+    if (itemTag && (!itemSerial || !itemBrand)) {
+      const a = rawAssets.find(x => x.tag_id === itemTag);
+      if (a) {
+        if (!itemSerial && a.serial_no) itemSerial = a.serial_no;
+        if (!itemBrand && a.brand) itemBrand = a.brand;
+      }
     }
+    if (itemSerial && (!itemTag || !itemBrand)) {
+      const a = rawAssets.find(x => x.serial_no === itemSerial);
+      if (a) {
+        if (!itemTag && a.tag_id) itemTag = a.tag_id;
+        if (!itemBrand && a.brand) itemBrand = a.brand;
+      }
+    }
+
     const parsed = {
       ...li,
       brand: itemBrand,
+      serial_no: itemSerial,
+      tag_id: itemTag,
       loan_accessories: JSON.parse(li.loan_accessories_json || '[]'),
       returned_accessories: JSON.parse(li.returned_accessories_json || '[]'),
       missing_accessories: JSON.parse(li.missing_accessories_json || '[]'),
