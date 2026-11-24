@@ -7787,7 +7787,6 @@ function renderSingleGatePassSheet(loan, copyType = '', sizeClass = '') {
                 <td class="gp-td-idx">${idx + 1}</td>
                 <td class="gp-td-model">
                   <strong>${escapeHtml(fullModelDisplay)}</strong>
-                  ${itemBrand ? `<div class="gp-model-brand-sub" style="font-size:11px; color:#475569; font-weight:500; margin-top:2px;">แบรนด์: <strong>${escapeHtml(itemBrand)}</strong></div>` : ''}
                 </td>
                 <td class="gp-td-sn">
                   ${
