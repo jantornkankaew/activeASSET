@@ -3590,26 +3590,15 @@ let agodaCalYear = 2026;
 let agodaCalMonth = 10; // 0-based
 let agodaTempStart = null;
 let agodaTempEnd = null;
-let agodaHoverDate = null;
-let agodaPickingStage = 'start'; // 'start' | 'end'
-let agodaDragState = {
-  isDragging: false,
-  handle: null, // 'start' | 'end' | 'both'
-  pointerId: null,
-  startX: 0,
-  startY: 0,
-  originDate: null
-};
-let justFinishedAgodaDrag = false;
+let agodaPickingStage = 'end'; // 'start' | 'end'
 
-function openAgodaDateRangeModal(stage = 'start') {
+function openAgodaDateRangeModal(stage = 'end') {
   const checkoutVal = document.getElementById('loanCheckoutDate')?.value || state.today || new Date().toISOString().slice(0, 10);
   const dueVal = document.getElementById('loanDueDate')?.value || checkoutVal;
 
   agodaTempStart = checkoutVal;
   agodaTempEnd = dueVal;
-  agodaHoverDate = null;
-  agodaPickingStage = (state.editingLoanNoteOnly || stage === 'end') ? 'end' : 'start';
+  agodaPickingStage = (state.editingLoanId || state.editingLoanNoteOnly || stage === 'end') ? 'end' : 'start';
 
   const targetDateStr = (agodaPickingStage === 'end' && dueVal) ? dueVal : checkoutVal;
   const targetDateObj = new Date(targetDateStr + 'T00:00:00');
@@ -3681,8 +3670,6 @@ function renderAgodaCalendar() {
     grid.appendChild(emptyCell);
   }
 
-  const effectiveEnd = agodaTempEnd || (agodaPickingStage === 'end' ? agodaHoverDate : null);
-
   for (let day = 1; day <= daysInMonth; day++) {
     const mm = String(agodaCalMonth + 1).padStart(2, '0');
     const dd = String(day).padStart(2, '0');
@@ -3693,277 +3680,60 @@ function renderAgodaCalendar() {
     cell.setAttribute('data-date', dateStr);
 
     const isStart = (agodaTempStart === dateStr);
-    const isEnd = (effectiveEnd === dateStr);
-    const isInRange = (agodaTempStart && effectiveEnd && dateStr > agodaTempStart && dateStr < effectiveEnd);
+    const isEnd = (agodaTempEnd === dateStr);
+    const isInRange = (agodaTempStart && agodaTempEnd && dateStr > agodaTempStart && dateStr < agodaTempEnd);
     const isToday = (todayStr === dateStr);
 
     if (isStart) cell.classList.add('is-range-start');
     if (isEnd) cell.classList.add('is-range-end');
-    if (isInRange) {
-      if (agodaTempEnd) {
-        cell.classList.add('is-in-range');
-      } else {
-        cell.classList.add('is-hover-range');
-      }
-    }
+    if (isInRange) cell.classList.add('is-in-range');
     if (isToday) cell.classList.add('is-today');
 
     cell.innerHTML = `<span class="day-inner">${day}</span>`;
 
-    // Pointer-based drag to adjust loan start or end date
-    cell.addEventListener('pointerdown', (e) => {
-      if (state.editingLoanNoteOnly) return;
-      if (e.button !== 0 && e.pointerType === 'mouse') return;
-      const isStart = (agodaTempStart === dateStr);
-      const isEnd = (agodaTempEnd === dateStr);
-
-      if (isStart || isEnd) {
-        agodaDragState.isDragging = false;
-        agodaDragState.handle = (isStart && isEnd) ? 'both' : (isStart ? 'start' : 'end');
-        agodaDragState.pointerId = e.pointerId;
-        agodaDragState.startX = e.clientX;
-        agodaDragState.startY = e.clientY;
-        agodaDragState.originDate = dateStr;
-
-        try {
-          cell.setPointerCapture(e.pointerId);
-        } catch (err) {}
-      }
-    });
-
-    cell.addEventListener('pointermove', (e) => {
-      if (!agodaDragState.handle || agodaDragState.pointerId !== e.pointerId) return;
-
-      const dist = Math.hypot(e.clientX - agodaDragState.startX, e.clientY - agodaDragState.startY);
-      if (dist > 4) {
-        agodaDragState.isDragging = true;
-      }
-
-      if (agodaDragState.isDragging) {
-        const elUnder = document.elementFromPoint(e.clientX, e.clientY);
-        const hoveredCell = elUnder ? elUnder.closest('.agoda-day-cell[data-date]') : null;
-        if (hoveredCell) {
-          const hoveredDate = hoveredCell.getAttribute('data-date');
-          if (hoveredDate) {
-            let changed = false;
-
-            if (agodaDragState.handle === 'both') {
-              if (hoveredDate > agodaTempStart) {
-                agodaDragState.handle = 'end';
-                agodaTempEnd = hoveredDate;
-                changed = true;
-              } else if (hoveredDate < agodaTempStart) {
-                agodaDragState.handle = 'start';
-                agodaTempStart = hoveredDate;
-                changed = true;
-              }
-            } else if (agodaDragState.handle === 'start') {
-              const targetDate = (agodaTempEnd && hoveredDate > agodaTempEnd) ? agodaTempEnd : hoveredDate;
-              if (agodaTempStart !== targetDate) {
-                agodaTempStart = targetDate;
-                changed = true;
-              }
-            } else if (agodaDragState.handle === 'end') {
-              const targetDate = (agodaTempStart && hoveredDate < agodaTempStart) ? agodaTempStart : hoveredDate;
-              if (agodaTempEnd !== targetDate) {
-                agodaTempEnd = targetDate;
-                changed = true;
-              }
-            }
-
-            if (changed) {
-              updateAgodaCalendarCellsLive(agodaTempStart, agodaTempEnd, agodaDragState.handle);
-              document.getElementById('loanCheckoutDate').value = agodaTempStart;
-              document.getElementById('loanDueDate').value = agodaTempEnd;
-              updateAgodaDateDisplay();
-            }
-          }
-        }
-      }
-    });
-
-    const handlePointerEnd = (e) => {
-      if (agodaDragState.pointerId === e.pointerId) {
-        const wasDragging = agodaDragState.isDragging;
-        if (wasDragging) {
-          justFinishedAgodaDrag = true;
-          setTimeout(() => { justFinishedAgodaDrag = false; }, 120);
-        }
-
-        try {
-          if (cell.hasPointerCapture(e.pointerId)) {
-            cell.releasePointerCapture(e.pointerId);
-          }
-        } catch (err) {}
-
-        agodaDragState = {
-          isDragging: false,
-          handle: null,
-          pointerId: null,
-          startX: 0,
-          startY: 0,
-          originDate: null
-        };
-
-        if (wasDragging) {
-          agodaPickingStage = 'start';
-          renderAgodaCalendar();
-        }
-      }
-    };
-
-    cell.addEventListener('pointerup', handlePointerEnd);
-    cell.addEventListener('pointercancel', handlePointerEnd);
-
-    cell.addEventListener('click', () => {
-      if (justFinishedAgodaDrag) return;
+    // Pure click to select date - no drag, no hover tracking
+    cell.addEventListener('click', (e) => {
+      e.preventDefault();
       handleAgodaDayClick(dateStr);
-    });
-
-    cell.addEventListener('mouseenter', () => {
-      if (state.editingLoanNoteOnly) return;
-      if (agodaDragState.isDragging) return;
-      if (agodaPickingStage === 'end' && !agodaTempEnd && agodaTempStart && dateStr >= agodaTempStart) {
-        agodaHoverDate = dateStr;
-        updateAgodaHoverVisuals(agodaTempStart, dateStr);
-      }
     });
 
     grid.appendChild(cell);
   }
-
-  grid.addEventListener('mouseleave', () => {
-    if (agodaPickingStage === 'end' && !agodaTempEnd) {
-      agodaHoverDate = null;
-      const endValEl = document.getElementById('agodaModalEndVal');
-      const durTextEl = document.getElementById('agodaModalDurationText');
-      if (endValEl) endValEl.textContent = '—';
-      if (durTextEl) durTextEl.textContent = 'เลือกวันคืน ➔';
-      const cells = grid.querySelectorAll('.agoda-day-cell[data-date]');
-      cells.forEach(c => {
-        const d = c.getAttribute('data-date');
-        if (d === agodaTempStart) {
-          c.classList.add('is-range-start');
-        } else {
-          c.classList.remove('is-range-start', 'is-range-end', 'is-in-range', 'is-hover-range');
-        }
-      });
-    }
-  });
-}
-
-function updateAgodaHoverVisuals(startStr, hoverStr) {
-  const grid = document.getElementById('agodaDaysGrid');
-  if (!grid) return;
-  const cells = grid.querySelectorAll('.agoda-day-cell[data-date]');
-  cells.forEach(c => {
-    const d = c.getAttribute('data-date');
-    if (d === startStr) {
-      c.classList.add('is-range-start');
-      c.classList.remove('is-in-range', 'is-hover-range');
-    } else if (d === hoverStr) {
-      c.classList.add('is-range-end');
-      c.classList.remove('is-in-range', 'is-hover-range');
-    } else if (d > startStr && d < hoverStr) {
-      c.classList.add('is-hover-range');
-      c.classList.remove('is-range-start', 'is-range-end');
-    } else {
-      c.classList.remove('is-range-start', 'is-range-end', 'is-in-range', 'is-hover-range');
-    }
-  });
-
-  const endValEl = document.getElementById('agodaModalEndVal');
-  const durTextEl = document.getElementById('agodaModalDurationText');
-  if (endValEl && hoverStr) {
-    endValEl.textContent = `${formatDisplayDateThai(hoverStr)} (${getDayOfWeekShortThai(hoverStr)})`;
-  }
-  if (durTextEl && hoverStr) {
-    const diff = getDaysDiff(startStr, hoverStr);
-    durTextEl.textContent = diff === 0 ? '1 วัน' : `${diff} วัน`;
-  }
-}
-
-function updateAgodaCalendarCellsLive(startStr, endStr, draggingHandle = null) {
-  const grid = document.getElementById('agodaDaysGrid');
-  if (!grid) return;
-
-  const startValEl = document.getElementById('agodaModalStartVal');
-  const endValEl = document.getElementById('agodaModalEndVal');
-  const durTextEl = document.getElementById('agodaModalDurationText');
-
-  if (startValEl) {
-    startValEl.textContent = startStr ? `${formatDisplayDateThai(startStr)} (${getDayOfWeekShortThai(startStr)})` : '—';
-  }
-  if (endValEl) {
-    endValEl.textContent = endStr ? `${formatDisplayDateThai(endStr)} (${getDayOfWeekShortThai(endStr)})` : '—';
-  }
-  if (durTextEl) {
-    if (startStr && endStr) {
-      const diff = getDaysDiff(startStr, endStr);
-      durTextEl.textContent = diff === 0 ? '1 วัน' : `${diff} วัน`;
-    } else if (startStr) {
-      durTextEl.textContent = 'เลือกวันคืน ➔';
-    } else {
-      durTextEl.textContent = '➔';
-    }
-  }
-
-  const cells = grid.querySelectorAll('.agoda-day-cell[data-date]');
-  cells.forEach(c => {
-    const d = c.getAttribute('data-date');
-    const isStart = (d === startStr);
-    const isEnd = (d === endStr);
-    const isInRange = (startStr && endStr && d > startStr && d < endStr);
-
-    c.classList.toggle('is-range-start', isStart);
-    c.classList.toggle('is-range-end', isEnd);
-    c.classList.toggle('is-in-range', isInRange);
-    c.classList.remove('is-hover-range');
-
-    const isDraggingCell = (draggingHandle === 'start' && isStart) || (draggingHandle === 'end' && isEnd);
-    c.classList.toggle('is-dragging', Boolean(isDraggingCell));
-  });
 }
 
 function handleAgodaDayClick(dateStr) {
-  if (state.editingLoanNoteOnly) {
+  if (state.editingLoanId || state.editingLoanNoteOnly || agodaPickingStage === 'end') {
     if (agodaTempStart && dateStr < agodaTempStart) {
-      showToast(`⚠️ กำหนดส่งคืนต้องไม่ก่อนวันยืม (${formatDisplayDateThai(agodaTempStart)})`);
-      return;
+      if (state.editingLoanNoteOnly) {
+        showToast(`⚠️ กำหนดส่งคืนต้องไม่ก่อนวันยืม (${formatDisplayDateThai(agodaTempStart)})`);
+        return;
+      }
+      agodaTempStart = dateStr;
+      agodaTempEnd = dateStr;
+      agodaPickingStage = 'end';
+      if (!state.editingLoanNoteOnly) {
+        document.getElementById('loanCheckoutDate').value = agodaTempStart;
+      }
+    } else {
+      agodaTempEnd = dateStr;
+      agodaPickingStage = 'end';
     }
-    agodaTempEnd = dateStr;
-    agodaHoverDate = null;
     document.getElementById('loanDueDate').value = agodaTempEnd;
     updateAgodaDateDisplay();
     renderAgodaCalendar();
     return;
   }
-  if (agodaPickingStage === 'start') {
-    agodaTempStart = dateStr;
-    agodaTempEnd = null;
-    agodaHoverDate = null;
-    agodaPickingStage = 'end';
-    document.getElementById('loanCheckoutDate').value = agodaTempStart;
-    renderAgodaCalendar();
-  } else if (agodaPickingStage === 'end') {
-    if (dateStr < agodaTempStart) {
-      agodaTempStart = dateStr;
-      agodaTempEnd = null;
-      agodaHoverDate = null;
-      agodaPickingStage = 'end';
-      document.getElementById('loanCheckoutDate').value = agodaTempStart;
-      renderAgodaCalendar();
-    } else {
-      agodaTempEnd = dateStr;
-      agodaHoverDate = null;
-      agodaPickingStage = 'start';
-      // Immediately set on the form without waiting for "ตกลง"!
-      document.getElementById('loanCheckoutDate').value = agodaTempStart;
-      document.getElementById('loanDueDate').value = agodaTempEnd;
-      updateAgodaDateDisplay();
-      renderAgodaCalendar();
-    }
+
+  // Picking start date (in create mode)
+  agodaTempStart = dateStr;
+  if (!agodaTempEnd || agodaTempEnd < agodaTempStart) {
+    agodaTempEnd = agodaTempStart;
   }
+  agodaPickingStage = 'end';
+  document.getElementById('loanCheckoutDate').value = agodaTempStart;
+  document.getElementById('loanDueDate').value = agodaTempEnd;
+  updateAgodaDateDisplay();
+  renderAgodaCalendar();
 }
 
 function applyAgodaDateRange() {
@@ -3991,8 +3761,7 @@ function applyAgodaQuickPreset(days) {
 
   agodaTempStart = start;
   agodaTempEnd = `${y}-${m}-${d}`;
-  agodaHoverDate = null;
-  agodaPickingStage = state.editingLoanNoteOnly ? 'end' : 'start';
+  agodaPickingStage = 'end';
 
   agodaCalYear = dt.getFullYear();
   agodaCalMonth = dt.getMonth();
@@ -4027,7 +3796,6 @@ function resetAgodaToToday() {
     const m = String(dt.getMonth() + 1).padStart(2, '0');
     const d = String(dt.getDate()).padStart(2, '0');
     agodaTempEnd = `${y}-${m}-${d}`;
-    agodaHoverDate = null;
     agodaCalYear = dt.getFullYear();
     agodaCalMonth = dt.getMonth();
     document.getElementById('loanDueDate').value = agodaTempEnd;
@@ -4044,13 +3812,15 @@ function resetAgodaToToday() {
 
   agodaTempStart = today;
   agodaTempEnd = `${y}-${m}-${d}`;
-  agodaHoverDate = null;
-  agodaPickingStage = 'start';
+  agodaPickingStage = 'end';
 
   const tObj = new Date(today + 'T00:00:00');
   agodaCalYear = tObj.getFullYear();
   agodaCalMonth = tObj.getMonth();
 
+  document.getElementById('loanCheckoutDate').value = agodaTempStart;
+  document.getElementById('loanDueDate').value = agodaTempEnd;
+  updateAgodaDateDisplay();
   renderAgodaCalendar();
 }
 
@@ -14485,6 +14255,26 @@ function setupEventListeners() {
   const btnAgodaReset = document.getElementById('btnAgodaReset');
   if (btnAgodaReset) {
     btnAgodaReset.addEventListener('click', resetAgodaToToday);
+  }
+
+  const boxStart = document.getElementById('agodaBoxStart');
+  if (boxStart) {
+    boxStart.addEventListener('click', () => {
+      if (state.editingLoanNoteOnly) {
+        showToast('ℹ️ สินค้าส่งมอบแล้ว วันที่ยืมจะถูกล็อกไว้ สามารถแก้ไขได้เฉพาะกำหนดวันส่งคืน');
+        return;
+      }
+      agodaPickingStage = 'start';
+      renderAgodaCalendar();
+    });
+  }
+
+  const boxEnd = document.getElementById('agodaBoxEnd');
+  if (boxEnd) {
+    boxEnd.addEventListener('click', () => {
+      agodaPickingStage = 'end';
+      renderAgodaCalendar();
+    });
   }
 
   const btnAgodaPrevMonth = document.getElementById('btnAgodaPrevMonth');
