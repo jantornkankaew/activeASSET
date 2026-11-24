@@ -4313,6 +4313,10 @@ function getAllAvailableBrands() {
   const brandSet = new Set();
   (state.catalogs || []).forEach(c => { if (c.brand && c.brand.trim()) brandSet.add(c.brand.trim()); });
   (state.assets || []).forEach(a => { if (a.brand && a.brand.trim()) brandSet.add(a.brand.trim()); });
+  (state.masterOptions || []).forEach(o => { if (o.type === 'brand' && o.name && o.name.trim()) brandSet.add(o.name.trim()); });
+  if (state.customBrandsList && Array.isArray(state.customBrandsList)) {
+    state.customBrandsList.forEach(b => { if (b && b.trim()) brandSet.add(b.trim()); });
+  }
   const commonBrands = [
     'Zebra', 'Honeywell', 'Bixolon', 'Point Mobile', 'Sunmi', 
     'Datalogic', 'Newland', 'Urovo', 'Seiko', 'CipherLab', 
@@ -4351,17 +4355,39 @@ function renderBrandDropdown(rowIdx, query = '') {
 
   let itemsHtml = '';
 
-  // If query does not match any existing brand, offer adding as new brand (GEMINI.md rule 1.2)
+  // 1. If query is empty, offer a quick "+ เพิ่มแบรนด์ใหม่..." option at the very top
+  if (!q) {
+    itemsHtml += `
+      <div
+        class="model-dropdown-item brand-dropdown-item brand-item-new"
+        data-action="prompt-create-brand"
+        data-row="${rowIdx}"
+        style="background: #f0f7ff; border-bottom: 1px dashed #bfdbfe;"
+      >
+        <div class="model-item-main">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="brand-item-new-icon" style="color:#2563eb; font-weight:700;">➕</span>
+            <span class="model-item-name" style="color:#2563eb; font-weight:700;">สร้างแบรนด์ใหม่...</span>
+          </div>
+          <span class="model-item-sub">พิมพ์ระบุชื่อแบรนด์ใหม่ที่ไม่มีในฐานข้อมูล</span>
+        </div>
+        <span class="source-item-badge badge-source-supplier">สร้างใหม่</span>
+      </div>
+    `;
+  }
+
+  // 2. If query does not match any existing brand, offer adding as new brand (GEMINI.md rule 1.2)
   if (q && !exactMatch) {
     itemsHtml += `
       <div
         class="model-dropdown-item brand-dropdown-item brand-item-new"
         data-select-brand="${escapeHtml(query.trim())}"
         data-row="${rowIdx}"
+        style="background: #f0f7ff; border-bottom: 1px dashed #bfdbfe;"
       >
         <div class="model-item-main">
           <div style="display:flex; align-items:center; gap:6px;">
-            <span class="brand-item-new-icon">+</span>
+            <span class="brand-item-new-icon" style="color:#2563eb; font-weight:700;">➕</span>
             <span class="model-item-name" style="color:#2563eb; font-weight:700;">ใช้แบรนด์ใหม่: "${escapeHtml(query.trim())}"</span>
           </div>
           <span class="model-item-sub">บันทึกแบรนด์ใหม่นี้ลงฐานข้อมูลอัตโนมัติ</span>
@@ -5116,13 +5142,11 @@ function renderLoanExcelRows() {
                       value="${escapeHtml(row.brand || '')}"
                       data-excel-brand-input="${rowIdx}"
                       autocomplete="off"
-                      ${state.editingLoanNoteOnly ? 'readonly disabled' : ''}
                     />
-                    ${state.editingLoanNoteOnly ? '' : `
                     <div class="input-actions-end">
                       <button type="button" class="btn-input-clear ${row.brand ? '' : 'hidden'}" data-clear-brand="${rowIdx}" title="ล้างค่า">✕</button>
                       <button type="button" class="btn-input-dropdown-arrow" data-brand-dropdown-trigger="${rowIdx}" title="เลือกแบรนด์">▾</button>
-                    </div>`}
+                    </div>
                   </div>
                 </div>
 
@@ -14485,14 +14509,57 @@ function setupEventListeners() {
       return;
     }
 
+    // 0c-2. Prompt Create Brand item
+    const promptCreateBrand = e.target.closest('[data-action="prompt-create-brand"]');
+    if (promptCreateBrand) {
+      e.preventDefault();
+      e.stopPropagation();
+      const rowIdx = Number(promptCreateBrand.getAttribute('data-row'));
+      closeAllModelDropdowns();
+      const brandInp = excelTbody.querySelector(`[data-excel-brand-input="${rowIdx}"]`);
+      if (brandInp) {
+        brandInp.removeAttribute('readonly');
+        brandInp.removeAttribute('disabled');
+        brandInp.focus();
+      }
+      setTimeout(async () => {
+        const brandName = prompt('ระบุชื่อแบรนด์ใหม่ที่ต้องการสร้าง:');
+        if (brandName && brandName.trim()) {
+          const cleanBrand = brandName.trim();
+          if (state.loanDraftRows[rowIdx]) {
+            state.loanDraftRows[rowIdx].brand = cleanBrand;
+            if (brandInp) {
+              brandInp.value = cleanBrand;
+              const wrap = brandInp.closest('.brand-field-wrap');
+              const clearBtn = wrap ? wrap.querySelector('[data-clear-brand]') : null;
+              if (clearBtn) clearBtn.classList.remove('hidden');
+            }
+            if (!state.customBrandsList) state.customBrandsList = [];
+            if (!state.customBrandsList.includes(cleanBrand)) state.customBrandsList.push(cleanBrand);
+            try {
+              await fetch('/api/master/options', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'brand', name: cleanBrand })
+              });
+            } catch (_) {}
+            showToast(`✨ สร้างและเลือกแบรนด์ใหม่: "${cleanBrand}" เรียบร้อยแล้ว`);
+            const modelInp = excelTbody.querySelector(`[data-excel-model-input="${rowIdx}"]`);
+            if (modelInp) modelInp.focus();
+          }
+        }
+      }, 50);
+      return;
+    }
+
     // 0d. Pick Brand item
     const brandItem = e.target.closest('.brand-dropdown-item[data-select-brand]');
     if (brandItem) {
       e.preventDefault();
       e.stopPropagation();
       const rowIdx = Number(brandItem.getAttribute('data-row'));
-      const chosenBrand = brandItem.getAttribute('data-select-brand');
-      if (state.loanDraftRows[rowIdx]) {
+      const chosenBrand = (brandItem.getAttribute('data-select-brand') || '').trim();
+      if (state.loanDraftRows[rowIdx] && chosenBrand) {
         state.loanDraftRows[rowIdx].brand = chosenBrand;
         const brandInp = excelTbody.querySelector(`[data-excel-brand-input="${rowIdx}"]`);
         if (brandInp) {
@@ -14501,6 +14568,20 @@ function setupEventListeners() {
           const clearBtn = wrap ? wrap.querySelector('[data-clear-brand]') : null;
           if (clearBtn) clearBtn.classList.remove('hidden');
         }
+
+        // If new brand not in available list, auto-persist to master_options
+        const knownBrands = getAllAvailableBrands();
+        if (!knownBrands.includes(chosenBrand)) {
+          if (!state.customBrandsList) state.customBrandsList = [];
+          if (!state.customBrandsList.includes(chosenBrand)) state.customBrandsList.push(chosenBrand);
+          fetch('/api/master/options', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'brand', name: chosenBrand })
+          }).catch(() => {});
+          showToast(`✨ บันทึกและเลือกแบรนด์ใหม่: "${chosenBrand}" เรียบร้อยแล้ว`);
+        }
+
         // Advance focus to Model input
         const modelInp = excelTbody.querySelector(`[data-excel-model-input="${rowIdx}"]`);
         if (modelInp) {
@@ -14713,14 +14794,26 @@ function setupEventListeners() {
         e.preventDefault();
         const brandDd = document.getElementById('globalBrandDropdown');
         const firstItem = brandDd ? brandDd.querySelector('.brand-dropdown-item') : null;
+        let chosen = '';
         if (firstItem && !brandDd.classList.contains('hidden')) {
-          const chosen = firstItem.getAttribute('data-select-brand');
-          if (chosen) {
-            state.loanDraftRows[rowIdx].brand = chosen;
-            e.target.value = chosen;
-          }
+          chosen = (firstItem.getAttribute('data-select-brand') || e.target.value).trim();
         } else {
-          state.loanDraftRows[rowIdx].brand = e.target.value.trim();
+          chosen = e.target.value.trim();
+        }
+        if (chosen && state.loanDraftRows[rowIdx]) {
+          state.loanDraftRows[rowIdx].brand = chosen;
+          e.target.value = chosen;
+          const knownBrands = getAllAvailableBrands();
+          if (!knownBrands.includes(chosen)) {
+            if (!state.customBrandsList) state.customBrandsList = [];
+            if (!state.customBrandsList.includes(chosen)) state.customBrandsList.push(chosen);
+            fetch('/api/master/options', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ type: 'brand', name: chosen })
+            }).catch(() => {});
+            showToast(`✨ บันทึกและเลือกแบรนด์ใหม่: "${chosen}" เรียบร้อยแล้ว`);
+          }
         }
         closeAllModelDropdowns();
         const modelInp = excelTbody.querySelector(`[data-excel-model-input="${rowIdx}"]`);

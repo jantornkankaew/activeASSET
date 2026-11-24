@@ -25445,10 +25445,17 @@ html.is-unauthenticated .app-shell {
 #loanDialog.mode-note-only .cell-qty button,
 #loanDialog.mode-note-only .cell-source button,
 #loanDialog.mode-note-only .cell-source-btn,
-#loanDialog.mode-note-only .collapsed-source-pill {
+#loanDialog.mode-note-only .collapsed-source-pill,
+#loanDialog.mode-note-only .brand-field-wrap input,
+#loanDialog.mode-note-only .brand-field-wrap button {
   pointer-events: auto !important;
   opacity: 1 !important;
   cursor: pointer !important;
+}
+
+#loanDialog.mode-note-only .brand-field-wrap input {
+  cursor: text !important;
+  background: #ffffff !important;
 }
 
 #loanDialog.mode-note-only .cell-source .cell-source-btn {

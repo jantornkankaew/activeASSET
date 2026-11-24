@@ -3733,6 +3733,49 @@ const server = http.createServer(async (req, res) => {
                 }
               }
 
+              // Check Brand change (e.g. user selected or created a brand for Supplier)
+              const newBrand = String(it.brand !== undefined ? it.brand : (existing.brand || '')).trim();
+              const oldBrand = String(existing.brand || '').trim();
+              if (newBrand && newBrand !== oldBrand) {
+                db.prepare('UPDATE loan_items SET brand = ? WHERE id = ?').run(newBrand, existing.id);
+                if (effectiveTagId) {
+                  db.prepare("UPDATE assets SET brand = ?, updated_at = datetime('now', 'localtime') WHERE tag_id = ?").run(newBrand, effectiveTagId);
+                  logAssetActivity(
+                    db,
+                    effectiveTagId,
+                    'UPDATE',
+                    'แก้ไขแบรนด์สินค้า',
+                    `ใบยืม ${loanId} • แก้ไขแบรนด์จาก "${oldBrand || 'ไม่ระบุ'}" ➔ "${newBrand}"`,
+                    actor,
+                    { loanId, oldBrand, newBrand }
+                  );
+                } else {
+                  logAssetActivity(
+                    db,
+                    loanId,
+                    'UPDATE',
+                    'แก้ไขแบรนด์สินค้า',
+                    `ใบยืม ${loanId} • รุ่น ${existing.model || ''} แก้ไขแบรนด์จาก "${oldBrand || 'ไม่ระบุ'}" ➔ "${newBrand}"`,
+                    actor,
+                    { loanId, oldBrand, newBrand }
+                  );
+                }
+
+                // Auto-register brand in master_options & product_catalogs if not present
+                try {
+                  db.prepare(`
+                    INSERT OR IGNORE INTO master_options (type, name, code)
+                    VALUES ('brand', ?, ?)
+                  `).run(newBrand, newBrand.toUpperCase().replace(/[^A-Z0-9]/g, ''));
+                } catch (_) {}
+                try {
+                  db.prepare(`
+                    INSERT OR IGNORE INTO product_catalogs (brand, model, category, default_specs, default_accessories)
+                    VALUES (?, ?, 'General', '', '[]')
+                  `).run(newBrand, existing.model || 'General');
+                } catch (_) {}
+              }
+
               // Check Note change
               const oldNote = String(existing.loan_free_note || '').trim();
               if (note !== oldNote) {
