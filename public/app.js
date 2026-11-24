@@ -735,11 +735,15 @@ function initMobileKeyboardControl() {
 }
 
 function restoreNavigationState() {
-  const hash = window.location.hash.replace(/^#/, '');
+  let hash = window.location.hash.replace(/^#/, '');
+  const savedModal = sessionStorage.getItem('activeasset_active_modal');
+  if (!hash && savedModal) {
+    hash = `modal:${savedModal}`;
+    window.location.hash = hash;
+  }
   if (!hash) return;
   const parts = hash.split(':');
   const view = parts[0];
-  const param = parts[1];
 
   if (['kanban', 'list', 'returned', 'stock'].includes(view)) {
     state.viewMode = view;
@@ -749,40 +753,59 @@ function restoreNavigationState() {
 function updateUrlHash(action, param = '') {
   if (action === 'modal') {
     window.location.hash = param ? `modal:${param}` : state.viewMode;
+    if (param) {
+      sessionStorage.setItem('activeasset_active_modal', param);
+    } else {
+      sessionStorage.removeItem('activeasset_active_modal');
+    }
   } else if (['kanban', 'list', 'returned', 'stock'].includes(action)) {
     window.location.hash = action;
+    sessionStorage.removeItem('activeasset_active_modal');
   }
 }
 
 function syncNavigationFromHash() {
-  const hash = window.location.hash.replace(/^#/, '');
+  let hash = window.location.hash.replace(/^#/, '');
+  const savedModal = sessionStorage.getItem('activeasset_active_modal');
+
+  // If hash is not modal, but sessionStorage remembers we were on a modal before refresh
+  if (!hash.startsWith('modal:') && savedModal) {
+    hash = `modal:${savedModal}`;
+    window.location.hash = hash;
+  }
+
   if (!hash) return;
   const parts = hash.split(':');
   const type = parts[0];
-  const param = parts[1];
+  const param = parts.slice(1).join(':');
 
-  if (type === 'modal') {
+  if (type === 'modal' && param) {
+    sessionStorage.setItem('activeasset_active_modal', param);
     if (param === 'create') {
       openCreateLoanModal(false);
-    } else if (param && param.startsWith('edit-')) {
-      const loanId = param.replace('edit-', '');
+    } else if (param.startsWith('edit-')) {
+      const loanId = decodeURIComponent(param.replace('edit-', ''));
       openEditLoanModal(loanId, false);
-    } else if (param && param.startsWith('dispatch-')) {
-      const loanId = param.replace('dispatch-', '');
+    } else if (param.startsWith('dispatch-')) {
+      const loanId = decodeURIComponent(param.replace('dispatch-', ''));
       openDispatchModal(loanId, false);
-    } else if (param && param.startsWith('return-')) {
-      const loanId = param.replace('return-', '');
+    } else if (param.startsWith('return-')) {
+      const loanId = decodeURIComponent(param.replace('return-', ''));
       openReturnModal(loanId, false);
-    } else if (param && param.startsWith('print-')) {
-      const loanId = param.replace('print-', '');
+    } else if (param.startsWith('print-')) {
+      const loanId = decodeURIComponent(param.replace('print-', ''));
       openPrintModal(loanId, false);
       const urlParams = new URLSearchParams(window.location.search);
       const sigRole = urlParams.get('openSig');
       if (sigRole && window.openDigitalSigModalForRole) {
         setTimeout(() => window.openDigitalSigModalForRole(sigRole), 100);
       }
+    } else if (param.startsWith('asset-')) {
+      const tagId = decodeURIComponent(param.replace('asset-', ''));
+      openAssetDetailModal(tagId);
     }
   } else if (['kanban', 'list', 'returned', 'stock'].includes(type)) {
+    sessionStorage.removeItem('activeasset_active_modal');
     if (state.viewMode !== type) {
       state.viewMode = type;
       renderActiveView();
@@ -791,11 +814,35 @@ function syncNavigationFromHash() {
 }
 
 function setupDialogsLightDismissFallback() {
+  const subDialogIds = new Set([
+    'agodaDateRangeDialog',
+    'snModalDialog',
+    'accModalDialog',
+    'filePreviewModalDialog',
+    'confirmModalDialog',
+    'dispatchMismatchDialog',
+    'dispatchLiveCameraDialog',
+    'searchBarcodeModal'
+  ]);
+
   document.querySelectorAll('dialog.modal-dialog').forEach(dialog => {
     // When dialog closes, restore URL hash to current view and refocus search input
     dialog.addEventListener('close', () => {
+      // Sub-dialogs must NEVER touch parent modal hash
+      if (subDialogIds.has(dialog.id)) {
+        return;
+      }
+
+      // If another main dialog is still open, do NOT clear hash
+      const otherOpenMainDialog = Array.from(document.querySelectorAll('dialog.modal-dialog[open]'))
+        .find(d => !subDialogIds.has(d.id));
+      if (otherOpenMainDialog) {
+        return;
+      }
+
+      sessionStorage.removeItem('activeasset_active_modal');
       if (window.location.hash.startsWith('#modal:')) {
-        window.location.hash = state.viewMode;
+        window.location.hash = state.viewMode || 'kanban';
       }
       focusSearchInputIfIdle(120);
     });
@@ -818,8 +865,14 @@ function setupDialogsLightDismissFallback() {
   document.querySelectorAll('[data-close-dialog]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      const dlg = document.getElementById(btn.getAttribute('data-close-dialog'));
-      if (dlg) smoothCloseDialog(dlg, btn);
+      const targetId = btn.getAttribute('data-close-dialog');
+      const dlg = document.getElementById(targetId);
+      if (dlg) {
+        if (targetId === 'loanDialog' || targetId === 'dispatchDialog' || targetId === 'returnDialog' || targetId === 'printDialog') {
+          sessionStorage.removeItem('activeasset_active_modal');
+        }
+        smoothCloseDialog(dlg, btn);
+      }
     });
   });
 }
@@ -15362,6 +15415,7 @@ function setupEventListeners() {
         if (!res.ok) throw new Error(data.error || 'บันทึกไม่สำเร็จ');
         applyServerState(data);
         showToast(`✅ บันทึกการแก้ไขใบยืม ${targetId} เรียบร้อย`);
+        sessionStorage.removeItem('activeasset_active_modal');
         document.getElementById('loanDialog')?.close();
         if (state.printAfterSave) openPrintModal(targetId);
         focusLoanCardInKanban(targetId);
@@ -15551,6 +15605,7 @@ function setupEventListeners() {
         state.editingLoanId = null;
 
         showToast(`✅ บันทึกการแก้ไขใบยืม ${targetId} เรียบร้อย`);
+        sessionStorage.removeItem('activeasset_active_modal');
         document.getElementById('loanDialog')?.close();
         if (state.printAfterSave) openPrintModal(targetId);
         focusLoanCardInKanban(targetId);
@@ -15570,6 +15625,7 @@ function setupEventListeners() {
         state.editingLoanId = null;
 
         showToast(`✅ ออกใบยืม ${targetId} เรียบร้อยแล้ว`);
+        sessionStorage.removeItem('activeasset_active_modal');
         document.getElementById('loanDialog')?.close();
         if (state.printAfterSave) openPrintModal(targetId);
         focusLoanCardInKanban(targetId);
@@ -16856,7 +16912,9 @@ function setupEventListeners() {
       e.preventDefault();
       const loanId = state.activeDispatchLoan.id;
       document.getElementById('dispatchDialog')?.close();
-      openEditLoanModal(loanId);
+      setTimeout(() => {
+        openEditLoanModal(loanId);
+      }, 30);
     }
   });
 
