@@ -1685,8 +1685,17 @@ function getFullState() {
 
   const itemsByLoan = new Map();
   for (const li of rawLoanItems) {
+    let itemBrand = String(li.brand || '').trim();
+    if (!itemBrand && li.tag_id) {
+      const a = rawAssets.find(x => x.tag_id === li.tag_id);
+      if (a && a.brand) itemBrand = a.brand;
+    } else if (!itemBrand && li.serial_no) {
+      const a = rawAssets.find(x => x.serial_no === li.serial_no);
+      if (a && a.brand) itemBrand = a.brand;
+    }
     const parsed = {
       ...li,
+      brand: itemBrand,
       loan_accessories: JSON.parse(li.loan_accessories_json || '[]'),
       returned_accessories: JSON.parse(li.returned_accessories_json || '[]'),
       missing_accessories: JSON.parse(li.missing_accessories_json || '[]'),
@@ -3707,7 +3716,7 @@ const server = http.createServer(async (req, res) => {
               // Check Source change (e.g. from Demo -> Supplier)
               if (newSource && newSource !== existing.source_snapshot) {
                 const oldSource = existing.source_snapshot;
-                db.prepare('UPDATE loan_items SET source_snapshot = ? WHERE id = ?').run(newSource, existing.id);
+                db.prepare('UPDATE loan_items SET source_snapshot = ? WHERE loan_id = ? AND (id = ? OR model = ?)').run(newSource, loanId, existing.id, existing.model);
 
                 if (effectiveTagId) {
                   db.prepare("UPDATE assets SET source = ?, updated_at = datetime('now', 'localtime') WHERE tag_id = ?").run(newSource, effectiveTagId);
@@ -3721,6 +3730,7 @@ const server = http.createServer(async (req, res) => {
                     { loanId, oldSource, newSource }
                   );
                 } else {
+                  db.prepare("UPDATE assets SET source = ?, updated_at = datetime('now', 'localtime') WHERE current_loan_id = ? AND model = ?").run(newSource, loanId, existing.model);
                   logAssetActivity(
                     db,
                     loanId,
@@ -3736,29 +3746,35 @@ const server = http.createServer(async (req, res) => {
               // Check Brand change (e.g. user selected or created a brand for Supplier)
               const newBrand = String(it.brand !== undefined ? it.brand : (existing.brand || '')).trim();
               const oldBrand = String(existing.brand || '').trim();
-              if (newBrand && newBrand !== oldBrand) {
-                db.prepare('UPDATE loan_items SET brand = ? WHERE id = ?').run(newBrand, existing.id);
+              if (newBrand) {
+                db.prepare('UPDATE loan_items SET brand = ? WHERE loan_id = ? AND (id = ? OR model = ?)').run(newBrand, loanId, existing.id, existing.model);
                 if (effectiveTagId) {
-                  db.prepare("UPDATE assets SET brand = ?, updated_at = datetime('now', 'localtime') WHERE tag_id = ?").run(newBrand, effectiveTagId);
-                  logAssetActivity(
-                    db,
-                    effectiveTagId,
-                    'UPDATE',
-                    'แก้ไขแบรนด์สินค้า',
-                    `ใบยืม ${loanId} • แก้ไขแบรนด์จาก "${oldBrand || 'ไม่ระบุ'}" ➔ "${newBrand}"`,
-                    actor,
-                    { loanId, oldBrand, newBrand }
-                  );
+                  const assetFullName = newBrand ? `${newBrand} ${existing.model || ''}`.trim() : (existing.model || '');
+                  db.prepare("UPDATE assets SET brand = ?, name = ?, updated_at = datetime('now', 'localtime') WHERE tag_id = ?").run(newBrand, assetFullName, effectiveTagId);
+                  if (newBrand !== oldBrand) {
+                    logAssetActivity(
+                      db,
+                      effectiveTagId,
+                      'UPDATE',
+                      'แก้ไขแบรนด์สินค้า',
+                      `ใบยืม ${loanId} • แก้ไขแบรนด์จาก "${oldBrand || 'ไม่ระบุ'}" ➔ "${newBrand}"`,
+                      actor,
+                      { loanId, oldBrand, newBrand }
+                    );
+                  }
                 } else {
-                  logAssetActivity(
-                    db,
-                    loanId,
-                    'UPDATE',
-                    'แก้ไขแบรนด์สินค้า',
-                    `ใบยืม ${loanId} • รุ่น ${existing.model || ''} แก้ไขแบรนด์จาก "${oldBrand || 'ไม่ระบุ'}" ➔ "${newBrand}"`,
-                    actor,
-                    { loanId, oldBrand, newBrand }
-                  );
+                  db.prepare("UPDATE assets SET brand = ?, updated_at = datetime('now', 'localtime') WHERE current_loan_id = ? AND model = ?").run(newBrand, loanId, existing.model);
+                  if (newBrand !== oldBrand) {
+                    logAssetActivity(
+                      db,
+                      loanId,
+                      'UPDATE',
+                      'แก้ไขแบรนด์สินค้า',
+                      `ใบยืม ${loanId} • รุ่น ${existing.model || ''} แก้ไขแบรนด์จาก "${oldBrand || 'ไม่ระบุ'}" ➔ "${newBrand}"`,
+                      actor,
+                      { loanId, oldBrand, newBrand }
+                    );
+                  }
                 }
 
                 // Auto-register brand in master_options & product_catalogs if not present
@@ -3806,7 +3822,7 @@ const server = http.createServer(async (req, res) => {
                         source_snapshot, location_snapshot, loan_accessories_json, loan_free_note, attachments_json
                       ) VALUES (?, '', ?, ?, '', ?, ?, ?, ?, ?)
                     `).run(
-                      loanId, existing.model || '', existing.brand || '',
+                      loanId, existing.model || '', newBrand || existing.brand || '',
                       newSource, existing.location_snapshot || '',
                       existing.loan_accessories_json || '[]', note, existing.attachments_json || '[]'
                     );

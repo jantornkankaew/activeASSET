@@ -3151,8 +3151,12 @@ function openEditLoanModal(loanId, updateHash = true) {
     // Group identical items by model, brand, source so qty accurately reflects the total
     const grouped = [];
     for (const it of loan.items || []) {
+      const assetObj = it.tag_id
+        ? state.assets.find(a => a.tag_id === it.tag_id)
+        : (it.serial_no ? state.assets.find(a => a.serial_no === it.serial_no) : null);
+      const itemBrand = it.brand || (assetObj ? assetObj.brand : '') || '';
       const existing = grouped.find(
-        g => g.brand === (it.brand || '') && g.model === (it.model || '') && g.source === (it.source_snapshot || 'Demo')
+        g => g.brand === itemBrand && g.model === (it.model || '') && g.source === (it.source_snapshot || 'Demo')
       );
       if (existing) {
         existing.qty += 1;
@@ -3163,7 +3167,7 @@ function openEditLoanModal(loanId, updateHash = true) {
         grouped.push({
           id: it.id,
           tag_id: it.tag_id || '',
-          brand: it.brand || '',
+          brand: itemBrand,
           model: it.model || '',
           qty: 1,
           source: it.source_snapshot || 'Demo',
@@ -3174,27 +3178,36 @@ function openEditLoanModal(loanId, updateHash = true) {
         });
       }
     }
-    state.loanDraftRows = grouped.length > 0 ? grouped : (loan.items || []).map(it => ({
-      id: it.id,
-      tag_id: it.tag_id || '',
-      brand: it.brand || '',
-      model: it.model || '',
-      qty: 1,
-      source: it.source_snapshot || 'Demo',
-      accessories: [...(it.loan_accessories || [])],
-      free_note: it.loan_free_note || '',
-      attachments: [...(it.attachments || [])],
-      serials: it.serial_no ? [it.serial_no] : []
-    }));
+    state.loanDraftRows = grouped.length > 0 ? grouped : (loan.items || []).map(it => {
+      const assetObj = it.tag_id
+        ? state.assets.find(a => a.tag_id === it.tag_id)
+        : (it.serial_no ? state.assets.find(a => a.serial_no === it.serial_no) : null);
+      return {
+        id: it.id,
+        tag_id: it.tag_id || '',
+        brand: it.brand || (assetObj ? assetObj.brand : '') || '',
+        model: it.model || '',
+        qty: 1,
+        source: it.source_snapshot || 'Demo',
+        accessories: [...(it.loan_accessories || [])],
+        free_note: it.loan_free_note || '',
+        attachments: [...(it.attachments || [])],
+        serials: it.serial_no ? [it.serial_no] : []
+      };
+    });
   } else {
     // Group identical model rows when editing a pre-dispatch or dispatched loan
     const grouped = [];
     for (const it of loan.items || []) {
+      const assetObj = it.tag_id
+        ? state.assets.find(a => a.tag_id === it.tag_id)
+        : (it.serial_no ? state.assets.find(a => a.serial_no === it.serial_no) : null);
+      const itemBrand = it.brand || (assetObj ? assetObj.brand : '') || '';
       const accStr = JSON.stringify(it.loan_accessories || []);
       const attStr = JSON.stringify(it.attachments || []);
       const existing = grouped.find(
         g =>
-          g.brand === (it.brand || '') &&
+          g.brand === itemBrand &&
           g.model === (it.model || '') &&
           g.source === (it.source_snapshot || 'Demo') &&
           g.free_note === (it.loan_free_note || '') &&
@@ -3211,7 +3224,7 @@ function openEditLoanModal(loanId, updateHash = true) {
         grouped.push({
           id: it.id,
           tag_id: it.tag_id || '',
-          brand: it.brand || '',
+          brand: itemBrand,
           model: it.model || '',
           qty: 1,
           source: it.source_snapshot || 'Demo',
@@ -15388,12 +15401,50 @@ function setupEventListeners() {
   document.getElementById('loanForm').addEventListener('submit', async e => {
     e.preventDefault();
 
+    // Auto-commit any active text in DOM inputs to state.loanDraftRows
+    document.querySelectorAll('[data-excel-brand-input]').forEach(inp => {
+      const idx = Number(inp.getAttribute('data-excel-brand-input'));
+      if (state.loanDraftRows[idx]) {
+        state.loanDraftRows[idx].brand = inp.value.trim();
+      }
+    });
+    document.querySelectorAll('[data-excel-model-input]').forEach(inp => {
+      const idx = Number(inp.getAttribute('data-excel-model-input'));
+      if (state.loanDraftRows[idx] && inp.value.trim()) {
+        state.loanDraftRows[idx].model = inp.value.trim();
+      }
+    });
+    document.querySelectorAll('[data-excel-free-note]').forEach(inp => {
+      const idx = Number(inp.getAttribute('data-excel-free-note'));
+      if (state.loanDraftRows[idx]) {
+        state.loanDraftRows[idx].free_note = inp.value.trim();
+      }
+    });
+
     if (state.editingLoanNoteOnly && state.editingLoanId) {
+      // Validate Brand for Supplier & คลังขาย items before note update
+      for (let i = 0; i < state.loanDraftRows.length; i++) {
+        const r = state.loanDraftRows[i];
+        if (!r.model || !r.model.trim()) continue;
+        const isSupplierOrSale = r.source === 'Supplier' || r.source === 'คลังขาย';
+        if (isSupplierOrSale && (!r.brand || !r.brand.trim())) {
+          showToast(`⚠️ รายการที่ ${i + 1} (${r.model}): กรุณาระบุแบรนด์สินค้าสำหรับสินค้าจาก ${r.source}`);
+          const brandInp = document.querySelector(`[data-excel-brand-input="${i}"]`);
+          if (brandInp) {
+            brandInp.focus();
+            brandInp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            brandInp.classList.add('input-attention-ring');
+            setTimeout(() => brandInp.classList.remove('input-attention-ring'), 1500);
+          }
+          return;
+        }
+      }
+
       const dueDateVal = document.getElementById('loanDueDate')?.value || '';
       const notePayload = {
         due_date: dueDateVal,
         user_name: (state.currentUser && state.currentUser.name) || '',
-        items: state.loanDraftRows.map(r => ({
+        items: state.loanDraftRows.filter(r => r.model && r.model.trim()).map(r => ({
           id: r.id,
           tag_id: r.tag_id || '',
           model: r.model || '',
