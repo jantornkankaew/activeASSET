@@ -5209,6 +5209,35 @@ dialog.modal-dialog::backdrop {
   color: #0066cc !important;
 }
 
+/* Entrance Animation for Fullscreen Modals */
+@keyframes modalFullscreenSlideIn {
+  from {
+    transform: translate3d(50px, 0, 0) scale(0.99);
+    opacity: 0;
+  }
+  to {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  @keyframes modalFullscreenSlideIn {
+    from {
+      transform: translate3d(100%, 0, 0);
+      opacity: 0.85;
+    }
+    to {
+      transform: translate3d(0, 0, 0);
+      opacity: 1;
+    }
+  }
+}
+
+dialog.modal-fullscreen[open] .modal-inner {
+  animation: modalFullscreenSlideIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
 /* Smooth Exit Animations across all dialogs */
 dialog.dialog-closing {
   pointer-events: none !important;
@@ -5216,30 +5245,48 @@ dialog.dialog-closing {
 
 /* Fullscreen Modals Slide Out Smoothly to the Right (iOS style navigation pop) */
 dialog.modal-fullscreen .modal-inner {
-  transition: transform 0.14s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.13s ease-out;
+  transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1), filter 0.26s ease-out;
   will-change: transform, opacity;
 }
 
 dialog.modal-fullscreen.dialog-closing .modal-inner {
-  transform: translateX(36px) scale(0.99) !important;
+  animation: none !important;
+  transform: translate3d(70px, 0, 0) scale(0.985) !important;
   opacity: 0 !important;
+  filter: blur(1px) !important;
+}
+
+@media (max-width: 640px) {
+  dialog.modal-fullscreen.dialog-closing .modal-inner {
+    animation: none !important;
+    transform: translate3d(100%, 0, 0) !important;
+    opacity: 0.8 !important;
+    filter: none !important;
+  }
 }
 
 /* Floating/Standard Modals Pop Down & Fade */
 dialog:not(.modal-fullscreen) {
-  transition: transform 0.14s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.13s ease-out;
+  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease-out;
   will-change: transform, opacity;
 }
 
 dialog:not(.modal-fullscreen).dialog-closing {
-  transform: translateY(18px) scale(0.96) !important;
+  transform: translate3d(0, 20px, 0) scale(0.96) !important;
   opacity: 0 !important;
+}
+
+@media (max-width: 640px) {
+  dialog.modal-dialog:not(.modal-fullscreen):not(.modal-signature).dialog-closing {
+    transform: translateY(100%) !important;
+    opacity: 0.9 !important;
+  }
 }
 
 /* Backdrop Fade Out */
 dialog.dialog-closing::backdrop {
   opacity: 0 !important;
-  transition: opacity 0.13s ease-out !important;
+  transition: opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 /* Ensure all closed dialogs never render any children or fixed footers */
@@ -6849,44 +6896,47 @@ dialog:not([open]) * {
 }
 
 .btn-navbar-back.btn-navbar-icon-only {
-  width: 34px !important;
-  height: 34px !important;
-  min-width: 34px !important;
-  min-height: 34px !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
   border-radius: 50% !important;
   border: 1px solid rgba(203, 213, 225, 0.85) !important;
   background: #ffffff !important;
-  color: #64748b !important;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+  color: #475569 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04) !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   padding: 0 !important;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.2s ease, color 0.15s ease !important;
 }
 
 .btn-navbar-back.btn-navbar-icon-only:hover {
   background: #ffffff !important;
   color: #007aff !important;
   border-color: #93c5fd !important;
-  box-shadow: 0 3px 8px -1px rgba(0, 122, 255, 0.2), 0 1px 3px rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 4px 12px -2px rgba(0, 122, 255, 0.22), 0 2px 4px rgba(15, 23, 42, 0.06) !important;
+  transform: translateX(-2.5px) !important;
 }
 
 .btn-navbar-back.btn-navbar-icon-only:hover svg {
-  transform: translateX(-3.5px) !important;
+  transform: translateX(-2.5px) scale(1.08) !important;
   color: #007aff !important;
 }
 
 .btn-navbar-back.btn-navbar-icon-only:active,
 .btn-navbar-back.btn-navbar-icon-only.btn-back-pressed {
-  transform: scale(0.90) translateX(-2.5px) !important;
+  transform: scale(0.90) translateX(-4px) !important;
   background: #f1f5f9 !important;
-  border-color: #60a5fa !important;
-  box-shadow: 0 0 0 3.5px rgba(59, 130, 246, 0.25) !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25), inset 0 2px 4px rgba(0, 0, 0, 0.06) !important;
+  color: #0066cc !important;
 }
 
 .btn-navbar-back.btn-navbar-icon-only:active svg,
 .btn-navbar-back.btn-navbar-icon-only.btn-back-pressed svg {
-  transform: translateX(-5.5px) scale(1.12) !important;
+  transform: translateX(-4.5px) scale(1.15) !important;
   color: #0066cc !important;
 }
 

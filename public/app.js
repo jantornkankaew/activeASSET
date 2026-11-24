@@ -847,6 +847,12 @@ function setupDialogsLightDismissFallback() {
       focusSearchInputIfIdle(120);
     });
 
+    // Intercept native Esc key to run smooth exit transition
+    dialog.addEventListener('cancel', (e) => {
+      e.preventDefault();
+      smoothCloseDialog(dialog);
+    });
+
     if (!('closedBy' in HTMLDialogElement.prototype)) {
       dialog.addEventListener('click', event => {
         if (event.target !== dialog) return;
@@ -868,7 +874,9 @@ function setupDialogsLightDismissFallback() {
       const targetId = btn.getAttribute('data-close-dialog');
       const dlg = document.getElementById(targetId);
       if (dlg) {
-        if (targetId === 'loanDialog' || targetId === 'dispatchDialog' || targetId === 'returnDialog' || targetId === 'printDialog') {
+        if (targetId === 'printDialog' && state.printReturnTo) {
+          // Returning back to previous modal, keep modal state intact
+        } else if (targetId === 'loanDialog' || targetId === 'dispatchDialog' || targetId === 'returnDialog' || targetId === 'printDialog') {
           sessionStorage.removeItem('activeasset_active_modal');
         }
         smoothCloseDialog(dlg, btn);
@@ -896,7 +904,7 @@ function smoothCloseDialog(dlg, triggerBtn) {
     if (triggerBtn) {
       triggerBtn.classList.remove('btn-back-pressed');
     }
-  }, 130);
+  }, 260);
 }
 window.smoothCloseDialog = smoothCloseDialog;
 
@@ -7524,7 +7532,7 @@ function openPrintModal(loanId, updateHash = true) {
   const loan = state.loans.find(l => l.id === loanId);
   if (!loan) return;
 
-  // Auto-detect open dialog source if not already tracked
+  // Auto-detect open dialog source if not already tracked (keep underlying dialog open in top-layer stack)
   if (!state.printReturnTo) {
     const dispatchDlg = document.getElementById('dispatchDialog');
     if (dispatchDlg && dispatchDlg.hasAttribute('open')) {
@@ -7533,7 +7541,6 @@ function openPrintModal(loanId, updateHash = true) {
         loanId: state.activeDispatchLoan?.id || loanId,
         returnMode: !!state.dispatchReturnMode
       };
-      dispatchDlg.close();
     } else {
       const assetDlg = document.getElementById('assetDetailModalDialog');
       if (assetDlg && assetDlg.hasAttribute('open')) {
@@ -7543,7 +7550,6 @@ function openPrintModal(loanId, updateHash = true) {
           tagId: state.currentDetailTagId,
           tab: activeTabBtn ? activeTabBtn.getAttribute('data-tab-target') : 'info'
         };
-        assetDlg.close();
       } else {
         const loanDlg = document.getElementById('loanDialog');
         if (loanDlg && loanDlg.hasAttribute('open')) {
@@ -7551,7 +7557,6 @@ function openPrintModal(loanId, updateHash = true) {
             type: 'loan',
             loanId: state.editingLoanId || loanId
           };
-          loanDlg.close();
         } else {
           const deliveryDlg = document.getElementById('deliveryModalDialog');
           if (deliveryDlg && deliveryDlg.hasAttribute('open')) {
@@ -7560,7 +7565,6 @@ function openPrintModal(loanId, updateHash = true) {
               type: 'delivery',
               loanId: delLoanId || loanId
             };
-            deliveryDlg.close();
           } else {
             const supSaleDlg = document.getElementById('supplierSaleReturnDialog');
             if (supSaleDlg && supSaleDlg.hasAttribute('open')) {
@@ -7569,7 +7573,6 @@ function openPrintModal(loanId, updateHash = true) {
                 type: 'supplierSaleReturn',
                 loanId: supLoanId || loanId
               };
-              supSaleDlg.close();
             }
           }
         }
@@ -14374,7 +14377,6 @@ function setupEventListeners() {
             loanId: state.activeDispatchLoan?.id || loanId,
             returnMode: !!state.dispatchReturnMode
           };
-          dispatchDlg.close();
         }
         const assetDlg = document.getElementById('assetDetailModalDialog');
         if (assetDlg && assetDlg.hasAttribute('open')) {
@@ -14384,7 +14386,6 @@ function setupEventListeners() {
             tagId: state.currentDetailTagId,
             tab: activeTabBtn ? activeTabBtn.getAttribute('data-tab-target') : 'info'
           };
-          assetDlg.close();
         }
         openPrintModal(loanId);
       }
@@ -17114,7 +17115,6 @@ function setupEventListeners() {
         loanId: state.activeDispatchLoan.id,
         returnMode: !!state.dispatchReturnMode
       };
-      document.getElementById('dispatchDialog')?.close();
       openPrintModal(state.activeDispatchLoan.id);
     }
   });
@@ -17140,7 +17140,6 @@ function setupEventListeners() {
         type: 'return',
         loanId: state.activeReturnLoan.id
       };
-      document.getElementById('returnDialog')?.close();
       openPrintModal(state.activeReturnLoan.id);
     }
   });
@@ -17153,7 +17152,6 @@ function setupEventListeners() {
         type: 'loan',
         loanId: state.editingLoanId
       };
-      document.getElementById('loanDialog')?.close();
       openPrintModal(state.editingLoanId);
     }
   });
@@ -20095,6 +20093,36 @@ function setupEventListeners() {
 
     if (!returnTo) return;
 
+    // Check if the previous modal was kept open in background top layer:
+    let prevDlg = null;
+    let modalParam = '';
+    if (returnTo.type === 'dispatch') {
+      prevDlg = document.getElementById('dispatchDialog');
+      modalParam = `dispatch-${returnTo.loanId}`;
+    } else if (returnTo.type === 'loan') {
+      prevDlg = document.getElementById('loanDialog');
+      modalParam = `edit-${returnTo.loanId}`;
+    } else if (returnTo.type === 'return') {
+      prevDlg = document.getElementById('returnDialog');
+      modalParam = `return-${returnTo.loanId}`;
+    } else if (returnTo.type === 'assetDetail') {
+      prevDlg = document.getElementById('assetDetailModalDialog');
+      modalParam = `asset-${returnTo.tagId}`;
+    } else if (returnTo.type === 'delivery') {
+      prevDlg = document.getElementById('deliveryModalDialog');
+    } else if (returnTo.type === 'supplierSaleReturn') {
+      prevDlg = document.getElementById('supplierSaleReturnDialog');
+    }
+
+    if (prevDlg && prevDlg.hasAttribute('open')) {
+      // The parent modal was active underneath all along!
+      if (modalParam) {
+        updateUrlHash('modal', modalParam);
+      }
+      return;
+    }
+
+    // Fallback if not already open (e.g. page was refreshed while inside print view)
     setTimeout(() => {
       if (returnTo.type === 'dispatch' && returnTo.loanId) {
         openDispatchModal(returnTo.loanId, true, returnTo.returnMode || false);
@@ -20110,7 +20138,7 @@ function setupEventListeners() {
       } else if (returnTo.type === 'supplierSaleReturn' && returnTo.loanId) {
         openSupplierSaleReturnModal(returnTo.loanId);
       }
-    }, 60);
+    }, 20);
   });
 
   // --------------------------------------------------------------------------
