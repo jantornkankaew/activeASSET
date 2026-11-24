@@ -3065,6 +3065,18 @@ function openEditLoanModal(loanId, updateHash = true) {
     btnStart.title = isDeliveredStage ? 'สินค้าส่งมอบแล้ว วันที่ยืมถูกล็อก' : 'แตะเพื่อเลือกวันยืม';
   }
 
+  const purposeTrigger = document.getElementById('loanPurposeTrigger');
+  if (purposeTrigger) {
+    purposeTrigger.classList.toggle('is-locked', isDeliveredStage);
+    purposeTrigger.style.pointerEvents = isDeliveredStage ? 'none' : 'auto';
+  }
+
+  const statusTrigger = document.getElementById('loanInitialStatusTrigger');
+  if (statusTrigger) {
+    statusTrigger.classList.toggle('is-locked', Boolean(state.editingLoanId));
+    statusTrigger.style.pointerEvents = state.editingLoanId ? 'none' : 'auto';
+  }
+
   document.getElementById('loanBorrower').value = loan.borrower_name || '';
   document.getElementById('loanCustomer').value = loan.customer_name || '';
   document.getElementById('loanCustomerPhone').value = loan.customer_phone || loan.borrower_phone || '';
@@ -3083,9 +3095,35 @@ function openEditLoanModal(loanId, updateHash = true) {
   }
 
   if (isDeliveredStage) {
-    // Delivered: each item keeps its distinct row & ID for individual note editing
-    state.loanDraftRows = (loan.items || []).map(it => ({
+    // Group identical items by model, brand, source so qty accurately reflects the total
+    const grouped = [];
+    for (const it of loan.items || []) {
+      const existing = grouped.find(
+        g => g.brand === (it.brand || '') && g.model === (it.model || '') && g.source === (it.source_snapshot || 'Demo')
+      );
+      if (existing) {
+        existing.qty += 1;
+        if (it.serial_no && !existing.serials.includes(it.serial_no)) {
+          existing.serials.push(it.serial_no);
+        }
+      } else {
+        grouped.push({
+          id: it.id,
+          tag_id: it.tag_id || '',
+          brand: it.brand || '',
+          model: it.model || '',
+          qty: 1,
+          source: it.source_snapshot || 'Demo',
+          accessories: [...(it.loan_accessories || [])],
+          free_note: it.loan_free_note || '',
+          attachments: [...(it.attachments || [])],
+          serials: it.serial_no ? [it.serial_no] : []
+        });
+      }
+    }
+    state.loanDraftRows = grouped.length > 0 ? grouped : (loan.items || []).map(it => ({
       id: it.id,
+      tag_id: it.tag_id || '',
       brand: it.brand || '',
       model: it.model || '',
       qty: 1,
@@ -3119,6 +3157,7 @@ function openEditLoanModal(loanId, updateHash = true) {
       } else {
         grouped.push({
           id: it.id,
+          tag_id: it.tag_id || '',
           brand: it.brand || '',
           model: it.model || '',
           qty: 1,
@@ -3136,8 +3175,8 @@ function openEditLoanModal(loanId, updateHash = true) {
         : [{ brand: '', model: '', qty: 1, source: 'Demo', accessories: [], free_note: '', serials: [], attachments: [] }];
   }
 
-  // Set all rows collapsed by default when opening in edit mode so user must click a row to edit it
-  state.activeLoanRowIdx = -1;
+  // In delivered stage, expand the first row by default so user can immediately edit qty, source, and notes
+  state.activeLoanRowIdx = isDeliveredStage ? 0 : -1;
 
   // Ensure trailing empty row is present for seamless adding
   ensureTrailingEmptyRow();
@@ -5122,7 +5161,7 @@ function renderLoanExcelRows() {
             <!-- 4. Source (1-4) -->
             <td class="cell-source">
               <div class="collapsed-cell-source-wrap">
-                <span class="collapsed-source-pill">${escapeHtml(row.source || 'Demo')}</span>
+                <button type="button" class="collapsed-source-pill" data-source-trigger="${rowIdx}" title="แตะเพื่อเลือกคลัง">${escapeHtml(row.source || 'Demo')} ▾</button>
               </div>
             </td>
 
@@ -5290,11 +5329,13 @@ function renderLoanExcelRows() {
                       value="${escapeHtml(row.brand || '')}"
                       data-excel-brand-input="${rowIdx}"
                       autocomplete="off"
+                      ${state.editingLoanNoteOnly ? 'readonly disabled' : ''}
                     />
+                    ${state.editingLoanNoteOnly ? '' : `
                     <div class="input-actions-end">
                       <button type="button" class="btn-input-clear ${row.brand ? '' : 'hidden'}" data-clear-brand="${rowIdx}" title="ล้างค่า">✕</button>
                       <button type="button" class="btn-input-dropdown-arrow" data-brand-dropdown-trigger="${rowIdx}" title="เลือกแบรนด์">▾</button>
-                    </div>
+                    </div>`}
                   </div>
                 </div>
 
@@ -5308,7 +5349,9 @@ function renderLoanExcelRows() {
                       value="${escapeHtml(row.model || '')}"
                       data-excel-model-input="${rowIdx}"
                       autocomplete="off"
+                      ${state.editingLoanNoteOnly ? 'readonly disabled' : ''}
                     />
+                    ${state.editingLoanNoteOnly ? '' : `
                     <div class="input-actions-end">
                       <button
                         type="button"
@@ -5318,7 +5361,7 @@ function renderLoanExcelRows() {
                         tabindex="-1"
                         aria-label="ล้างรุ่นที่เลือก"
                       >✕</button>
-                    </div>
+                    </div>`}
                   </div>
                 </div>
               </div>
@@ -5331,7 +5374,9 @@ function renderLoanExcelRows() {
                   value="${escapeHtml(modelVal)}"
                   data-excel-model-input="${rowIdx}"
                   autocomplete="off"
+                  ${state.editingLoanNoteOnly ? 'readonly disabled' : ''}
                 />
+                ${state.editingLoanNoteOnly ? '' : `
                 <div class="input-actions-end">
                   <button
                     type="button"
@@ -5367,7 +5412,7 @@ function renderLoanExcelRows() {
                       <line x1="7" y1="16" x2="17" y2="16"></line>
                     </svg>
                   </button>
-                </div>
+                </div>`}
                 <div class="model-dropdown-menu hidden" data-model-dropdown="${rowIdx}"></div>
               </div>
             `}
@@ -15394,8 +15439,15 @@ function setupEventListeners() {
       const dueDateVal = document.getElementById('loanDueDate')?.value || '';
       const notePayload = {
         due_date: dueDateVal,
+        user_name: (state.currentUser && state.currentUser.name) || '',
         items: state.loanDraftRows.map(r => ({
           id: r.id,
+          tag_id: r.tag_id || '',
+          model: r.model || '',
+          brand: r.brand || '',
+          qty: Math.max(1, Number(r.qty || 1)),
+          source: r.source || 'Demo',
+          serials: r.serials || [],
           free_note: r.free_note || ''
         }))
       };

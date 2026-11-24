@@ -412,7 +412,7 @@
           </div>
           <div class="note-banner-content">
             <strong>โหมดแก้ไขใบยืม (ส่งมอบสินค้าแล้ว)</strong>
-            <span>ใบยืมนี้จัดส่งมอบสินค้าเรียบร้อยแล้ว คุณสามารถแก้ไขกำหนดวันส่งคืน และบันทึกหมายเหตุเพิ่มเติมของแต่ละรายการได้ (รายการสินค้าและ S/N จะถูกล็อกไว้เพื่อความถูกต้องของสต็อก)</span>
+            <span>ใบยืมนี้จัดส่งมอบสินค้าเรียบร้อยแล้ว คุณสามารถแก้ไขกำหนดวันส่งคืน, คลังสินค้า (Source), จำนวน และบันทึกหมายเหตุได้ (ข้อมูลลูกค้า รุ่นสินค้า และ S/N จะถูกล็อกไว้)</span>
           </div>
           <button type="button" class="btn btn-xs btn-outline btn-quick-due-edit" id="btnBannerEditDueDate" style="margin-left: auto; align-self: center; white-space: nowrap; font-size: 12px; padding: 5px 12px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; border-color: #3b82f6; color: #1d4ed8; background: #ffffff;">
             📅 แก้ไขวันคืน
@@ -536,6 +536,12 @@
                         <select id="loanInitialStatus" class="visually-hidden" tabindex="-1">
                           <option value="Requested">รอจัด (Requested)</option>
                           <option value="Dispatching">กำลังจัด (Dispatching)</option>
+                          <option value="Dispatched">เบิกออกแล้ว/รอส่งมอบ (Dispatched)</option>
+                          <option value="Delivered">ส่งมอบแล้ว / กำลังยืม (Delivered)</option>
+                          <option value="Pending_QC">รอตรวจ QC คืนของ (Pending QC)</option>
+                          <option value="Partially_Returned">คืนบางส่วน (Partially Returned)</option>
+                          <option value="Returned">คืนครบแล้ว (Returned)</option>
+                          <option value="Cancelled">ยกเลิก (Cancelled)</option>
                         </select>
                         <div class="custom-select-menu hidden" id="loanInitialStatusMenu" role="listbox">
                           <div class="custom-select-item active" data-val="Requested" role="option">
@@ -549,6 +555,48 @@
                             <div class="custom-select-item-text">
                               <span class="item-title">กำลังจัด (Dispatching)</span>
                               <span class="item-desc">กำลังเบิกของเตรียมส่งมอบ</span>
+                            </div>
+                            <span class="item-check">✓</span>
+                          </div>
+                          <div class="custom-select-item" data-val="Dispatched" role="option">
+                            <div class="custom-select-item-text">
+                              <span class="item-title">เบิกออกแล้ว / รอส่งมอบ (Dispatched)</span>
+                              <span class="item-desc">ของถูกจัดและเบิกออกจากคลังแล้ว</span>
+                            </div>
+                            <span class="item-check">✓</span>
+                          </div>
+                          <div class="custom-select-item" data-val="Delivered" role="option">
+                            <div class="custom-select-item-text">
+                              <span class="item-title">ส่งมอบแล้ว / กำลังยืม (Delivered)</span>
+                              <span class="item-desc">ลูกค้าได้รับสินค้าเรียบร้อย</span>
+                            </div>
+                            <span class="item-check">✓</span>
+                          </div>
+                          <div class="custom-select-item" data-val="Pending_QC" role="option">
+                            <div class="custom-select-item-text">
+                              <span class="item-title">รอตรวจ QC คืนของ (Pending QC)</span>
+                              <span class="item-desc">สินค้าคืนกลับมารอเจ้าหน้าที่ตรวจสภาพ</span>
+                            </div>
+                            <span class="item-check">✓</span>
+                          </div>
+                          <div class="custom-select-item" data-val="Partially_Returned" role="option">
+                            <div class="custom-select-item-text">
+                              <span class="item-title">คืนบางส่วน (Partially Returned)</span>
+                              <span class="item-desc">คืนสินค้าแล้วบางส่วน</span>
+                            </div>
+                            <span class="item-check">✓</span>
+                          </div>
+                          <div class="custom-select-item" data-val="Returned" role="option">
+                            <div class="custom-select-item-text">
+                              <span class="item-title">คืนครบแล้ว (Returned)</span>
+                              <span class="item-desc">รับคืนครบทุกรายการเรียบร้อย</span>
+                            </div>
+                            <span class="item-check">✓</span>
+                          </div>
+                          <div class="custom-select-item" data-val="Cancelled" role="option">
+                            <div class="custom-select-item-text">
+                              <span class="item-title">ยกเลิก (Cancelled)</span>
+                              <span class="item-desc">ยกเลิกใบยืมนี้</span>
                             </div>
                             <span class="item-check">✓</span>
                           </div>

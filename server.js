@@ -3643,25 +3643,168 @@ const server = http.createServer(async (req, res) => {
       const isDeliveredStage = ['Delivered', 'Partially_Returned', 'Returned'].includes(loan.status);
       const isFullEditable = ['Requested', 'Dispatching', 'Dispatched'].includes(loan.status);
 
-      // Case 1: Delivered Stage - Note and due_date editing ("ถ้าส่งมอบไปแล้ว แก้ไขได้เฉพาะกำหนดวันส่งคืนและหมายเหตุ")
+      // Case 1: Delivered Stage - Edit due_date, source, quantity, notes, and record AUDIT LOGS
       if (isDeliveredStage) {
         db.exec('BEGIN TRANSACTION');
         try {
-          if (body.due_date) {
-            db.prepare('UPDATE loans SET due_date = ? WHERE id = ?').run(String(body.due_date).trim(), loanId);
+          const actor = (body.user_name || '').trim() || loan.borrower_name || 'เจ้าหน้าที่';
+          const existingItems = db.prepare('SELECT * FROM loan_items WHERE loan_id = ? ORDER BY id ASC').all(loanId);
+
+          // 1. Audit log & update due_date
+          if (body.due_date && String(body.due_date).trim() !== String(loan.due_date || '').trim()) {
+            const oldDue = loan.due_date || '';
+            const newDue = String(body.due_date).trim();
+            db.prepare('UPDATE loans SET due_date = ? WHERE id = ?').run(newDue, loanId);
+
+            const uniqueTagIds = [...new Set(existingItems.map(it => it.tag_id).filter(Boolean))];
+            if (uniqueTagIds.length > 0) {
+              for (const tagId of uniqueTagIds) {
+                logAssetActivity(
+                  db,
+                  tagId,
+                  'UPDATE',
+                  'แก้ไขกำหนดวันส่งคืน',
+                  `ใบยืม ${loanId} • เปลี่ยนกำหนดคืนจาก "${oldDue}" ➔ "${newDue}"`,
+                  actor,
+                  { loanId, oldDue, newDue }
+                );
+              }
+            } else {
+              logAssetActivity(
+                db,
+                loanId,
+                'UPDATE',
+                'แก้ไขกำหนดวันส่งคืน',
+                `ใบยืม ${loanId} • เปลี่ยนกำหนดคืนจาก "${oldDue}" ➔ "${newDue}"`,
+                actor,
+                { loanId, oldDue, newDue }
+              );
+            }
           }
+
           if (body.delivery_note !== undefined) {
             db.prepare('UPDATE loans SET delivery_note = ? WHERE id = ?').run(String(body.delivery_note || '').trim(), loanId);
           }
+
+          // 2. Process items (source, qty, free_note)
           if (Array.isArray(body.items)) {
-            const existingItems = db.prepare('SELECT id FROM loan_items WHERE loan_id = ? ORDER BY id ASC').all(loanId);
             for (let i = 0; i < body.items.length; i++) {
               const it = body.items[i];
+              const existing = (it.id ? existingItems.find(e => e.id === it.id) : null) || existingItems[i];
+              if (!existing) continue;
+
               const note = String(it.free_note || it.loan_free_note || '').trim();
-              if (it.id) {
-                db.prepare('UPDATE loan_items SET loan_free_note = ? WHERE id = ? AND loan_id = ?').run(note, it.id, loanId);
-              } else if (existingItems[i]) {
-                db.prepare('UPDATE loan_items SET loan_free_note = ? WHERE id = ? AND loan_id = ?').run(note, existingItems[i].id, loanId);
+              const newSource = String(it.source || existing.source_snapshot || 'Demo').trim();
+              const newQty = Math.max(1, parseInt(it.qty || 1, 10));
+
+              // Resolve tag_id
+              let effectiveTagId = existing.tag_id || '';
+              if (!effectiveTagId && existing.serial_no) {
+                const a = db.prepare('SELECT tag_id FROM assets WHERE serial_no = ?').get(existing.serial_no);
+                if (a) effectiveTagId = a.tag_id;
+              }
+
+              // Check Source change (e.g. from Demo -> Supplier)
+              if (newSource && newSource !== existing.source_snapshot) {
+                const oldSource = existing.source_snapshot;
+                db.prepare('UPDATE loan_items SET source_snapshot = ? WHERE id = ?').run(newSource, existing.id);
+
+                if (effectiveTagId) {
+                  db.prepare("UPDATE assets SET source = ?, updated_at = datetime('now', 'localtime') WHERE tag_id = ?").run(newSource, effectiveTagId);
+                  logAssetActivity(
+                    db,
+                    effectiveTagId,
+                    'UPDATE',
+                    'แก้ไขคลังสินค้า (Source)',
+                    `ใบยืม ${loanId} • แก้ไขคลังจาก "${oldSource}" ➔ "${newSource}"`,
+                    actor,
+                    { loanId, oldSource, newSource }
+                  );
+                } else {
+                  logAssetActivity(
+                    db,
+                    loanId,
+                    'UPDATE',
+                    'แก้ไขคลังสินค้า (Source)',
+                    `ใบยืม ${loanId} • รุ่น ${existing.model || ''} แก้ไขคลังจาก "${oldSource}" ➔ "${newSource}"`,
+                    actor,
+                    { loanId, oldSource, newSource }
+                  );
+                }
+              }
+
+              // Check Note change
+              const oldNote = String(existing.loan_free_note || '').trim();
+              if (note !== oldNote) {
+                db.prepare('UPDATE loan_items SET loan_free_note = ? WHERE id = ?').run(note, existing.id);
+                if (effectiveTagId) {
+                  logAssetActivity(
+                    db,
+                    effectiveTagId,
+                    'UPDATE',
+                    'แก้ไขหมายเหตุใบยืม',
+                    `ใบยืม ${loanId} • แก้ไขหมายเหตุ: "${oldNote || 'ไม่มีหมายเหตุ'}" ➔ "${note || 'ไม่มีหมายเหตุ'}"`,
+                    actor,
+                    { loanId, oldNote, newNote: note }
+                  );
+                }
+              }
+
+              // Check Quantity change
+              const matchingModelItems = existingItems.filter(e => e.model === existing.model);
+              const oldQty = matchingModelItems.length;
+              if (newQty !== oldQty) {
+                if (newQty > oldQty) {
+                  const toAdd = newQty - oldQty;
+                  for (let a = 0; a < toAdd; a++) {
+                    db.prepare(`
+                      INSERT INTO loan_items (
+                        loan_id, tag_id, model, brand, serial_no,
+                        source_snapshot, location_snapshot, loan_accessories_json, loan_free_note, attachments_json
+                      ) VALUES (?, '', ?, ?, '', ?, ?, ?, ?, ?)
+                    `).run(
+                      loanId, existing.model || '', existing.brand || '',
+                      newSource, existing.location_snapshot || '',
+                      existing.loan_accessories_json || '[]', note, existing.attachments_json || '[]'
+                    );
+                  }
+                } else if (newQty < oldQty) {
+                  const toRemove = oldQty - newQty;
+                  // Remove excess units (prefer removing items without tag_id first)
+                  const removable = matchingModelItems.slice().sort((a, b) => {
+                    if (!a.tag_id && b.tag_id) return -1;
+                    if (a.tag_id && !b.tag_id) return 1;
+                    return b.id - a.id;
+                  }).slice(0, toRemove);
+                  for (const rm of removable) {
+                    if (rm.tag_id) {
+                      db.prepare("UPDATE assets SET status = 'Available', current_loan_id = NULL WHERE tag_id = ?").run(rm.tag_id);
+                    }
+                    db.prepare('DELETE FROM loan_items WHERE id = ?').run(rm.id);
+                  }
+                }
+
+                if (effectiveTagId) {
+                  logAssetActivity(
+                    db,
+                    effectiveTagId,
+                    'UPDATE',
+                    'แก้ไขจำนวนในใบยืม',
+                    `ใบยืม ${loanId} • ปรับจำนวนรุ่น ${existing.model || ''} จาก ${oldQty} เครื่อง ➔ ${newQty} เครื่อง`,
+                    actor,
+                    { loanId, oldQty, newQty }
+                  );
+                } else {
+                  logAssetActivity(
+                    db,
+                    loanId,
+                    'UPDATE',
+                    'แก้ไขจำนวนในใบยืม',
+                    `ใบยืม ${loanId} • ปรับจำนวนรุ่น ${existing.model || ''} จาก ${oldQty} เครื่อง ➔ ${newQty} เครื่อง`,
+                    actor,
+                    { loanId, oldQty, newQty }
+                  );
+                }
               }
             }
           }

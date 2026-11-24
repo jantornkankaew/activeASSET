@@ -25402,24 +25402,54 @@ html.is-unauthenticated .app-shell {
   color: #1e3a8a;
 }
 
-#loanDialog.mode-note-only .is-locked {
+#loanDialog.mode-note-only .is-locked,
+.custom-select-trigger.is-locked {
   background: #f8fafc !important;
   color: #64748b !important;
   border-color: #e2e8f0 !important;
   cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
+.custom-select-trigger.is-locked .custom-select-arrow {
+  display: none !important;
 }
 
 #loanDialog.mode-note-only .cell-model input,
-#loanDialog.mode-note-only .cell-qty input,
-#loanDialog.mode-note-only .cell-source select,
+#loanDialog.mode-note-only .model-picker-cell input,
 #loanDialog.mode-note-only .cell-options-cell button,
 #loanDialog.mode-note-only .cell-action .btn-item-dup,
 #loanDialog.mode-note-only .cell-action .btn-item-delete,
 #loanDialog.mode-note-only .row-add-next-item,
 #loanDialog.mode-note-only .btn-add-item-drawer {
   pointer-events: none !important;
-  opacity: 0.5 !important;
+  opacity: 0.55 !important;
   cursor: not-allowed !important;
+  background: #f8fafc !important;
+}
+
+#loanDialog.mode-note-only .cell-qty input,
+#loanDialog.mode-note-only .cell-qty button,
+#loanDialog.mode-note-only .cell-source button,
+#loanDialog.mode-note-only .cell-source-btn,
+#loanDialog.mode-note-only .collapsed-source-pill {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+}
+
+#loanDialog.mode-note-only .cell-source .cell-source-btn {
+  border-color: #3b82f6 !important;
+  background: #ffffff !important;
+  cursor: pointer !important;
+}
+
+#loanDialog.mode-note-only .collapsed-source-pill {
+  border: 1px dashed #3b82f6 !important;
+  cursor: pointer !important;
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  font-weight: 600;
 }
 
 #loanDialog.mode-note-only .cell-note .note-unified-box {
