@@ -3643,10 +3643,13 @@ const server = http.createServer(async (req, res) => {
       const isDeliveredStage = ['Delivered', 'Partially_Returned', 'Returned'].includes(loan.status);
       const isFullEditable = ['Requested', 'Dispatching', 'Dispatched'].includes(loan.status);
 
-      // Case 1: Delivered Stage - Note-only editing ("ถ้าส่งมอบไปแล้ว แก้ไขได้แค่หมายเหตุ")
+      // Case 1: Delivered Stage - Note and due_date editing ("ถ้าส่งมอบไปแล้ว แก้ไขได้เฉพาะกำหนดวันส่งคืนและหมายเหตุ")
       if (isDeliveredStage) {
         db.exec('BEGIN TRANSACTION');
         try {
+          if (body.due_date) {
+            db.prepare('UPDATE loans SET due_date = ? WHERE id = ?').run(String(body.due_date).trim(), loanId);
+          }
           if (body.delivery_note !== undefined) {
             db.prepare('UPDATE loans SET delivery_note = ? WHERE id = ?').run(String(body.delivery_note || '').trim(), loanId);
           }

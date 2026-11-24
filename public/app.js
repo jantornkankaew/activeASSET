@@ -1707,9 +1707,9 @@ function renderKanbanCard(loan) {
             ? `
           <div class="card-actions">
             ${can('edit_loan') ? `
-            <button type="button" class="btn-card-edit-minimal" data-edit-loan="${escapeHtml(loan.id)}" title="${isDeliveredStage ? 'แก้ไขหมายเหตุใบยืม' : 'แก้ไขรายการใบยืม'}">
+            <button type="button" class="btn-card-edit-minimal" data-edit-loan="${escapeHtml(loan.id)}" title="แก้ไขใบยืม">
               ${APP_ICONS.edit}
-              <span>${isDeliveredStage ? 'หมายเหตุ' : 'แก้ไข'}</span>
+              <span>แก้ไข</span>
             </button>` : ''}
             ${loan.status === 'Requested' && can('cancel_loan') ? `
             <button type="button" class="btn-card-cancel-minimal" data-cancel-loan="${escapeHtml(loan.id)}" title="ยกเลิกใบยืมนี้">
@@ -1865,8 +1865,8 @@ function renderListView() {
           <td style="text-align:right;">
             <div class="min-actions-toolbar">
               ${(isEditable || isDeliveredStage) && can('edit_loan') ? `
-                <button type="button" class="btn-min-tool" data-edit-loan="${escapeHtml(l.id)}" title="${isDeliveredStage ? 'แก้ไขหมายเหตุใบยืม' : 'แก้ไขใบยืม'}">
-                  ${isDeliveredStage ? APP_ICONS.note : APP_ICONS.edit}
+                <button type="button" class="btn-min-tool" data-edit-loan="${escapeHtml(l.id)}" title="แก้ไขใบยืม">
+                  ${APP_ICONS.edit}
                 </button>
               ` : ''}
               ${l.status === 'Requested' && can('cancel_loan') ? `
@@ -3028,7 +3028,7 @@ function openEditLoanModal(loanId, updateHash = true) {
   const titleEl = document.getElementById('loanDialogTitle');
   if (titleEl) {
     titleEl.textContent = isDeliveredStage
-      ? `แก้ไขหมายเหตุใบยืม ${loan.id} (ส่งมอบแล้ว)`
+      ? `แก้ไขใบยืม ${loan.id} (ส่งมอบแล้ว)`
       : `แก้ไขใบยืม ${loan.id}`;
   }
   document.getElementById('btnLoanEditPrintPass')?.classList.remove('hidden');
@@ -3047,11 +3047,7 @@ function openEditLoanModal(loanId, updateHash = true) {
   const submitBtns = document.querySelectorAll('#loanForm button[type="submit"]');
   submitBtns.forEach(btn => {
     const span = btn.querySelector('span') || btn;
-    if (isDeliveredStage) {
-      span.textContent = 'บันทึกหมายเหตุ';
-    } else {
-      span.textContent = 'บันทึกการแก้ไข';
-    }
+    span.textContent = 'บันทึกการแก้ไข';
   });
 
   // Lock/Unlock top info inputs for note-only mode
@@ -3062,6 +3058,12 @@ function openEditLoanModal(loanId, updateHash = true) {
       el.classList.toggle('is-locked', isDeliveredStage);
     }
   });
+
+  const btnStart = document.getElementById('btnOpenAgodaStart');
+  if (btnStart) {
+    btnStart.classList.toggle('is-locked', isDeliveredStage);
+    btnStart.title = isDeliveredStage ? 'สินค้าส่งมอบแล้ว วันที่ยืมถูกล็อก' : 'แตะเพื่อเลือกวันยืม';
+  }
 
   document.getElementById('loanBorrower').value = loan.borrower_name || '';
   document.getElementById('loanCustomer').value = loan.customer_name || '';
@@ -3140,7 +3142,11 @@ function openEditLoanModal(loanId, updateHash = true) {
   // Ensure trailing empty row is present for seamless adding
   ensureTrailingEmptyRow();
 
-  collapseTopInfoDrawer();
+  if (isDeliveredStage) {
+    expandTopInfoDrawer();
+  } else {
+    collapseTopInfoDrawer();
+  }
   updateTopInfoSummary();
 
   closeAllModelDropdowns();
@@ -3564,7 +3570,7 @@ function openAgodaDateRangeModal(stage = 'start') {
   agodaTempStart = checkoutVal;
   agodaTempEnd = dueVal;
   agodaHoverDate = null;
-  agodaPickingStage = (stage === 'end') ? 'end' : 'start';
+  agodaPickingStage = (state.editingLoanNoteOnly || stage === 'end') ? 'end' : 'start';
 
   const targetDateStr = (agodaPickingStage === 'end' && dueVal) ? dueVal : checkoutVal;
   const targetDateObj = new Date(targetDateStr + 'T00:00:00');
@@ -3879,6 +3885,19 @@ function updateAgodaCalendarCellsLive(startStr, endStr, draggingHandle = null) {
 }
 
 function handleAgodaDayClick(dateStr) {
+  if (state.editingLoanNoteOnly) {
+    if (agodaTempStart && dateStr < agodaTempStart) {
+      showToast('⚠️ กำหนดส่งคืนต้องไม่เกิดขึ้นก่อนวันยืม (' + formatDisplayDateThai(agodaTempStart) + ')');
+      return;
+    }
+    agodaTempEnd = dateStr;
+    agodaHoverDate = null;
+    agodaPickingStage = 'end';
+    document.getElementById('loanDueDate').value = agodaTempEnd;
+    updateAgodaDateDisplay();
+    renderAgodaCalendar();
+    return;
+  }
   if (agodaPickingStage === 'start') {
     agodaTempStart = dateStr;
     agodaTempEnd = null;
@@ -3912,12 +3931,14 @@ function applyAgodaDateRange() {
   const start = agodaTempStart;
   const end = agodaTempEnd || agodaTempStart;
 
-  document.getElementById('loanCheckoutDate').value = start;
+  if (!state.editingLoanNoteOnly) {
+    document.getElementById('loanCheckoutDate').value = start;
+  }
   document.getElementById('loanDueDate').value = end;
 
   updateAgodaDateDisplay();
   closeAgodaDateRangeModal();
-  showToast(`📅 ช่วงเวลายืม ${formatDisplayDateThai(start)} → ${formatDisplayDateThai(end)} (${getDaysDiff(start, end)} วัน)`);
+  showToast(`📅 กำหนดวันส่งคืน: ${formatDisplayDateThai(end)} (${getDaysDiff(start, end)} วัน)`);
 }
 
 function applyAgodaQuickPreset(days) {
@@ -3931,13 +3952,14 @@ function applyAgodaQuickPreset(days) {
   agodaTempStart = start;
   agodaTempEnd = `${y}-${m}-${d}`;
   agodaHoverDate = null;
-  agodaPickingStage = 'start';
+  agodaPickingStage = state.editingLoanNoteOnly ? 'end' : 'start';
 
   agodaCalYear = dt.getFullYear();
   agodaCalMonth = dt.getMonth();
 
-  // Immediately set on the form without waiting for "ตกลง"!
-  document.getElementById('loanCheckoutDate').value = agodaTempStart;
+  if (!state.editingLoanNoteOnly) {
+    document.getElementById('loanCheckoutDate').value = agodaTempStart;
+  }
   document.getElementById('loanDueDate').value = agodaTempEnd;
   updateAgodaDateDisplay();
 
@@ -5651,12 +5673,12 @@ function updateDispatchSummary() {
       `;
     } else if (isDeliveredLoan) {
       rightBtnsEl.innerHTML = `
-        <button type="button" class="btn btn-outline btn-dispatch-edit-note" id="btnDispatchEditFromFooter" title="แก้ไขหมายเหตุการยืม">
+        <button type="button" class="btn btn-outline btn-dispatch-edit-note" id="btnDispatchEditFromFooter" title="แก้ไขใบยืม">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
           </svg>
-          <span>แก้ไขหมายเหตุ</span>
+          <span>แก้ไข</span>
         </button>
         <button type="button" class="btn btn-success btn-dispatch-return" id="btnDispatchStartReturn" title="เริ่มขั้นตอนการคืนสินค้า">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -14354,6 +14376,10 @@ function setupEventListeners() {
   if (btnStart) {
     btnStart.addEventListener('click', e => {
       e.preventDefault();
+      if (state.editingLoanNoteOnly) {
+        showToast('ℹ️ สินค้าส่งมอบแล้ว วันที่ยืมจะถูกล็อกไว้ สามารถแก้ไขได้เฉพาะกำหนดวันส่งคืน');
+        return;
+      }
       openAgodaDateRangeModal('start');
     });
   }
@@ -14361,6 +14387,14 @@ function setupEventListeners() {
   const btnEnd = document.getElementById('btnOpenAgodaEnd');
   if (btnEnd) {
     btnEnd.addEventListener('click', e => {
+      e.preventDefault();
+      openAgodaDateRangeModal('end');
+    });
+  }
+
+  const btnBannerEditDueDate = document.getElementById('btnBannerEditDueDate');
+  if (btnBannerEditDueDate) {
+    btnBannerEditDueDate.addEventListener('click', e => {
       e.preventDefault();
       openAgodaDateRangeModal('end');
     });
@@ -15357,7 +15391,9 @@ function setupEventListeners() {
     e.preventDefault();
 
     if (state.editingLoanNoteOnly && state.editingLoanId) {
+      const dueDateVal = document.getElementById('loanDueDate')?.value || '';
       const notePayload = {
+        due_date: dueDateVal,
         items: state.loanDraftRows.map(r => ({
           id: r.id,
           free_note: r.free_note || ''
@@ -15373,7 +15409,7 @@ function setupEventListeners() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'บันทึกไม่สำเร็จ');
         applyServerState(data);
-        showToast(`✅ บันทึกหมายเหตุใบยืม ${targetId} เรียบร้อย`);
+        showToast(`✅ บันทึกการแก้ไขใบยืม ${targetId} เรียบร้อย`);
         document.getElementById('loanDialog')?.close();
         if (state.printAfterSave) openPrintModal(targetId);
         focusLoanCardInKanban(targetId);
