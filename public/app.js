@@ -3712,6 +3712,7 @@ function renderAgodaCalendar() {
 
     // Pointer-based drag to adjust loan start or end date
     cell.addEventListener('pointerdown', (e) => {
+      if (state.editingLoanNoteOnly) return;
       if (e.button !== 0 && e.pointerType === 'mouse') return;
       const isStart = (agodaTempStart === dateStr);
       const isEnd = (agodaTempEnd === dateStr);
@@ -3820,8 +3821,9 @@ function renderAgodaCalendar() {
     });
 
     cell.addEventListener('mouseenter', () => {
+      if (state.editingLoanNoteOnly) return;
       if (agodaDragState.isDragging) return;
-      if (agodaPickingStage === 'end' && agodaTempStart && dateStr >= agodaTempStart) {
+      if (agodaPickingStage === 'end' && !agodaTempEnd && agodaTempStart && dateStr >= agodaTempStart) {
         agodaHoverDate = dateStr;
         updateAgodaHoverVisuals(agodaTempStart, dateStr);
       }
@@ -3926,12 +3928,11 @@ function updateAgodaCalendarCellsLive(startStr, endStr, draggingHandle = null) {
 function handleAgodaDayClick(dateStr) {
   if (state.editingLoanNoteOnly) {
     if (agodaTempStart && dateStr < agodaTempStart) {
-      showToast('⚠️ กำหนดส่งคืนต้องไม่เกิดขึ้นก่อนวันยืม (' + formatDisplayDateThai(agodaTempStart) + ')');
+      showToast(`⚠️ กำหนดส่งคืนต้องไม่ก่อนวันยืม (${formatDisplayDateThai(agodaTempStart)})`);
       return;
     }
     agodaTempEnd = dateStr;
     agodaHoverDate = null;
-    agodaPickingStage = 'end';
     document.getElementById('loanDueDate').value = agodaTempEnd;
     updateAgodaDateDisplay();
     renderAgodaCalendar();
@@ -4018,6 +4019,22 @@ function navAgodaMonth(delta) {
 }
 
 function resetAgodaToToday() {
+  if (state.editingLoanNoteOnly) {
+    const base = agodaTempStart || state.today || new Date().toISOString().slice(0, 10);
+    const dt = new Date(base + 'T00:00:00');
+    dt.setDate(dt.getDate() + 7);
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, '0');
+    const d = String(dt.getDate()).padStart(2, '0');
+    agodaTempEnd = `${y}-${m}-${d}`;
+    agodaHoverDate = null;
+    agodaCalYear = dt.getFullYear();
+    agodaCalMonth = dt.getMonth();
+    document.getElementById('loanDueDate').value = agodaTempEnd;
+    updateAgodaDateDisplay();
+    renderAgodaCalendar();
+    return;
+  }
   const today = state.today || new Date().toISOString().slice(0, 10);
   const dt = new Date(today + 'T00:00:00');
   dt.setDate(dt.getDate() + 7);
