@@ -1594,11 +1594,36 @@ function renderKanbanCard(loan) {
     loan.overdue_days
   );
 
-  // Group items strictly by Brand + Model (NO Tag ID and NO extra details on the Kanban card)
+  // Group items with Brand & Model on Kanban card (Auto-resolves brand for Demo and avoids duplicate prefixes)
   const modelCounts = new Map();
   for (const it of loan.items || []) {
-    const label = `${it.brand || ''} ${it.model || ''}`.trim();
-    if (!label) continue;
+    let brand = String(it.brand || '').trim();
+    const model = String(it.model || '').trim();
+    if (!model) continue;
+
+    if (!brand) {
+      const assetObj = (state.assets || []).find(a =>
+        (it.tag_id && a.tag_id === it.tag_id) ||
+        (it.serial_no && a.serial_no === it.serial_no) ||
+        (a.model && a.model.toLowerCase() === model.toLowerCase() && a.brand)
+      );
+      if (assetObj && assetObj.brand) {
+        brand = assetObj.brand.trim();
+      } else {
+        const catObj = (state.productCatalogs || []).find(c => c.model && c.model.toLowerCase() === model.toLowerCase() && c.brand);
+        if (catObj && catObj.brand) brand = catObj.brand.trim();
+      }
+    }
+
+    let label = model;
+    if (brand) {
+      if (model.toLowerCase().startsWith(brand.toLowerCase())) {
+        label = model;
+      } else {
+        label = `${brand} ${model}`.trim();
+      }
+    }
+
     modelCounts.set(label, (modelCounts.get(label) || 0) + 1);
   }
 

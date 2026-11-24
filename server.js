@@ -1682,6 +1682,7 @@ function getFullState() {
   const rawAssets = db.prepare('SELECT * FROM assets ORDER BY tag_id ASC').all();
   const rawLoans = db.prepare('SELECT * FROM loans ORDER BY id ASC').all();
   const rawLoanItems = db.prepare('SELECT * FROM loan_items ORDER BY id ASC').all();
+  const rawCatalogs = db.prepare('SELECT brand, model FROM product_catalogs').all();
 
   const itemsByLoan = new Map();
   for (const li of rawLoanItems) {
@@ -1701,6 +1702,16 @@ function getFullState() {
       if (a) {
         if (!itemTag && a.tag_id) itemTag = a.tag_id;
         if (!itemBrand && a.brand) itemBrand = a.brand;
+      }
+    }
+    if (!itemBrand && li.model) {
+      const m = String(li.model).trim().toLowerCase();
+      const a = rawAssets.find(x => x.brand && String(x.model || '').trim().toLowerCase() === m);
+      if (a && a.brand) {
+        itemBrand = a.brand;
+      } else {
+        const c = rawCatalogs.find(x => x.brand && String(x.model || '').trim().toLowerCase() === m);
+        if (c && c.brand) itemBrand = c.brand;
       }
     }
 
@@ -3234,7 +3245,16 @@ const server = http.createServer(async (req, res) => {
 
         for (const it of items) {
           const modelName = String(it.model || '').trim();
-          const brandName = String(it.brand || '').trim();
+          let brandName = String(it.brand || '').trim();
+          if (!brandName && modelName) {
+            const cat = db.prepare('SELECT brand FROM product_catalogs WHERE LOWER(model) = LOWER(?)').get(modelName);
+            if (cat && cat.brand) {
+              brandName = cat.brand;
+            } else {
+              const a = db.prepare('SELECT brand FROM assets WHERE LOWER(model) = LOWER(?) AND brand != ""').get(modelName);
+              if (a && a.brand) brandName = a.brand;
+            }
+          }
           if (!modelName) throw new Error('กรุณาเลือกรุ่นสินค้าให้ครบทุกแถว');
 
           const qty = Math.max(1, parseInt(it.qty || 1, 10) || 1);
@@ -4008,7 +4028,16 @@ const server = http.createServer(async (req, res) => {
 
           for (const it of body.items) {
             const modelName = String(it.model || '').trim();
-            const brandName = String(it.brand || '').trim();
+            let brandName = String(it.brand || '').trim();
+            if (!brandName && modelName) {
+              const cat = db.prepare('SELECT brand FROM product_catalogs WHERE LOWER(model) = LOWER(?)').get(modelName);
+              if (cat && cat.brand) {
+                brandName = cat.brand;
+              } else {
+                const a = db.prepare('SELECT brand FROM assets WHERE LOWER(model) = LOWER(?) AND brand != ""').get(modelName);
+                if (a && a.brand) brandName = a.brand;
+              }
+            }
             if (!modelName) throw new Error('กรุณาเลือกรุ่นสินค้าให้ครบทุกแถว');
             const qty = Math.max(1, parseInt(it.qty || 1, 10) || 1);
             const itemAcc = Array.isArray(it.accessories) ? it.accessories : [];
