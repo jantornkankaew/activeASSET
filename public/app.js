@@ -5776,9 +5776,18 @@ function openDispatchModal(loanId, updateHash = true, forceReturnMode = false) {
     const isAlreadyFullyReturned = Boolean(it.returned) && it.returned_to_location === 1 && it.qc_status !== 'Pending';
     const isInQcQueue = isPendingQc && !isAlreadyFullyReturned;
 
+    const modelTrim = String(it.model || '').trim().toLowerCase();
+    const modelAsset = !assetObj && modelTrim
+      ? (state.assets || []).find(a => (a.model || '').toLowerCase() === modelTrim && a.brand)
+      : null;
+    const catObj = !assetObj && !modelAsset && modelTrim
+      ? (state.productCatalogs || []).find(c => (c.model || '').toLowerCase() === modelTrim && c.brand)
+      : null;
+    const resolvedBrand = it.brand || (assetObj ? assetObj.brand : '') || (modelAsset ? modelAsset.brand : '') || (catObj ? catObj.brand : '') || '';
+
     return {
       id: it.id,
-      brand: it.brand || (assetObj ? assetObj.brand : ''),
+      brand: resolvedBrand,
       model: it.model || (assetObj ? assetObj.model : ''),
       tag_id: existingTag,
       serial_no: existingSn,
@@ -6546,7 +6555,14 @@ function renderDispatchTable() {
                 <div style="display:flex; flex-direction:column; gap:4px; min-width:0;">
                   <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                     <span class="dispatch-model-name" style="font-size:14px; font-weight:700; color:#1e293b; line-height:1.2;">
-                      ${escapeHtml(row.brand || '')} <strong>${escapeHtml(row.model || '')}</strong>
+                      ${(() => {
+                        const b = (row.brand || '').trim();
+                        const m = (row.model || '').trim();
+                        if (b && !m.toLowerCase().startsWith(b.toLowerCase())) {
+                          return `${escapeHtml(b)} <strong>${escapeHtml(m)}</strong>`;
+                        }
+                        return `<strong>${escapeHtml(m)}</strong>`;
+                      })()}
                     </span>
                     ${row.returned 
                       ? `<span class="ret-status-badge badge-returned">${APP_ICONS.check}<span>คืนเข้าคลังแล้ว</span></span>`
@@ -6745,7 +6761,14 @@ function renderDispatchTable() {
           <!-- Model & Location -->
           <td>
             <div class="dispatch-model-cell">
-              <span class="dispatch-model-name">${escapeHtml(row.brand || '')} <strong>${escapeHtml(row.model || '')}</strong></span>
+              <span class="dispatch-model-name">${(() => {
+                const b = (row.brand || '').trim();
+                const m = (row.model || '').trim();
+                if (b && !m.toLowerCase().startsWith(b.toLowerCase())) {
+                  return `${escapeHtml(b)} <strong>${escapeHtml(m)}</strong>`;
+                }
+                return `<strong>${escapeHtml(m)}</strong>`;
+              })()}</span>
               ${
                 !isMatched
                   ? `
@@ -7730,12 +7753,38 @@ function renderSingleGatePassSheet(loan, copyType = '', sizeClass = '') {
           </thead>
           <tbody>
             ${(loan.items || [])
-              .map(
-                (it, idx) => `
+              .map((it, idx) => {
+                let itemBrand = String(it.brand || '').trim();
+                const itemModel = String(it.model || '').trim();
+                if (!itemBrand && itemModel) {
+                  const assetObj = (state.assets || []).find(a =>
+                    (it.tag_id && a.tag_id === it.tag_id) ||
+                    (it.serial_no && a.serial_no === it.serial_no) ||
+                    (a.model && a.model.toLowerCase() === itemModel.toLowerCase() && a.brand)
+                  );
+                  if (assetObj && assetObj.brand) {
+                    itemBrand = assetObj.brand.trim();
+                  } else {
+                    const catObj = (state.productCatalogs || []).find(c => c.model && c.model.toLowerCase() === itemModel.toLowerCase() && c.brand);
+                    if (catObj && catObj.brand) itemBrand = catObj.brand.trim();
+                  }
+                }
+
+                let fullModelDisplay = itemModel;
+                if (itemBrand) {
+                  if (itemModel.toLowerCase().startsWith(itemBrand.toLowerCase())) {
+                    fullModelDisplay = itemModel;
+                  } else {
+                    fullModelDisplay = `${itemBrand} ${itemModel}`.trim();
+                  }
+                }
+
+                return `
               <tr>
                 <td class="gp-td-idx">${idx + 1}</td>
                 <td class="gp-td-model">
-                  <strong>${escapeHtml(it.brand)} ${escapeHtml(it.model)}</strong>
+                  <strong>${escapeHtml(fullModelDisplay)}</strong>
+                  ${itemBrand ? `<div class="gp-model-brand-sub" style="font-size:11px; color:#475569; font-weight:500; margin-top:2px;">แบรนด์: <strong>${escapeHtml(itemBrand)}</strong></div>` : ''}
                 </td>
                 <td class="gp-td-sn">
                   ${
@@ -7782,9 +7831,8 @@ function renderSingleGatePassSheet(loan, copyType = '', sizeClass = '') {
                   })()}
                 </td>
               </tr>
-            `
-              )
-              .join('')}
+            `;
+          }).join('')}
           </tbody>
         </table>
       </div>
